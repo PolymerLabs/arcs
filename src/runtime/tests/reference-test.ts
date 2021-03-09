@@ -94,7 +94,7 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc({arcName: 'test', storageKeyPrefix});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix}));
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
@@ -178,7 +178,7 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc({arcName: 'test', storageKeyPrefix});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix}));
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
@@ -275,7 +275,7 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc({arcName: 'test', storageKeyPrefix});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix}));
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
@@ -354,7 +354,7 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc({arcName: 'test', storageKeyPrefix});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix}));
     const recipe = manifest.recipes[0];
     const resultEntity = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
@@ -493,7 +493,7 @@ describe('reference', () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc({arcName: 'test', storageKeyPrefix});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix}));
     const recipe = manifest.recipes[0];
 
     // create 'input:1' store to hold [Result]
@@ -615,7 +615,7 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc({arcName: 'test', storageKeyPrefix});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix}));
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
     const referenceOut = manifest.particles[0].handleConnectionMap.get('referenceOut');
@@ -699,7 +699,7 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc({arcName: 'test', storageKeyPrefix});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix}));
     const recipe = manifest.recipes[0];
 
     const resultType = Entity.createEntityClass(manifest.findSchemaByName('Result'), null).type;

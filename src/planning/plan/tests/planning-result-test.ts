@@ -26,7 +26,7 @@ describe('planning result', () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile('./src/runtime/tests/artifacts/Products/Products.recipes');
 
-    const arc = runtime.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
 
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     assert.isNotEmpty(suggestions);
@@ -51,7 +51,7 @@ describe('planning result', () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile('./src/runtime/tests/artifacts/Products/Products.recipes');
 
-    const arc = runtime.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
     const {loader, context} = runtime;
@@ -119,7 +119,7 @@ recipe R3
         `;
   async function prepareMerge(manifestStr1, manifestStr2) {
     const runtime = new Runtime();
-    const arc = runtime.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
 
     const planToSuggestion = async (plan: Recipe): Promise<Suggestion> => {
       const suggestion = Suggestion.create(plan, await plan.digest(), Relevance.create(arc, plan));

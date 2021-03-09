@@ -72,13 +72,13 @@ export class ArcHost {
     return serialization;
   }
   async _spawn(storage, id, serialization, portFactories) {
-    return this.runtime.newArc({
+    return this.runtime.getArcById(this.runtime.allocator.newArc({
       arcName: id,
       serialization, // TODO(mmandlis): support for `serialization` has been lost.
       storage: `${storage}/${id}`,
       portFactories,
       inspectorFactory: devtoolsArcInspectorFactory,
-    });
+    }));
   }
   async instantiateDefaultRecipe(arc, manifest) {
     log('instantiateDefaultRecipe');

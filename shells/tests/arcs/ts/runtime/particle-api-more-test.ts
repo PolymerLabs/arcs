@@ -45,7 +45,8 @@ const getCollectionData = async (arc: Arc, index: number) => {
 const spawnTestArc = async (loader) => {
   const runtime = new Runtime({loader});
   runtime.context = await runtime.parseFile('./manifest');
-  const arc = await runtime.startArc({arcName: 'test-arc', storageKeyPrefix: storageKeyPrefixForTest()});
+  const arcId = await runtime.allocator.startArc({arcName: 'test-arc', storageKeyPrefix: storageKeyPrefixForTest()});
+  const arc = runtime.getArcById(arcId);
   await arc.idle;
   return arc;
 };

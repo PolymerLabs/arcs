@@ -22,8 +22,6 @@ describe('runtime manifest integration', () => {
     const storeInfo = arc.findStoresByType(type)[0] as StoreInfo<SingletonEntityType>;
 
     const handle = await handleForStoreInfo(storeInfo, arc);
-    // TODO: This should not be necessary.
-    type.maybeResolve();
     const result = await handle.fetch();
     assert.strictEqual(result['value'], 'Hello, world!');
   });

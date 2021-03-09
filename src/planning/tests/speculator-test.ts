@@ -20,7 +20,7 @@ describe('speculator', () => {
   it('can speculatively produce a relevance', async () => {
     const loader = new Loader();
     const runtime = new Runtime({loader, context: new Manifest({id: ArcId.newForTest('test')})});
-    const arc = runtime.newArc({arcName: 'test'});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     const manifest = await Manifest.load('./src/runtime/tests/artifacts/test.manifest', loader);
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());

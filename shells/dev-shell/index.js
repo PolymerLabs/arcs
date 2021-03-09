@@ -15,6 +15,7 @@ import '../lib/platform/loglevel-web.js';
 
 import {Arc} from '../../build/runtime/arc.js';
 import {Runtime} from '../../build/runtime/runtime.js';
+import {IdGenerator} from '../../build/runtime/id.js';
 import {RecipeResolver} from '../../build/runtime/recipe-resolver.js';
 import {devtoolsArcInspectorFactory} from '../../build/devtools-connector/devtools-arc-inspector.js';
 import {SlotObserver} from '../lib/xen-renderer.js';
@@ -120,55 +121,23 @@ async function wrappedExecute() {
 }
 
 async function createRecipeArc(recipe, runtime, index) {
-  // ask runtime to assemble arc parameter boilerplate (argument is the arc name)
-  // const params = runtime.host.buildArcParams({arcName: `arc${index}`});
-  // construct the arc
-  const arc = runtime.newArc({/*...params*/arcName: `arc${index}`, ...extraArcParams});
+  const arcId = IdGenerator.newSession().newArcId(`arc${index}`);
   // establish a UI Surface
-  const arcPanel = outputPane.addArcPanel(params.id);
-  // attach a renderer (SlotObserver and a DOM node) to the composer
-  params.slotComposer.observeSlots(new SlotObserver(arcPanel.shadowRoot));
+  const arcPanel = outputPane.addArcPanel(arcId);
   // attach arc to bespoke shell ui
+  const slotObserver = new SlotObserver(arcPanel.shadowRoot);
+  // construct the arc
+  const arc = runtime.getArcById(runtime.allocator.newArc({arcId, slotObserver, ...extraArcParams}));
   arcPanel.attachArc(arc);
   arc.arcPanel = arcPanel;
   try {
-    normalizeRecipe(arc, recipe);
-    const resolvedRecipe = await resolveRecipe(arc, recipe);
-    await instantiateRecipe(arc, resolvedRecipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
   } catch (x) {
     arcPanel.showError('recipe error', x);
     return;
   }
   // display description
   await arcPanel.arcInstantiated(await runtime.getArcDescription(arc));
-}
-
-function normalizeRecipe(arc, recipe) {
-  const errors = new Map();
-  if (!recipe.normalize({errors})) {
-    throw `Error in recipe.normalize: ${[...errors.values()].join('\n')}`;
-  }
-}
-
-async function resolveRecipe(arc, recipe) {
-  let resolved = recipe;
-  if (!recipe.isResolved()) {
-    const errors = new Map();
-    const resolver = new RecipeResolver(arc);
-    resolved = await resolver.resolve(recipe, {errors});
-    if (!resolved) {
-      throw `Error in RecipeResolver: ${[...errors.entries()].join('\n')}.\n${recipe.toString()}`;
-    }
-  }
-  return resolved;
-}
-
-async function instantiateRecipe(arc, recipe) {
-  try {
-    await arc.instantiate(recipe);
-  } catch (e) {
-    throw `Error in arc.instantiate: ${e}`;
-  }
 }
 
 function showHelp() {

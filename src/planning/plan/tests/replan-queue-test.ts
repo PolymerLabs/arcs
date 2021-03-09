@@ -42,7 +42,7 @@ async function init(options?) {
       value: Text
   `);
   const runtime = new Runtime({loader, context});
-  const arc = runtime.newArc({arcName: 'test'});
+  const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
   const producer = new TestPlanProducer(arc, runtime);
   const queue = new ReplanQueue(producer, options);
 

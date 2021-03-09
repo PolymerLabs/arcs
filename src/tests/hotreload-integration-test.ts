@@ -70,7 +70,7 @@ describe('Hot Code Reload for JS Particle', async () => {
     });
 
     const runtime = new Runtime({context, loader});
-    const arc = runtime.newArc({arcName: 'test'});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     const personType = context.findTypeByName('Person') as EntityType;
 
     const personStoreIn = await arc.createStore(new SingletonType(personType));
@@ -127,7 +127,7 @@ describe('Hot Code Reload for WASM Particle', async () => {
     const context = await Manifest.load(manifestFile, loader);
 
     const runtime = new Runtime({loader, context});
-    const arc = await runtime.startArc({arcName: 'HotReload'});
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'HotReload'}));
     await arc.idle;
 
     // TODO(sjmiles): render data no longer captured by slot objects
@@ -149,7 +149,7 @@ describe('Hot Code Reload for WASM Particle', async () => {
     const context = await Manifest.load(manifestFile, loader);
 
     const runtime = new Runtime({loader, context});
-    const arc = runtime.newArc({arcName: 'test'});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     const personType = context.findTypeByName('Person') as EntityType;
 
     const personStoreIn = await arc.createStore(new SingletonType(personType));

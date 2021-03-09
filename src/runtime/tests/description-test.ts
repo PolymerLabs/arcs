@@ -28,7 +28,7 @@ import {newRecipe} from '../recipe/internal/recipe-constructor.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const runtime = new Runtime({context: manifest, loader: new Loader()});
-  const arc = runtime.newArc({arcName: 'test'});
+  const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
   // TODO(lindner) stop messing with arc internal state, or provide a way to supply in constructor..
   arc['_activeRecipe'] = recipe;
   arc['_recipeDeltas'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});
@@ -621,7 +621,7 @@ recipe
     const recipe = manifest.recipes[0];
     // Cannot use createTestArc here, because capabilities-resolver cannot be set to null,
     // and interface returns a null schema, and cannot generate hash.
-    const arc = runtime.newArc({arcName: 'test'});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     arc['_activeRecipe'] = recipe;
     arc['_recipeDeltas'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});
 

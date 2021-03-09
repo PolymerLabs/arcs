@@ -31,7 +31,7 @@ describe('Allocator', () => {
     const host = new ArcHostImpl('myhost', runtime);
     allocator.registerArcHost(new SingletonArcHostFactory(host));
 
-    const arcId = await allocator.startArcWithPlan({planName: 'TestRecipe', arcName: 'test'});
+    const arcId = await allocator.startArc({planName: 'TestRecipe', arcName: 'test'});
     const arc = host.getArcById(arcId);
     assert.equal(arc.id, arcId);
     assert.equal(arc.activeRecipe.name, 'TestRecipe');

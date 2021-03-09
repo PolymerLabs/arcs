@@ -65,7 +65,7 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
       `);
       runtime.context = context;
 
-      const arc = runtime.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), modality});
+      const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), modality}));
       assert.lengthOf(context.allRecipes, 4);
 
       const consumer = await createPlanConsumer(arc, context);

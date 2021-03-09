@@ -32,7 +32,8 @@ describe('products test', () => {
   it('filters', async () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile(manifestFilename);
-  const arc = await runtime.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), planName: 'FilterBooks'});
+  const arc = runtime.getArcById(
+      await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), planName: 'FilterBooks'}));
     await arc.idle;
     await verifyFilteredBook(arc);
   });
@@ -48,12 +49,12 @@ describe('products test', () => {
         .expectRenderSlot('List', 'root')
         .expectRenderSlot('ShowProduct', 'item')
         ;
-    const arc = await runtime.startArc({
+    const arc = runtime.getArcById(await runtime.allocator.startArc({
       arcName: 'demo',
       storageKeyPrefix: storageKeyPrefixForTest(),
       planName: 'FilterAndDisplayBooks',
       slotObserver
-    });
+    }));
     await arc.idle;
     await verifyFilteredBook(arc);
   });

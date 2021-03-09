@@ -29,7 +29,7 @@ describe('ArcStoresFetcher', () => {
       schema Foo
         value: Text`);
     const runtime = new Runtime({context});
-    const arc = runtime.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), inspectorFactory: devtoolsArcInspectorFactory});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), inspectorFactory: devtoolsArcInspectorFactory}));
 
     const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
     const fooStore = await arc.createStore(new SingletonType(foo.type), 'fooStoreName', 'fooStoreId', ['awesome', 'arcs']);
@@ -48,6 +48,7 @@ describe('ArcStoresFetcher', () => {
     const results = DevtoolsForTests.channel.messages.filter(
         m => m.messageType === 'fetch-stores-result');
     assert.lengthOf(results, 1);
+
     // Location in the schema file is stored in the type and used by some tools.
     // We don't assert on it in this test.
     deleteFieldRecursively(results, 'location');
@@ -107,21 +108,22 @@ describe('ArcStoresFetcher', () => {
         value: Text
       particle P in 'p.js'
         foo: reads writes Foo
-      recipe FooPlan
+      recipe
         foo: create *
         P
           foo: foo`);
     const runtime = new Runtime({loader, context});
-    const arc = await runtime.startArc({
+    const arc = runtime.getArcById(await runtime.allocator.startArc({
       arcName: 'demo',
       storageKeyPrefix: storageKeyPrefixForTest(),
       inspectorFactory: devtoolsArcInspectorFactory
-    });
+    }));
 
     assert.isEmpty(DevtoolsForTests.channel.messages.filter(
         m => m.messageType === 'store-value-changed'));
 
     await arc.idle;
+
     const results = DevtoolsForTests.channel.messages.filter(
         m => m.messageType === 'store-value-changed');
     assert.lengthOf(results, 1);

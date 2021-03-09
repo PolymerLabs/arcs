@@ -61,7 +61,7 @@ describe('particle-api', () => {
       '*': `defineParticle(({UiParticle}) => class extends UiParticle {});`,
     });
     const runtime = new Runtime({loader, context});
-    const arc = await runtime.startArc({arcName: 'demo'});
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo'}));
     await arc.idle;
 
     assert.lengthOf(arc.activeRecipe.particles, 1);

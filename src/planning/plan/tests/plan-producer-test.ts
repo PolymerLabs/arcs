@@ -81,10 +81,10 @@ describe('plan producer', () => {
   async function createProducer() {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile('./src/runtime/tests/artifacts/Products/Products.recipes');
-    const arc = runtime.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
     const suggestions = await StrategyTestHelper.planForArc(
       runtime,
-      runtime.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()})
+      runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}))
     );
     const store = await Planificator['_initSuggestStore'](arc, storageKeyForTest(arc.id));
     assert.isNotNull(store);
@@ -167,7 +167,7 @@ describe('plan producer - search', () => {
       schema Bar
         value: Text
     `);
-    const arc = runtime.newArc({arcName: 'test', storageKeyPrefix: storageKeyForTest, arcId: ArcId.newForTest('test')});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix: storageKeyForTest, arcId: ArcId.newForTest('test')}));
     const searchStore = await Planificator['_initSearchStore'](arc);
 
     const producer = new TestSearchPlanProducer(arc, runtime, searchStore);

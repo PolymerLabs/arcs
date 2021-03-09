@@ -47,7 +47,7 @@ describe('particle interface loading with slots', () => {
     assert(recipe.isResolved(), `recipe isn't resolved`);
 
     const slotObserver = new SlotTestObserver();
-    const arc = runtime.newArc({arcName: 'test', slotObserver});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', slotObserver}));
 
     return {manifest, recipe, slotObserver, arc};
   }

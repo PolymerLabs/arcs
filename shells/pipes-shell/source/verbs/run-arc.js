@@ -29,14 +29,14 @@ export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
     warn(`found no recipes matching [${recipe}]`);
     return null;
   }
-  const arc = runtime.newArc({
+  const arc = runtime.getArcById(runtime.allocator.newArc({
     arcName: arcId,
     storageKeyPrefix: storageKeyPrefix || defaultStorageKeyPrefix, // TODO(mmandlis): fix this!
     fileName: './serialized.manifest',
     pecFactories: [runtime.pecFactory, portIndustry(bus, pecId)],
     loader: runtime.loader,
     inspectorFactory: devtoolsArcInspectorFactory
-  });
+  }));
   arc.peh.slotComposer.slotObserver = {
     observe: (content, arc) => {
       bus.send({message: 'output', data: content});

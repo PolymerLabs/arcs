@@ -39,8 +39,7 @@ describe('Arc', () => {
 
     `);
 
-    const opts = runtime.host.buildArcParams({arcName: 'test2'});
-    const arc = runtime.newArc({arcId: opts.id});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test2'}));
 
     const barType = runtime.context.findTypeByName('Bar') as EntityType;
     let store = await arc.createStore(barType.collectionOf(), undefined, 'test:1');
@@ -64,7 +63,7 @@ describe('Arc', () => {
     await handle.add(new handle.entityClass({value: 'one'}));
     await newArc.idle;
 
-    // assert.strictEqual(slotComposer.slotsCreated, 1);
+    //assert.strictEqual(slotComposer.slotsCreated, 1);
   });
 
 
@@ -134,7 +133,7 @@ describe('Arc', () => {
         A
           root: consumes root
     `);
-    const arc = runtime.newArc({arcName: 'arcid'});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'arcid'}));
     await runtime.allocator.runPlanInArc(arc.id, arc.context.recipes[0]);
   });
 
@@ -155,7 +154,7 @@ describe('Arc', () => {
             foods: foods
         `);
 
-    const arc = runtime.newArc({arcName: 'test'});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     assert.isNotNull(arc);
 
     const favoriteFoodClass = Entity.createEntityClass(runtime.context.findSchemaByName('FavoriteFood'), null);
@@ -177,8 +176,7 @@ describe('Arc', () => {
     runtime.allocator.stopArc(arc.id);
     const newArc = await runtime.allocator.deserialize({serialization, fileName: ''});
     assert.strictEqual(newArc.stores.length, 1);
-    assert.strictEqual(newArc.activeRecipe.toString(),
-                    `@active\n${arc.activeRecipe.toString()}`);
+    assert.strictEqual(newArc.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');
   });
 });

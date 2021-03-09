@@ -444,6 +444,7 @@ export class Arc implements ArcInterface {
     });
 
     for (const recipeHandle of handles) {
+      assert(recipeHandle.immediateValue || ['use', 'map'].includes(recipeHandle.fate), `???? ${recipeHandle.fate}`);
       const fate = recipeHandle.originalFate && recipeHandle.originalFate !== '?'
           ? recipeHandle.originalFate : recipeHandle.fate;
       if (fate === 'use') {
@@ -461,16 +462,17 @@ export class Arc implements ArcInterface {
 
         assert(recipeHandle.id);
         const storeId = recipeHandle.id;
-        const volatileKey = recipeHandle.immediateValue
+        const volatileKey = recipeHandle.immediateValue // TODO: rename, it's not necesarily VOLATILE!
           ? new VolatileStorageKey(this.id, '').childKeyForHandle(storeId)
           : recipeHandle.storageKey;
+        assert(volatileKey, 'HELLO????');
 
         // TODO(shanestephens): Remove this once singleton types are expressed directly in recipes.
         if (type instanceof EntityType || type instanceof ReferenceType || type instanceof InterfaceType) {
           type = new SingletonType(type);
         }
-        const newStore = await this.createStoreInternal(type, /* name= */ null, storeId,
-            recipeHandle.tags, volatileKey, recipeHandle.capabilities);
+        const newStore = await this.createStoreInternal(type, storeId, volatileKey, /* name= */ null,
+            recipeHandle.tags); //recipeHandle.capabilities);
         if (recipeHandle.immediateValue) {
           const particleSpec = recipeHandle.immediateValue;
           const type = recipeHandle.type;
@@ -482,6 +484,7 @@ export class Arc implements ArcInterface {
             throw new Error(`Can't currently store immediate values in non-singleton stores`);
           }
         } else if (['copy', 'map'].includes(fate)) {
+// TODO: investigate what happens with MAP, it cannot be reached :(
           const copiedStoreRef = this.context.findStoreById(recipeHandle.originalId);
           const copiedActiveStore = await this.getActiveStore(copiedStoreRef);
           assert(copiedActiveStore, `Cannot find store ${recipeHandle.originalId}`);
@@ -542,22 +545,19 @@ export class Arc implements ArcInterface {
   // TODO(shanestephens): Once we stop auto-wrapping in singleton types below, convert this to return a well-typed store.
   async createStore<T extends Type>(type: T, name?: string, id?: string, tags?: string[], storageKey?: StorageKey,
         capabilities?: Capabilities): Promise<StoreInfo<T>> {
-    const store = await this.createStoreInternal(type, name, id, tags, storageKey, capabilities);
-    this.addStoreToRecipe(store);
-    return store;
-  }
-
-  private async createStoreInternal<T extends Type>(type: T, name?: string, id?: string, tags?: string[],
-      storageKey?: StorageKey, capabilities?: Capabilities): Promise<StoreInfo<T>> {
-    assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
-    if (type instanceof TupleType) {
-      throw new Error('Tuple type is not yet supported');
-    }
-
     if (id == undefined) {
       id = this.generateID().toString();
     }
 
+    const store = await this.createStoreInternal(type, id,
+      await this.createStorageKeyIfNeeded(type, id, tags, capabilities, storageKey),
+      name, tags);
+      //capabilities);
+    this.addStoreToRecipe(store);
+    return store;
+  }
+
+  private async createStorageKeyIfNeeded<T extends Type>(type: T, id?: string, tags?: string[], capabilities?: Capabilities, storageKey?: StorageKey): Promise<StorageKey> {
     if (storageKey == undefined) {
       if (this.capabilitiesResolver) {
         storageKey = await this.capabilitiesResolver.createStorageKey(
@@ -569,8 +569,21 @@ export class Arc implements ArcInterface {
 
     const hasVolatileTag = (tags: string[]) => tags && tags.includes('volatile');
     if (storageKey == undefined || hasVolatileTag(tags)) {
+      assert(false, 'REALLY???');
       storageKey = new VolatileStorageKey(this.id, id);
     }
+    return storageKey;
+  }
+
+  private async createStoreInternal<T extends Type>(
+      type: T, id: string, storageKey: StorageKey, name?: string, tags?: string[],
+      /*, capabilities?: Capabilities*/): Promise<StoreInfo<T>> {
+    assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
+    if (type instanceof TupleType) {
+      throw new Error('Tuple type is not yet supported');
+    }
+
+    // storageKey = await this.createStorageKeyIfNeeded(id, tags, capabilities, storageKey);
 
     // Catch legacy cases that expected us to wrap entity types in a singleton.
     if (type.isEntity || type.isInterface || type.isReference) {

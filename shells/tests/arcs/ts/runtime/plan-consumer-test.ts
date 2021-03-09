@@ -58,7 +58,7 @@ describe('plan consumer', () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parse(manifestText);
 
-    const arc = runtime.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
     let suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
     const consumer = await createPlanConsumer(arc);

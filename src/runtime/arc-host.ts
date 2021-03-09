@@ -39,6 +39,7 @@ export interface ArcHost {
   getArcById(arcId: ArcId): Arc;
   isHostForParticle(particle: Particle): boolean;
   buildArcParams(options: NewArcOptions): ArcOptions;
+  findArcByParticleId(particleId: string): Arc;
 }
 
 export class ArcHostImpl implements ArcHost {
@@ -97,6 +98,10 @@ export class ArcHostImpl implements ArcHost {
       idGenerator,
       ...options
     };
+  }
+
+  findArcByParticleId(particleId: string): Arc {
+    return [...this.arcById.values()].find(arc => !!arc.activeRecipe.findParticle(particleId));
   }
 }
 

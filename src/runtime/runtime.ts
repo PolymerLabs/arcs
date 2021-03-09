@@ -131,9 +131,6 @@ export class Runtime {
   /*private*/public composerClass: typeof SlotComposer | null;
   public memoryProvider: VolatileMemoryProvider;
   public readonly storageService: StorageService;
-  public get arcById() {
-    return (this.host as ArcHostImpl).arcById; // TODO: get rid of this!
-  }
   public readonly allocator: Allocator;
   public readonly host: ArcHost;
   public driverFactory: DriverFactory;
@@ -185,35 +182,9 @@ export class Runtime {
     return this.memoryProvider;
   }
 
-  // TODO(shans): Clean up once old storage is removed.
-  // Note that this incorrectly assumes every storage key can be of the form `prefix` + `arcId`.
-  // Should ids be provided to the Arc constructor, or should they be constructed by the Arc?
-  // How best to provide default storage to an arc given whatever we decide?
-
-  /**
-   * Given an arc name, return either:
-   * (1) the already running arc
-   * (2) a deserialized arc (TODO: needs implementation)
-   * (3) a newly created arc
-   */
-  async startArc(options: NewArcOptions & {planName?: string}): Promise<Arc> {
-    const arcId = await this.allocator.startArcWithPlan(options);
-    return this.host.getArcById(arcId);
-  }
-
-  newArc(options?: NewArcOptions): Arc {
-    const arcId = this.allocator.startArc(options);
+  getArcById(arcId: ArcId): Arc {
     assert(this.host.getArcById(arcId));
     return this.host.getArcById(arcId);
-  }
-
-  stop(name: string) {
-    this.allocator.stopArc(ArcId.fromString(name));
-  }
-
-  findArcByParticleId(particleId: string): Arc {
-    //return [...this.arcById.values()]
-    return Object.values(this.arcById).find(arc => !!arc.activeRecipe.findParticle(particleId));
   }
 
   async parse(content: string, options?): Promise<Manifest> {

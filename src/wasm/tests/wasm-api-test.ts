@@ -96,7 +96,12 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     async function setup(planName) {
       const runtime = new Runtime({loader, context: await manifestPromise});
       const slotObserver = new SlotTestObserver();
-      const arc = await runtime.startArc({arcName: 'wasm-test', storageKeyPrefix: storageKeyPrefixForTest(), planName, slotObserver});
+      const arc = runtime.getArcById(await runtime.allocator.startArc({
+        arcName: 'wasm-test',
+        storageKeyPrefix: storageKeyPrefixForTest(),
+        planName,
+        slotObserver
+      }));
       await arc.idle;
       const [info] = arc.loadedParticleInfo.values();
 
@@ -474,7 +479,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // extra fields are correctly ignored.
       const manifest = await manifestPromise;
       const runtime = new Runtime({loader, context: manifest});
-      const arc = runtime.newArc({arcName: 'wasm-test', storageKeyPrefix: storageKeyPrefixForTest()});
+      const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'wasm-test', storageKeyPrefix: storageKeyPrefixForTest()}));
 
       const sliceClass = Entity.createEntityClass(manifest.findSchemaByName('Slice'), null);
       const sngStore = await arc.createStore(new SingletonType(sliceClass.type), undefined, 'test:0');

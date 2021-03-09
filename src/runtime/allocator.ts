@@ -39,15 +39,17 @@ export type PlanInArcOptions = Readonly<{
 export interface Allocator {
   arcHostFactories: ArcHostFactory[];
   registerArcHost(factory: ArcHostFactory);
-  startArc(options: NewArcOptions): ArcId;
+  newArc(options: NewArcOptions): ArcId;
   // tslint:disable-next-line: no-any
-  startArcWithPlan(options: NewArcOptions & {planName?: string}): Promise<ArcId>;
+  startArc(options: NewArcOptions & {planName?: string}): Promise<ArcId>;
   deserialize(options: DeserializeArcOptions): Promise<Arc>;
 
   // tslint:disable-next-line: no-any
   runPlanInArc(arcId: ArcId, plan: Recipe, reinstantiate?: boolean): Promise<any>; // TODO: remove this later!
   stopArc(arcId: ArcId);
   assignStorageKeys(arcId: ArcId, plan: Recipe, idGenerator?: IdGenerator): Promise<Recipe>;
+
+  // TODO: improve API - should return boolean? or null, if not resolved? or throw?
   resolveRecipe(arcId: ArcId, recipe: Recipe): Promise<Recipe>;
 }
 
@@ -60,7 +62,7 @@ export class AllocatorImpl implements Allocator {
 
   registerArcHost(factory: ArcHostFactory) { this.arcHostFactories.push(factory); }
 
-  startArc(options: NewArcOptions): ArcId {
+  newArc(options: NewArcOptions): ArcId {
     assert(options.arcId || options.arcName);
     let arcId = null;
     let idGenerator = null;
@@ -79,8 +81,8 @@ export class AllocatorImpl implements Allocator {
     return arcId;
   }
 
-  public async startArcWithPlan(options: NewArcOptions & {planName?: string}): Promise<ArcId> {
-    const arcId = this.startArc(options);
+  public async startArc(options: NewArcOptions & {planName?: string}): Promise<ArcId> {
+    const arcId = this.newArc(options);
     await this.runInArc(arcId, options.planName);
     return arcId;
   }
@@ -93,15 +95,13 @@ export class AllocatorImpl implements Allocator {
       ? this.runtime.context.allRecipes.find(r => r.name === planName)
       : this.runtime.context.recipes[0];
     assert(plan);
-    assert(plan.normalize());
-    assert(plan.isResolved(), `Unresolved partition plan: ${plan.toString({showUnresolved: true})}`);
     return this.runPlanInArc(arcId, plan);
   }
 
   // tslint:disable-next-line: no-any
   async runPlanInArc(arcId: ArcId, plan: Recipe, reinstantiate?: boolean): Promise<any> {
-    plan.normalize();
-    assert(plan.isResolved(), `Unresolved plan: ${plan.toString({showUnresolved: true})}`);
+    plan = await this.resolveRecipe(arcId, plan);
+
     const partitionByFactory = new Map<ArcHostFactory, Particle[]>();
     for (const particle of plan.particles) {
       const hostFactory = [...this.arcHostFactories.values()].find(
@@ -168,12 +168,18 @@ export class AllocatorImpl implements Allocator {
     return this.resolveRecipe(arcId, plan);
   }
 
-  async resolveRecipe(arcId: ArcId, recipe: Recipe): Promise<Recipe> {
+  protected tryResolveRecipe(arcId: ArcId, recipe: Recipe) {
     assert(this.normalize(recipe));
-    for (const handle of recipe.handles) {
-      // Otherwise normalize un-resolves typevar handle types.
-      assert(handle.type.maybeResolve());
+    if (!recipe.isResolved()) {
+      for (const handle of recipe.handles) {
+        // Otherwise normalize un-resolves typevar handle types.
+        assert(handle.type.maybeResolve());
+      }
     }
+  }
+
+  async resolveRecipe(arcId: ArcId, recipe: Recipe): Promise<Recipe> {
+    this.tryResolveRecipe(arcId, recipe);
     assert(recipe.isResolved(), `Unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
     return recipe;
   }
@@ -215,8 +221,8 @@ export class SingletonAllocator extends AllocatorImpl {
     this.registerArcHost(new SingletonArcHostFactory(host));
   }
 
-  startArc(options: NewArcOptions): ArcId {
-    const arcId = super.startArc(options);
+  newArc(options: NewArcOptions): ArcId {
+    const arcId = super.newArc(options);
 
     this.host.start({
       arcOptions: {
@@ -230,13 +236,13 @@ export class SingletonAllocator extends AllocatorImpl {
   }
 
   async resolveRecipe(arcId: ArcId, recipe: Recipe): Promise<Recipe> {
-    let plan = await super.resolveRecipe(arcId, recipe);
-    if (plan.isResolved()) {
-      return plan;
+    super.tryResolveRecipe(arcId, recipe);
+    if (recipe.isResolved()) {
+      return recipe;
     }
     const resolver = new RecipeResolver(this.host.getArcById(arcId));
-    plan = await resolver.resolve(recipe);
-    assert(plan && plan.isResolved());
+    const plan = await resolver.resolve(recipe);
+    assert(plan && plan.isResolved(), `Unresolved plan: ${recipe.toString({showUnresolved: true})}`);
     return plan;
   }
 
@@ -249,7 +255,7 @@ export class SingletonAllocator extends AllocatorImpl {
     assert(!this.arcStateById.has(arcId));
     const idGenerator = IdGenerator.newSession();
     this.arcStateById.set(arcId, {partitions: [], idGenerator});
-    this.startArc({...options, arcId, idGenerator});
+    this.newArc({...options, arcId, idGenerator});
     const arc = this.host.getArcById(arcId);
 
     await Promise.all(manifest.stores.map(async storeStub => {

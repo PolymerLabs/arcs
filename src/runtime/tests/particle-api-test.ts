@@ -85,7 +85,7 @@ describe('particle-api', () => {
   async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}): Promise<Arc> {
     const manifest = await Manifest.parse(fileMap.manifest);
     runtime = new Runtime({loader: new Loader(null, fileMap), context: manifest});
-    return runtime.newArc({arcName: 'demo'});
+    return runtime.getArcById(runtime.allocator.newArc({arcName: 'demo'}));
   }
 
   it('StorageProxy integration test', async () => {
@@ -788,7 +788,7 @@ describe('particle-api', () => {
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const runtime = new Runtime({context: new Manifest({id}), loader});
-    const arc = runtime.newArc({arcName: 'test'});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -844,7 +844,7 @@ describe('particle-api', () => {
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const runtime = new Runtime({loader, context: new Manifest({id})});
-    const arc = runtime.newArc({arcName: 'test'});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -900,7 +900,7 @@ describe('particle-api', () => {
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const runtime = new Runtime({context: new Manifest({id}), loader});
-    const arc = runtime.newArc({arcName: 'test'});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -953,7 +953,7 @@ describe('particle-api', () => {
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const runtime = new Runtime({context: new Manifest({id}), loader});
-    const arc = runtime.newArc({arcName: 'test'});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -1016,7 +1016,7 @@ describe('particle-api', () => {
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const runtime = new Runtime({context: new Manifest({id}), loader});
-    const arc = runtime.newArc({arcName: 'test'});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
@@ -1075,7 +1075,7 @@ describe('particle-api', () => {
     });
     // TODO(lindner): add strict rendering
     const runtime = new Runtime({loader, context});
-    const arc = await runtime.startArc({arcName: 'demo'});
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo'}));
     await arc.idle;
 
     assert.lengthOf(arc.activeRecipe.particles, 1);

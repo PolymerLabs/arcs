@@ -42,7 +42,7 @@ async function init(recipeStr) {
   const runtime = new Runtime({loader, composerClass: TestSlotComposer});
   runtime.context = await runtime.parse(recipeStr);
 
-  const arc = runtime.newArc({arcName: 'test-arc'});
+  const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test-arc'}));
 
   const planner = new Planner();
   const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
@@ -115,7 +115,7 @@ recipe
     runtime.context = await runtime.parseFile(manifest);
 
     const slotObserver = new SlotTestObserver();
-    const arc = runtime.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver}));
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
     const suggestion = suggestions.find(s => s.plan.name === 'FilterAndDisplayBooks');
@@ -253,7 +253,7 @@ recipe
         .expectRenderSlot('B', 'detail')
         ;
 
-    await runtime.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver});
+    await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver});
 
     await slotObserver.expectationsCompleted();
   });
