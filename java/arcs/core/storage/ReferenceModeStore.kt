@@ -149,7 +149,7 @@ class ReferenceModeStore private constructor(
    *
    * All access to this map should be synchronized.
    */
-  private val versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
+  private var versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
 
   /**
    * Callback Id of the callback that the [ReferenceModeStore] registered with the backing store.
@@ -464,8 +464,32 @@ class ReferenceModeStore private constructor(
         }
       }
     }
+    removeUnusedEntityVersions(proxyMessage)
     return true
   }
+
+  /* Removes entries from the entities versions, if they were removed from the container store. */
+  private fun removeUnusedEntityVersions(proxyMessage: ContainerProxyMessage) =
+    synchronized(versions) {
+      when (proxyMessage) {
+        is ProxyMessage.Operations ->
+          proxyMessage.operations.forEach { op ->
+            when (op) {
+              is CrdtSet.Operation.Remove<*> -> versions.remove(op.removed)
+              is CrdtSet.Operation.Clear<*> -> versions.clear()
+              is CrdtSet.Operation.FastForward<*> -> versions.keys.removeAll(op.removed)
+            }
+          }
+        is ProxyMessage.ModelUpdate -> {
+          if (proxyMessage.model is CrdtSet.Data<*>) {
+            val keys =
+              (proxyMessage.model as CrdtSet.Data<*>).values.keys.filter { versions.contains(it) }
+            versions = keys.associateWithTo(mutableMapOf()) { versions[it]!! }
+          }
+        }
+        is ProxyMessage.SyncRequest -> return
+      }
+    }
 
   private fun newBackingInstance(): CrdtModel<CrdtData, CrdtOperation, Referencable> =
     crdtType.createCrdtModel()
