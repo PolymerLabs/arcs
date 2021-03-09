@@ -1,7 +1,7 @@
 package arcs.android.crdt
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.core.crdt.testutil.freeEntityGenerator
+import arcs.core.testutil.freeEntityGenerator
 import arcs.core.testutil.runFuzzTest
 import org.junit.Test
 import org.junit.runner.RunWith

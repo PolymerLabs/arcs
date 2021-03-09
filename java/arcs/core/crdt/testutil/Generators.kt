@@ -10,18 +10,13 @@ import arcs.core.crdt.VersionMap
 import arcs.core.data.FieldName
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
-import arcs.core.data.testutil.FieldTypeGenerator
 import arcs.core.data.testutil.FieldTypeWithReferencedSchemas
-import arcs.core.data.testutil.ReferencableFromFieldType
+import arcs.core.data.testutil.SchemaWithReferencedSchemas
 import arcs.core.data.util.toReferencable
 import arcs.core.testutil.FuzzingRandom
 import arcs.core.testutil.Generator
-import arcs.core.testutil.IntInRange
 import arcs.core.testutil.MapOf
-import arcs.core.testutil.RandomLong
-import arcs.core.testutil.SetOf
 import arcs.core.testutil.Transformer
-import arcs.core.testutil.midSizedString
 
 /** Generate a [CrdtEntity] given a generator for the [VersionMap] and [RawEntity]. */
 class CrdtEntityAtFixedVersionGenerator(
@@ -116,29 +111,6 @@ class CrdtEntityGenerator(
   override fun invoke() = CrdtEntity(data())
 }
 
-/**
- * Returns a [Generator] of reasonably-sized [CrdtEntity] instances with as few constraints as
- * feasible.
- */
-fun freeEntityGenerator(s: FuzzingRandom): Generator<CrdtEntity> {
-  val aFew = IntInRange(s, 1, 5)
-  val noneOrMore = IntInRange(s, 0, 5)
-  return CrdtEntityGenerator(
-    CrdtEntityDataGenerator(
-      s,
-      version = VersionMapGenerator(midSizedString(s), IntInRange(s, 1, 20), aFew),
-      singletonFields = SetOf(midSizedString(s), noneOrMore),
-      collectionFields = SetOf(midSizedString(s), noneOrMore),
-      collectionSize = noneOrMore,
-      fieldType = FieldTypeGenerator(s),
-      fieldValue = ReferencableFromFieldType(s, noneOrMore),
-      creationTimestamp = RandomLong(s),
-      expirationTimestamp = RandomLong(s),
-      id = midSizedString(s)
-    )
-  )
-}
-
 /** Generate a [VersionMap] with a single actor given generators for the actor and version. */
 class SingleActorVersionMapGenerator(
   val actor: Generator<String>,
@@ -189,6 +161,37 @@ class RawEntityGenerator(
       creationTimestamp = creationTimestamp(),
       expirationTimestamp = expirationTimestamp()
     )
+  }
+}
+
+/**
+ * Generate a [RawEntity] that matches a given [Schema]. Because [Schema]s can reference or inline
+ * sub-[Schema]s, and these are not contained in the data structure but instead referenced by
+ * hash, a [SchemaWithReferencedSchemas] is required that lists both the [Schema] to match
+ * the [RawEntity] to, and all other referenced [Schema]s, indexed by hash.
+ *
+ * Requires a source of [id] values, collection sizes, [creationTimestamp] and
+ * [expirationTimestamp], and a [Transformer] to generate [Referencable] values from
+ * [FieldType]s (noting that [FieldType] is represented by [FieldTypeWithReferencedSchemas] for the
+ * same reason as above).
+ */
+class RawEntityFromSchema(
+  val id: Generator<String>,
+  val referencable: Transformer<FieldTypeWithReferencedSchemas, Referencable>,
+  val collectionSize: Generator<Int>,
+  val creationTimestamp: Generator<Long>,
+  val expirationTimestamp: Generator<Long>
+) : Transformer<SchemaWithReferencedSchemas, RawEntity>() {
+  override fun invoke(i: SchemaWithReferencedSchemas): RawEntity {
+    val singletons = i.schema.fields.singletons.mapValues {
+      referencable(FieldTypeWithReferencedSchemas(it.value, i.schemas))
+    }
+    val collections = i.schema.fields.collections.mapValues {
+      (1..collectionSize()).map { idx ->
+        referencable(FieldTypeWithReferencedSchemas(it.value, i.schemas))
+      }.toSet()
+    }
+    return RawEntity(id(), singletons, collections, creationTimestamp(), expirationTimestamp())
   }
 }
 

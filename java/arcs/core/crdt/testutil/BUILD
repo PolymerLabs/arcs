@@ -16,6 +16,7 @@ arcs_kt_library(
     deps = [
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
+        "//java/arcs/core/data:data-kt",
         "//java/arcs/core/data:rawentity",
         "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/testutil:generators",

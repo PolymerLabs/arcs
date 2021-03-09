@@ -21,6 +21,7 @@ arcs_kt_library(
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
         "//java/arcs/core/host/testutil:generators",
+        "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/testutil",
         "//java/arcs/core/type",
