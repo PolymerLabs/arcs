@@ -1,0 +1,62 @@
+// Copyright 2021 Google LLC.
+//
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+//
+// Code distributed by Google as part of this project is also subject to an additional IP rights
+// grant found at
+// http://polymer.github.io/PATENTS.txt
+
+meta
+  namespace: arcs.android.integration.policy
+
+schema Thing
+  a: Text
+  b: Text
+  c: Text
+  d: Text
+
+@ingress
+particle IngressThing in '.IngressThing'
+   input: writes [Thing {a, b, c, d}]
+
+@egress('GeneralEgress')
+particle EgressAB in '.EgressAB'
+  output: reads [Thing {a, b}]
+
+
+/// Scenario: A policy-compliant recipe with @persistent handles egresses data
+/// and stores ingress-restricted values to disk that is never deleted
+
+@egressType('GeneralEgress')
+policy SimplePersistencePolicy {
+  @allowedRetention(medium: 'Disk', encryption: false)
+  from Thing access {
+    b,
+    @allowedUsage(label: 'raw', usageType: '*')
+    c
+  }
+}
+
+// Given a recipe is compliant with a policy
+@policy('SimplePersistencePolicy')
+recipe PersistsEgresses
+  // And the recipe's store is marked @persistent
+  handle1: create @persistent
+
+  // And the recipe ingresses a schema Thing {a, b, c, d}
+  IngressThing
+    input: handle1
+
+  // And the recipe egresses Thing {a, b}
+  EgressAB
+    output: handle1
+
+  // When the Arc is run
+  // Then data with the schema / fields Thing {a, b} will be stored to disk
+  // And this data will be egressed
+  // And no data with fields Thing {c, d} will be written anywhere
+  // And data with fields Thing {a, b} will be persisted after the arc is finished
+  // And data with fields Thing {a, b} will be persisted after the Arcs’ runtime ends.
+
+
