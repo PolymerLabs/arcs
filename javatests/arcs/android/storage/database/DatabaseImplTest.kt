@@ -1103,6 +1103,359 @@ class DatabaseImplTest {
     )
   }
 
+  @Test
+  fun applyOp_clearCollection() = runBlockingTest {
+    val schema = newSchema("hash")
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val reference1 = RawReference("ref1", backingKey, VersionMap())
+    val reference2 = RawReference("ref2", backingKey, VersionMap())
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference1, schema))
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference2, schema))
+
+    database.applyOp(collectionKey, DatabaseOp.ClearCollection(schema))
+
+    val expectedCollection = DatabaseData.Collection(
+      values = setOf(),
+      schema = schema,
+      databaseVersion = 2,
+      versionMap = VersionMap(DATABASE_CRDT_ACTOR to 2)
+    )
+    assertThat(database.getCollection(collectionKey, schema)).isEqualTo(expectedCollection)
+  }
+
+  @Test
+  fun applyOp_clearCollection_alreadyEmpty() = runBlockingTest {
+    val schema = newSchema("hash")
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val emptyCollection = dbCollection(backingKey, schema)
+    database.insertOrUpdate(collectionKey, emptyCollection)
+
+    database.applyOp(collectionKey, DatabaseOp.ClearCollection(schema))
+
+    assertThat(database.getCollection(collectionKey, schema)).isEqualTo(emptyCollection)
+  }
+
+  @Test
+  fun applyOp_clearCollection_collectionDoesNotExist() = runBlockingTest {
+    val schema = newSchema("hash")
+    val collectionKey = DummyStorageKey("collection")
+
+    database.applyOp(collectionKey, DatabaseOp.ClearCollection(schema))
+
+    assertThat(database.getCollection(collectionKey, schema)).isNull()
+  }
+
+  @Test
+  fun applyOp_clearCollection_doesNotChangeOtherCollections() = runBlockingTest {
+    val schema = newSchema("hash")
+    val collection1Key = DummyStorageKey("collection1")
+    val collection2Key = DummyStorageKey("collection2")
+    val backingKey = DummyStorageKey("backing")
+    val reference1 = RawReference("ref1", backingKey, VersionMap())
+    val reference2 = RawReference("ref2", backingKey, VersionMap())
+    database.applyOp(collection1Key, DatabaseOp.AddToCollection(reference1, schema))
+    database.applyOp(collection2Key, DatabaseOp.AddToCollection(reference2, schema))
+
+    database.applyOp(collection1Key, DatabaseOp.ClearCollection(schema))
+
+    val expectedCollection1 = DatabaseData.Collection(
+      values = setOf(),
+      schema = schema,
+      databaseVersion = 1,
+      versionMap = VersionMap(DATABASE_CRDT_ACTOR to 1)
+    )
+    val expectedCollection2 = DatabaseData.Collection(
+      values = setOf(ReferenceWithVersion(reference2, VersionMap(DATABASE_CRDT_ACTOR to 1))),
+      schema = schema,
+      databaseVersion = 1,
+      versionMap = VersionMap(DATABASE_CRDT_ACTOR to 1)
+    )
+    assertThat(database.getCollection(collection1Key, schema)).isEqualTo(expectedCollection1)
+    assertThat(database.getCollection(collection2Key, schema)).isEqualTo(expectedCollection2)
+  }
+
+  @Test
+  fun applyOp_clearCollection_afterInsertOrUpdate() = runBlockingTest {
+    val schema = newSchema("hash")
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val reference1 = RawReference("ref1", backingKey, VersionMap())
+    val startCollection = DatabaseData.Collection(
+      values = setOf(ReferenceWithVersion(reference1, VersionMap("a1" to 1))),
+      schema = schema,
+      databaseVersion = 5,
+      versionMap = VersionMap("a2" to 2)
+    )
+
+    database.insertOrUpdate(collectionKey, startCollection)
+    database.applyOp(collectionKey, DatabaseOp.ClearCollection(schema))
+
+    val expectedCollection = DatabaseData.Collection(
+      values = emptySet(),
+      schema = schema,
+      databaseVersion = 5,
+      versionMap = VersionMap("a2" to 2)
+    )
+    assertThat(database.getCollection(collectionKey, schema)).isEqualTo(
+      expectedCollection
+    )
+  }
+
+  @Test
+  fun applyOp_clearCollection_alsoClearsEntities() = runBlockingTest {
+    val schema = newSchema(
+      "hash",
+      SchemaFields(singletons = mapOf("text" to FieldType.Text), collections = mapOf())
+    )
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val entity1Key = DummyStorageKey("backing/entity1")
+    val entity2Key = DummyStorageKey("backing/entity2")
+    val reference1 = RawReference("entity1", backingKey, VersionMap())
+    val reference2 = RawReference("entity2", backingKey, VersionMap())
+    val entity1 = RawEntity(
+      "entity1",
+      mapOf("text" to "abc".toReferencable()),
+      mapOf()
+    ).toDatabaseData(schema)
+    val entity2 = RawEntity(
+      "entity2",
+      mapOf("text" to "ddd".toReferencable()),
+      mapOf()
+    ).toDatabaseData(schema)
+    database.insertOrUpdate(entity1Key, entity1)
+    database.insertOrUpdate(entity2Key, entity2)
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference1, schema))
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference2, schema))
+
+    database.applyOp(collectionKey, DatabaseOp.ClearCollection(schema))
+
+    val expectedCollection = DatabaseData.Collection(
+      values = setOf(),
+      schema = schema,
+      databaseVersion = 2,
+      versionMap = VersionMap(DATABASE_CRDT_ACTOR to 2)
+    )
+    assertThat(database.getCollection(collectionKey, schema)).isEqualTo(expectedCollection)
+    assertThat(database.getEntity(entity1Key, schema)).isEqualTo(entity1.nulled())
+    assertThat(database.getEntity(entity2Key, schema)).isEqualTo(entity2.nulled())
+  }
+
+  @Test
+  fun applyOp_removeFromCollection() = runBlockingTest {
+    val schema = newSchema("hash")
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val reference1 = RawReference("ref1", backingKey, VersionMap())
+    val reference2 = RawReference("ref2", backingKey, VersionMap())
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference1, schema))
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference2, schema))
+
+    database.applyOp(collectionKey, DatabaseOp.RemoveFromCollection("ref1", schema))
+
+    val expectedCollection = DatabaseData.Collection(
+      values = setOf(
+        ReferenceWithVersion(reference2, VersionMap(DATABASE_CRDT_ACTOR to 2))
+      ),
+      schema = schema,
+      databaseVersion = 2,
+      versionMap = VersionMap(DATABASE_CRDT_ACTOR to 2)
+    )
+    assertThat(database.getCollection(collectionKey, schema)).isEqualTo(expectedCollection)
+  }
+
+  @Test
+  fun applyOp_removeFromCollection_onlyElement() = runBlockingTest {
+    val schema = newSchema("hash")
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val reference1 = RawReference("ref1", backingKey, VersionMap())
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference1, schema))
+
+    database.applyOp(collectionKey, DatabaseOp.RemoveFromCollection("ref1", schema))
+
+    val expectedCollection = DatabaseData.Collection(
+      values = setOf(),
+      schema = schema,
+      databaseVersion = 1,
+      versionMap = VersionMap(DATABASE_CRDT_ACTOR to 1)
+    )
+    assertThat(database.getCollection(collectionKey, schema)).isEqualTo(expectedCollection)
+  }
+
+  @Test
+  fun applyOp_removeFromCollection_twiceSameElement() = runBlockingTest {
+    val schema = newSchema("hash")
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val reference1 = RawReference("ref1", backingKey, VersionMap())
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference1, schema))
+
+    database.applyOp(collectionKey, DatabaseOp.RemoveFromCollection("ref1", schema))
+    database.applyOp(collectionKey, DatabaseOp.RemoveFromCollection("ref1", schema))
+
+    val expectedCollection = DatabaseData.Collection(
+      values = setOf(),
+      schema = schema,
+      databaseVersion = 1,
+      versionMap = VersionMap(DATABASE_CRDT_ACTOR to 1)
+    )
+    assertThat(database.getCollection(collectionKey, schema)).isEqualTo(expectedCollection)
+  }
+
+  @Test
+  fun applyOp_removeFromCollection_elementNotContained() = runBlockingTest {
+    val schema = newSchema("hash")
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val reference1 = RawReference("ref1", backingKey, VersionMap())
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference1, schema))
+
+    database.applyOp(collectionKey, DatabaseOp.RemoveFromCollection("different-ref", schema))
+
+    val expectedCollection = DatabaseData.Collection(
+      values = setOf(
+        ReferenceWithVersion(reference1, VersionMap(DATABASE_CRDT_ACTOR to 1))
+      ),
+      schema = schema,
+      databaseVersion = 1,
+      versionMap = VersionMap(DATABASE_CRDT_ACTOR to 1)
+    )
+    assertThat(database.getCollection(collectionKey, schema)).isEqualTo(expectedCollection)
+  }
+
+  @Test
+  fun applyOp_removeFromCollection_emptyCollection() = runBlockingTest {
+    val schema = newSchema("hash")
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val emptyCollection = dbCollection(backingKey, schema)
+    database.insertOrUpdate(collectionKey, emptyCollection)
+
+    database.applyOp(collectionKey, DatabaseOp.RemoveFromCollection("ref1", schema))
+
+    assertThat(database.getCollection(collectionKey, schema)).isEqualTo(emptyCollection)
+  }
+
+  @Test
+  fun applyOp_removeFromCollection_collectionDoesNotExist() = runBlockingTest {
+    val schema = newSchema("hash")
+    val collectionKey = DummyStorageKey("collection")
+
+    database.applyOp(collectionKey, DatabaseOp.RemoveFromCollection("ref1", schema))
+
+    assertThat(database.getCollection(collectionKey, schema)).isNull()
+  }
+
+  @Test
+  fun applyOp_removeFromCollection_afterInsertOrUpdate() = runBlockingTest {
+    val schema = newSchema("hash")
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val reference1 = RawReference("ref1", backingKey, VersionMap())
+    val reference2 = RawReference("ref2", backingKey, VersionMap())
+    val startCollection = DatabaseData.Collection(
+      values = setOf(
+        ReferenceWithVersion(reference1, VersionMap("a1" to 1)),
+        ReferenceWithVersion(reference2, VersionMap("a1" to 2))
+      ),
+      schema = schema,
+      databaseVersion = 5,
+      versionMap = VersionMap("a2" to 2)
+    )
+
+    database.insertOrUpdate(collectionKey, startCollection)
+    database.applyOp(collectionKey, DatabaseOp.RemoveFromCollection("ref1", schema))
+
+    val expectedCollection = DatabaseData.Collection(
+      values = setOf(ReferenceWithVersion(reference2, VersionMap("a1" to 2))),
+      schema = schema,
+      databaseVersion = 5,
+      versionMap = VersionMap("a2" to 2)
+    )
+    assertThat(database.getCollection(collectionKey, schema)).isEqualTo(
+      expectedCollection
+    )
+  }
+
+  @Test
+  fun applyOp_removeFromCollection_alsoClearsEntities() = runBlockingTest {
+    val schema = newSchema(
+      "hash",
+      SchemaFields(singletons = mapOf("text" to FieldType.Text), collections = mapOf())
+    )
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val entity1Key = DummyStorageKey("backing/entity1")
+    val entity2Key = DummyStorageKey("backing/entity2")
+    val reference1 = RawReference("entity1", backingKey, VersionMap())
+    val reference2 = RawReference("entity2", backingKey, VersionMap())
+    val entity1 = RawEntity(
+      "entity1",
+      mapOf("text" to "abc".toReferencable()),
+      mapOf()
+    ).toDatabaseData(schema)
+    val entity2 = RawEntity(
+      "entity2",
+      mapOf("text" to "ddd".toReferencable()),
+      mapOf()
+    ).toDatabaseData(schema)
+    database.insertOrUpdate(entity1Key, entity1)
+    database.insertOrUpdate(entity2Key, entity2)
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference1, schema))
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference2, schema))
+
+    database.applyOp(collectionKey, DatabaseOp.RemoveFromCollection("entity1", schema))
+
+    val expectedCollection = DatabaseData.Collection(
+      values = setOf(
+        ReferenceWithVersion(reference2, VersionMap(DATABASE_CRDT_ACTOR to 2))
+      ),
+      schema = schema,
+      databaseVersion = 2,
+      versionMap = VersionMap(DATABASE_CRDT_ACTOR to 2)
+    )
+    assertThat(database.getCollection(collectionKey, schema)).isEqualTo(expectedCollection)
+    assertThat(database.getEntity(entity1Key, schema)).isEqualTo(entity1.nulled())
+    assertThat(database.getEntity(entity2Key, schema)).isEqualTo(entity2)
+  }
+
+  @Test
+  fun applyOp_removeFromCollection_notifiesWhenClears() = runBlockingTest {
+    val schema = newSchema(
+      "hash",
+      SchemaFields(singletons = mapOf("text" to FieldType.Text), collections = mapOf())
+    )
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val entity1Key = DummyStorageKey("backing/entity1")
+    val reference1 = RawReference("entity1", backingKey, VersionMap())
+    val entity1 = RawEntity(
+      "entity1",
+      mapOf("text" to "abc".toReferencable()),
+      mapOf()
+    ).toDatabaseData(schema)
+    database.insertOrUpdate(entity1Key, entity1)
+    database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference1, schema))
+    // Add clients to verify updates.
+    val collectionClient = FakeDatabaseClient(collectionKey).also { database.addClient(it) }
+    val entityClient = FakeDatabaseClient(entity1Key).also { database.addClient(it) }
+    val clientId = 22
+
+    database.applyOp(collectionKey, DatabaseOp.RemoveFromCollection("entity1", schema), clientId)
+
+    collectionClient.eventMutex.withLock {
+      assertThat(collectionClient.updates).hasSize(1)
+      assertThat(collectionClient.updates.single().originatingClientId).isEqualTo(clientId)
+    }
+    entityClient.eventMutex.withLock {
+      assertThat(entityClient.deletes).containsExactly(clientId)
+    }
+  }
+
+  @Test
   fun insertAndGet_collection_newEmptyCollection() = runBlockingTest {
     val key = DummyStorageKey("key")
     val schema = newSchema("hash")

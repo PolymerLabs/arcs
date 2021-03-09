@@ -606,14 +606,104 @@ class DatabaseImpl(
     )
   }
 
+  /**
+   * Clears the collection at [storageKey], calls [clearEntities] for any entity that was in the
+   * collection. If the collection does not exist or is empty, this is a no-op.
+   */
+  private suspend fun clearCollection(storageKey: StorageKey, clientId: Int?) {
+    if (!BuildFlags.WRITE_ONLY_STORAGE_STACK) {
+      throw BuildFlagDisabledError("WRITE_ONLY_STORAGE_STACK")
+    }
+    writableDatabase.transaction {
+      // Load collection id. If the collection cannot be found, return.
+      val collectionId =
+        getCollectionMetadata(storageKey, DataType.Collection, this)?.collectionId?.toString()
+          ?: return
+
+      // Clear all entities contained in the collection. It is important to do this before we clear
+      // the collection entries themselves.
+      clearEntities(
+        """
+        SELECT storage_keys.id, storage_keys.storage_key
+        FROM collection_entries
+        LEFT JOIN entity_refs ON entity_refs.id = collection_entries.value_id
+        INNER JOIN storage_keys ON storage_keys.storage_key = entity_refs.entity_storage_key
+        WHERE collection_entries.collection_id = ?
+        """,
+        args = arrayOf(collectionId),
+        clientId = clientId
+      )
+
+      // Clear the collection entries.
+      delete(
+        TABLE_COLLECTION_ENTRIES,
+        "collection_id = ?",
+        arrayOf(collectionId)
+      )
+    }
+  }
+
+  /**
+   * Removes any element with the given id from the collection at [storageKey], and calls
+   * [clearEntities] for the entity. If the collection does not exist or does not contain that id,
+   * this is a no-op.
+   */
+  private suspend fun removeFromCollection(storageKey: StorageKey, id: String, clientId: Int?) {
+    if (!BuildFlags.WRITE_ONLY_STORAGE_STACK) {
+      throw BuildFlagDisabledError("WRITE_ONLY_STORAGE_STACK")
+    }
+    writableDatabase.transaction {
+      // Load collection id. If the collection cannot be found, return.
+      val collectionId =
+        getCollectionMetadata(storageKey, DataType.Collection, this)?.collectionId?.toString()
+          ?: return
+      // Extract the id and entity_storage_key of the reference.
+      val references = rawQuery(
+        """
+        SELECT entity_refs.id, entity_refs.entity_storage_key
+        FROM collection_entries
+        LEFT JOIN entity_refs ON entity_refs.id = collection_entries.value_id
+        WHERE collection_entries.collection_id = ?
+        AND entity_refs.entity_id = ?
+        """.trimIndent(),
+        arrayOf(collectionId, id)
+      ).map { it.getLong(0) to it.getString(1) }
+      if (references.isEmpty()) {
+        // Item not in the collection, return.
+        return@transaction
+      }
+      check(references.size == 1) { "Duplicate reference $id in collection." }
+      val (referenceId, entityStorageKey) = references.single()
+      // Clear the entity.
+      clearEntities(
+        """
+        SELECT id, storage_key
+        FROM storage_keys
+        WHERE storage_key = ?
+        """.trimIndent(),
+        args = arrayOf(entityStorageKey),
+        clientId = clientId
+      )
+      // Clear the collection entry.
+      delete(
+        TABLE_COLLECTION_ENTRIES,
+        "collection_id = ? AND value_id = ?",
+        arrayOf(collectionId, referenceId.toString())
+      )
+    }
+  }
+
   override suspend fun applyOp(storageKey: StorageKey, op: DatabaseOp, originatingClientId: Int?) {
     if (!BuildFlags.WRITE_ONLY_STORAGE_STACK) {
       throw BuildFlagDisabledError("WRITE_ONLY_STORAGE_STACK")
     }
     stats.insertUpdate.timeSuspending { counters ->
-      // Use an assignemnt to make the when-expression required to be exhaustive.
+      // Use an assignment to make the when-expression required to be exhaustive.
       val unused = when (op) {
         is DatabaseOp.AddToCollection -> addToCollection(storageKey, op, counters)
+        is DatabaseOp.RemoveFromCollection ->
+          removeFromCollection(storageKey, op.id, originatingClientId)
+        is DatabaseOp.ClearCollection -> clearCollection(storageKey, originatingClientId)
       }
       notifyClients(storageKey) {
         // If there is anyone listening, notify of the new data.
@@ -1367,7 +1457,8 @@ class DatabaseImpl(
   private suspend fun clearEntities(
     query: String,
     entitiesAreTopLevel: Boolean = true,
-    args: Array<String> = arrayOf()
+    args: Array<String> = arrayOf(),
+    clientId: Int? = null
   ): Int {
     return writableDatabase.transaction {
       val db = this
@@ -1502,7 +1593,7 @@ class DatabaseImpl(
 
         (storageKeys union updatedContainersStorageKeys).map { storageKey ->
           notifyClients(storageKeyManager.parse(storageKey)) {
-            it.onDatabaseDelete(null)
+            it.onDatabaseDelete(clientId)
           }
         }
       }
