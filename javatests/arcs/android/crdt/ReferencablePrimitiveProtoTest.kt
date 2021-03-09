@@ -59,6 +59,40 @@ class ReferencablePrimitiveProtoTest {
   }
 
   @Test
+  fun parcelableRoundTrip_works_forNewlineChars() {
+    val primitive = '\n'.toReferencable()
+
+    val marshalled = with(Parcel.obtain()) {
+      writeProto(primitive.toProto())
+      marshall()
+    }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readReferencablePrimitive()
+    }
+
+    assertThat(unmarshalled).isEqualTo(primitive)
+  }
+
+  @Test
+  fun parcelableRoundTrip_works_forCarriageReturnChars() {
+    val primitive = '\r'.toReferencable()
+
+    val marshalled = with(Parcel.obtain()) {
+      writeProto(primitive.toProto())
+      marshall()
+    }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readReferencablePrimitive()
+    }
+
+    assertThat(unmarshalled).isEqualTo(primitive)
+  }
+
+  @Test
   fun parcelableRoundTrip_works_forShorts() {
     val primitive = 1337.toShort().toReferencable()
 
@@ -146,6 +180,23 @@ class ReferencablePrimitiveProtoTest {
   @Test
   fun parcelableRoundTrip_works_forStrings() {
     val primitive = "This is a test".toReferencable()
+
+    val marshalled = with(Parcel.obtain()) {
+      writeProto(primitive.toProto())
+      marshall()
+    }
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readReferencablePrimitive()
+    }
+
+    assertThat(unmarshalled).isEqualTo(primitive)
+  }
+
+  @Test
+  fun parcelableRoundTrip_works_forStrings_withParenthesis() {
+    val primitive = "This) ((is) a((()())( test(".toReferencable()
 
     val marshalled = with(Parcel.obtain()) {
       writeProto(primitive.toProto())
