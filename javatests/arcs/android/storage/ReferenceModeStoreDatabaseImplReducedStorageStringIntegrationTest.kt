@@ -11,7 +11,6 @@
 
 package arcs.android.storage
 
-import androidx.test.core.app.ApplicationProvider
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtSet
@@ -26,8 +25,10 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.ReferenceModeStoreTestBase
+import arcs.core.util.RandomBuilder
 import arcs.flags.testing.BuildFlagsRule
 import arcs.flags.testing.ParameterizedBuildFlags
+import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
@@ -35,11 +36,17 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
+import kotlin.random.Random
 
+/**
+ * Implementation of [ReferenceModeStoreTestBase] that mirrors
+ * [ReferenceModeStoreDatabaseImplIntegrationTest] but uses a stubbed version of [Random] to test
+ * edge cases.
+ */
 @Suppress("UNCHECKED_CAST")
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(ParameterizedRobolectricTestRunner::class)
-class ReferenceModeStoreDatabaseImplIntegrationTest(
+class ReferenceModeStoreDatabaseImplReducedStorageStringIntegrationTest(
   private val parameters: ParameterizedBuildFlags
 ) : ReferenceModeStoreTestBase() {
 
@@ -58,6 +65,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest(
 
   override lateinit var driverFactory: DriverFactory
   private lateinit var databaseFactory: AndroidSqliteDatabaseManager
+  private lateinit var oldRandomBuilder: (Long?) -> Random
 
   @Before
   override fun setUp() = runBlockingTest {
@@ -66,11 +74,18 @@ class ReferenceModeStoreDatabaseImplIntegrationTest(
     databaseFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
     DatabaseDriverProvider.configure(databaseFactory, SchemaRegistry::getSchema)
     driverFactory = FixedDriverFactory(DatabaseDriverProvider)
+
+    val knownRandom = { MyRandom() }
+
+    // Set the global random builder.
+    oldRandomBuilder = RandomBuilder
+    RandomBuilder = { knownRandom() }
   }
 
   @After
   fun tearDown() = runBlockingTest {
     databaseFactory.resetAll()
+    RandomBuilder = oldRandomBuilder
   }
 
   override suspend fun sendToReceiver(
@@ -81,5 +96,23 @@ class ReferenceModeStoreDatabaseImplIntegrationTest(
     val databaseDriver = driver as DatabaseDriver<CrdtSet.Data<RawReference>>
     val receiver = requireNotNull(databaseDriver.receiver) { "Driver receiver is missing." }
     receiver(data, version)
+  }
+
+  // Class that wraps around Random with a seed of 0. This class will return a specific array
+  // the first time nextBytes(8) is called which allows us to test edge cases.
+  class MyRandom() : Random() {
+    private val r = Random(0)
+    private var nextBytesCalled = false
+    override fun nextBits(bitCount: Int): Int {
+      return r.nextBits(bitCount)
+    }
+
+    override fun nextBytes(size: Int): ByteArray {
+      if (!nextBytesCalled && size == 8) {
+        nextBytesCalled = true
+        return byteArrayOf(-128, 0, 3, 4, 5, 6, 7, 127)
+      }
+      return r.nextBytes(size)
+    }
   }
 }

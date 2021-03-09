@@ -21,20 +21,33 @@ import arcs.core.storage.testutil.FakeDriver
 import arcs.core.storage.testutil.FakeDriverVendor
 import arcs.core.storage.testutil.ReferenceModeStoreTestBase
 import arcs.core.storage.testutil.getStoredDataForTesting
+import arcs.flags.testing.BuildFlagsRule
+import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Ignore
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.runners.Parameterized
 
 /** Tests for the [ReferenceModeStore]. */
 @Suppress("UNCHECKED_CAST")
-@RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
+@RunWith(Parameterized::class)
+class ReferenceModeStoreTest(
+  private val parameters: ParameterizedBuildFlags
+) : ReferenceModeStoreTestBase() {
+
+  @get:Rule val rule = BuildFlagsRule.parameterized(parameters)
+
+  companion object {
+    @get:JvmStatic
+    @get:Parameterized.Parameters(name = "{0}")
+    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_STRING_REDUCTION")
+  }
 
   override val TEST_KEY = ReferenceModeStorageKey(
     MockHierarchicalStorageKey(),

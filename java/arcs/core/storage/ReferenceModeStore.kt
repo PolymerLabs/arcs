@@ -48,6 +48,7 @@ import arcs.core.util.TaggedLog
 import arcs.core.util.Time
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
+import arcs.flags.BuildFlags
 import kotlin.properties.Delegates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -141,7 +142,11 @@ class ReferenceModeStore private constructor(
    * needs to synthesize updates. This key is used as the unique write key and
    * [arcs.core.crdt.internal.Actor] for those updates.
    */
-  /* internal */ val crdtKey = Random.nextSafeRandomLong().toString()
+  /* internal */ val crdtKey = if (!BuildFlags.STORAGE_STRING_REDUCTION) {
+    Random.nextSafeRandomLong().toString()
+  } else {
+    String(Random.nextBytes(8))
+  }
 
   /**
    * The [versions] map transitively tracks the maximum write version for each contained entity's
