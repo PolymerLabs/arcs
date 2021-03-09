@@ -24,6 +24,7 @@ import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.doReturn
@@ -80,6 +81,17 @@ class DatabaseDriverProviderTest {
   }
 
   @Test
+  fun willSupport_returnsTrue_whenReferenceModeKey_andSchemaFound() = runBlockingTest {
+    schemaHashLookup["1234a"] = DUMMY_SCHEMA
+
+    val key = ReferenceModeStorageKey(
+      DatabaseStorageKey.Persistent("foo", "1234a"),
+      DatabaseStorageKey.Persistent("bar", "1234a")
+    )
+    assertThat(provider.willSupport(key)).isTrue()
+  }
+
+  @Test
   fun willSupport_returnsFalse_whenNotDatabaseKey() = runBlockingTest {
     val ramdisk = RamDiskStorageKey("foo")
     val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
@@ -97,6 +109,56 @@ class DatabaseDriverProviderTest {
   fun willSupport_returnsFalse_whenSchemaNotFound() = runBlockingTest {
     val key = DatabaseStorageKey.Persistent("foo", "1234a")
     assertThat(provider.willSupport(key)).isFalse()
+  }
+
+  @Test
+  fun willSupport_returnsFalse_whenReferenceModeKeyNoDb() = runBlockingTest {
+    val key = ReferenceModeStorageKey(
+      RamDiskStorageKey("foo"),
+      RamDiskStorageKey("bar")
+    )
+    assertThat(provider.willSupport(key)).isFalse()
+  }
+
+  @Test
+  fun willSupport_returnsFalse_whenSchemaNotFound_RefMode() = runBlockingTest {
+    val key = ReferenceModeStorageKey(
+      DatabaseStorageKey.Persistent("foo", "1234a"),
+      DatabaseStorageKey.Persistent("bar", "1234a")
+    )
+    assertThat(provider.willSupport(key)).isFalse()
+  }
+
+  @Test
+  fun willSupport_throwsException_refMode_differentDbNames() = runBlockingTest {
+    val key = ReferenceModeStorageKey(
+      DatabaseStorageKey.Persistent("foo", "1234a", "dbA"),
+      DatabaseStorageKey.Persistent("bar", "1234a", "dbB")
+    )
+    assertFailsWith<IllegalStateException> {
+      provider.willSupport(key)
+    }.also {
+      assertThat(it).hasMessageThat()
+        .isEqualTo(
+          "Database can support ReferenceModeStorageKey only with a single dbName."
+        )
+    }
+  }
+
+  @Test
+  fun willSupport_throwsException_refMode_differentSchemas() = runBlockingTest {
+    val key = ReferenceModeStorageKey(
+      DatabaseStorageKey.Persistent("foo", "1234a"),
+      DatabaseStorageKey.Persistent("bar", "1234b")
+    )
+    assertFailsWith<IllegalStateException> {
+      provider.willSupport(key)
+    }.also {
+      assertThat(it).hasMessageThat()
+        .isEqualTo(
+          "Database can support ReferenceModeStorageKey only with a single entitySchemaHash."
+        )
+    }
   }
 
   @Test
@@ -145,6 +207,27 @@ class DatabaseDriverProviderTest {
   @Test
   fun getDriver() = runBlockingTest {
     val key = DatabaseStorageKey.Persistent("foo", "1234a")
+    schemaHashLookup["1234a"] = DUMMY_SCHEMA
+
+    val entityDriver = provider.getDriver(key, CrdtEntity.Data::class)
+    assertThat(entityDriver).isInstanceOf(DatabaseDriver::class.java)
+    assertThat(entityDriver.storageKey).isEqualTo(key)
+
+    val setDriver = provider.getDriver(key, CrdtSet.DataImpl::class)
+    assertThat(setDriver).isInstanceOf(DatabaseDriver::class.java)
+    assertThat(setDriver.storageKey).isEqualTo(key)
+
+    val singletonDriver = provider.getDriver(key, CrdtSingleton.DataImpl::class)
+    assertThat(singletonDriver).isInstanceOf(DatabaseDriver::class.java)
+    assertThat(singletonDriver.storageKey).isEqualTo(key)
+  }
+
+  @Test
+  fun getDriver_referenceModeKey() = runBlockingTest {
+    val key = ReferenceModeStorageKey(
+      DatabaseStorageKey.Persistent("foo", "1234a"),
+      DatabaseStorageKey.Persistent("bar", "1234a")
+    )
     schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
     val entityDriver = provider.getDriver(key, CrdtEntity.Data::class)

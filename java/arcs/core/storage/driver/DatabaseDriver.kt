@@ -23,11 +23,12 @@ import arcs.core.data.Schema
 import arcs.core.data.util.ReferencableList
 import arcs.core.storage.Driver
 import arcs.core.storage.RawReference
+import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
-import arcs.core.storage.keys.DatabaseStorageKey
+import arcs.core.storage.driver.DatabaseDriverProvider.getDatabaseInfo
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
 import kotlin.reflect.KClass
@@ -35,7 +36,7 @@ import kotlin.reflect.KClass
 /** [Driver] implementation capable of managing data stored in a SQL database. */
 @Suppress("RemoveExplicitTypeArguments")
 class DatabaseDriver<Data : Any>(
-  override val storageKey: DatabaseStorageKey,
+  override val storageKey: StorageKey,
   override val dataClass: KClass<Data>,
   private val schemaLookup: (String) -> Schema?,
   /* internal */
@@ -45,9 +46,13 @@ class DatabaseDriver<Data : Any>(
 
   /* internal */ var clientId: Int = -1
 
+  private val entitySchemaHash = checkNotNull(storageKey.getDatabaseInfo()?.entitySchemaHash) {
+    "StorageKey of type ${storageKey.protocol} not supported by DatabaseDriver."
+  }
+
   private val schema: Schema
-    get() = checkNotNull(schemaLookup(storageKey.entitySchemaHash)) {
-      "Schema not found for hash: ${storageKey.entitySchemaHash}"
+    get() = checkNotNull(schemaLookup(entitySchemaHash)) {
+      "Schema not found for hash: $entitySchemaHash"
     }
 
   // TODO(#5551): Consider including a hash of the toString info in log prefix.

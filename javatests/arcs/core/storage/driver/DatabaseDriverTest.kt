@@ -31,6 +31,8 @@ import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.keys.DatabaseStorageKey
+import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.util.testutil.LogRule
@@ -65,6 +67,25 @@ class DatabaseDriverTest {
     val driver = buildDriver<CrdtEntity.Data>(database)
     assertThat(database.clients[driver.clientId]?.first).isEqualTo(driver.storageKey)
     assertThat(database.clients[driver.clientId]?.second).isSameInstanceAs(driver)
+  }
+
+  @Test
+  fun constructor_refModeKey_addsDriverAsClientOfDatabase() = runBlockingTest {
+    val driver = buildDriver<CrdtEntity.Data>(database, REFMODE_STORAGE_KEY)
+    assertThat(database.clients[driver.clientId]?.first).isEqualTo(driver.storageKey)
+    assertThat(database.clients[driver.clientId]?.second).isSameInstanceAs(driver)
+  }
+
+  @Test
+  fun constructor_unsupportedStorageKey_throws() = runBlockingTest {
+    assertFailsWith<IllegalStateException> {
+      buildDriver<CrdtEntity.Data>(database, RAMDISK_KEY)
+    }.also {
+      assertThat(it).hasMessageThat()
+        .isEqualTo(
+          "StorageKey of type ramdisk not supported by DatabaseDriver."
+        )
+    }
   }
 
   @Test
@@ -413,7 +434,7 @@ class DatabaseDriverTest {
     var dataClass: KClass<Data>,
     var type: Type,
     var database: Database,
-    var storageKey: DatabaseStorageKey = DEFAULT_STORAGE_KEY,
+    var storageKey: StorageKey = DEFAULT_STORAGE_KEY,
     var schemaLookup: (String) -> Schema? = { DEFAULT_SCHEMA }
   ) {
     var schema: Schema?
@@ -431,14 +452,16 @@ class DatabaseDriverTest {
     }
   }
 
-  suspend inline fun <reified Data : Any> buildDriver(
+  private suspend inline fun <reified Data : Any> buildDriver(
     database: Database,
+    storageKey: StorageKey = DEFAULT_STORAGE_KEY,
     crossinline block: DriverBuilder<Data>.() -> Unit = {}
-  ) = buildDriver(database, Data::class) { this.block() }
+  ) = buildDriver(database, Data::class, storageKey) { this.block() }
 
-  suspend fun <Data : Any> buildDriver(
+  private suspend fun <Data : Any> buildDriver(
     database: Database,
     dataClass: KClass<Data>,
+    storageKey: StorageKey,
     block: DriverBuilder<Data>.() -> Unit = {}
   ): DatabaseDriver<Data> {
     val typeTag = when (dataClass) {
@@ -450,7 +473,7 @@ class DatabaseDriverTest {
     val type = object : Type {
       override val tag = typeTag
     }
-    return DriverBuilder(dataClass, type, database).apply(block).build()
+    return DriverBuilder(dataClass, type, database, storageKey).apply(block).build()
   }
 
   companion object {
@@ -459,6 +482,15 @@ class DatabaseDriverTest {
       entitySchemaHash = "a1234",
       dbName = "testdb"
     )
+    private val REFMODE_STORAGE_KEY = ReferenceModeStorageKey(
+      DatabaseStorageKey.Persistent(
+        unique = "backing",
+        entitySchemaHash = "a1234",
+        dbName = "testdb"
+      ),
+      DEFAULT_STORAGE_KEY
+    )
+    private val RAMDISK_KEY = RamDiskStorageKey("foo")
     private val DEFAULT_SCHEMA = Schema(
       setOf(SchemaName("foo")),
       SchemaFields(
