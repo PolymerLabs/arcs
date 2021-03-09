@@ -1,5 +1,6 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_android_library",
     "arcs_kt_android_test_suite",
 )
 
@@ -12,13 +13,19 @@ arcs_kt_android_test_suite(
     size = "medium",
     srcs = glob(
         ["*.kt"],
-        exclude = ["DatabaseImplTest.kt"],
+        exclude = [
+            "DatabaseImplTest.kt",
+            "DatabaseImplInvariants.kt",
+        ],
     ),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.android.storage.database",
     deps = [
+        ":test-util",
         "//java/arcs/android/common",  # buildcleaner: keep
         "//java/arcs/android/storage/database",
+        "//java/arcs/android/storage/database/testutil:generators",
+        "//java/arcs/android/util/testutil",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
@@ -39,6 +46,8 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/util",
         "//java/arcs/core/util:utils-platform-dependencies",
         "//java/arcs/core/util/testutil",
+        "//java/arcs/flags:build_flags",
+        "//java/arcs/flags/testing",
         "//java/arcs/jvm/util/testutil",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
@@ -91,5 +100,21 @@ arcs_kt_android_test_suite(
         "//third_party/kotlin/kotlin:kotlin_test",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
+    ],
+)
+
+arcs_kt_android_library(
+    name = "test-util",
+    testonly = 1,
+    srcs = [
+        "DatabaseImplInvariants.kt",
+    ],
+    deps = [
+        "//java/arcs/android/storage/database",
+        "//java/arcs/core/storage:reference",
+        "//java/arcs/core/storage:storage_key",
+        "//java/arcs/core/storage/database",
+        "//java/arcs/core/testutil",
+        "//third_party/java/truth:truth-android",
     ],
 )
