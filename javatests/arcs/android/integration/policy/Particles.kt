@@ -10,18 +10,13 @@
  */
 package arcs.android.integration.policy
 
-/** Egresses Thing{ a, b }. */
-class EgressAB : AbstractEgressAB() {
-  val outputForTest = mutableListOf<Thing>()
-  override fun onFirstStart() {
-    handles.output.onUpdate { outputForTest.addAll(it.added) }
-  }
-}
+import kotlinx.coroutines.Job
 
 /** Ingresses Things. */
 class IngressThing : AbstractIngressThing() {
+  lateinit var storeFinished: Job
   override fun onFirstStart() {
-    handles.input.storeAll(listOf(
+    storeFinished = handles.input.storeAll(listOf(
       Thing("Once", "upon", "a", "midnight"),
       Thing("dreary", "while", "I", "pondered"),
       Thing("weak", "and", "weary", "over"),
@@ -29,5 +24,16 @@ class IngressThing : AbstractIngressThing() {
       Thing("curious", "volumes", "of", "forgotten"),
       Thing("lore", "while", "I", "nodded")
     ))
+  }
+}
+
+/** Egresses Thing { a, b }. */
+class EgressAB : AbstractEgressAB() {
+  val handleRegistered = Job()
+  val outputForTest = mutableSetOf<Thing>()
+
+  override fun onReady() {
+    outputForTest.addAll(handles.output.fetchAll())
+    handleRegistered.complete()
   }
 }

@@ -18,7 +18,7 @@ schema Thing
 
 @ingress
 particle IngressThing in '.IngressThing'
-   input: writes [Thing {a, b, c, d}]
+  input: writes [Thing {a, b, c, d}]
 
 @egress('GeneralEgress')
 particle EgressAB in '.EgressAB'
