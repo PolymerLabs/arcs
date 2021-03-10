@@ -479,7 +479,7 @@ export class Arc implements ArcInterface {
       }
 
       if (['copy', 'create'].includes(recipeHandle.fate)) {
-      let type = recipeHandle.type;
+        let type = recipeHandle.type;
         if (recipeHandle.fate === 'create') {
           assert(type.maybeResolve(), `Can't assign resolved type to ${type}`);
         }
@@ -508,7 +508,7 @@ export class Arc implements ArcInterface {
           } else {
             throw new Error(`Can't currently store immediate values in non-singleton stores`);
           }
-        } else if (['copy', 'map'].includes(recipeHandle.fate)) {
+        } else if (recipeHandle.fate === 'copy') {
           const copiedStoreRef = this.context.findStoreById(recipeHandle.id);
           const copiedActiveStore = await this.getActiveStore(copiedStoreRef);
           assert(copiedActiveStore, `Cannot find store ${recipeHandle.id}`);
