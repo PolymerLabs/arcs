@@ -1,6 +1,7 @@
 package arcs.core.storage.testutil
 
 import arcs.core.crdt.CrdtCount
+import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.Driver
 import arcs.core.storage.StorageKey
 import kotlin.reflect.KClass
@@ -19,6 +20,7 @@ class FakeDriver<T : Any>(
   var lastData: T? = null
   var lastVersion: Int? = null
   var closed: Boolean = false
+  val ops = mutableListOf<CrdtOperation>()
 
   override suspend fun registerReceiver(
     token: String?,
@@ -39,6 +41,10 @@ class FakeDriver<T : Any>(
       lastReceiver?.invoke(data, version)
     }
     return response
+  }
+
+  override suspend fun applyOps(ops: List<CrdtOperation>) {
+    this.ops.addAll(ops)
   }
 
   override suspend fun close() {
