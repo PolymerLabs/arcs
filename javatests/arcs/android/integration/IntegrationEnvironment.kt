@@ -300,8 +300,7 @@ class IntegrationEnvironment(
 
   private suspend fun teardownArcs(components: IntegrationArcsComponents) {
     // Stop all the arcs and shut down the arcHost.
-    startedArcs.forEach { it.stop() }
-    hostRegistry.availableArcHosts().forEach { it.shutdown() }
+    stopRuntime()
 
     // Reset the Databases and close them.
     components.dbManager.resetAll()
@@ -311,6 +310,12 @@ class IntegrationEnvironment(
     if (components.scope.coroutineContext[Job] != null) {
       components.scope.cancel()
     }
+  }
+
+  /** Stops components of Arcs Runtime. */
+  suspend fun stopRuntime() {
+    startedArcs.forEach { it.stop() }
+    hostRegistry.availableArcHosts().forEach { it.shutdown() }
   }
 
   private data class IntegrationArcsComponents(

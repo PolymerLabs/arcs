@@ -70,38 +70,47 @@ class PolicyTest {
       .storageKey
 
     // Thing {a, b} is written to storage
-    val states = env.getStorageState(startingKey, AbstractIngressThing.Thing.SCHEMA)
     var callbackExecuted = false
-    states
+    env.getStorageState(startingKey, AbstractIngressThing.Thing.SCHEMA)
       .filterIsInstance<DatabaseData.Entity>()
       .forEach { entity ->
         assertRawEntity_OnlyHasSingletonFields_AB(entity.rawEntity)
         callbackExecuted = true
     }
-
     assertThat(callbackExecuted).isTrue()
 
     env.stopArc(arc)
 
     // Thing {a, b} data persists after the arc is run
-    val postArcStates = env.getStorageState(startingKey, AbstractIngressThing.Thing.SCHEMA)
     callbackExecuted = false
-    postArcStates
+    env.getStorageState(startingKey, AbstractIngressThing.Thing.SCHEMA)
       .filterIsInstance<DatabaseData.Entity>()
       .forEach { entity ->
         assertRawEntity_OnlyHasSingletonFields_AB(entity.rawEntity)
         callbackExecuted = true
       }
-
     assertThat(callbackExecuted).isTrue()
+
+    env.stopRuntime()
+
+    // Thing {a, b} data persists after runtime ends
+    callbackExecuted = false
+    env.getStorageState(startingKey, AbstractIngressThing.Thing.SCHEMA)
+      .filterIsInstance<DatabaseData.Entity>()
+      .forEach { entity ->
+        assertRawEntity_OnlyHasSingletonFields_AB(entity.rawEntity)
+        callbackExecuted = true
+      }
+    assertThat(callbackExecuted).isTrue()
+
   }
 
   companion object {
-    /** Only fields "a" and "b" have data set in the raw entity. */
-    fun assertRawEntity_OnlyHasSingletonFields_AB(entity: RawEntity) {
-      val setEntries = entity.singletons.entries.filter { it.value != null }
+    /** Only singleton fields "a" and "b" have data set in the raw entity. */
+    fun assertRawEntity_OnlyHasSingletonFields_AB(rawEntity: RawEntity) {
+      val setEntries = rawEntity.singletons.entries.filter { it.value != null }
       assertThat(setEntries.map { it.key }.toSet()).isEqualTo(setOf("a", "b"))
-      assertThat(entity.collections).isEmpty()
+      assertThat(rawEntity.collections).isEmpty()
     }
   }
 }
