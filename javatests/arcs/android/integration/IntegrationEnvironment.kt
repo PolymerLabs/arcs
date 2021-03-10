@@ -36,7 +36,6 @@ import arcs.core.storage.StorageProxy
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
@@ -397,9 +396,8 @@ class IntegrationEnvironment(
     return handleManager.createHandleArguments.toList()
   }
 
-  // TODO(alxr): Add a new method to DbImpl and call the method (via cast)
-  // Takes entityStorage key and looks at the fields or values
-  suspend fun getStorageState(handle: Handle, fullSchema: Schema): List<DatabaseData> {
+  /** Get collection of [DatabaseData] for all databases, including referenced entities. */
+  suspend fun getStorageState(startingKey: StorageKey, fullSchema: Schema): List<DatabaseData> {
     val classes = listOf(
       DatabaseData.Collection::class,
       DatabaseData.Singleton::class,
@@ -409,43 +407,36 @@ class IntegrationEnvironment(
     val dbs = dbManager.registry.fetchAll()
       .map { dbManager.getDatabase(it.name, it.isPersistent) as DatabaseImpl }
 
-    val startingKey = (handle.getProxy().storageKey as ReferenceModeStorageKey).storageKey
-
-    val values: List<DatabaseData> = dbs.flatMap { dbImpl ->
-      val zs = classes.flatMap { klass ->
-        val data = try {
+    return dbs.flatMap { dbImpl ->
+      val data = classes.mapNotNull { klass ->
+        try {
           dbImpl.get(startingKey, klass, fullSchema)
         } catch (e: IllegalArgumentException) {
           null
         }
-        if (data == null) emptyList()
-        else {
-          listOf(data) + when (data) {
-            is DatabaseData.Singleton -> {
-              val singletonKey = data.value?.rawReference?.referencedStorageKey()
-              if (singletonKey == null) emptyList()
-              else listOfNotNull(
-                dbImpl.get(singletonKey, DatabaseData.Entity::class, fullSchema)
-              )
-            }
-            is DatabaseData.Collection -> {
-              val collectionKeys = data.values.map { it.rawReference.referencedStorageKey() }
-              collectionKeys.mapNotNull { key ->
-                dbImpl.get(key, DatabaseData.Entity::class, fullSchema)
-              }
-            }
-            is DatabaseData.Entity -> emptyList()
+      }.firstOrNull()
+
+      when (data) {
+        null -> emptyList()
+        is DatabaseData.Singleton -> {
+          val singletonKey = data.value?.rawReference?.referencedStorageKey()
+          if (singletonKey == null) listOf(data)
+          else listOfNotNull(
+            data,
+            dbImpl.get(singletonKey, DatabaseData.Entity::class, fullSchema)
+          )
+        }
+        is DatabaseData.Collection -> {
+          val collectionKeys = data.values.map { it.rawReference.referencedStorageKey() }
+          listOf(data) + collectionKeys.mapNotNull { key ->
+            dbImpl.get(key, DatabaseData.Entity::class, fullSchema)
           }
         }
+        is DatabaseData.Entity -> listOf(data)
       }
-      zs
     }
-
-    return values
   }
 }
-
-data class StorageState(val dbName: String, val dbData: DatabaseData)
 
 /** A [HandleManager] that exposes data about created [Handle]s. */
 class IntegrationHandleManager(private val handleManagerImpl: HandleManagerImpl) : HandleManager {
@@ -476,6 +467,7 @@ class IntegrationHandleManager(private val handleManagerImpl: HandleManagerImpl)
     handleManagerImpl.allStorageProxies()
 }
 
+/** A record of arguments passed to [HandleManager.createHandle]. */
 data class CreateHandleArgs(
   val spec: HandleSpec,
   val storageKey: StorageKey,

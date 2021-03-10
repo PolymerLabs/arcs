@@ -12,8 +12,10 @@ package arcs.android.integration.policy
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.integration.IntegrationEnvironment
+import arcs.core.data.RawEntity
 import arcs.core.host.toRegistration
 import arcs.core.storage.database.DatabaseData
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,6 +36,10 @@ class PolicyTest {
   @get:Rule
   val env = IntegrationEnvironment()
 
+  /**
+   * Scenario: A policy-compliant recipe with @persistent handles egresses data
+   * and stores ingress-restricted values to disk that is never deleted.
+   */
   @Test
   fun persistentHandlesWithEgress_StoresIngressRestrictedValues_neverDeleted() = runBlocking {
     env.addNewHostWith(
@@ -43,9 +49,8 @@ class PolicyTest {
 
     val arc = env.startArc(PersistsEgressesPlan)
 
-    val createHandleArgs = env.getCreateHandleArgs()
-    // Ensure that the store contains the ingress-restricted schema (`Thing {b, c}`)
-    val allStoreSchemas = createHandleArgs.map { it.storeSchema }.filterNotNull()
+    // Ensure that the store contains the ingress-restricted schema (`Thing {a, b}`)
+    val allStoreSchemas = env.getCreateHandleArgs().mapNotNull { it.storeSchema }
     assertThat(allStoreSchemas).doesNotContain(AbstractIngressThing.Thing.SCHEMA)
     assertThat(allStoreSchemas).contains(AbstractEgressAB.Thing.SCHEMA)
 
@@ -58,27 +63,45 @@ class PolicyTest {
       ingest.storeFinished.join()
       egressAB.handleRegistered.join()
     }
-    // Data is egressed to the egress particle
+    // Data is egressed
     assertThat(egressAB.outputForTest).hasSize(6)
 
-    // db test
-    // TODO(alxr): use wait for entities util function before checking db
+    val startingKey = (egressAB.handles.output.getProxy().storageKey as ReferenceModeStorageKey)
+      .storageKey
 
-    val states = env.getStorageState(egressAB.handles.output, AbstractIngressThing.Thing.SCHEMA)
-
+    // Thing {a, b} is written to storage
+    val states = env.getStorageState(startingKey, AbstractIngressThing.Thing.SCHEMA)
     var callbackExecuted = false
     states
       .filterIsInstance<DatabaseData.Entity>()
       .forEach { entity ->
-        // Only fields "a" and "b" have data set in the raw entity.
-        val setEntries = entity.rawEntity.singletons.entries.filter { it.value != null }
-        assertThat(setEntries.map { it.key }.toSet()).isEqualTo(setOf("a", "b"))
-        assertThat(entity.rawEntity.collections).isEmpty()
+        assertRawEntity_OnlyHasSingletonFields_AB(entity.rawEntity)
         callbackExecuted = true
     }
 
     assertThat(callbackExecuted).isTrue()
 
     env.stopArc(arc)
+
+    // Thing {a, b} data persists after the arc is run
+    val postArcStates = env.getStorageState(startingKey, AbstractIngressThing.Thing.SCHEMA)
+    callbackExecuted = false
+    postArcStates
+      .filterIsInstance<DatabaseData.Entity>()
+      .forEach { entity ->
+        assertRawEntity_OnlyHasSingletonFields_AB(entity.rawEntity)
+        callbackExecuted = true
+      }
+
+    assertThat(callbackExecuted).isTrue()
+  }
+
+  companion object {
+    /** Only fields "a" and "b" have data set in the raw entity. */
+    fun assertRawEntity_OnlyHasSingletonFields_AB(entity: RawEntity) {
+      val setEntries = entity.singletons.entries.filter { it.value != null }
+      assertThat(setEntries.map { it.key }.toSet()).isEqualTo(setOf("a", "b"))
+      assertThat(entity.collections).isEmpty()
+    }
   }
 }
