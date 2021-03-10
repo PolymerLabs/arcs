@@ -20,7 +20,7 @@ import arcs.core.util.Time
 /**
  * Builds an instance of [HandleManagerImpl] to be used to create [Handle]s.
  */
-class HandleManagerFactory(
+open class HandleManagerFactory(
   /**
    * Creates a [Scheduler] associated with an arcId. Will be the scheduler for all created
    * [Handle]s.
@@ -45,7 +45,7 @@ class HandleManagerFactory(
   /**
    * Returns an instance of [HandleManagerImpl] to be used to create [Handle]s.
    */
-  fun build(arcId: String, hostId: String): HandleManager = HandleManagerImpl(
+  open fun build(arcId: String, hostId: String): HandleManager = HandleManagerImpl(
     arcId = arcId,
     hostId = hostId,
     time = platformTime,

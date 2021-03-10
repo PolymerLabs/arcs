@@ -9,23 +9,36 @@ import androidx.work.testing.TestDriver
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
+import arcs.android.storage.database.DatabaseImpl
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.core.allocator.Allocator
 import arcs.core.allocator.Arc
+import arcs.core.data.Capability
 import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.entity.ForeignReferenceChecker
 import arcs.core.entity.ForeignReferenceCheckerImpl
+import arcs.core.entity.Handle
+import arcs.core.entity.HandleSpec
 import arcs.core.host.AbstractArcHost
 import arcs.core.host.ArcHost
+import arcs.core.host.HandleManager
 import arcs.core.host.HandleManagerFactory
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.NoOpArcHostContextSerializer
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ParticleState
+import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.storage.StorageEndpointManager
+import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageProxy
 import arcs.core.storage.api.DriverAndKeyConfigurator
+import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.RamDisk
+import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
+import arcs.core.util.Time
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Particle
@@ -89,6 +102,23 @@ import org.robolectric.shadows.ShadowSystemClock
  *   val arc = env.startArc(YourGeneratedPlan)
  * ```
  *
+ * Rudimentary support for inspecting the database state exists, given you know the storage
+ * key and schema. Note: what actually gets written to storage may differ (be more specific) than
+ * the stated fields in the schema.
+ *
+ * ```
+ * @Test
+ * fun checkThatStorageLooksOk() = runTest {
+ *  // Get storage key location from a live particle
+ *  val startingKey = getStorageKeyFromHandle(someParticle.handles.input)
+ *
+ *  // Returns a list of [DatabaseData] data classes
+ *  val storageState = env.getStorageState(startingKey, AbstractSomeParticle.FooType.SCHEMA)
+ *
+ *  // ...
+ * }
+ * ```
+ *
  * This will allow the allocator to start a plan spread across multiple hosts.
  */
 @OptIn(ExperimentalCoroutinesApi::class, kotlin.time.ExperimentalTime::class)
@@ -107,6 +137,7 @@ class IntegrationEnvironment(
   private lateinit var allocator: Allocator
   lateinit var hostRegistry: ExplicitHostRegistry
   private lateinit var dbManager: AndroidSqliteDatabaseManager
+  private lateinit var handleManagerFactory: HandleManagerFactory
 
   private val startedArcs = mutableListOf<Arc>()
   private val testScope = TestCoroutineScope()
@@ -270,7 +301,7 @@ class IntegrationEnvironment(
       periodicWorkConfig
     )
 
-    val handleManagerFactory = HandleManagerFactory(
+    handleManagerFactory = CachedHandleManagerFactory(
       schedulerProvider = schedulerProvider,
       storageEndpointManager = storageEndpointManager,
       platformTime = JvmTime,
@@ -370,6 +401,123 @@ class IntegrationEnvironment(
 
   class IntegrationStorageService : StorageService() {
     fun changeConfig(config: StorageServiceConfig) = schedulePeriodicJobs(config)
+  }
+
+  /** Returns a collection of [CreateHandleArgs] that arose from starting the [Arc]. */
+  fun getCreateHandleArgs(): List<CreateHandleArgs> {
+    val handleManager = requireNotNull(
+      (handleManagerFactory as CachedHandleManagerFactory).handleManager
+    ) {
+      "HandleManagerImpl has not yet been initialized! Make sure startArc() has been called."
+    }
+    return handleManager.createHandleArguments.toList()
+  }
+
+  /** Get collection of [DatabaseData] for all databases; includes referenced entities. */
+  suspend fun getStorageState(startingKey: StorageKey, fullSchema: Schema): List<DatabaseData> {
+    val classes = listOf(
+      DatabaseData.Collection::class,
+      DatabaseData.Singleton::class,
+      DatabaseData.Entity::class
+    )
+
+    val dbs = dbManager.registry.fetchAll()
+      .map { dbManager.getDatabase(it.name, it.isPersistent) as DatabaseImpl }
+
+    return dbs.flatMap { dbImpl ->
+      // Get the first value at the storage key location, guessing if it's a singleton, collection,
+      // or entity.
+      val data = classes.mapNotNull { klass ->
+        try {
+          dbImpl.get(startingKey, klass, fullSchema)
+        } catch (e: IllegalArgumentException) {
+          null
+        }
+      }.firstOrNull()
+
+      // Return the value found (if it exists) and the values it references (if it's a singleton or
+      // collection).
+      when (data) {
+        null -> emptyList()
+        is DatabaseData.Singleton -> {
+          val singletonKey = data.value?.rawReference?.referencedStorageKey()
+          if (singletonKey == null) listOf(data)
+          else listOfNotNull(
+            data,
+            dbImpl.get(singletonKey, DatabaseData.Entity::class, fullSchema)
+          )
+        }
+        is DatabaseData.Collection -> {
+          val collectionKeys = data.values.map { it.rawReference.referencedStorageKey() }
+          listOf(data) + collectionKeys.mapNotNull { key ->
+            dbImpl.get(key, DatabaseData.Entity::class, fullSchema)
+          }
+        }
+        is DatabaseData.Entity -> listOf(data)
+      }
+    }
+  }
+}
+
+/** A [HandleManager] that exposes data about created [Handle]s. */
+class IntegrationHandleManager(private val handleManagerImpl: HandleManagerImpl) : HandleManager {
+  val createHandleArguments = mutableListOf<CreateHandleArgs>()
+
+  override suspend fun createHandle(
+    spec: HandleSpec,
+    storageKey: StorageKey,
+    ttl: Capability.Ttl,
+    particleId: String,
+    immediateSync: Boolean,
+    storeSchema: Schema?,
+    actor: String?
+  ): Handle {
+    createHandleArguments.add(
+      CreateHandleArgs(spec, storageKey, ttl, particleId, storeSchema, actor)
+    )
+    return handleManagerImpl.createHandle(
+      spec, storageKey, ttl, particleId, immediateSync, storeSchema, actor
+    )
+  }
+
+  override fun scheduler(): Scheduler = handleManagerImpl.scheduler()
+
+  override suspend fun close() = handleManagerImpl.close()
+
+  override suspend fun allStorageProxies(): List<StorageProxy<*, *, *>> =
+    handleManagerImpl.allStorageProxies()
+}
+
+/** A record of arguments passed to [HandleManager.createHandle]. */
+data class CreateHandleArgs(
+  val spec: HandleSpec,
+  val storageKey: StorageKey,
+  val ttl: Capability.Ttl,
+  val particleId: String,
+  val storeSchema: Schema?,
+  val actor: String?
+)
+
+/** A [HandleManagerFactory] that caches and exposes the [HandleManagerImpl]. */
+class CachedHandleManagerFactory(
+  schedulerProvider: SchedulerProvider,
+  storageEndpointManager: StorageEndpointManager,
+  platformTime: Time,
+  foreignReferenceChecker: ForeignReferenceChecker = ForeignReferenceCheckerImpl(
+    emptyMap()
+  )
+) : HandleManagerFactory(
+  schedulerProvider,
+  storageEndpointManager,
+  platformTime,
+  foreignReferenceChecker = foreignReferenceChecker
+) {
+  lateinit var handleManager: IntegrationHandleManager
+
+  @Suppress("UNCHECKED_CAST")
+  override fun build(arcId: String, hostId: String): HandleManager {
+    handleManager = IntegrationHandleManager(super.build(arcId, hostId) as HandleManagerImpl)
+    return handleManager
   }
 }
 
