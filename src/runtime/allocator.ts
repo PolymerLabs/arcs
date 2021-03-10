@@ -37,30 +37,34 @@ export type PlanInArcOptions = Readonly<{
 }>;
 
 export interface Allocator {
-  arcHostFactories: ArcHostFactory[];
   registerArcHost(factory: ArcHostFactory);
+
+  // TODO(b/182410550): unify `newArc` and `startArc`.
+  // Note: all `newArc` callers will have to support async execution.
   newArc(options: NewArcOptions): ArcId;
-  // tslint:disable-next-line: no-any
   startArc(options: NewArcOptions & {planName?: string}): Promise<ArcId>;
-  deserialize(options: DeserializeArcOptions): Promise<Arc>;
+  runPlanInArc(arcId: ArcId, plan: Recipe, reinstantiate?: boolean): Promise<void[]>;
 
-  // tslint:disable-next-line: no-any
-  runPlanInArc(arcId: ArcId, plan: Recipe, reinstantiate?: boolean): Promise<any>; // TODO: remove this later!
+  deserialize(options: DeserializeArcOptions): Promise<ArcId>;
+
   stopArc(arcId: ArcId);
-  assignStorageKeys(arcId: ArcId, plan: Recipe, idGenerator?: IdGenerator): Promise<Recipe>;
 
-  // TODO: improve API - should return boolean? or null, if not resolved? or throw?
-  resolveRecipe(arcId: ArcId, recipe: Recipe): Promise<Recipe>;
+  // TODO(b/182410550): This method is only called externally when speculating.
+  // It should become private, once Planning is incorporated into Allocator APIs.
+  // Once private, consider not returning a value.
+  assignStorageKeys(arcId: ArcId, plan: Recipe, idGenerator?: IdGenerator): Promise<Recipe>;
 }
 
 export class AllocatorImpl implements Allocator {
-  public readonly arcHostFactories: ArcHostFactory[] = [];
-  public readonly arcStateById = new Map<ArcId, {partitions: PlanPartition[], idGenerator: IdGenerator}>();
-  public readonly hostById: Dictionary<ArcHost> = {};
+  protected readonly arcHostFactories: ArcHostFactory[] = [];
+  protected readonly arcStateById = new Map<ArcId, {partitions: PlanPartition[], idGenerator: IdGenerator}>();
+  protected readonly hostById: Dictionary<ArcHost> = {};
 
-  constructor(public readonly runtime: Runtime) {}
+  constructor(protected readonly runtime: Runtime) {}
 
-  registerArcHost(factory: ArcHostFactory) { this.arcHostFactories.push(factory); }
+  registerArcHost(factory: ArcHostFactory) {
+    this.arcHostFactories.push(factory);
+  }
 
   newArc(options: NewArcOptions): ArcId {
     assert(options.arcId || options.arcName);
@@ -87,8 +91,7 @@ export class AllocatorImpl implements Allocator {
     return arcId;
   }
 
-  // tslint:disable-next-line: no-any
-  protected async runInArc(arcId: ArcId, planName?: string): Promise<any> {
+  protected async runInArc(arcId: ArcId, planName?: string): Promise<void[]> {
     assert(this.arcStateById.has(arcId));
     assert(planName || this.runtime.context.recipes.length === 1);
     const plan = planName
@@ -98,11 +101,11 @@ export class AllocatorImpl implements Allocator {
     return this.runPlanInArc(arcId, plan);
   }
 
-  // tslint:disable-next-line: no-any
-  async runPlanInArc(arcId: ArcId, plan: Recipe, reinstantiate?: boolean): Promise<any> {
+  async runPlanInArc(arcId: ArcId, plan: Recipe, reinstantiate?: boolean): Promise<void[]> {
     plan = await this.resolveRecipe(arcId, plan);
 
     const partitionByFactory = new Map<ArcHostFactory, Particle[]>();
+    // Partition the `plan` into particles by ArcHostFactory.
     for (const particle of plan.particles) {
       const hostFactory = [...this.arcHostFactories.values()].find(
           factory => factory.isHostForParticle(particle));
@@ -113,6 +116,7 @@ export class AllocatorImpl implements Allocator {
       partitionByFactory.get(hostFactory).push(particle);
     }
 
+    // Start all partitions.
     return Promise.all([...partitionByFactory.keys()].map(async factory => {
       const host = factory.createHost();
       this.hostById[host.hostId] = host;
@@ -128,24 +132,23 @@ export class AllocatorImpl implements Allocator {
       });
       await this.assignStorageKeys(arcId, partial);
 
-      const partition = {
-        arcHostId: host.hostId,
-        arcOptions: {
-          arcId,
-          idGenerator: this.arcStateById.get(arcId).idGenerator
-        },
-        plan: partial,
-        reinstantiate
-      };
-
+      const arcOptions = {arcId, idGenerator: this.arcStateById.get(arcId).idGenerator};
+      const partition = {arcHostId: host.hostId, arcOptions, plan: partial, reinstantiate};
       this.arcStateById.get(arcId).partitions.push(partition);
+
       return host.start(partition);
     }));
   }
 
   async assignStorageKeys(arcId: ArcId, plan: Recipe, idGenerator?: IdGenerator): Promise<Recipe> {
+    // TODO(b/182410550): All internal caller(s) should pass non normalized recipe.
+    // Remove this check, once the method is private, and don't return recipe.
+    if (plan.isNormalized()) {
+      plan = plan.clone();
+    }
     // Assign storage keys for all `create` & `copy` stores.
     for (const handle of plan.handles) {
+      if (handle.immediateValue) continue;
       if (['copy', 'create'].includes(handle.fate)) {
       let type = handle.type;
         if (handle.fate === 'create') {
@@ -154,34 +157,37 @@ export class AllocatorImpl implements Allocator {
 
         type = type.resolvedType();
         assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
-        // TODO: should handle immediate values here? no!
-        if (!handle.immediateValue) {
-          handle.id = handle.fate === 'create' && !!handle.id
-            ? handle.id
-            : (idGenerator || this.arcStateById.get(arcId).idGenerator).newChildId(arcId, '').toString();
-          handle.fate = 'use';
-          handle.storageKey = await this.runtime.getCapabilitiesResolver(arcId)
-            .createStorageKey(handle.capabilities || Capabilities.create(), type, handle.id);
-        }
+        handle.id = handle.fate === 'create' && !!handle.id
+          ? handle.id
+          : (idGenerator || this.arcStateById.get(arcId).idGenerator).newChildId(arcId, '').toString();
+        handle.fate = 'use';
+        handle.storageKey = await this.runtime.getCapabilitiesResolver(arcId)
+          .createStorageKey(handle.capabilities || Capabilities.create(), type, handle.id);
       }
     }
     return this.resolveRecipe(arcId, plan);
   }
 
-  protected tryResolveRecipe(arcId: ArcId, recipe: Recipe) {
+  // Returns the resolved recipe (the original recipe might have changed),
+  // or throws an exception, if the recipe cannot be resolved.
+  // Note this method is overriden by the subclass, and calls RecipeResolver, if needed.
+  // The APIs might change, when Planning is incorporated in Allocator.
+  protected async resolveRecipe(arcId: ArcId, recipe: Recipe): Promise<Recipe> {
+    assert(this.tryResolveRecipe(arcId, recipe), `Unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
+    return recipe;
+  }
+
+  // Normalizes, if needed, and tries to resolve type variable handle types.
+  // Returns true, if the recipe is resolved.
+  protected tryResolveRecipe(arcId: ArcId, recipe: Recipe): boolean {
     assert(this.normalize(recipe));
     if (!recipe.isResolved()) {
       for (const handle of recipe.handles) {
-        // Otherwise normalize un-resolves typevar handle types.
+        // The call to `normalize` above un-resolves typevar handle types.
         assert(handle.type.maybeResolve());
       }
     }
-  }
-
-  async resolveRecipe(arcId: ArcId, recipe: Recipe): Promise<Recipe> {
-    this.tryResolveRecipe(arcId, recipe);
-    assert(recipe.isResolved(), `Unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
-    return recipe;
+    return recipe.isResolved();
   }
 
   private normalize(recipe: Recipe): boolean {
@@ -206,8 +212,27 @@ export class AllocatorImpl implements Allocator {
     this.arcStateById.delete(arcId);
   }
 
-  async deserialize(options: DeserializeArcOptions): Promise<Arc> {
-    throw new Error('not supported yet');
+  async deserialize(options: DeserializeArcOptions): Promise<ArcId> {
+    const {serialization, slotComposer, fileName, inspectorFactory} = options;
+    const manifest = await this.runtime.parse(serialization, {fileName, context: this.runtime.context});
+    const arcId = Id.fromString(manifest.meta.name);
+    const storageKey = this.runtime.storageKeyParser.parse(manifest.meta.storageKey);
+
+    assert(!this.arcStateById.has(arcId));
+    const idGenerator = IdGenerator.newSession();
+    this.arcStateById.set(arcId, {partitions: [], idGenerator});
+    this.newArc({...options, arcId, idGenerator});
+
+    await this.createStoresAndCopyTags(arcId, manifest);
+
+    await this.runPlanInArc(arcId, manifest.activeRecipe, /* reinstantiate= */ true);
+    return arcId;
+  }
+
+  protected async createStoresAndCopyTags(arcId: ArcId, manifest: Manifest): Promise<void[]> {
+    // Temporarily this can only be implemented in SingletonAllocator subclass,
+    // because it requires access to `host` and Arc's store creation API.
+    return Promise.all([]);
   }
 }
 
@@ -235,7 +260,7 @@ export class SingletonAllocator extends AllocatorImpl {
     return arcId;
   }
 
-  async resolveRecipe(arcId: ArcId, recipe: Recipe): Promise<Recipe> {
+  protected async resolveRecipe(arcId: ArcId, recipe: Recipe): Promise<Recipe> {
     super.tryResolveRecipe(arcId, recipe);
     if (recipe.isResolved()) {
       return recipe;
@@ -246,41 +271,26 @@ export class SingletonAllocator extends AllocatorImpl {
     return plan;
   }
 
-  async deserialize(options: DeserializeArcOptions): Promise<Arc> {
-    const {serialization, pecFactories, slotComposer, fileName, inspectorFactory} = options;
-    const manifest = await this.runtime.parse(serialization, {fileName, context: this.runtime.context});
-    const arcId = Id.fromString(manifest.meta.name);
-    const storageKey = this.runtime.storageKeyParser.parse(manifest.meta.storageKey);
-
-    assert(!this.arcStateById.has(arcId));
-    const idGenerator = IdGenerator.newSession();
-    this.arcStateById.set(arcId, {partitions: [], idGenerator});
-    this.newArc({...options, arcId, idGenerator});
+  async createStoresAndCopyTags(arcId: ArcId, manifest: Manifest): Promise<void[]> {
     const arc = this.host.getArcById(arcId);
 
-    await Promise.all(manifest.stores.map(async storeStub => {
-      const tags = [...manifest.storeTagsById[storeStub.id]];
-      if (storeStub.storageKey instanceof VolatileStorageKey) {
-        arc.volatileMemory.deserialize(storeStub.model, storeStub.storageKey.unique);
+    return Promise.all(manifest.stores.map(async storeInfo => {
+      const tags = [...manifest.storeTagsById[storeInfo.id]];
+      if (storeInfo.storageKey instanceof VolatileStorageKey) {
+        arc.volatileMemory.deserialize(storeInfo.model, storeInfo.storageKey.unique);
       }
-      await arc._registerStore(storeStub, tags);
-      // DO THIS ON THE RECIPE, NOT THE ARC?
-      arc.addStoreToRecipe(storeStub);
-    }));
-    const recipe = manifest.activeRecipe.clone();
-    await this.runPlanInArc(arc.id, recipe, /* reinstantiate= */ true);
 
-    // TODO(shanestephens): if we decide that merging a 'use' handle adds any tags on that handle to
-    // the handle in the underlying recipe, then we can remove this from here.
-    for (const handle of recipe.handles) {
-      const newHandle = arc.activeRecipe.findHandleByID(handle.id);
+      await arc.addStoreInfo(storeInfo, tags);
+
+      const newHandle = arc.activeRecipe.handles.find(h => h.id === storeInfo.id);
+      const handle = manifest.activeRecipe.handles.find(h => h.id === storeInfo.id);
+      assert(newHandle && handle);
       for (const tag of handle.tags) {
         if (newHandle.tags.includes(tag)) {
           continue;
         }
         newHandle.tags.push(tag);
       }
-    }
-    return arc;
+    }));
   }
 }

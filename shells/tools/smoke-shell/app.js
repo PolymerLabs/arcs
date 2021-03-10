@@ -11,14 +11,12 @@
 import {Runtime} from '../../../build/runtime/runtime.js';
 import {Modality} from '../../../build/runtime/arcs-types/modality.js';
 
-export const App = async (composer, path) => {
-  // TODO: this is still broken, investigate!
-  const arc = await new Runtime().newArc({arcName: 'smoke-arc', composer});
-  //spawnArc({id: 'smoke-arc', composer});
+export const App = async (runtime, composer, path) => {
+  const arc = runtime.getArcById(await runtime.allocator.newArc({arcName: 'smoke-arc', composer}));
   arc.modality = Modality.dom;
   console.log(`arc [${arc.id}]`);
   //
-  const manifest = await Runtime.parse(`import 'https://$particles/${path}'`);
+  const manifest = await runtime.parse(`import 'https://$particles/${path}'`);
   console.log(`manifest [${manifest.id}]`);
   //
   //const recipe = manifest.findRecipesByVerb('login')[0];
@@ -27,10 +25,7 @@ export const App = async (composer, path) => {
   //
   if (recipe) {
     console.log(`recipe [${recipe.name}]`);
-    const plan = await Runtime.resolveRecipe(arc, recipe);
-    if (plan) {
-      await arc.instantiate(plan);
-    }
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
   }
   //
   console.log(`\narc serialization`);

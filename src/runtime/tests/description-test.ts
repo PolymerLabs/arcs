@@ -25,6 +25,7 @@ import {Runtime} from '../runtime.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {StoreInfo} from '../storage/store-info.js';
 import {newRecipe} from '../recipe/internal/recipe-constructor.js';
+import {VolatileStorageKey} from '../storage/drivers/volatile.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const runtime = new Runtime({context: manifest, loader: new Loader()});
@@ -547,7 +548,7 @@ particle C
   foo: reads Foo
   otherslot: consumes Slot
   description \`only c\`
-recipe TestRecipe
+recipe
   handle0: create 'test:1' // Foo
   slot0: slot 'rootslotid-root'
   A as particle1
@@ -594,9 +595,7 @@ recipe
   });
 
   it('capitalizes when some particles do not have descriptions', async () => {
-    const runtime =  new class extends Runtime {
-      getCapabilitiesResolver(arcId: ArcId) { return null; }
-    }();
+    const runtime = new Runtime();
     const manifest = (await runtime.parse(`
 interface DummyInterface
 particle NoDescription
@@ -628,7 +627,9 @@ recipe
     const hostedParticle = manifest.findParticleByName('NoDescription');
     const hostedType = manifest.findParticleByName('NoDescMuxer').handleConnections[0].type as InterfaceType;
 
-    const newStore = await arc.createStore(new SingletonType(hostedType), /* name= */ null, 'hosted-particle-handle');
+    const hostedStoreId = 'hosted-particle-handle';
+    const hostedStorageKey = new VolatileStorageKey(arc.id, '').childKeyForHandle(hostedStoreId);
+    const newStore = await arc.createStore(new SingletonType(hostedType), /* name= */ null, hostedStoreId, /* tags= */ [], hostedStorageKey);
     const newHandle = await handleForStoreInfo(newStore, arc);
     await newHandle.set(hostedParticle.clone());
 

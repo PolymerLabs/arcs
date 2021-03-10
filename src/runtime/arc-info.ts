@@ -46,8 +46,11 @@ export type NewArcOptions = Readonly<{
 }>;
 
 export type PlanPartition = Readonly<{
-  plan?: Recipe; // TODO: plan should be mandatory, when Arc and RunningArc classes are split.
-  reinstantiate?: boolean; // TODO: should this be in arcOptions, or can it apply to only selected partitions?
+  // TODO(b/182410550): plan should be mandatory, when Arc class is refactored
+  // into ArcState (like) structure, and there is no need to call ArcHost when
+  // an Arc with no running recipes is created.
+  plan?: Recipe;
+  reinstantiate?: boolean;
   arcOptions: NewArcOptions;
   arcHostId: string;
 }>;

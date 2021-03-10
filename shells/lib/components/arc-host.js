@@ -14,11 +14,10 @@ import {devtoolsArcInspectorFactory} from '../../../build/devtools-connector/dev
 const {log, warn, error} = logsFactory('ArcHost', '#cade57');
 
 export class ArcHost {
-  constructor(runtime, storage, composer, portFactories) {
+  constructor(runtime, storage, composer) {
     this.runtime = runtime;
     this.storage = storage;
     this.composer = composer;
-    this.portFactories = portFactories;
   }
   disposeArc() {
     if (this.arc) {
@@ -34,9 +33,7 @@ export class ArcHost {
     this.serialization = await this.computeSerialization(config, storage);
     // TODO(sjmiles): weird consequence of re-using composer, which we probably should not do anymore
     this.composer.arc = null;
-    this.arc = await this._spawn(storage, config.id, this.serialization, this.portFactories);
-    // TODO(mmandlis): pass slotObserver to ArcHost, instead of a slotComposer.
-    this.arc.peh.slotComposer.observeSlots(this.composer['slotObserver']);
+    this.arc = await this._spawn(storage, config.id, this.serialization);
     if (config.manifest && !this.serialization) {
       await this.instantiateDefaultRecipe(this.arc, config.manifest);
     }
@@ -71,24 +68,27 @@ export class ArcHost {
     }
     return serialization;
   }
-  async _spawn(storage, id, serialization, portFactories) {
-    return this.runtime.getArcById(this.runtime.allocator.newArc({
-      arcName: id,
-      serialization, // TODO(mmandlis): support for `serialization` has been lost.
-      storage: `${storage}/${id}`,
-      portFactories,
-      inspectorFactory: devtoolsArcInspectorFactory,
-    }));
+  async _spawn(storage, id, serialization, inspectorFactory) {
+    return this.runtime.getArcById(serialization ?
+      await this.runtime.allocator.deserialize({
+        serialization,
+        slotObserver: this.composer['slotObserver'],
+        inspectorFactory: devtoolsArcInspectorFactory,
+      }) :
+      await this.runtime.allocator.newArc({
+        arcName: id,
+        storage: `${storage}/${id}`, // should be StorageKey instead
+        slotObserver: this.composer['slotObserver'],
+        inspectorFactory: devtoolsArcInspectorFactory
+      })
+    );
   }
   async instantiateDefaultRecipe(arc, manifest) {
     log('instantiateDefaultRecipe');
     try {
       manifest = await this.runtime.parse(manifest);
       const recipe = manifest.allRecipes[0];
-      const plan = await this.runtime.resolveRecipe(arc, recipe);
-      if (plan) {
-        await this.instantiatePlan(arc, plan);
-      }
+      await this.instantiatePlan(arc, recipe);
     } catch (x) {
       error(x);
     }
@@ -97,9 +97,6 @@ export class ArcHost {
     log('instantiatePlan');
     // TODO(sjmiles): pass suggestion all the way from web-shell
     // and call suggestion.instantiate(arc).
-    if (!plan.isResolved()) {
-      log(`plan ${plan.toString({showUnresolved: true})} is not resolved.`);
-    }
     try {
       await this.runtime.allocator.runPlanInArc(arc.id, plan);
     } catch (x) {

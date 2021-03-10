@@ -31,7 +31,7 @@ export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
   }
   const arc = runtime.getArcById(runtime.allocator.newArc({
     arcName: arcId,
-    storageKeyPrefix: storageKeyPrefix || defaultStorageKeyPrefix, // TODO(mmandlis): fix this!
+    storageKeyPrefix: storageKeyPrefix || defaultStorageKeyPrefix,
     fileName: './serialized.manifest',
     pecFactories: [runtime.pecFactory, portIndustry(bus, pecId)],
     loader: runtime.loader,
@@ -51,73 +51,76 @@ export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
 };
 
 const instantiateRecipe = async (arc, runtime, recipe, particles) => {
-  let plan = await runtime.resolveRecipe(arc, recipe);
-  if (!plan) {
-    warn(`failed to resolve recipe ${recipe}`);
-    return false;
-  }
-  if (matchesRecipe(arc.activeRecipe, plan)) {
-    log(`recipe ${recipe} is already instantiated in ${arc}`);
-    for (const particle of particles) {
-      if (!reinstantiateParticle(arc, particle.id, particle.name)) {
-        return false;
-      }
-    }
-    return true;
-  }
+  // let plan = await runtime.resolveRecipe(arc, recipe);
+  // if (!plan) {
+  //   warn(`failed to resolve recipe ${recipe}`);
+  //   return false;
+  // }
 
-  for (const particle of particles) {
-    plan = updateParticleInPlan(plan, particle.id, particle.name, particle.providedSlotId);
-    if (!plan) {
-      warn(`failed updating particle id '${particle.id}', name ${particle.name} in recipe ${recipe}`);
-      return false;
-    }
-  }
+  // Note: Arc `reinstantiate` support was deprecated and removed.
 
-  await arc.instantiate(plan);
+  // if (matchesRecipe(arc.activeRecipe, plan)) {
+  //   log(`recipe ${recipe} is already instantiated in ${arc}`);
+  //   for (const particle of particles) {
+  //     if (!reinstantiateParticle(arc, particle.id, particle.name)) {
+  //       return false;
+  //     }
+  //   }
+  //   return true;
+  // }
+
+  // for (const particle of particles) {
+  //   plan = updateParticleInPlan(plan, particle.id, particle.name, particle.providedSlotId);
+  //   if (!plan) {
+  //     warn(`failed updating particle id '${particle.id}', name ${particle.name} in recipe ${recipe}`);
+  //     return false;
+  //   }
+  // }
+
+  await runtime.allocator.runPlanInArc(arc.id, recipe);
   return true;
 };
 
-const reinstantiateParticle = (arc, particleId, particleName) => {
-  if (particleId) {
-    const particle = arc.activeRecipe.particles.find(p => p.id === particleId);
-    if (particle) {
-      arc.reinstantiateParticle(particle);
-      return true;
-    }
-    warn(`Particle ${particleName} (${particleId} is not found in the active recipe`);
-  }
-  return false;
-};
+// const reinstantiateParticle = (arc, particleId, particleName) => {
+//   if (particleId) {
+//     const particle = arc.activeRecipe.particles.find(p => p.id === particleId);
+//     if (particle) {
+//       arc.reinstantiateParticle(particle);
+//       return true;
+//     }
+//     warn(`Particle ${particleName} (${particleId} is not found in the active recipe`);
+//   }
+//   return false;
+// };
 
-const updateParticleInPlan = (plan, particleId, particleName, providedSlotId) => {
-  if (!!particleId && !!particleName) {
-    plan = plan.clone();
-    const particle = plan.particles.find(p => p.name === particleName);
-    if (!particle) {
-      warn(`Cannot find particle ${particleName} in plan = ${plan.toString()}.`);
-      return null;
-    }
-    particle.id = particleId;
-    if (providedSlotId) {
-      if (particle.getSlotConnections().length !== 1) {
-        warn(`Unexpected ${particle.getSlotConnections().length} of consumed slots for particle ${particleName}.`);
-        return;
-      }
-      const providedSlots = Object.values(particle.getSlotConnections()[0].providedSlots);
-      if (providedSlots.length !== 1) {
-        warn(`Unexpected ${providedSlots.length} of provided slots for particle ${particleName}.`);
-      }
-      providedSlots[0].id = providedSlotId;
-    }
-    if (!plan.normalize()) {
-      warn(`cannot normalize after setting id ${particleId} for particle ${particleName}`);
-      return null;
-    }
-    if (!plan.isResolved()) {
-      warn(`unresolved plan after setting id ${particleId} for particle ${particleName}`);
-      return null;
-    }
-  }
-  return plan;
-};
+// const updateParticleInPlan = (plan, particleId, particleName, providedSlotId) => {
+//   if (!!particleId && !!particleName) {
+//     plan = plan.clone();
+//     const particle = plan.particles.find(p => p.name === particleName);
+//     if (!particle) {
+//       warn(`Cannot find particle ${particleName} in plan = ${plan.toString()}.`);
+//       return null;
+//     }
+//     particle.id = particleId;
+//     if (providedSlotId) {
+//       if (particle.getSlotConnections().length !== 1) {
+//         warn(`Unexpected ${particle.getSlotConnections().length} of consumed slots for particle ${particleName}.`);
+//         return;
+//       }
+//       const providedSlots = Object.values(particle.getSlotConnections()[0].providedSlots);
+//       if (providedSlots.length !== 1) {
+//         warn(`Unexpected ${providedSlots.length} of provided slots for particle ${particleName}.`);
+//       }
+//       providedSlots[0].id = providedSlotId;
+//     }
+//     if (!plan.normalize()) {
+//       warn(`cannot normalize after setting id ${particleId} for particle ${particleName}`);
+//       return null;
+//     }
+//     if (!plan.isResolved()) {
+//       warn(`unresolved plan after setting id ${particleId} for particle ${particleName}`);
+//       return null;
+//     }
+//   }
+//   return plan;
+// };

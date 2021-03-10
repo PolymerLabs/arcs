@@ -134,7 +134,7 @@ describe('Arc new storage', () => {
     await colHandle.clear();
     await refVarHandle.clear();
 
-    const arc2 = await runtime.allocator.deserialize({serialization, fileName: ''});
+    const arc2 = runtime.getArcById(await runtime.allocator.deserialize({serialization, fileName: ''}));
     const varStore2 = arc2.findStoreById(varStore.id) as StoreInfo<SingletonEntityType>;
     const colStore2 = arc2.findStoreById(colStore.id) as StoreInfo<CollectionEntityType>;
     const refVarStore2 = arc2.findStoreById(refVarStore.id) as StoreInfo<SingletonEntityType>;
@@ -673,12 +673,13 @@ describe('Arc', () => {
     const serialization = await arc.serialize();
     runtime.allocator.stopArc(arc.id);
 
-    const newArc = await runtime.allocator.deserialize({serialization, fileName: 'foo.manifest'});
+    const newArc = runtime.getArcById(await runtime.allocator.deserialize({serialization, fileName: 'foo.manifest'}));
     await newArc.idle;
     assert.strictEqual(newArc.stores.length, 0);
+    // Note: when empty arc is deserialized @active annotation isn't set on
+    // the Arc's activeRecipe because `host.start` is never actually called
+    // with an empty partition, and `arc.instantiate` isn't executed.
     assert.strictEqual(newArc.activeRecipe.toString(),
-                      // TODO: is @active annotation really needed here?
-                      //  `@active\n${arc.activeRecipe.toString()}`);
                       `${arc.activeRecipe.toString()}`);
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');
     newArc.dispose();
@@ -704,7 +705,7 @@ describe('Arc', () => {
     const serialization = await arc.serialize();
     runtime.allocator.stopArc(arc.id);
 
-    const newArc = await runtime.allocator.deserialize({serialization, fileName: '', slotComposer: new SlotComposer()});
+    const newArc = runtime.getArcById(await runtime.allocator.deserialize({serialization, fileName: '', slotComposer: new SlotComposer()}));
     await newArc.idle;
     fooStore = newArc.findStoreById(fooStore.id) as StoreInfo<SingletonEntityType>;
     barStore = newArc.findStoreById(barStore.id) as StoreInfo<SingletonEntityType>;
@@ -757,27 +758,21 @@ describe('Arc', () => {
   });
 
   it('registers and deregisters its own volatile storage', async () => {
-    const id1 = ArcId.newForTest('test1');
-    const id2 = ArcId.newForTest('test2');
-    const storageKey1 = new VolatileStorageKey(id1, '');
-    const storageKey2 = new VolatileStorageKey(id2, '');
-
     // runtime creates a default RamDisk with SimpleVolatileMemoryProvider
     const runtime = new Runtime();
-    const {storageService, driverFactory, storageKeyParser} = runtime;
-    assert.equal(driverFactory.providers.size, 1);
+    assert.equal(runtime.driverFactory.providers.size, 1);
 
-    const arc1 = new Arc({id: id1, storageKey: storageKey1, loader: new Loader(), context: new Manifest({id: id1}), storageService, driverFactory, storageKeyParser});
-    assert.strictEqual(driverFactory.providers.size, 2);
+    const arc1 = runtime.getArcById(runtime.allocator.newArc({arcName: 'test1'}));
+    assert.strictEqual(runtime.driverFactory.providers.size, 2);
 
-    const arc2 = new Arc({id: id2, storageKey: storageKey2, loader: new Loader(), context: new Manifest({id: id2}), storageService, driverFactory, storageKeyParser});
-    assert.strictEqual(driverFactory.providers.size, 3);
+    const arc2 = runtime.getArcById(runtime.allocator.newArc({arcName: 'test2'}));
+    assert.strictEqual(runtime.driverFactory.providers.size, 3);
 
     arc1.dispose();
-    assert.strictEqual(driverFactory.providers.size, 2);
+    assert.strictEqual(runtime.driverFactory.providers.size, 2);
 
     arc2.dispose();
-    assert.equal(driverFactory.providers.size, 1);
+    assert.equal(runtime.driverFactory.providers.size, 1);
   });
 
   it('preserves create handle ids if specified', Flags.withDefaultReferenceMode(async () => {

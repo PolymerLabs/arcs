@@ -69,10 +69,7 @@ describe('particle interface loading', () => {
             };
           });`
     });
-    const runtime = new class extends Runtime {
-      constructor() { super({loader}); }
-      getCapabilitiesResolver(arcId: ArcId) { return null; }
-    }();
+    const runtime = new Runtime({loader});
     const manifest = await runtime.parseFile('./src/runtime/tests/artifacts/test-particles.manifest');
     runtime.context = manifest;
     const arc = runtime.getArcById(runtime.allocator.newArc({arcId: ArcId.newForTest('test')}));
@@ -96,7 +93,9 @@ describe('particle interface loading', () => {
       ],
     });
 
-    const ifaceStore = await arc.createStore(new SingletonType(ifaceType));
+    const ifaceStoreId = 'hosted-particle-handle';
+    const ifaceStorageKey = new VolatileStorageKey(arc.id, '').childKeyForHandle(ifaceStoreId);
+    const ifaceStore = await arc.createStore(new SingletonType(ifaceType), /* name= */ null, ifaceStoreId, /* tags= */ [], ifaceStorageKey);
     const outStore = await arc.createStore(new SingletonType(barType));
     const inStore = await arc.createStore(new SingletonType(fooType));
     const ifaceHandle = await handleForStoreInfo(ifaceStore, arc);
@@ -283,7 +282,7 @@ describe('particle interface loading', () => {
     runtime.allocator.stopArc(arc.id);
 
     const {driverFactory, storageService, storageKeyParser} = runtime;
-    const arc2 = await runtime.allocator.deserialize({serialization, fileName: ''});
+    const arc2 = runtime.getArcById(await runtime.allocator.deserialize({serialization, fileName: ''}));
     await arc2.idle;
 
     const fooHandle2 = await handleForStoreInfo(arc2.stores.find(StoreInfo.isSingletonEntityStore), arc2);

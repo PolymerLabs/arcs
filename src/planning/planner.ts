@@ -280,13 +280,11 @@ export class Planner implements InspectablePlanner {
     if (cachedSuggestion && cachedSuggestion.isUpToDate(arc, plan)) {
       return cachedSuggestion;
     }
-    const clonnedPlan: Recipe = plan.clone();
     let relevance: Relevance|undefined = undefined;
     let description: Description|null = null;
     if (this._shouldSpeculate(plan)) {
       //log(`speculatively executing [${plan.name}]`);
-      assert(clonnedPlan.normalize() && clonnedPlan.isResolved());
-      const result = await this.speculator.speculate(this.arc, clonnedPlan, hash);
+      const result = await this.speculator.speculate(this.arc, plan, hash);
       if (!result) {
         return undefined;
       }
@@ -296,12 +294,12 @@ export class Planner implements InspectablePlanner {
       //log(`[${plan.name}] => [${description.getRecipeSuggestion()}]`);
     } else {
       const speculativeArc = await arc.cloneForSpeculativeExecution();
-      await this.runtime.allocator.assignStorageKeys(arc.id, clonnedPlan);
-      await speculativeArc.mergeIntoActiveRecipe(clonnedPlan);
-      relevance = Relevance.create(arc, clonnedPlan);
+      plan = await this.runtime.allocator.assignStorageKeys(arc.id, plan);
+      await speculativeArc.mergeIntoActiveRecipe(plan);
+      relevance = Relevance.create(arc, plan);
       description = await Description.create(speculativeArc, relevance);
     }
-    const suggestion = Suggestion.create(clonnedPlan, hash, relevance);
+    const suggestion = Suggestion.create(plan, hash, relevance);
     suggestion.setDescription(description, this.arc.modality);
     this.getCache().set(hash, suggestion);
     return suggestion;

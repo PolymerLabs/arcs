@@ -197,7 +197,6 @@ describe('FindRequiredParticles', () => {
     const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
     const results = await strategy.generateFrom(inputParams);
     const recipe = results[0].result;
-    assert(recipe.isNormalized() || recipe.normalize());
     assert.isFalse(recipe.isResolved(), 'recipe is resolved when it shouldn\'t be');
   });
   it('find two required particles that doesn\'t match the require section', async () => {

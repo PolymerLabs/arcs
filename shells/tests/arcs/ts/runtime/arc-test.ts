@@ -56,7 +56,7 @@ describe('Arc', () => {
     const serialization = await arc.serialize();
     runtime.allocator.stopArc(arc.id);
 
-    const newArc = await runtime.allocator.deserialize({serialization, fileName: './manifest.manifest'});
+    const newArc = runtime.getArcById(await runtime.allocator.deserialize({serialization, fileName: './manifest.manifest'}));
     await newArc.idle;
     store = newArc.findStoreById(store.id) as StoreInfo<CollectionEntityType>;
     const handle = await handleForStoreInfo(store, newArc);
@@ -174,7 +174,7 @@ describe('Arc', () => {
 
     const serialization = await arc.serialize();
     runtime.allocator.stopArc(arc.id);
-    const newArc = await runtime.allocator.deserialize({serialization, fileName: ''});
+    const newArc = runtime.getArcById(await runtime.allocator.deserialize({serialization, fileName: ''}));
     assert.strictEqual(newArc.stores.length, 1);
     assert.strictEqual(newArc.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');

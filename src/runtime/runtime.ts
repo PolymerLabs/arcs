@@ -15,7 +15,6 @@ import {ArcOptions, Arc} from './arc.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId, Id} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
-import {SlotComposer} from './slot-composer.js';
 import {Recipe} from './recipe/lib-recipe.js';
 import {RecipeResolver} from './recipe-resolver.js';
 import {Loader} from '../platform/loader.js';
@@ -47,7 +46,6 @@ export type RuntimeOptions = Readonly<{
   driverFactory?: DriverFactory;
   storageKeyFactories?: StorageKeyFactory[];
   storageService?: StorageService,
-  composerClass?: typeof SlotComposer;
   context?: Manifest;
   rootPath?: string,
   urlMap?: {},
@@ -90,45 +88,12 @@ export class Runtime {
     return (await Description.create(arc)).getArcDescription();
   }
 
-  // TODO(mmandlis): move into allocator!
-  async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {
-    if (this.normalize(recipe)) {
-      if (recipe.isResolved()) {
-        return recipe;
-      }
-      const resolver = new RecipeResolver(arc);
-      const plan = await resolver.resolve(recipe);
-      if (plan && plan.isResolved()) {
-        return plan;
-      }
-      warn('failed to resolve:\n', (plan || recipe).toString({showUnresolved: true}));
-    }
-    return null;
-  }
-
-  private normalize(recipe: Recipe): boolean {
-    if (this.isNormalized(recipe)) {
-      return true;
-    }
-    const errors = new Map();
-    if (recipe.normalize({errors})) {
-      return true;
-    }
-    warn('failed to normalize:\n', errors, recipe.toString());
-    return false;
-  }
-
-  private isNormalized(recipe: Recipe): boolean {
-    return Object.isFrozen(recipe);
-  }
-
   // non-static members
 
   public context: Manifest;
   public readonly pecFactory: PecFactory;
   public readonly loader: Loader | null;
   private cacheService: RuntimeCacheService;
-  /*private*/public composerClass: typeof SlotComposer | null;
   public memoryProvider: VolatileMemoryProvider;
   public readonly storageService: StorageService;
   public readonly allocator: Allocator;
@@ -142,7 +107,6 @@ export class Runtime {
     const rootMap = opts.rootPath && Runtime.mapFromRootPath(opts.rootPath) || nob;
     this.loader = opts.loader || new Loader({...rootMap, ...customMap}, opts.staticMap);
     this.pecFactory = opts.pecFactory || pecIndustry(this.loader);
-    this.composerClass = opts.composerClass || SlotComposer;
     this.cacheService = new RuntimeCacheService();
     this.memoryProvider = opts.memoryProvider || new SimpleVolatileMemoryProvider();
     this.driverFactory = opts.driverFactory || new DriverFactory();

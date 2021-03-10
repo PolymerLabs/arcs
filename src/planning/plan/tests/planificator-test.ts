@@ -88,7 +88,7 @@ describe.skip('remote planificator', () => {
     await consumePlanificator.setSearch(null);
     await consumePlanificator.consumer.result.clear();
     //
-    const deserializedArc = await runtime.allocator.deserialize({slotComposer: new SlotComposer(), fileName: ''});
+    const deserializedArc = runtime.getArcById(await runtime.allocator.deserialize({slotComposer: new SlotComposer(), fileName: ''}));
     //
     producePlanificator = new Planificator(
       deserializedArc,

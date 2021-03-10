@@ -22,15 +22,15 @@
   (async () => {
     try {
       // read intent
-      const manifest = getUrlParam('manifest') || getUrlParam('m') || `Arcs/Login.recipe`;
+      const manifest = getUrlParam('manifest') || getUrlParam('m') || `Arcs/Login.arcs`;
       // configure arcs environment
-      const runtime = new Runtime({rootPath: '../..'});
+      const runtime = new Runtime({rootPath: '../../..'});
       // construct renderer
       const composer = new SlotComposer();
       // establish surface
       composer.observeSlots(new SlotObserver(document.body));
       // start app
-      await App(composer, manifest);
+      await App(runtime, composer, manifest);
     } catch (x) {
       console.error(x);
     }

@@ -11,21 +11,11 @@
 import {Planner} from '../../../../../build/planning/arcs-planning.js';
 import {assert} from '../../../../../build/platform/chai-web.js';
 import {Loader} from '../../../../../build/platform/loader.js';
-import {SlotComposer} from '../../../../../build/runtime/slot-composer.js';
 import {SlotTestObserver} from '../../../../../build/runtime/testing/slot-test-observer.js';
 import {StrategyTestHelper} from '../../../../../build/planning/testing/strategy-test-helper.js';
 import {Runtime} from '../../../../../build/runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../../../../../build/runtime/testing/handle-for-test.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
-
-class TestSlotComposer extends SlotComposer {
-  public readonly observer;
-  constructor() {
-    super();
-    this.observer = new SlotTestObserver();
-    this.observeSlots(this.observer);
-  }
-}
 
 async function init(recipeStr) {
   const loader = new Loader(null, {
@@ -39,10 +29,11 @@ async function init(recipeStr) {
       });
     `
   });
-  const runtime = new Runtime({loader, composerClass: TestSlotComposer});
+  const runtime = new Runtime({loader});
   runtime.context = await runtime.parse(recipeStr);
 
-  const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test-arc'}));
+  const observer = new SlotTestObserver();
+  const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test-arc', slotObserver: observer}));
 
   const planner = new Planner();
   const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
@@ -51,7 +42,6 @@ async function init(recipeStr) {
   await planner.strategizer.generate();
   assert.lengthOf(planner.strategizer.population, 1);
 
-  const observer = (arc.peh.slotComposer as TestSlotComposer).observer;
   const plan = planner.strategizer.population[0].result;
 
   return {runtime, arc, observer, plan};

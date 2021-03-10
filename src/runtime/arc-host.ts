@@ -32,7 +32,7 @@ import {PlanPartition, NewArcOptions} from './arc-info.js';
 export interface ArcHost {
   hostId: string;
   storageService: StorageService;
-  // slotComposer: SlotComposer;  // TODO: refactor to UiBroker.
+  // slotComposer: SlotComposer;  // TODO(b/182410550): refactor to UiBroker.
 
   start(plan: PlanPartition);
   stop(arcId: ArcId);
@@ -61,8 +61,8 @@ export class ArcHostImpl implements ArcHost {
     if (partition.plan) {
       assert(partition.plan.isResolved(), `Unresolved partition plan: ${partition.plan.toString({showUnresolved: true})}`);
       await arc.instantiate(partition.plan, partition.reinstantiate);
-      // TODO: add await to instantiate and return arc.idle here!
-      // TODO: move the call to ParticleExecutionHost's DefineHandle to here
+      // TODO(b/182410550): add await to instantiate and return arc.idle here!
+      // TODO(b/182410550): move the call to ParticleExecutionHost's DefineHandle to here
     }
     return arc;
   }
@@ -89,7 +89,7 @@ export class ArcHostImpl implements ArcHost {
       loader: this.runtime.loader,
       context: this.runtime.context,
       pecFactories: [this.runtime.pecFactory],
-      slotComposer: this.runtime.composerClass ? new this.runtime.composerClass() : null,
+      slotComposer: new SlotComposer(),
       storageService: this.runtime.storageService,
       capabilitiesResolver: this.runtime.getCapabilitiesResolver(id),
       driverFactory: this.runtime.driverFactory,

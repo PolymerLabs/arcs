@@ -158,8 +158,7 @@ describe('Multiplexer', () => {
     const runtime = new Runtime({loader});
     const context = await runtime.parseFile('./shells/tests/artifacts/polymorphic-muxing.recipes');
     //
-    const arcId = await runtime.allocator.startArc({arcName: 'fooTest', storageKeyPrefix: storageKeyPrefixForTest()});
-    const arc = runtime.getArcById(arcId);
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'fooTest', storageKeyPrefix: storageKeyPrefixForTest()}));
     await arc.idle;
     //
     // NOTE: a direct translation of this to new storage is unlikely to work as

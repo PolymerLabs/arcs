@@ -121,18 +121,6 @@ export class ArcId extends Id {
   static _newArcIdInternal(root: string, name: string): ArcId {
     return new ArcId(root, [name]);
   }
-  /** Parses a string representation of an ID (see toString). */
-  static fromString(str: string): ArcId {
-    const bits = str.split(':');
-
-    if (bits[0].startsWith('!')) {
-      const root = bits[0].slice(1);
-      const idTree = bits.slice(1).filter(component => component.length > 0);
-      return new ArcId(root, idTree);
-    } else {
-      return new ArcId('', bits);
-    }
-  }
 
   /** Creates a new Arc ID with the given name. For convenience in unit testing only; otherwise use IdGenerator to create new IDs instead. */
   static newForTest(id: string): ArcId {

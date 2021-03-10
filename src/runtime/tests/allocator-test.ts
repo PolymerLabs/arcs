@@ -36,4 +36,7 @@ describe('Allocator', () => {
     assert.equal(arc.id, arcId);
     assert.equal(arc.activeRecipe.name, 'TestRecipe');
   });
+
+  // TODO(b/182410550): Add more tests. Currently Allocator functionality is tested
+  // via other unit tests, that create Arcs and instantiate recipes using Runtime.
 });

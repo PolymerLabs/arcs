@@ -16,7 +16,7 @@ import 'https://$particles/Profile/Sharing.recipe'
   `);
   console.log(`context [${context.id}]`);
 
-  const manifest = await Runtime.parse(`import 'https://$particles/${manifestPath || 'Arcs/Login.recipe'}'`);
+  const manifest = await Runtime.parse(`import 'https://$particles/${manifestPath || 'Arcs/Login.arcs'}'`);
   console.log(`manifest [${manifest.id}]`);
 
   const recipe = manifest.allRecipes[0];
