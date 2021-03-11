@@ -97,7 +97,6 @@ class PolicyTest {
         callbackExecuted = true
       }
     assertThat(callbackExecuted).isTrue()
-
   }
 
   companion object {
