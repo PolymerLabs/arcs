@@ -49,11 +49,6 @@ class PolicyTest {
 
     val arc = env.startArc(PersistsEgressesPlan)
 
-    // Ensure that the store contains the ingress-restricted schema (`Thing {a, b}`)
-    val allStoreSchemas = env.getCreateHandleArgs().mapNotNull { it.storeSchema }
-    assertThat(allStoreSchemas).doesNotContain(AbstractIngressThing.Thing.SCHEMA)
-    assertThat(allStoreSchemas).contains(AbstractEgressAB.Thing.SCHEMA)
-
     env.waitForIdle(arc)
 
     val ingest = env.getParticle<IngressThing>(arc)
@@ -69,7 +64,7 @@ class PolicyTest {
     val startingKey = (egressAB.handles.output.getProxy().storageKey as ReferenceModeStorageKey)
       .storageKey
 
-    // Thing {a, b} is written to storage
+    // Only Thing {a, b} is written to storage
     var callbackExecuted = false
     env.getStorageState(startingKey, AbstractIngressThing.Thing.SCHEMA)
       .filterIsInstance<DatabaseData.Entity>()
