@@ -23,7 +23,9 @@ import arcs.core.host.NoOpArcHostContextSerializer
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ParticleState
 import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
+import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.RamDisk
 import arcs.core.util.TaggedLog
 import arcs.jvm.host.ExplicitHostRegistry
@@ -392,6 +394,26 @@ class IntegrationEnvironment(
 
   class IntegrationStorageService : StorageService() {
     fun changeConfig(config: StorageServiceConfig) = schedulePeriodicJobs(config)
+  }
+
+  /** Get [DatabaseData.Entity]s from a Collection in storage. */
+  suspend fun getDatabaseEntities(
+    startingKey: StorageKey,
+    fullSchema: Schema
+  ): List<DatabaseData.Entity> {
+    return dbManager.registry.fetchAll()
+      .map { dbManager.getDatabase(it.name, it.isPersistent) }
+      .flatMap { db ->
+        val collection = db.get(startingKey, DatabaseData.Collection::class, fullSchema)
+          as DatabaseData.Collection?
+
+        // Return associated entities with the collection.
+        collection?.values?.mapNotNull {
+          db.get(it.rawReference.referencedStorageKey(), DatabaseData.Entity::class, fullSchema)
+            as DatabaseData.Entity?
+        }
+          ?: emptyList()
+      }
   }
 }
 
