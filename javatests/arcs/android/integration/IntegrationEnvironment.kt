@@ -9,7 +9,6 @@ import androidx.work.testing.TestDriver
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
-import arcs.android.storage.database.DatabaseImpl
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.core.allocator.Allocator
 import arcs.core.allocator.Arc
@@ -418,49 +417,24 @@ class IntegrationEnvironment(
     return handleManager.createHandleArguments.toList()
   }
 
-  /** Get collection of [DatabaseData] for all databases; includes referenced entities. */
-  suspend fun getStorageState(startingKey: StorageKey, fullSchema: Schema): List<DatabaseData> {
-    val classes = listOf(
-      DatabaseData.Collection::class,
-      DatabaseData.Singleton::class,
-      DatabaseData.Entity::class
-    )
+  /** Get [DatabaseData.Entity]s from a Collection in storage. */
+  suspend fun getDatabaseEntities(
+    startingKey: StorageKey,
+    fullSchema: Schema
+  ): List<DatabaseData.Entity> {
+    return dbManager.registry.fetchAll()
+      .map { dbManager.getDatabase(it.name, it.isPersistent) }
+      .flatMap { db ->
+        val collection = db.get(startingKey, DatabaseData.Collection::class, fullSchema)
+          as DatabaseData.Collection?
 
-    val dbs = dbManager.registry.fetchAll()
-      .map { dbManager.getDatabase(it.name, it.isPersistent) as DatabaseImpl }
-
-    return dbs.flatMap { dbImpl ->
-      // Get the first value at the storage key location, guessing if it's a singleton, collection,
-      // or entity.
-      val data = classes.mapNotNull { klass ->
-        try {
-          dbImpl.get(startingKey, klass, fullSchema)
-        } catch (e: IllegalArgumentException) {
-          null
+        // Return associated entities with the collection.
+        collection?.values?.mapNotNull {
+          db.get(it.rawReference.referencedStorageKey(), DatabaseData.Entity::class, fullSchema)
+            as DatabaseData.Entity?
         }
-      }.firstOrNull()
-
-      // Return the value found (if it exists) and the values it references (if it's a singleton or
-      // collection).
-      when (data) {
-        null -> emptyList()
-        is DatabaseData.Singleton -> {
-          val singletonKey = data.value?.rawReference?.referencedStorageKey()
-          if (singletonKey == null) listOf(data)
-          else listOfNotNull(
-            data,
-            dbImpl.get(singletonKey, DatabaseData.Entity::class, fullSchema)
-          )
-        }
-        is DatabaseData.Collection -> {
-          val collectionKeys = data.values.map { it.rawReference.referencedStorageKey() }
-          listOf(data) + collectionKeys.mapNotNull { key ->
-            dbImpl.get(key, DatabaseData.Entity::class, fullSchema)
-          }
-        }
-        is DatabaseData.Entity -> listOf(data)
+          ?: emptyList()
       }
-    }
   }
 }
 
