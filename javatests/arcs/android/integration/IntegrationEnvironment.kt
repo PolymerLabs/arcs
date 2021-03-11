@@ -99,10 +99,10 @@ import org.robolectric.shadows.ShadowSystemClock
  * @Test
  * fun checkThatStorageLooksOk() = runTest {
  *  // Get storage key location from a live particle
- *  val startingKey = getStorageKeyFromHandle(someParticle.handles.input)
+ *  val collectionKey = // ... some way to get the key from a handle.
  *
- *  // Returns a list of [DatabaseData] data classes
- *  val storageState = env.getStorageState(startingKey, AbstractSomeParticle.FooType.SCHEMA)
+ *  // Returns a list of [DatabaseData.Entity] data classes
+ *  val storageState = env.getDatabaseEntities(collectionKey, AbstractSomeParticle.FooType.SCHEMA)
  *
  *  // ...
  * }
@@ -398,13 +398,13 @@ class IntegrationEnvironment(
 
   /** Get [DatabaseData.Entity]s from a Collection in storage. */
   suspend fun getDatabaseEntities(
-    startingKey: StorageKey,
+    collectionKey: StorageKey,
     fullSchema: Schema
   ): List<DatabaseData.Entity> {
     return dbManager.registry.fetchAll()
       .map { dbManager.getDatabase(it.name, it.isPersistent) }
       .flatMap { db ->
-        val collection = db.get(startingKey, DatabaseData.Collection::class, fullSchema)
+        val collection = db.get(collectionKey, DatabaseData.Collection::class, fullSchema)
           as DatabaseData.Collection?
 
         // Return associated entities with the collection.
