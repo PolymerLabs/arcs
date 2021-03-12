@@ -790,6 +790,9 @@ ParticleHandleConnectionBody
       expression: optional(expression, e => e[3], null)
     });
   }
+  / name:NameWithColon &(!('consumes' / 'provides')) (direction:([a-zA-Z0-0?]+) {
+    expected(`a direction (${AstNode.directions.join(', ')})`)
+  })
 
 Direction "a direction (e.g. reads writes, reads, writes, hosts, `consumes, `provides, any')"
   = (('reads' ('?'?) ' writes') / 'reads' / 'writes' / 'hosts' / '`consumes' / '`provides') &([^a-zA-Z0-9] / !.)

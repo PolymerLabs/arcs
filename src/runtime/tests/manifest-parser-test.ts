@@ -213,7 +213,7 @@ describe('manifest parser', () => {
           particle MyParticle
             foo: read MyThing`);
       },
-      /Expected a direction (reads, writes.*) but "read" found./,
+      /Expected a direction \(reads, writes.*\) but "read" found\./,
       'this parse should have failed, unknown capabilities/directions should not be accepted!'
     );
   });
