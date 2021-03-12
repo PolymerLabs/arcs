@@ -207,6 +207,16 @@ describe('manifest parser', () => {
       store Store1 of Person 'some-id' @7 in 'person.json'
       store Store2 of BigCollection<Person> in 'population.json'`);
   });
+  it('fails to parse a particle handle with an unknown capability/direction', () => {
+    assert.throws(() => {
+        parse(`
+          particle MyParticle
+            foo: read MyThing`);
+      },
+      /Expected a direction (reads, writes.*) but "read" found./,
+      'this parse should have failed, unknown capabilities/directions should not be accepted!'
+    );
+  });
   it('fails to parse an argument list that use a reserved word as an identifier', () => {
     assert.throws(() => {
         parse(`
