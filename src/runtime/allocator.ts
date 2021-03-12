@@ -31,11 +31,6 @@ import {NewArcOptions, PlanPartition, DeserializeArcOptions} from './arc-info.js
 import {ArcHost, ArcHostFactory, SingletonArcHostFactory} from './arc-host.js';
 import {RecipeResolver} from './recipe-resolver.js';
 
-export type PlanInArcOptions = Readonly<{
-  arcId: ArcId;
-  planName?: string;
-}>;
-
 export interface Allocator {
   registerArcHost(factory: ArcHostFactory);
 
