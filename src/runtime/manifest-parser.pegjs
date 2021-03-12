@@ -426,9 +426,9 @@ Interface "an interface"
 // split into multiple capture clauses because the combined one is able to match against an empty string (this would
 // cause an infinite loop).
 InterfaceArgument
-  = name:NameWithColon direction:(Direction / SlotDirection)? isOptional:'?'? type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
+  = name:NameWithColon direction:(SlotDirection / Direction)? isOptional:'?'? type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
   { return buildInterfaceArgument(name, direction || 'any', isOptional, optional(type, t => t[1], null)); }
-  / direction:(Direction / SlotDirection) isOptional:'?'? type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
+  / direction:(SlotDirection / Direction) isOptional:'?'? type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
   { return buildInterfaceArgument(null, direction || 'any', isOptional, optional(type, t => t[1], null)); }
   / isOptional:'?'? type:(whiteSpace? ParticleHandleConnectionType) eolWhiteSpace
   { return buildInterfaceArgument(null, 'any', isOptional, type); }
