@@ -810,6 +810,97 @@ abstract class ReferenceModeStoreTestBase {
     assertThat(message).isInstanceOf(ProxyMessage.SyncRequest::class.java)
   }
 
+  @Test
+  fun entityVersion_isIncremented() = runBlockingTest {
+    val activeStore = collectionReferenceModeStore(scope = this)
+    val storeHelper = RefModeStoreHelper("me", activeStore)
+    val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
+
+    storeHelper.sendAddOp(bob)
+
+    // The actor is non-deterministic, we can check that there is only one actor and its version is 1.
+    assertThat(activeStore.getLocalData("an-id").versionMap.backingMap.values).containsExactly(1)
+
+    storeHelper.sendAddOp(bob)
+
+    // Check that the entity version has been incremented.
+    assertThat(activeStore.getLocalData("an-id").versionMap.backingMap.values).containsExactly(2)
+  }
+
+  @Test
+  fun entityVersion_reset_onClearOp() = runBlockingTest {
+    val activeStore = collectionReferenceModeStore(scope = this)
+    val storeHelper = RefModeStoreHelper("me", activeStore)
+    val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
+    storeHelper.sendAddOp(bob)
+    assertThat(activeStore.getLocalData("an-id").versionMap.backingMap.values).containsExactly(1)
+
+    // Now clear the container store.
+    activeStore.containerStore.onProxyMessage(
+      ProxyMessage.Operations(
+        listOf(
+          CrdtSet.Operation.Clear<RawReference>(
+            "me",
+            activeStore.containerStore.getLocalData().versionMap
+          )
+        ),
+        null
+      )
+    )
+
+    // Now re-add Bob. If the versions map was correctly cleared, we should still be at version 1.
+    storeHelper.sendAddOp(bob)
+    assertThat(activeStore.getLocalData("an-id").versionMap.backingMap.values).containsExactly(1)
+  }
+
+  @Test
+  fun entityVersion_reset_onRemoveOp() = runBlockingTest {
+    val activeStore = collectionReferenceModeStore(scope = this)
+    val storeHelper = RefModeStoreHelper("me", activeStore)
+    val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
+    storeHelper.sendAddOp(bob)
+    assertThat(activeStore.getLocalData("an-id").versionMap.backingMap.values).containsExactly(1)
+
+    // Now remove from the container with a remove op.
+    activeStore.containerStore.onProxyMessage(
+      ProxyMessage.Operations(
+        listOf(
+          CrdtSet.Operation.Remove<RawReference>(
+            "me",
+            activeStore.containerStore.getLocalData().versionMap,
+            "an-id"
+          )
+        ),
+        null
+      )
+    )
+
+    // Now re-add Bob. If the versions map was correctly cleared, we should still be at version 1.
+    storeHelper.sendAddOp(bob)
+    assertThat(activeStore.getLocalData("an-id").versionMap.backingMap.values).containsExactly(1)
+  }
+
+  @Test
+  fun entityVersion_reset_onModelUpdate() = runBlockingTest {
+    val activeStore = collectionReferenceModeStore(scope = this)
+    val storeHelper = RefModeStoreHelper("me", activeStore)
+    val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
+    storeHelper.sendAddOp(bob)
+    assertThat(activeStore.getLocalData("an-id").versionMap.backingMap.values).containsExactly(1)
+
+    // Now clear the container store sending an empty model.
+    activeStore.containerStore.onProxyMessage(
+      ProxyMessage.ModelUpdate(
+        CrdtSet(CrdtSet.DataImpl<RawReference>(versionMap = VersionMap("me" to 2))).data,
+        null
+      )
+    )
+
+    // Now re-add Bob. If the versions map was correctly cleared, we should still be at version 1.
+    storeHelper.sendAddOp(bob)
+    assertThat(activeStore.getLocalData("an-id").versionMap.backingMap.values).containsExactly(1)
+  }
+
   protected suspend fun collectionReferenceModeStore(scope: CoroutineScope): ReferenceModeStore {
     return ReferenceModeStore.collectionTestStore(
       TEST_KEY,

@@ -84,7 +84,9 @@ data class ReferencablePrimitive<T> private constructor(
       ArcsDuration::class to "Primitive<$primitiveArcsDuration>",
       ArcsInstant::class to "Primitive<$primitiveArcsInstant>"
     )
-    private val pattern = "Primitive<([^>]+)>\\((.*)\\)$".toRegex()
+
+    // the DOT_MATCHES_ALL flag is required so that .* matches newlines and other characters
+    private val pattern = Regex("Primitive<([^>]+)>\\((.*)\\)", RegexOption.DOT_MATCHES_ALL)
 
     /** Returns whether or not the given type is a supported type for [ReferencablePrimitive]. */
     fun isSupportedPrimitive(klass: KClass<*>): Boolean =

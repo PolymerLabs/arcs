@@ -9,12 +9,16 @@ FAKE_DRIVER_PROVIDER_SRCS = [
     "FakeDriver.kt",
 ]
 
+GENERATOR_SRCS = [
+    "Generators.kt",
+]
+
 arcs_kt_jvm_library(
     name = "testutil",
     testonly = True,
     srcs = glob(
         ["*.kt"],
-        exclude = FAKE_DRIVER_PROVIDER_SRCS,
+        exclude = FAKE_DRIVER_PROVIDER_SRCS + GENERATOR_SRCS,
     ),
     deps = [
         "//java/arcs/core/common",
@@ -50,5 +54,17 @@ arcs_kt_jvm_library(
         "//java/arcs/core/crdt",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:storage_key",
+    ],
+)
+
+arcs_kt_jvm_library(
+    name = "generators",
+    testonly = True,
+    srcs = GENERATOR_SRCS,
+    deps = [
+        "//java/arcs/core/storage:reference",
+        "//java/arcs/core/storage:storage_key",
+        "//java/arcs/core/storage/testutil",
+        "//java/arcs/core/testutil",
     ],
 )

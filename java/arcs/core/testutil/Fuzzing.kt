@@ -301,9 +301,7 @@ class AlphaNumericString(
   override fun invoke(): String {
     val len = length()
     val builder = StringBuilder(len)
-    (1..len).forEach {
-      builder.append(VALID_CHARS[s.nextInRange(0, VALID_CHARS_SIZE - 1)])
-    }
+    repeat(len) { builder.append(VALID_CHARS[s.nextInRange(0, VALID_CHARS_SIZE - 1)]) }
     return builder.toString()
   }
 
@@ -313,8 +311,27 @@ class AlphaNumericString(
   }
 }
 
-fun midSizedString(s: FuzzingRandom): Generator<String> {
+/** A [Generator] that produces arbitrary Unicode strings. */
+class UnicodeString(
+  val s: FuzzingRandom,
+  val length: Generator<Int>
+) : Generator<String> {
+  override fun invoke(): String {
+    val len = length()
+    val builder = StringBuilder(len)
+    repeat(len) { builder.append(s.nextChar()) }
+    return builder.toString()
+  }
+}
+
+/** Utility to produce alphanumeric strings between 10 and 50 characters long. */
+fun midSizedAlphaNumericString(s: FuzzingRandom): Generator<String> {
   return AlphaNumericString(s, IntInRange(s, 10, 50))
+}
+
+/** Utility to produce Unicode strings between 10 and 50 characters long. */
+fun midSizedUnicodeString(s: FuzzingRandom): Generator<String> {
+  return UnicodeString(s, IntInRange(s, 10, 50))
 }
 
 /**
@@ -408,6 +425,101 @@ class MapOf<T, U>(
  */
 class Function<I, O>(val f: (i: I) -> O) : Transformer<I, O>() {
   override operator fun invoke(i: I): O = f(i)
+}
+
+/**
+ * Utility class to enable recursive definitions of [Generator]s.
+ *
+ * This class should only be used via the [generatorWithRecursion] function; see that function
+ * for documentation.
+ */
+private class LazyGenerator<T>(
+  var maxDepth: Int,
+  val terminationCase: Generator<T>?
+) : Generator<T> {
+  private var generator: Generator<T>? = null
+  override fun invoke(): T {
+    if (maxDepth == 0) {
+      return terminationCase?.invoke() ?: throw java.lang.UnsupportedOperationException(
+        "termination depth reached but no terminator"
+      )
+    }
+    maxDepth--
+    val result = generator?.invoke() ?: throw UnsupportedOperationException(
+      "must set internal generator before invoking"
+    )
+    maxDepth++
+    return result
+  }
+  fun setGenerator(generator: Generator<T>) {
+    this.generator = generator
+  }
+}
+
+/**
+ * Utility class to enable recursive definitions of [Transformer]s.
+ *
+ * This class should only be used via the [transformerWithRecursion] function; see that function
+ * for documentation.
+ */
+private class LazyTransformer<I, O> : Transformer<I, O>() {
+  private var transformer: Transformer<I, O>? = null
+  override fun invoke(i: I): O {
+    return transformer?.invoke(i)
+      ?: throw UnsupportedOperationException("must set internal generator before invoking")
+  }
+  fun setTransformer(transformer: Transformer<I, O>) {
+    this.transformer = transformer
+  }
+}
+
+/**
+ * In cases where you need a [Generator] of type T in order to produce a [Generator] of type
+ * T, this function allows the construction to be expressed as a function from [Generator]<T> to
+ * [Generator]<T>.
+ *
+ * A [LazyGenerator] is constructed and provided to the function, then the returned implementation
+ * is inserted into the [LazyGenerator] using [setGenerator].
+ *
+ * If desired, this function can also be used to control recursive depth by passing a positive
+ * [maxDepth]. When doing so, you should also provide a simple [Generator]<T> instance to use as
+ * the [terminationCase] of the recursion.
+ *
+ * For example:
+ *
+ * generatorWithRecursion(2, SimpleGenerator<Int>) {
+ *   return ComplexGenerator<Int>(OtherGenerator(it))
+ * }
+ *
+ * will return a ComplexGenerator which will recurse on itself twice before invoking
+ * SimpleGenerator instead.
+ */
+fun <T> generatorWithRecursion(
+  maxDepth: Int = -1,
+  terminationCase: Generator<T>? = null,
+  f: (Generator<T>) -> Generator<T>
+): Generator<T> {
+  val generatorForRecursion = LazyGenerator<T>(maxDepth, terminationCase)
+  val generatorImplementation = f(generatorForRecursion)
+  generatorForRecursion.setGenerator(generatorImplementation)
+  return generatorForRecursion
+}
+
+/**
+ * In cases where you need a [Transformer] of type I,O in order to produce a [Transformer] of type
+ * I,O, this function allows the construction to be expressed as a function from [Transformer]<I, O>
+ * to [Transformer]<I, O>.
+ *
+ * A [LazyTransformer] is constructed and provided to the function, then the returned implementation
+ * is inserted into the [LazyTransformer] using [setTransformer].
+ */
+fun <I, O> transformerWithRecursion(
+  f: (Transformer<I, O>) -> Transformer<I, O>
+): Transformer<I, O> {
+  val transformerForRecursion = LazyTransformer<I, O>()
+  val transformerImplementation = f(transformerForRecursion)
+  transformerForRecursion.setTransformer(transformerImplementation)
+  return transformerImplementation
 }
 
 /**

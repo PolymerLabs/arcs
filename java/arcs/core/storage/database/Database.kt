@@ -11,6 +11,7 @@
 
 package arcs.core.storage.database
 
+import arcs.core.common.ReferenceId
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -167,6 +168,17 @@ sealed class DatabaseOp(open val schema: Schema) {
     val value: RawReference,
     override val schema: Schema
   ) : DatabaseOp(schema)
+
+  // Remove any element with the given id from the collection, no-op if the collection does not
+  // exist or does not contain that id. Also clears the entity corresponding to the id.
+  data class RemoveFromCollection(
+    val id: ReferenceId,
+    override val schema: Schema
+  ) : DatabaseOp(schema)
+
+  // Clear the collection, no-op if the collection does not exist or is empty.  Also clears all the
+  // entities that were in the collection.
+  data class ClearCollection(override val schema: Schema) : DatabaseOp(schema)
 }
 
 data class ReferenceWithVersion(

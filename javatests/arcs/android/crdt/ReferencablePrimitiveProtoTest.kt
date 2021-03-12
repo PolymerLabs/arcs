@@ -11,14 +11,11 @@
 
 package arcs.android.crdt
 
-import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.android.util.writeProto
 import arcs.core.data.util.toReferencable
 import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
-import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -26,221 +23,95 @@ import org.junit.runner.RunWith
 class ReferencablePrimitiveProtoTest {
   @Test
   fun parcelableRoundTrip_works_forBytes() {
-    val primitive = 42.toByte().toReferencable()
-
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(primitive.toProto())
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readReferencablePrimitive()
-    }
-
-    assertThat(unmarshalled).isEqualTo(primitive)
+    invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip(42.toByte().toReferencable())
   }
 
   @Test
   fun parcelableRoundTrip_works_forChars() {
-    val primitive = 'a'.toReferencable()
+    invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip('a'.toReferencable())
+  }
 
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(primitive.toProto())
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readReferencablePrimitive()
-    }
+  @Test
+  fun parcelableRoundTrip_works_forNewlineChars() {
+    invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip('\n'.toReferencable())
+  }
 
-    assertThat(unmarshalled).isEqualTo(primitive)
+  @Test
+  fun parcelableRoundTrip_works_forCarriageReturnChars() {
+    invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip('\r'.toReferencable())
   }
 
   @Test
   fun parcelableRoundTrip_works_forShorts() {
-    val primitive = 1337.toShort().toReferencable()
-
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(primitive.toProto())
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readReferencablePrimitive()
-    }
-
-    assertThat(unmarshalled).isEqualTo(primitive)
+    invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip(
+      1337.toShort().toReferencable()
+    )
   }
 
   @Test
   fun parcelableRoundTrip_works_forInts() {
-    val primitive = 1.toReferencable()
-
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(primitive.toProto())
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readReferencablePrimitive()
-    }
-
-    assertThat(unmarshalled).isEqualTo(primitive)
+    invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip(1.toReferencable())
   }
 
   @Test
   fun parcelableRoundTrip_works_forLongs() {
-    val primitive = 6000000000L.toReferencable()
-
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(primitive.toProto())
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readReferencablePrimitive()
-    }
-
-    assertThat(unmarshalled).isEqualTo(primitive)
+    invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip(6000000000L.toReferencable())
   }
 
   @Test
   fun parcelableRoundTrip_works_forFloats() {
-    val primitive = 1.0f.toReferencable()
-
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(primitive.toProto())
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readReferencablePrimitive()
-    }
-
-    assertThat(unmarshalled).isEqualTo(primitive)
+    invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip(1.0f.toReferencable())
   }
 
   @Test
   fun parcelableRoundTrip_works_forDoubles() {
-    val primitive = 1.0.toReferencable()
-
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(primitive.toProto())
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readReferencablePrimitive()
-    }
-
-    assertThat(unmarshalled).isEqualTo(primitive)
+    invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip(1.0.toReferencable())
   }
 
   @Test
   fun parcelableRoundTrip_works_forStrings() {
-    val primitive = "This is a test".toReferencable()
+    invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip(
+      "This is a test".toReferencable()
+    )
+  }
 
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(primitive.toProto())
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readReferencablePrimitive()
-    }
-
-    assertThat(unmarshalled).isEqualTo(primitive)
+  @Test
+  fun parcelableRoundTrip_works_forStrings_withParenthesis() {
+    invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip(
+      "This) ((is) a((()())( test(".toReferencable()
+    )
   }
 
   @Test
   fun parcelableRoundTrip_works_forBooleans() {
-    val primitive = true.toReferencable()
-
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(primitive.toProto())
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readReferencablePrimitive()
-    }
-
-    assertThat(unmarshalled).isEqualTo(primitive)
+    invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip(true.toReferencable())
   }
 
   @Test
   fun parcelableRoundTrip_works_forByteArrays() {
-    val primitive = ByteArray(10) { it.toByte() }.toReferencable()
-
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(primitive.toProto())
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readReferencablePrimitive()
-    }
-    assertThat(unmarshalled).isEqualTo(primitive)
+    invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip(
+      ByteArray(10) { it.toByte() }.toReferencable()
+    )
   }
 
   @Test
   fun parcelableRoundTrip_works_forBigInts() {
-    val primitive = BigInt("100000000000000000000000000000000000000000001").toReferencable()
-
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(primitive.toProto())
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readReferencablePrimitive()
-    }
-
-    assertThat(unmarshalled).isEqualTo(primitive)
+    invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip(
+      BigInt("100000000000000000000000000000000000000000001").toReferencable()
+    )
   }
 
   @Test
   fun parcelableRoundTrip_works_forArcsDurations() {
-    val primitive = ArcsDuration.ofMillis(1337).toReferencable()
-
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(primitive.toProto())
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readReferencablePrimitive()
-    }
-
-    assertThat(unmarshalled).isEqualTo(primitive)
+    invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip(
+      ArcsDuration.ofMillis(1337).toReferencable()
+    )
   }
 
   @Test
   fun parcelableRoundTrip_works_forArcsInstants() {
-    val primitive = ArcsInstant.ofEpochMilli(1337).toReferencable()
-
-    val marshalled = with(Parcel.obtain()) {
-      writeProto(primitive.toProto())
-      marshall()
-    }
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readReferencablePrimitive()
-    }
-
-    assertThat(unmarshalled).isEqualTo(primitive)
+    invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip(
+      ArcsInstant.ofEpochMilli(1337).toReferencable()
+    )
   }
 }

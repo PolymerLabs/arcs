@@ -48,6 +48,7 @@ import arcs.core.util.TaggedLog
 import arcs.core.util.Time
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
+import arcs.flags.BuildFlags
 import kotlin.properties.Delegates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -141,7 +142,11 @@ class ReferenceModeStore private constructor(
    * needs to synthesize updates. This key is used as the unique write key and
    * [arcs.core.crdt.internal.Actor] for those updates.
    */
-  /* internal */ val crdtKey = Random.nextSafeRandomLong().toString()
+  /* internal */ val crdtKey = if (!BuildFlags.STORAGE_STRING_REDUCTION) {
+    Random.nextSafeRandomLong().toString()
+  } else {
+    String(Random.nextBytes(8))
+  }
 
   /**
    * The [versions] map transitively tracks the maximum write version for each contained entity's
@@ -149,7 +154,7 @@ class ReferenceModeStore private constructor(
    *
    * All access to this map should be synchronized.
    */
-  private val versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
+  private var versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
 
   /**
    * Callback Id of the callback that the [ReferenceModeStore] registered with the backing store.
@@ -464,8 +469,32 @@ class ReferenceModeStore private constructor(
         }
       }
     }
+    removeUnusedEntityVersions(proxyMessage)
     return true
   }
+
+  /* Removes entries from the entities versions, if they were removed from the container store. */
+  private fun removeUnusedEntityVersions(proxyMessage: ContainerProxyMessage) =
+    synchronized(versions) {
+      when (proxyMessage) {
+        is ProxyMessage.Operations ->
+          proxyMessage.operations.forEach { op ->
+            when (op) {
+              is CrdtSet.Operation.Remove<*> -> versions.remove(op.removed)
+              is CrdtSet.Operation.Clear<*> -> versions.clear()
+              is CrdtSet.Operation.FastForward<*> -> versions.keys.removeAll(op.removed)
+            }
+          }
+        is ProxyMessage.ModelUpdate -> {
+          if (proxyMessage.model is CrdtSet.Data<*>) {
+            val keys =
+              (proxyMessage.model as CrdtSet.Data<*>).values.keys.filter { versions.contains(it) }
+            versions = keys.associateWithTo(mutableMapOf()) { versions[it]!! }
+          }
+        }
+        is ProxyMessage.SyncRequest -> return
+      }
+    }
 
   private fun newBackingInstance(): CrdtModel<CrdtData, CrdtOperation, Referencable> =
     crdtType.createCrdtModel()

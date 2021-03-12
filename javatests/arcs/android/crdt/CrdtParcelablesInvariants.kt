@@ -1,8 +1,10 @@
 package arcs.android.crdt
 
 import android.os.Parcel
+import arcs.android.util.writeProto
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
+import arcs.core.data.util.ReferencablePrimitive
 import com.google.common.truth.Truth.assertThat
 
 /**
@@ -30,4 +32,23 @@ fun invariant_CrdtOperation_preservedDuring_parcelRoundTrip(op: CrdtOperation) {
 fun invariant_CrdtOperations_preservedDuring_parcelRoundTrip(ops: List<CrdtOperation>) {
   val unmarshalled = roundTripThroughParcel(ops, Parcel::writeOperations, Parcel::readOperations)
   assertThat(unmarshalled).isEqualTo(ops)
+}
+
+private fun <T> Parcel.writeReferencablePrimitiveAsProto(primitive: ReferencablePrimitive<T>) {
+  writeProto(primitive.toProto())
+}
+
+/**
+ * When we write a [ReferencablePrimitive] into a Parcelable using [writeProto], we can always
+ * reconstruct the identical primitive by reading using [readReferencablePrimitive]
+ */
+fun <T> invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip(
+  primitive: ReferencablePrimitive<T>
+) {
+  val unmarshalled = roundTripThroughParcel(
+    primitive,
+    Parcel::writeReferencablePrimitiveAsProto,
+    Parcel::readReferencablePrimitive
+  )
+  assertThat(unmarshalled).isEqualTo(primitive)
 }

@@ -3,24 +3,29 @@ package arcs.core.data.testutil
 import arcs.core.common.Referencable
 import arcs.core.data.CollectionType
 import arcs.core.data.CreatableStorageKey
+import arcs.core.data.FieldName
 import arcs.core.data.FieldType
 import arcs.core.data.HandleMode
 import arcs.core.data.Plan
 import arcs.core.data.PrimitiveType
+import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
+import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.EntityBaseSpec
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.testutil.ParticleRegistrationGenerator
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
 import arcs.core.testutil.ChooseFromList
 import arcs.core.testutil.FuzzingRandom
 import arcs.core.testutil.Generator
 import arcs.core.testutil.Transformer
 import arcs.core.testutil.Value
-import arcs.core.testutil.midSizedString
+import arcs.core.testutil.midSizedUnicodeString
 import arcs.core.type.Type
 import arcs.core.util.BigInt
 
@@ -238,66 +243,178 @@ class ListFieldTypeGenerator(
 }
 
 /**
- * A [Generator] of [FieldType]s. Note that this does not currently generate references
- * or inline entities.
+ * A [Generator] of [FieldType]s representing inline entities.
+ *
+ * Note that inline entities are referenced by schema hash rather than direct incorporation
+ * of the inline schema into the parent schema. For this reason, this generator returns
+ * [FieldTypeWithReferencedSchemas] objects that encapsulate both a [FieldType] and any schemas
+ * referenced by that [FieldType].
+ */
+class InlineEntityFieldTypeGenerator(
+  val schema: Generator<SchemaWithReferencedSchemas>
+) : Generator<FieldTypeWithReferencedSchemas> {
+  override fun invoke(): FieldTypeWithReferencedSchemas {
+    val theSchema = schema()
+    return FieldTypeWithReferencedSchemas(
+      FieldType.InlineEntity(theSchema.schema.hash),
+      theSchema.schemas + (theSchema.schema.hash to theSchema.schema)
+    )
+  }
+}
+
+/**
+ * A [Generator] of [FieldType]s representing references.
+ *
+ * Note that entities referenced by references are described by schema hash rather than direct
+ * incorporation of the inline schema into the field. For this reason, this generator returns
+ * [FieldTypeWithReferencedSchemas] objects that encapsulate both a [FieldType] and any schemas
+ * referenced by that [FieldType].
+ */
+class ReferenceFieldTypeGenerator(
+  val schema: Generator<SchemaWithReferencedSchemas>
+) : Generator<FieldTypeWithReferencedSchemas> {
+  override fun invoke(): FieldTypeWithReferencedSchemas {
+    val theSchema = schema()
+    return FieldTypeWithReferencedSchemas(
+      FieldType.EntityRef(theSchema.schema.hash),
+      theSchema.schemas + (theSchema.schema.hash to theSchema.schema)
+    )
+  }
+}
+
+/**
+ * A [Generator] of [FieldType]s that one could validly make an ordered list of.
  *
  * Note that some [FieldType]s reference schema hashes that are expected to be in a global
  * registry. For this reason, all [FieldType] generators return [FieldTypeWithReferencedSchemas]
  * objects that encapsulate both a [FieldType] and any schemas referenced by that [FieldType].
  */
-class FieldTypeGenerator(val s: FuzzingRandom) : Generator<FieldTypeWithReferencedSchemas> {
+class FieldTypeValidForListGenerator(
+  val s: FuzzingRandom,
+  val schema: Generator<SchemaWithReferencedSchemas>
+) : Generator<FieldTypeWithReferencedSchemas> {
   override fun invoke(): FieldTypeWithReferencedSchemas {
     return ChooseFromList(
       s,
       listOf(
         PrimitiveFieldTypeGenerator(s),
-        ListFieldTypeGenerator(PrimitiveFieldTypeGenerator(s))
+        InlineEntityFieldTypeGenerator(schema),
+        ReferenceFieldTypeGenerator(schema)
       )
     ).invoke().invoke()
   }
 }
 
 /**
+ * A [Generator] of [FieldType]s.
+ *
+ * Note that some [FieldType]s reference schema hashes that are expected to be in a global
+ * registry. For this reason, all [FieldType] generators return [FieldTypeWithReferencedSchemas]
+ * objects that encapsulate both a [FieldType] and any schemas referenced by that [FieldType].
+ */
+class FieldTypeGenerator(
+  val s: FuzzingRandom,
+  val schema: Generator<SchemaWithReferencedSchemas>
+) : Generator<FieldTypeWithReferencedSchemas> {
+  override fun invoke(): FieldTypeWithReferencedSchemas {
+    return ChooseFromList(
+      s,
+      listOf(
+        PrimitiveFieldTypeGenerator(s),
+        ListFieldTypeGenerator(FieldTypeValidForListGenerator(s, schema)),
+        InlineEntityFieldTypeGenerator(schema),
+        ReferenceFieldTypeGenerator(schema)
+      )
+    ).invoke().invoke()
+  }
+}
+
+/**
+ * A [Transformer] that, given a [PrimitiveType], can produce [ReferencablePrimitive] objects
+ * with appropriate data.
+ */
+class ReferencablePrimitiveFromPrimitiveType(
+  val s: FuzzingRandom
+) : Transformer<PrimitiveType, ReferencablePrimitive<*>>() {
+  override fun invoke(i: PrimitiveType): ReferencablePrimitive<*> {
+    return when (i) {
+      PrimitiveType.Boolean -> s.nextBoolean().toReferencable()
+      PrimitiveType.BigInt -> BigInt.valueOf(s.nextLong()).toReferencable()
+      PrimitiveType.Byte -> s.nextByte().toReferencable()
+      PrimitiveType.Char -> s.nextChar().toReferencable()
+      PrimitiveType.Double -> s.nextDouble().toReferencable()
+      PrimitiveType.Duration -> s.nextLong().toReferencable()
+      PrimitiveType.Float -> s.nextFloat().toReferencable()
+      PrimitiveType.Instant -> s.nextLong().toReferencable()
+      PrimitiveType.Int -> s.nextInt().toReferencable()
+      PrimitiveType.Long -> s.nextLong().toReferencable()
+      PrimitiveType.Number -> s.nextDouble().toReferencable()
+      PrimitiveType.Short -> s.nextShort().toReferencable()
+      PrimitiveType.Text -> midSizedUnicodeString(s)().toReferencable()
+    }
+  }
+}
+
+/**
  * A [Transformer] that, given a [FieldTypeWithReferencedSchemas] can produce [Referencable]
  * objects with appropriate data.
- *
- * Note that this does not currently generate data for inline entity or reference [FieldType]s.
  */
 class ReferencableFromFieldType(
-  val s: FuzzingRandom,
-  val listLength: Generator<Int>
+  val referencablePrimitive: Transformer<PrimitiveType, ReferencablePrimitive<*>>,
+  val listLength: Generator<Int>,
+  val rawEntity: Transformer<SchemaWithReferencedSchemas, RawEntity>,
+  val rawReference: Generator<RawReference>
 ) : Transformer<FieldTypeWithReferencedSchemas, Referencable>() {
   override fun invoke(fieldType: FieldTypeWithReferencedSchemas): Referencable {
-    when (fieldType.fieldType) {
-      is FieldType.Primitive -> {
-        return when (fieldType.fieldType.primitiveType) {
-          PrimitiveType.Boolean -> s.nextBoolean().toReferencable()
-          PrimitiveType.BigInt -> BigInt.valueOf(s.nextLong()).toReferencable()
-          PrimitiveType.Byte -> s.nextByte().toReferencable()
-          PrimitiveType.Char -> s.nextChar().toReferencable()
-          PrimitiveType.Double -> s.nextDouble().toReferencable()
-          PrimitiveType.Duration -> s.nextLong().toReferencable()
-          PrimitiveType.Float -> s.nextFloat().toReferencable()
-          PrimitiveType.Instant -> s.nextLong().toReferencable()
-          PrimitiveType.Int -> s.nextInt().toReferencable()
-          PrimitiveType.Long -> s.nextLong().toReferencable()
-          PrimitiveType.Number -> s.nextDouble().toReferencable()
-          PrimitiveType.Short -> s.nextShort().toReferencable()
-          PrimitiveType.Text -> midSizedString(s)().toReferencable()
-        }
-      }
-      is FieldType.Tuple -> {
-        throw UnsupportedOperationException("Values for Tuples not yet implemented")
-      }
+    return when (fieldType.fieldType) {
+      is FieldType.Primitive -> referencablePrimitive(fieldType.fieldType.primitiveType)
       is FieldType.ListOf -> {
         val primitiveField = FieldTypeWithReferencedSchemas(
           fieldType.fieldType.primitiveType,
           fieldType.schemas
         )
-        return (1..listLength()).map { invoke(primitiveField) }.toReferencable(fieldType.fieldType)
+        (1..listLength()).map { invoke(primitiveField) }.toReferencable(fieldType.fieldType)
       }
-      else -> TODO("b/180656030: values of Tuple type aren't yet supported")
+      is FieldType.InlineEntity -> {
+        val schema = fieldType.schemas[fieldType.fieldType.schemaHash]!!
+        rawEntity(SchemaWithReferencedSchemas(schema, fieldType.schemas))
+      }
+      is FieldType.EntityRef -> rawReference()
+      is FieldType.Tuple ->
+        TODO("b/180656030: values of Tuple type aren't yet supported")
+      is FieldType.NullableOf ->
+        TODO("b/182096850: Nullable field support not yet implemented")
     }
+  }
+}
+
+/**
+ * A [Generator] that builds [SchemaWithReferencedSchemas] objects ([Schema]s and their
+ * dependent sub-[Schema]s) from a set of [schemaName]s and maps of [singletons] and
+ * [collections] fields.
+ */
+class SchemaGenerator(
+  val schemaName: Generator<Set<String>>,
+  val singletons: Generator<Map<FieldName, FieldTypeWithReferencedSchemas>>,
+  val collections: Generator<Map<FieldName, FieldTypeWithReferencedSchemas>>,
+  val hash: Generator<String>
+) : Generator<SchemaWithReferencedSchemas> {
+  override fun invoke(): SchemaWithReferencedSchemas {
+    val theSingletons = singletons()
+    val theCollections = collections()
+    val schema = Schema(
+      schemaName().map { SchemaName(it) }.toSet(),
+      SchemaFields(
+        theSingletons.mapValues { it.value.fieldType },
+        theCollections.mapValues { it.value.fieldType }
+      ),
+      hash()
+    )
+    val schemas = mutableMapOf<String, Schema>()
+    theSingletons.map { it.value.schemas }.plus(theCollections.map { it.value.schemas }).forEach {
+      schemas.putAll(it)
+    }
+    return SchemaWithReferencedSchemas(schema, schemas)
   }
 }
 
@@ -316,3 +433,13 @@ data class FieldTypeWithReferencedSchemas(
     }
   }
 }
+
+/**
+ * A data class that encapsulates a [Schema] with all other [Schema] objects referenced by
+ * fields of that [Schema].
+ */
+
+data class SchemaWithReferencedSchemas(
+  val schema: Schema,
+  val schemas: Map<String, Schema>
+)

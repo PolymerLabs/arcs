@@ -14,6 +14,7 @@ package arcs.core.storage.driver
 import androidx.annotation.VisibleForTesting
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtEntity
+import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.VersionMap
@@ -23,19 +24,25 @@ import arcs.core.data.Schema
 import arcs.core.data.util.ReferencableList
 import arcs.core.storage.Driver
 import arcs.core.storage.RawReference
+import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
+import arcs.core.storage.database.DatabaseOp
 import arcs.core.storage.database.ReferenceWithVersion
-import arcs.core.storage.keys.DatabaseStorageKey
+import arcs.core.storage.driver.DatabaseDriverProvider.getDatabaseInfo
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.toReference
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
 import kotlin.reflect.KClass
 
 /** [Driver] implementation capable of managing data stored in a SQL database. */
 @Suppress("RemoveExplicitTypeArguments")
 class DatabaseDriver<Data : Any>(
-  override val storageKey: DatabaseStorageKey,
+  override val storageKey: StorageKey,
   override val dataClass: KClass<Data>,
   private val schemaLookup: (String) -> Schema?,
   /* internal */
@@ -45,10 +52,20 @@ class DatabaseDriver<Data : Any>(
 
   /* internal */ var clientId: Int = -1
 
+  private val entitySchemaHash = checkNotNull(storageKey.getDatabaseInfo()?.entitySchemaHash) {
+    "StorageKey of type ${storageKey.protocol} not supported by DatabaseDriver."
+  }
+
   private val schema: Schema
-    get() = checkNotNull(schemaLookup(storageKey.entitySchemaHash)) {
-      "Schema not found for hash: ${storageKey.entitySchemaHash}"
+    get() = checkNotNull(schemaLookup(entitySchemaHash)) {
+      "Schema not found for hash: $entitySchemaHash"
     }
+
+  private val containerStorageKey: StorageKey
+    get() = (storageKey as? ReferenceModeStorageKey)?.storageKey ?: storageKey
+
+  private val backingStorageKey: StorageKey
+    get() = (storageKey as? ReferenceModeStorageKey)?.backingKey ?: storageKey
 
   // TODO(#5551): Consider including a hash of the toString info in log prefix.
   private val log = TaggedLog { "DatabaseDriver" }
@@ -86,6 +103,45 @@ class DatabaseDriver<Data : Any>(
   override suspend fun close() {
     receiver = null
     database.removeClient(clientId)
+  }
+
+  override suspend fun applyOps(ops: List<CrdtOperation>) {
+    if (!BuildFlags.WRITE_ONLY_STORAGE_STACK) {
+      throw BuildFlagDisabledError("WRITE_ONLY_STORAGE_STACK")
+    }
+    ops.forEach {
+      val op = requireNotNull(it as? CrdtSet.IOperation<*>) {
+        "Only CrdtSet operations are supported, got $it."
+      }
+      when (op) {
+        is CrdtSet.Operation.Add<*> -> {
+          val added = requireNotNull(op.added as? RawEntity) {
+            "Only CrdtSet.IOperation<RawEntity> are supported, got $op."
+          }
+          // Send the new entity to the database at version 1. This does not support entity
+          // mutations.
+          val entityData = DatabaseData.Entity(added, schema, 1, ENTITIES_VERSION_MAP)
+          // Set an empty version map to work around b/181057055. When that bug is fixed, we can use
+          // ENTITIES_VERSION_MAP for the reference as well.
+          val reference = op.added.toReference(backingStorageKey, VersionMap())
+          database.insertOrUpdate(reference.referencedStorageKey(), entityData, clientId)
+          database.applyOp(
+            containerStorageKey,
+            DatabaseOp.AddToCollection(reference, schema),
+            clientId
+          )
+        }
+        is CrdtSet.Operation.Remove<*> ->
+          database.applyOp(
+            containerStorageKey,
+            DatabaseOp.RemoveFromCollection(op.removed, schema),
+            clientId
+          )
+        is CrdtSet.Operation.Clear<*> ->
+          database.applyOp(containerStorageKey, DatabaseOp.ClearCollection(schema), clientId)
+        else -> throw UnsupportedOperationException("Unsupported operation $op")
+      }
+    }
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -208,6 +264,13 @@ class DatabaseDriver<Data : Any>(
     val clone = DatabaseDriver(storageKey, dataClass, schemaLookup, database)
     clone.register()
     return clone
+  }
+
+  companion object {
+    // We use a fixed version map when generating entities. Even if we don't modify the entity, we
+    // need to have a non-empty version map to be compatible with ReferenceModeStore (which converts
+    // the entities to crdt models). Any non-empty version map should work here.
+    val ENTITIES_VERSION_MAP = VersionMap("e" to 1)
   }
 }
 
