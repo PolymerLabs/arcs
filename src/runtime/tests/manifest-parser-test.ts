@@ -217,6 +217,16 @@ describe('manifest parser', () => {
       'this parse should have failed, unknown capabilities/directions should not be accepted!'
     );
   });
+  it('fails to parse a recipe connection with an unknown capability/direction', () => {
+    assert.throws(() => {
+        parse(`
+          recipe MyParticle
+            foo: read bar`);
+      },
+      /Expected a direction \(reads, writes.*\) but "read" found\./,
+      'this parse should have failed, unknown capabilities/directions should not be accepted!'
+    );
+  });
   it('fails to parse an argument list that use a reserved word as an identifier', () => {
     assert.throws(() => {
         parse(`

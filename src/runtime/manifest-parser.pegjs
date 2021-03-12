@@ -1336,6 +1336,9 @@ RecipeConnection
       to,
     });
   }
+  / from:ConnectionTargetWithColon? &(!('consumes' / 'provides')) (direction:([a-zA-Z0-0?]+) {
+    expected(`a direction (${AstNode.directions.join(', ')})`)
+  })
 
 ConnectionTargetWithColon
   = target:ConnectionTarget ':' whiteSpace?
