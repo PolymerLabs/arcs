@@ -1185,15 +1185,15 @@ RecipeNode
 
 // RequireHandleSection is intended to replace RecipeHandle but for now we allow for both ways to create a handle.
 RecipeItem
-  = RecipeParticle
-  / RecipeHandle
-  / RecipeSyntheticHandle
+  = Description
   / RequireHandleSection
   / RecipeRequire
-  / RecipeSlot
   / RecipeSearch
+  / RecipeParticle
+  / RecipeSyntheticHandle
+  / RecipeSlot
+  / RecipeHandle
   / RecipeConnection
-  / Description
 
 LocalName
   = 'as' whiteSpace name:(lowerIdent / [a-zA-Z0-9]* { expected(`lower identifier`); })
