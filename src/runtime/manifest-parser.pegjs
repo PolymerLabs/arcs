@@ -579,11 +579,11 @@ Particle
 
 ParticleItem "a particle item"
   = ParticleModality
-  / ParticleSlotConnection
   / Description
-  / ParticleHandleConnection
   / ClaimStatement
   / CheckStatement
+  / ParticleSlotConnection
+  / ParticleHandleConnection
 
 ClaimStatement
   = 'claim' whiteSpace target:dottedFields whiteSpace expression:ClaimExpression eolWhiteSpace
