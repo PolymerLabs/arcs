@@ -78,10 +78,16 @@ fun policy(name: String, egressType: String, block: PolicyBuilder.() -> Unit = {
 /**
  * Builds a [PolicyTarget] with the supplied [schemaName], using a [PolicyTargetBuilder].
  *
+ * Providing `0` as [maxAgeMillis] implies that the target may not be held for any length of time.
+ *
  * See [policy] for an example.
  */
-fun target(schemaName: String, block: PolicyTargetBuilder.() -> Unit = {}): PolicyTarget =
-  PolicyTargetBuilder(schemaName).apply(block).build()
+fun target(
+  schemaName: String,
+  maxAgeMillis: Long,
+  block: PolicyTargetBuilder.() -> Unit = {}
+): PolicyTarget =
+  PolicyTargetBuilder(schemaName, maxAgeMillis).apply(block).build()
 
 /** Builder of [Policy] instances. */
 @DataDsl
@@ -94,9 +100,18 @@ class PolicyBuilder internal constructor(
   private val targets = mutableListOf<PolicyTarget>()
   private val configs = mutableMapOf<String, PolicyConfig>()
 
-  /** Adds a [PolicyTarget] to the [Policy] being built. */
-  fun target(schemaName: String, block: PolicyTargetBuilder.() -> Unit): PolicyTarget =
-    PolicyTargetBuilder(schemaName).apply(block).build().also(targets::add)
+  /**
+   * Adds a [PolicyTarget] to the [Policy] being built.
+   *
+   * Providing `0` as [maxAgeMillis] implies that the target may not be held for any length of time.
+   */
+  fun target(
+    schemaName: String,
+    maxAgeMillis: Long,
+    block: PolicyTargetBuilder.() -> Unit
+  ): PolicyTarget {
+    return PolicyTargetBuilder(schemaName, maxAgeMillis).apply(block).build().also(targets::add)
+  }
 
   /** Adds a [PolicyConfig] block to the [Policy] being built. */
   fun config(configName: String, block: PolicyConfigBuilder.() -> Unit): PolicyConfig =
@@ -115,11 +130,10 @@ class PolicyBuilder internal constructor(
 /** Builder of [PolicyTarget] instances. */
 @DataDsl
 class PolicyTargetBuilder internal constructor(
-  private val schemaName: String
-) {
+  private val schemaName: String,
   /** The maximum allowable age of the entities being targeted. */
-  var maxAgeMillis: Long = 0
-
+  var maxAgeMillis: Long
+) {
   private val retentions = mutableSetOf<PolicyRetention>()
   private val fields = mutableSetOf<PolicyField>()
   private val annotations = mutableSetOf<Annotation>()
