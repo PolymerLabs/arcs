@@ -66,8 +66,7 @@ class PolicyTest {
 
     // Only Thing {a, b} is written to storage
     var callbackExecuted = false
-    env.getStorageState(startingKey, AbstractIngressThing.Thing.SCHEMA)
-      .filterIsInstance<DatabaseData.Entity>()
+    env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA)
       .forEach { entity ->
         assertRawEntity_OnlyHasSingletonFields_AB(entity.rawEntity)
         callbackExecuted = true
@@ -78,8 +77,7 @@ class PolicyTest {
 
     // Thing {a, b} data persists after the arc is run
     callbackExecuted = false
-    env.getStorageState(startingKey, AbstractIngressThing.Thing.SCHEMA)
-      .filterIsInstance<DatabaseData.Entity>()
+    env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA)
       .forEach { entity ->
         assertRawEntity_OnlyHasSingletonFields_AB(entity.rawEntity)
         callbackExecuted = true
@@ -90,8 +88,7 @@ class PolicyTest {
 
     // Thing {a, b} data persists after runtime ends
     callbackExecuted = false
-    env.getStorageState(startingKey, AbstractIngressThing.Thing.SCHEMA)
-      .filterIsInstance<DatabaseData.Entity>()
+    env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA)
       .forEach { entity ->
         assertRawEntity_OnlyHasSingletonFields_AB(entity.rawEntity)
         callbackExecuted = true
