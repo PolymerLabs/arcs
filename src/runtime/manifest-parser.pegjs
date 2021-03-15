@@ -791,7 +791,7 @@ ParticleHandleConnectionBody
     });
   }
   / name:NameWithColon &(!('consumes' / 'provides')) (direction:([a-zA-Z0-0?]+) {
-    expected(`a direction (${AstNode.directions.join(', ')})`)
+    expected(`a direction (${AstNode.directions.join(', ')})`);
   })
 
 Direction "a direction (e.g. reads writes, reads, writes, hosts, `consumes, `provides, any')"
@@ -1337,7 +1337,7 @@ RecipeConnection
     });
   }
   / from:ConnectionTargetWithColon? &(!('consumes' / 'provides')) (direction:([a-zA-Z0-0?]+) {
-    expected(`a direction (${AstNode.directions.join(', ')})`)
+    expected(`a direction (${AstNode.directions.join(', ')})`);
   })
 
 ConnectionTargetWithColon
