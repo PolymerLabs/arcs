@@ -14,7 +14,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.integration.IntegrationEnvironment
 import arcs.core.data.RawEntity
 import arcs.core.host.toRegistration
-import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
