@@ -46,12 +46,10 @@ class PolicyBuilderTest {
   @Test
   fun withTargets() {
     val actual = policy("MyPolicy", "Analytics") {
-      target("Foo") {
-        maxAgeMillis = Duration.ofMinutes(15).toMillis()
+      target("Foo", maxAgeMillis = Duration.ofMinutes(15).toMillis()) {
         retention(StorageMedium.RAM, encryptionRequired = false)
       }
-      target("Bar") {
-        maxAgeMillis = Duration.ofDays(2).toMillis()
+      target("Bar", maxAgeMillis = Duration.ofDays(2).toMillis()) {
         retention(StorageMedium.DISK, encryptionRequired = true)
       }
     }
@@ -61,12 +59,10 @@ class PolicyBuilderTest {
     assertThat(actual.description).isEqualTo("")
     assertThat(actual.configs).isEmpty()
     assertThat(actual.targets).containsExactly(
-      target("Foo") {
-        maxAgeMillis = Duration.ofMinutes(15).toMillis()
+      target("Foo", maxAgeMillis = Duration.ofMinutes(15).toMillis()) {
         retention(StorageMedium.RAM, encryptionRequired = false)
       },
-      target("Bar") {
-        maxAgeMillis = Duration.ofDays(2).toMillis()
+      target("Bar", maxAgeMillis = Duration.ofDays(2).toMillis()) {
         retention(StorageMedium.DISK, encryptionRequired = true)
       }
     )

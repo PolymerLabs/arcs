@@ -15,7 +15,6 @@ import arcs.core.policy.PolicyRetention
 import arcs.core.policy.StorageMedium
 import arcs.core.policy.UsageType
 import com.google.common.truth.Truth.assertThat
-import java.time.Duration
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -24,23 +23,10 @@ import org.junit.runners.JUnit4
 class PolicyTargetBuilderTest {
   @Test
   fun minimal() {
-    val actual = target("MySchema")
+    val actual = target("MySchema", maxAgeMillis = 1234)
 
     assertThat(actual.schemaName).isEqualTo("MySchema")
-    assertThat(actual.maxAgeMs).isEqualTo(0L)
-    assertThat(actual.fields).isEmpty()
-    assertThat(actual.annotations).isEmpty()
-    assertThat(actual.retentions).isEmpty()
-  }
-
-  @Test
-  fun withMaxAge() {
-    val actual = target("MySchema") {
-      maxAgeMillis = Duration.ofDays(2).toMillis()
-    }
-
-    assertThat(actual.schemaName).isEqualTo("MySchema")
-    assertThat(actual.maxAgeMs).isEqualTo(Duration.ofDays(2).toMillis())
+    assertThat(actual.maxAgeMs).isEqualTo(1234L)
     assertThat(actual.fields).isEmpty()
     assertThat(actual.annotations).isEmpty()
     assertThat(actual.retentions).isEmpty()
@@ -49,7 +35,7 @@ class PolicyTargetBuilderTest {
   @Test
   fun withPreExistingAnnotation() {
     val annotation = annotation("myAnnotation")
-    val actual = target("MySchema") {
+    val actual = target("MySchema", maxAgeMillis = 0) {
       add(annotation)
     }
 
@@ -64,7 +50,7 @@ class PolicyTargetBuilderTest {
 
   @Test
   fun withInlineAnnotation() {
-    val actual = target("MySchema") {
+    val actual = target("MySchema", maxAgeMillis = 0) {
       annotation("myAnnotation")
       annotation("yourAnnotation") { param("name", "someone") }
     }
@@ -81,7 +67,7 @@ class PolicyTargetBuilderTest {
 
   @Test
   fun withRetention() {
-    val actual = target("MySchema") {
+    val actual = target("MySchema", maxAgeMillis = 0) {
       retention(StorageMedium.DISK, encryptionRequired = true)
       retention(StorageMedium.RAM, encryptionRequired = false)
     }
@@ -98,7 +84,7 @@ class PolicyTargetBuilderTest {
 
   @Test
   fun withField() {
-    val actual = target("MySchema") {
+    val actual = target("MySchema", maxAgeMillis = 0) {
       "name" to { rawUsage(UsageType.EGRESS) }
     }
 
