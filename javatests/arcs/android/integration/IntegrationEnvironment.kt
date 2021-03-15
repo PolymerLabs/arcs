@@ -23,7 +23,9 @@ import arcs.core.host.NoOpArcHostContextSerializer
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ParticleState
 import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
+import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.RamDisk
 import arcs.core.util.TaggedLog
 import arcs.jvm.host.ExplicitHostRegistry
@@ -87,6 +89,23 @@ import org.robolectric.shadows.ShadowSystemClock
  *
  *   // Start an Arc.
  *   val arc = env.startArc(YourGeneratedPlan)
+ * ```
+ *
+ * Rudimentary support for inspecting the database state exists, given you know the storage
+ * key and schema. Note: what actually gets written to storage may differ (be more specific) than
+ * the stated fields in the schema.
+ *
+ * ```
+ * @Test
+ * fun checkThatStorageLooksOk() = runTest {
+ *  // Get storage key location from a live particle
+ *  val collectionKey = // ... some way to get the key from a handle.
+ *
+ *  // Returns a list of [DatabaseData.Entity] data classes
+ *  val storageState = env.getDatabaseEntities(collectionKey, AbstractSomeParticle.FooType.SCHEMA)
+ *
+ *  // ...
+ * }
  * ```
  *
  * This will allow the allocator to start a plan spread across multiple hosts.
@@ -286,8 +305,7 @@ class IntegrationEnvironment(
 
   private suspend fun teardownArcs(components: IntegrationArcsComponents) {
     // Stop all the arcs and shut down the arcHost.
-    startedArcs.forEach { it.stop() }
-    hostRegistry.availableArcHosts().forEach { it.shutdown() }
+    stopRuntime()
 
     // Reset the Databases and close them.
     components.dbManager.resetAll()
@@ -297,6 +315,12 @@ class IntegrationEnvironment(
     if (components.scope.coroutineContext[Job] != null) {
       components.scope.cancel()
     }
+  }
+
+  /** Stops components of Arcs Runtime. */
+  suspend fun stopRuntime() {
+    startedArcs.forEach { it.stop() }
+    hostRegistry.availableArcHosts().forEach { it.shutdown() }
   }
 
   private data class IntegrationArcsComponents(
@@ -370,6 +394,26 @@ class IntegrationEnvironment(
 
   class IntegrationStorageService : StorageService() {
     fun changeConfig(config: StorageServiceConfig) = schedulePeriodicJobs(config)
+  }
+
+  /** Get [DatabaseData.Entity]s from a Collection in storage. */
+  suspend fun getDatabaseEntities(
+    collectionKey: StorageKey,
+    fullSchema: Schema
+  ): List<DatabaseData.Entity> {
+    return dbManager.registry.fetchAll()
+      .map { dbManager.getDatabase(it.name, it.isPersistent) }
+      .flatMap { db ->
+        val collection = db.get(collectionKey, DatabaseData.Collection::class, fullSchema)
+          as DatabaseData.Collection?
+
+        // Return associated entities with the collection.
+        collection?.values?.mapNotNull {
+          db.get(it.rawReference.referencedStorageKey(), DatabaseData.Entity::class, fullSchema)
+            as DatabaseData.Entity?
+        }
+          ?: emptyList()
+      }
   }
 }
 
