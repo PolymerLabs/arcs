@@ -131,7 +131,8 @@ async function createRecipeArc(recipe, runtime, index) {
   arcPanel.attachArc(arc);
   arc.arcPanel = arcPanel;
   try {
-    await runtime.allocator.runPlanInArc(arc.id, recipe);
+    const plan = await runtime.resolveRecipe(arc, recipe);
+    await runtime.allocator.runPlanInArc(arc.id, plan);
   } catch (x) {
     arcPanel.showError('recipe error', x);
     return;

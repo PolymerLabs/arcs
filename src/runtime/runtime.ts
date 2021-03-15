@@ -88,6 +88,20 @@ export class Runtime {
     return (await Description.create(arc)).getArcDescription();
   }
 
+  async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {
+    const errors = new Map();
+    if (recipe.tryResolve({errors})) {
+      return recipe;
+    }
+    const resolver = new RecipeResolver(arc);
+    const plan = await resolver.resolve(recipe);
+    if (plan && plan.isResolved()) {
+      return plan;
+    }
+    warn('failed to resolve:\n', (plan || recipe).toString({showUnresolved: true}));
+    return null;
+  }
+
   // non-static members
 
   public context: Manifest;

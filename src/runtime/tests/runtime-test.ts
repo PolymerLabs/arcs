@@ -132,7 +132,8 @@ describe('Runtime', () => {
     assert.lengthOf(runtime.context.stores, 6);
 
     const volatileArc1 = runtime.getArcById(runtime.allocator.newArc({arcName: 'test-arc-v1', storageKeyPrefix: volatileStorageKeyPrefixForTest()}));
-    await runtime.allocator.runPlanInArc(volatileArc1.id, manifest.recipes[1]);
+    const plan1 = await runtime.resolveRecipe(volatileArc1, manifest.recipes[1]);
+    await runtime.allocator.runPlanInArc(volatileArc1.id, plan1);
     assert.lengthOf(runtime.context.stores, 6);
     volatileArc1.dispose();
     assert.lengthOf(runtime.context.stores, 6);
@@ -144,7 +145,8 @@ describe('Runtime', () => {
     assert.lengthOf(runtime.context.stores, 6);
 
     const volatileArc2 = runtime.getArcById(runtime.allocator.newArc({arcName: 'test-arc-v2', storageKeyPrefix: volatileStorageKeyPrefixForTest()}));
-    await runtime.allocator.runPlanInArc(volatileArc2.id, manifest.recipes[1]);
+    const plan2 = await runtime.resolveRecipe(volatileArc2, manifest.recipes[1]);
+    await runtime.allocator.runPlanInArc(volatileArc2.id, plan2);
     assert.lengthOf(runtime.context.stores, 6);
     assert.isTrue(runtime.context.stores.map(s => s.storageKey).includes(
         volatileArc2.activeRecipe.handles[0].storageKey));

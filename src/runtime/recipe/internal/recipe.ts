@@ -167,7 +167,7 @@ export class Recipe implements Cloneable<Recipe>, PublicRecipe {
     && checkThat(this._connectionConstraints.length === 0, 'unresolved constraints')
     && checkThat(this.requires.every(require => require.isEmpty()), 'unresolved require')
     && checkThat((this._search === null || this._search.isResolved()), 'unresolved search')
-    && checkThat(this._handles.every(handle => handle.isResolved()), 'unresolved handles')
+    && checkThat(this._handles.every(handle => handle.isResolved(options)), 'unresolved handles')
     && checkThat(this._particles.every(particle => particle.isResolved(options)), 'unresolved particles')
     && checkThat(this.modality.isResolved(), 'unresolved modality')
     && checkThat(this.allRequiredSlotsPresent(options), 'unresolved required slot')
@@ -527,6 +527,22 @@ export class Recipe implements Cloneable<Recipe>, PublicRecipe {
 
   isNormalized() {
     return Object.isFrozen(this);
+  }
+
+  tryResolve(options?: IsValidOptions): boolean {
+    if (!this.isNormalized()) {
+      if (!this.normalize(options)) {
+        return false;
+      }
+    }
+
+    if (!this.isResolved()) {
+      for (const handle of this.handles) {
+        // The call to `normalize` above un-resolves typevar handle types.
+        assert(handle.type.maybeResolve());
+      }
+    }
+    return this.isResolved();
   }
 
   clone(map: Map<RecipeComponent, RecipeComponent> = undefined): Recipe {

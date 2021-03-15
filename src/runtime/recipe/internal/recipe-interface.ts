@@ -237,6 +237,7 @@ export interface Recipe {
   digest(): Promise<string>;
   normalize(options?: IsValidOptions): boolean;
   isNormalized(): boolean;
+  tryResolve(options?: IsValidOptions): boolean;
   toString(options?: ToStringOptions): string;
   getAnnotation(name: string): AnnotationRef | null;
   findAnnotations(name: string): AnnotationRef[];

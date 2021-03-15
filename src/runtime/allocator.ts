@@ -29,7 +29,6 @@ import {EntityType, ReferenceType, InterfaceType, SingletonType} from '../types/
 import {Capabilities} from './capabilities.js';
 import {NewArcOptions, PlanPartition, DeserializeArcOptions} from './arc-info.js';
 import {ArcHost, ArcHostFactory, SingletonArcHostFactory} from './arc-host.js';
-import {RecipeResolver} from './recipe-resolver.js';
 
 export interface Allocator {
   registerArcHost(factory: ArcHostFactory);
@@ -97,7 +96,7 @@ export class AllocatorImpl implements Allocator {
   }
 
   async runPlanInArc(arcId: ArcId, plan: Recipe, reinstantiate?: boolean): Promise<void[]> {
-    plan = await this.resolveRecipe(arcId, plan);
+    assert(plan.tryResolve(), `Cannot run an unresolved recipe: ${plan.toString({showUnresolved: true})}`);
 
     const partitionByFactory = new Map<ArcHostFactory, Particle[]>();
     // Partition the `plan` into particles by ArcHostFactory.
@@ -160,42 +159,10 @@ export class AllocatorImpl implements Allocator {
           .createStorageKey(handle.capabilities || Capabilities.create(), type, handle.id);
       }
     }
-    return this.resolveRecipe(arcId, plan);
+    assert(plan.tryResolve());
+    return plan;
   }
 
-  // Returns the resolved recipe (the original recipe might have changed),
-  // or throws an exception, if the recipe cannot be resolved.
-  // Note this method is overriden by the subclass, and calls RecipeResolver, if needed.
-  // The APIs might change, when Planning is incorporated in Allocator.
-  protected async resolveRecipe(arcId: ArcId, recipe: Recipe): Promise<Recipe> {
-    assert(this.tryResolveRecipe(arcId, recipe), `Unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
-    return recipe;
-  }
-
-  // Normalizes, if needed, and tries to resolve type variable handle types.
-  // Returns true, if the recipe is resolved.
-  protected tryResolveRecipe(arcId: ArcId, recipe: Recipe): boolean {
-    assert(this.normalize(recipe));
-    if (!recipe.isResolved()) {
-      for (const handle of recipe.handles) {
-        // The call to `normalize` above un-resolves typevar handle types.
-        assert(handle.type.maybeResolve());
-      }
-    }
-    return recipe.isResolved();
-  }
-
-  private normalize(recipe: Recipe): boolean {
-    if (recipe.isNormalized()) {
-      return true;
-    }
-    const errors = new Map();
-    if (recipe.normalize({errors})) {
-      return true;
-    }
-    console.warn('failed to normalize:\n', errors, recipe.toString());
-    return false;
-  }
 
   public stopArc(arcId: ArcId) {
     assert(this.arcStateById.get(arcId));
@@ -253,17 +220,6 @@ export class SingletonAllocator extends AllocatorImpl {
       arcHostId: this.host.hostId
     });
     return arcId;
-  }
-
-  protected async resolveRecipe(arcId: ArcId, recipe: Recipe): Promise<Recipe> {
-    super.tryResolveRecipe(arcId, recipe);
-    if (recipe.isResolved()) {
-      return recipe;
-    }
-    const resolver = new RecipeResolver(this.host.getArcById(arcId));
-    const plan = await resolver.resolve(recipe);
-    assert(plan && plan.isResolved(), `Unresolved plan: ${recipe.toString({showUnresolved: true})}`);
-    return plan;
   }
 
   async createStoresAndCopyTags(arcId: ArcId, manifest: Manifest): Promise<void[]> {
