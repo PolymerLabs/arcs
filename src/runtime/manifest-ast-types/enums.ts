@@ -21,7 +21,9 @@ export const directions = [
   'any'
 ] as const;
 
+// Creates a union of all values in the associated list.
 export type Direction = typeof directions[number];
+
 export type SlotDirection = 'provides' | 'consumes';
 
 /** The different types of trust claims that particles can make. */

@@ -760,6 +760,7 @@ export const schemaPrimitiveTypes = [
   'Duration',
 ] as const;
 
+// Creates a union of all values in the associated list.
 export type SchemaPrimitiveTypeValue = typeof schemaPrimitiveTypes[number];
 
 export const kotlinPrimitiveTypes = [
@@ -772,6 +773,7 @@ export const kotlinPrimitiveTypes = [
   'Double',
 ] as const;
 
+// Creates a union of all values in the associated list.
 export type KotlinPrimitiveTypeValue = typeof kotlinPrimitiveTypes[number];
 
 export const discreteTypes = [
@@ -782,8 +784,8 @@ export const discreteTypes = [
   'Duration',
 ] as const;
 
-export type DiscreteType
-  = typeof discreteTypes[number];
+// Creates a union of all values in the associated list.
+export type DiscreteType = typeof discreteTypes[number];
 
 export const continuousTypes = [
   'Number',
@@ -800,6 +802,7 @@ export const primitiveTypes = [
   ...discreteTypes
 ];
 
+// Creates a union of all values in the associated list.
 export type Primitive = typeof primitiveTypes[number];
 
 export const timeUnits = [
@@ -810,6 +813,7 @@ export const timeUnits = [
  'milliseconds'
 ];
 
+// Creates a union of all values in the associated list.
 export type SupportedUnit = typeof timeUnits[number];
 
 export interface NumberNode extends BaseNode {
