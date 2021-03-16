@@ -256,6 +256,8 @@ class ReferenceModeStore private constructor(
 
     when (proxyMessage) {
       is ProxyMessage.Operations -> {
+        val containerOps = mutableListOf<CrdtOperation>()
+        val upstreamOps = mutableListOf<RefModeStoreOp>()
         proxyMessage.operations.toBridgingOps(backingStore.storageKey).forEach { op ->
           when (op) {
             is BridgingOperation.UpdateSingleton,
@@ -273,15 +275,32 @@ class ReferenceModeStore private constructor(
 
             is BridgingOperation.ClearSet -> clearAllEntitiesInBackingStore()
           }
-          containerStore.onProxyMessage(
-            ProxyMessage.Operations(listOf(op.containerOp), containerStoreId)
-          )
 
+          if (BuildFlags.BATCH_CONTAINER_STORE_OPS) {
+            containerOps.add(op.containerOp)
+            upstreamOps.add(op.refModeOp)
+          } else {
+            containerStore.onProxyMessage(
+              ProxyMessage.Operations(listOf(op.containerOp), containerStoreId)
+            )
+            sendQueue.enqueue {
+              val upstream = listOf(op.refModeOp)
+              callbacks.allCallbacksExcept(proxyMessage.id).forEach { callback ->
+                callback(
+                  ProxyMessage.Operations(upstream, id = proxyMessage.id)
+                )
+              }
+            }
+          }
+        }
+        if (BuildFlags.BATCH_CONTAINER_STORE_OPS) {
+          containerStore.onProxyMessage(
+            ProxyMessage.Operations(containerOps, containerStoreId)
+          )
           sendQueue.enqueue {
-            val upstream = listOf(op.refModeOp)
             callbacks.allCallbacksExcept(proxyMessage.id).forEach { callback ->
               callback(
-                ProxyMessage.Operations(upstream, id = proxyMessage.id)
+                ProxyMessage.Operations(upstreamOps, id = proxyMessage.id)
               )
             }
           }

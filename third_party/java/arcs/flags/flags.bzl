@@ -91,6 +91,15 @@ ARCS_BUILD_FLAGS = [
             "DatabaseOp",
         ],
     ),
+    arcs_build_flag(
+        name = "batch_container_store_ops",
+        bug_id = "b/182508100",
+        desc = "Batch container store ops in ref mode store for improved performance.",
+        status = "NOT_READY",
+        stopwords = [
+            "batch.?container.?store.?ops",
+        ],
+    ),
 ]
 
 validate_flag_list(ARCS_BUILD_FLAGS)

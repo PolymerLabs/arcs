@@ -46,7 +46,10 @@ class ReferenceModeStoreTest(
   companion object {
     @get:JvmStatic
     @get:Parameterized.Parameters(name = "{0}")
-    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_STRING_REDUCTION")
+    val PARAMETERS = ParameterizedBuildFlags.of(
+      "STORAGE_STRING_REDUCTION",
+      "BATCH_CONTAINER_STORE_OPS"
+    )
   }
 
   override val TEST_KEY = ReferenceModeStorageKey(
