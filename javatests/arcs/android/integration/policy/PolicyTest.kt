@@ -14,6 +14,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.integration.IntegrationEnvironment
 import arcs.core.data.RawEntity
 import arcs.core.host.toRegistration
+import arcs.core.storage.StorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
@@ -56,36 +57,28 @@ class PolicyTest {
     ingest.storeFinished.join()
     egressAB.handleRegistered.join()
 
-    // Then data with fiends Thing {a, b} will be egressed
+    // Then data with fields Thing {a, b} will be egressed
     assertThat(egressAB.outputForTest).hasSize(6)
 
     val startingKey = (egressAB.handles.output.getProxy().storageKey as ReferenceModeStorageKey)
       .storageKey
 
     // And only Thing {a, b} is written to storage
-    var callbackExecuted = false
-    env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA)
-      .forEach { entity ->
-        assertRawEntityHasFields(entity.rawEntity, setOf("a", "b"))
-        callbackExecuted = true
-    }
-    assertThat(callbackExecuted).isTrue()
+    assertOnlySingletonAbIsPersisted(startingKey)
 
     env.stopArc(arc)
 
     // And Thing {a, b} data persists after the arc is run
-    callbackExecuted = false
-    env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA)
-      .forEach { entity ->
-        assertRawEntityHasFields(entity.rawEntity, setOf("a", "b"))
-        callbackExecuted = true
-      }
-    assertThat(callbackExecuted).isTrue()
+    assertOnlySingletonAbIsPersisted(startingKey)
 
     env.stopRuntime()
 
     // And Thing {a, b} data persists after runtime ends
-    callbackExecuted = false
+    assertOnlySingletonAbIsPersisted(startingKey)
+  }
+
+  private suspend fun assertOnlySingletonAbIsPersisted(startingKey: StorageKey) {
+    var callbackExecuted = false
     env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA)
       .forEach { entity ->
         assertRawEntityHasFields(entity.rawEntity, setOf("a", "b"))
