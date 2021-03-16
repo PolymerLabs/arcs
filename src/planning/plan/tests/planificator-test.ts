@@ -24,8 +24,8 @@ import {MockFirebaseStorageKey} from '../../../runtime/storage/testing/mock-fire
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {
     const runtime = new Runtime();
-    const arcStorageKey = () => new MockFirebaseStorageKey('location');
-    const arc = runtime.newArc('demo', arcStorageKey);
+    const storageKeyPrefix = () => new MockFirebaseStorageKey('location');
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix}));
 
     const verifySuggestion = (storageKeyBase) => {
       const key = Planificator.constructSuggestionKey(arc, storageKeyBase);
@@ -53,12 +53,12 @@ describe.skip('remote planificator', () => {
     runtime = new Runtime();
   });
 
-  async function createArc(options, storageKey) {
+  async function createArc(options, storageKeyPrefix) {
     const {manifestString, manifestFilename} = options;
     runtime.context = manifestString
         ? await runtime.parse(manifestString)
         : await runtime.parseFile(manifestFilename);
-    return runtime.newArc('demo', storageKey);
+    return runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix}));
   }
 
   async function createConsumePlanificator(manifestFilename) {
@@ -78,7 +78,7 @@ describe.skip('remote planificator', () => {
 
   async function instantiateAndReplan(consumePlanificator, producePlanificator, suggestionIndex) {
     const suggestion = consumePlanificator.consumer.result.suggestions[suggestionIndex];
-    await consumePlanificator.arc.instantiate(suggestion.plan);
+    await runtime.allocator.runPlanInArc(consumePlanificator.arc.id, suggestion.plan);
     const serialization = await consumePlanificator.arc.serialize();
     //
     producePlanificator.arc.dispose();
@@ -88,16 +88,7 @@ describe.skip('remote planificator', () => {
     await consumePlanificator.setSearch(null);
     await consumePlanificator.consumer.result.clear();
     //
-    const deserializedArc = await Arc.deserialize({serialization,
-      slotComposer: new SlotComposer(),
-      loader: new Loader(),
-      fileName: '',
-      pecFactories: undefined,
-      context: consumePlanificator.arc.context,
-      storageService: runtime.storageService,
-      driverFactory: runtime.driverFactory,
-      storageKeyParser: runtime.storageKeyParser
-    });
+    const deserializedArc = runtime.getArcById(await runtime.allocator.deserialize({slotComposer: new SlotComposer(), fileName: ''}));
     //
     producePlanificator = new Planificator(
       deserializedArc,

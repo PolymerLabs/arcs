@@ -112,6 +112,7 @@ export interface Handle {
   pattern: string;
 
   originalFate: Fate;
+  originalId: string;
   mappedType?: Type;
 
   isJoined: boolean;
@@ -235,6 +236,8 @@ export interface Recipe {
   clone(map?: Map<RecipeComponent, RecipeComponent>): Recipe;
   digest(): Promise<string>;
   normalize(options?: IsValidOptions): boolean;
+  isNormalized(): boolean;
+  tryResolve(options?: IsValidOptions): boolean;
   toString(options?: ToStringOptions): string;
   getAnnotation(name: string): AnnotationRef | null;
   findAnnotations(name: string): AnnotationRef[];

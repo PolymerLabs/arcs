@@ -94,7 +94,7 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix}));
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
@@ -123,9 +123,7 @@ describe('reference', () => {
     recipe.handles[0].mapToStorage(refStore);
     recipe.handles[1].mapToStorage(outStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     const inHandle = await handleForStoreInfo(refModeStore, arc);
@@ -180,7 +178,7 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix}));
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
@@ -216,9 +214,7 @@ describe('reference', () => {
     recipe.handles[0].mapToStorage(inputStore);
     recipe.handles[1].mapToStorage(outputStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     const handle1 = await handleForStoreInfo(refModeStore1, arc);
@@ -279,7 +275,7 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix}));
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
@@ -302,9 +298,7 @@ describe('reference', () => {
     recipe.handles[0].mapToStorage(inputStore);
     recipe.handles[1].mapToStorage(refStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
 
     const handle = await handleForStoreInfo(inputStore, arc);
     const entity = await handle.setFromData({value: 'what a result!'});
@@ -360,7 +354,7 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix}));
     const recipe = manifest.recipes[0];
     const resultEntity = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
@@ -393,9 +387,7 @@ describe('reference', () => {
     recipe.handles[0].mapToStorage(inputStore);
     recipe.handles[1].mapToStorage(outStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     const entityHandle = await handleForStoreInfo(entityStore, arc);
@@ -501,7 +493,7 @@ describe('reference', () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix}));
     const recipe = manifest.recipes[0];
 
     // create 'input:1' store to hold [Result]
@@ -535,9 +527,6 @@ describe('reference', () => {
     recipe.handles[1].mapToStorage(fooInputStore);
     recipe.handles[2].mapToStorage(fooOutputStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-
     const fooInHandle = await handleForStoreInfo(fooInputStore, arc);
     await fooInHandle.setFromData({result: null, shortForm: 'a'});
 
@@ -546,7 +535,7 @@ describe('reference', () => {
 
     const fooOutHandle = await handleForStoreInfo(fooOutputStore, arc);
     await fooOutHandle.addFromData({result: null, shortForm: 'b'});
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     const values = await fooOutHandle.toList();
@@ -626,7 +615,7 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix}));
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
     const referenceOut = manifest.particles[0].handleConnectionMap.get('referenceOut');
@@ -650,9 +639,7 @@ describe('reference', () => {
     recipe.handles[0].mapToStorage(inputStore);
     recipe.handles[1].mapToStorage(refStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
 
     const handle = await handleForStoreInfo(inputStore, arc);
     assert.strictEqual((handle.type.getContainedType() as EntityType).entitySchema.name, 'Result');
@@ -712,7 +699,7 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix}));
     const recipe = manifest.recipes[0];
 
     const resultType = Entity.createEntityClass(manifest.findSchemaByName('Result'), null).type;
@@ -744,9 +731,7 @@ describe('reference', () => {
     recipe.handles[0].mapToStorage(fooInputStore);
     recipe.handles[1].mapToStorage(resultOutputStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     const handle = await handleForStoreInfo(resultInputStore, arc);

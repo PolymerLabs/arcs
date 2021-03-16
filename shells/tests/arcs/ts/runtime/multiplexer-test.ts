@@ -36,14 +36,14 @@ describe('Multiplexer', () => {
     const recipe = manifest.recipes[0];
     const barType = checkDefined(manifest.findTypeByName('Bar')) as EntityType;
 
-    const arc = runtime.newArc('test');
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1');
     const barHandle = await handleForStoreInfo(barStore, arc);
     recipe.handles[0].mapToStorage(barStore);
     assert(recipe.normalize(), 'normalize');
     assert(recipe.isResolved());
 
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     await barHandle.add(new barHandle.entityClass({value: 'one'}));

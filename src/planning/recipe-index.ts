@@ -101,7 +101,8 @@ export class RecipeIndex {
       stub: true,
       storageService: arc.storageService,
       driverFactory: arc.driverFactory,
-      storageKeyParser: arc.storageKeyParser
+      storageKeyParser: arc.storageKeyParser,
+      capabilitiesResolver: arc.capabilitiesResolver
     });
     const strategizer = new Strategizer(
       [

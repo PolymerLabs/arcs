@@ -41,15 +41,14 @@ describe('DevtoolsArcInspector', () => {
         P
           foo: foo`);
     const runtime = new Runtime({loader, context});
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), inspectorFactory: devtoolsArcInspectorFactory}));
 
     const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
     const fooStore = await arc.createStore(new SingletonType(foo.type), undefined, 'fooStore');
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(fooStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
 
     const instantiateParticleCall = DevtoolsForTests.channel.messages.find(m =>
       m.messageType === 'PecLog' && m.messageBody.name === 'InstantiateParticle').messageBody;

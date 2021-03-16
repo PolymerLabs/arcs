@@ -156,7 +156,7 @@ export class Recipe implements Cloneable<Recipe>, PublicRecipe {
   }
 
   isResolved(options?): boolean {
-    assert(Object.isFrozen(this), 'Recipe must be normalized to be resolved.');
+    assert(this.isNormalized(), 'Recipe must be normalized to be resolved.');
     const checkThat = (check: boolean, label: string) => {
       if (!check && options && options.errors) {
         options.errors.set(this.name, label);
@@ -167,7 +167,7 @@ export class Recipe implements Cloneable<Recipe>, PublicRecipe {
     && checkThat(this._connectionConstraints.length === 0, 'unresolved constraints')
     && checkThat(this.requires.every(require => require.isEmpty()), 'unresolved require')
     && checkThat((this._search === null || this._search.isResolved()), 'unresolved search')
-    && checkThat(this._handles.every(handle => handle.isResolved()), 'unresolved handles')
+    && checkThat(this._handles.every(handle => handle.isResolved(options)), 'unresolved handles')
     && checkThat(this._particles.every(particle => particle.isResolved(options)), 'unresolved particles')
     && checkThat(this.modality.isResolved(), 'unresolved modality')
     && checkThat(this.allRequiredSlotsPresent(options), 'unresolved required slot')
@@ -396,7 +396,7 @@ export class Recipe implements Cloneable<Recipe>, PublicRecipe {
   }
 
   normalize(options?: IsValidOptions): boolean {
-    if (Object.isFrozen(this)) {
+    if (this.isNormalized()) {
       if (options && options.errors) {
         options.errors.set(this, 'already normalized');
       }
@@ -523,6 +523,26 @@ export class Recipe implements Cloneable<Recipe>, PublicRecipe {
     Object.freeze(this);
 
     return true;
+  }
+
+  isNormalized() {
+    return Object.isFrozen(this);
+  }
+
+  tryResolve(options?: IsValidOptions): boolean {
+    if (!this.isNormalized()) {
+      if (!this.normalize(options)) {
+        return false;
+      }
+    }
+
+    if (!this.isResolved()) {
+      for (const handle of this.handles) {
+        // The call to `normalize` above un-resolves typevar handle types.
+        assert(handle.type.maybeResolve());
+      }
+    }
+    return this.isResolved();
   }
 
   clone(map: Map<RecipeComponent, RecipeComponent> = undefined): Recipe {

@@ -39,8 +39,7 @@ describe('Arc', () => {
 
     `);
 
-    const params = runtime.buildArcParams('test2');
-    const arc = new Arc(params);
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test2'}));
 
     const barType = runtime.context.findTypeByName('Bar') as EntityType;
     let store = await arc.createStore(barType.collectionOf(), undefined, 'test:1');
@@ -51,14 +50,13 @@ describe('Arc', () => {
     assert(recipe.normalize());
     assert(recipe.isResolved());
 
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     const serialization = await arc.serialize();
-    arc.dispose();
+    runtime.allocator.stopArc(arc.id);
 
-    const {loader, context, slotComposer, storageService, driverFactory, storageKeyParser} = params;
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest', context, storageService, driverFactory, storageKeyParser});
+    const newArc = runtime.getArcById(await runtime.allocator.deserialize({serialization, fileName: './manifest.manifest'}));
     await newArc.idle;
     store = newArc.findStoreById(store.id) as StoreInfo<CollectionEntityType>;
     const handle = await handleForStoreInfo(store, newArc);
@@ -135,12 +133,8 @@ describe('Arc', () => {
         A
           root: consumes root
     `);
-    const opts = runtime.buildArcParams('arcid');
-    const arc = new Arc(opts);
-
-    const [recipe] = arc.context.recipes;
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'arcid'}));
+    await runtime.allocator.runPlanInArc(arc.id, arc.context.recipes[0]);
   });
 
   it('handles serialization/deserialization of empty arcs handles', async () => {
@@ -160,8 +154,7 @@ describe('Arc', () => {
             foods: foods
         `);
 
-    const opts = runtime.buildArcParams('test');
-    const arc = new Arc(opts);
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     assert.isNotNull(arc);
 
     const favoriteFoodClass = Entity.createEntityClass(runtime.context.findSchemaByName('FavoriteFood'), null);
@@ -177,11 +170,11 @@ describe('Arc', () => {
     const normalized = recipe.normalize(options);
     assert(normalized, 'not normalized ' + options.errors);
     assert(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
 
     const serialization = await arc.serialize();
-    const {loader, slotComposer, context, storageService, driverFactory, capabilitiesResolver, storageKeyParser} = opts;
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context, fileName: '', storageService, driverFactory, storageKeyParser});
+    runtime.allocator.stopArc(arc.id);
+    const newArc = runtime.getArcById(await runtime.allocator.deserialize({serialization, fileName: ''}));
     assert.strictEqual(newArc.stores.length, 1);
     assert.strictEqual(newArc.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');

@@ -9,5 +9,5 @@
  */
 
 export const stopArc = async ({arcId}, runtime) => {
-  runtime.stop(arcId);
+  runtime.allocator.stopArc(arcId);
 };

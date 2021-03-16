@@ -11,23 +11,13 @@
 import {Planner} from '../../../../../build/planning/arcs-planning.js';
 import {assert} from '../../../../../build/platform/chai-web.js';
 import {Loader} from '../../../../../build/platform/loader.js';
-import {SlotComposer} from '../../../../../build/runtime/slot-composer.js';
 import {SlotTestObserver} from '../../../../../build/runtime/testing/slot-test-observer.js';
 import {StrategyTestHelper} from '../../../../../build/planning/testing/strategy-test-helper.js';
 import {Runtime} from '../../../../../build/runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../../../../../build/runtime/testing/handle-for-test.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
-class TestSlotComposer extends SlotComposer {
-  public readonly observer;
-  constructor() {
-    super();
-    this.observer = new SlotTestObserver();
-    this.observeSlots(this.observer);
-  }
-}
-
-async function initSlotComposer(recipeStr) {
+async function init(recipeStr) {
   const loader = new Loader(null, {
     '*': `
       defineParticle(({UiParticle}) => {
@@ -39,10 +29,11 @@ async function initSlotComposer(recipeStr) {
       });
     `
   });
-  const runtime = new Runtime({loader, composerClass: TestSlotComposer});
+  const runtime = new Runtime({loader});
   runtime.context = await runtime.parse(recipeStr);
 
-  const arc = runtime.newArc('test-arc');
+  const observer = new SlotTestObserver();
+  const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test-arc', slotObserver: observer}));
 
   const planner = new Planner();
   const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
@@ -51,10 +42,9 @@ async function initSlotComposer(recipeStr) {
   await planner.strategizer.generate();
   assert.lengthOf(planner.strategizer.population, 1);
 
-  const observer = (arc.peh.slotComposer as TestSlotComposer).observer;
   const plan = planner.strategizer.population[0].result;
 
-  return {arc, observer, plan};
+  return {runtime, arc, observer, plan};
 }
 
 describe('slot composer', () => {
@@ -84,7 +74,7 @@ recipe
     otherSlot: consumes slot2
         `;
 
-    let {arc, observer, plan} = await initSlotComposer(manifestStr);
+    let {runtime, arc, observer, plan} = await init(manifestStr);
 
     // instantiate the recipe
     plan = plan.clone();
@@ -97,7 +87,7 @@ recipe
         .expectRenderSlot('BB', 'mySlot')
         .expectRenderSlot('C', 'otherSlot')
         ;
-    await arc.instantiate(plan);
+    await runtime.allocator.runPlanInArc(arc.id, plan);
     await observer.expectationsCompleted();
   });
 
@@ -114,7 +104,8 @@ recipe
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile(manifest);
 
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+    const slotObserver = new SlotTestObserver();
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver}));
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
     const suggestion = suggestions.find(s => s.plan.name === 'FilterAndDisplayBooks');
@@ -123,17 +114,13 @@ recipe
       ['ItemMultiplexer', 'List', 'ProductFilter']
     );
 
-    const slotComposer = arc.peh.slotComposer;
-    const observer = new SlotTestObserver();
-    slotComposer.observeSlots(observer);
-    observer
+    slotObserver
         .newExpectations()
         .expectRenderSlot('List', 'root')
         .expectRenderSlot('List', 'root')
-        .expectRenderSlot('ShowProduct', 'item')
-        ;
-    await arc.instantiate(suggestion.plan);
-    await observer.expectationsCompleted();
+        .expectRenderSlot('ShowProduct', 'item');
+    await runtime.allocator.runPlanInArc(arc.id, suggestion.plan);
+    await slotObserver.expectationsCompleted();
   });
 
   it('allows set slots to be consumed as a singleton slot', async () => {
@@ -156,7 +143,7 @@ recipe
           item: consumes slot1
     `;
 
-    let {arc, observer, plan} = await initSlotComposer(manifestStr);
+    let {runtime, arc, observer, plan} = await init(manifestStr);
 
     plan = plan.clone();
     plan.normalize();
@@ -167,7 +154,7 @@ recipe
         .expectRenderSlot('B', 'item')
         .expectRenderSlot('C', 'item')
         ;
-    await arc.instantiate(plan);
+    await runtime.allocator.runPlanInArc(arc.id, plan);
     await observer.expectationsCompleted();
   });
 
@@ -250,19 +237,15 @@ recipe
     const runtime = new Runtime({loader});
     runtime.context = await runtime.parse(contextText);
 
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    const [recipe] = arc.context.recipes;
-    recipe.normalize();
-
-    const observer = new SlotTestObserver();
-    arc.peh.slotComposer.observeSlots(observer);
-
-    observer.newExpectations()
+    const slotObserver = new SlotTestObserver();
+    slotObserver.newExpectations()
         .expectRenderSlot('A', 'content')
         .expectRenderSlot('B', 'detail')
         ;
-    await arc.instantiate(recipe);
-    await observer.expectationsCompleted();
+
+    await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver});
+
+    await slotObserver.expectationsCompleted();
   });
 
 });

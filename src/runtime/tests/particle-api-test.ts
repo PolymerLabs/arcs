@@ -79,13 +79,15 @@ class ResultInspector {
   }
 }
 
-async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}): Promise<Arc> {
-  const manifest = await Manifest.parse(fileMap.manifest);
-  const runtime = new Runtime({loader: new Loader(null, fileMap), context: manifest});
-  return runtime.newArc('demo');
-}
-
 describe('particle-api', () => {
+  let runtime = null;
+
+  async function loadFilesIntoNewArc(fileMap: {[index:string]: string, manifest: string}): Promise<Arc> {
+    const manifest = await Manifest.parse(fileMap.manifest);
+    runtime = new Runtime({loader: new Loader(null, fileMap), context: manifest});
+    return runtime.getArcById(runtime.allocator.newArc({arcName: 'demo'}));
+  }
+
   it('StorageProxy integration test', async () => {
     const arc = await loadFilesIntoNewArc({
       manifest: `
@@ -141,9 +143,8 @@ describe('particle-api', () => {
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(resStore);
-    recipe.normalize();
 
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await inspector.verify('sync:null');
 
     // Drop event 2; desync is triggered by v3.
@@ -206,8 +207,7 @@ describe('particle-api', () => {
     const resultStore = await arc.createStore(result.type.collectionOf(), undefined, 'result-handle');
     const resultHandle = await handleForStoreInfo(resultStore, arc);
     const recipe = arc.context.recipes[0];
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
     const values = await resultHandle.toList();
     assert.deepStrictEqual(values as {}[], [{value: 'two'}]);
@@ -250,8 +250,7 @@ describe('particle-api', () => {
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     assert.deepStrictEqual(await resultHandle.fetch() as {}, {value: 'done'});
@@ -334,8 +333,7 @@ describe('particle-api', () => {
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     assert.deepStrictEqual(await resultHandle.fetch() as {}, {value: 'done'});
@@ -432,8 +430,7 @@ describe('particle-api', () => {
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     assert.deepStrictEqual(await resultHandle.fetch() as {}, {value: 'done'});
@@ -532,7 +529,7 @@ describe('particle-api', () => {
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
     recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     assert.deepStrictEqual(await resultHandle.fetch() as {}, {value: 'done'});
@@ -634,8 +631,7 @@ describe('particle-api', () => {
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(resultStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     assert.deepStrictEqual(await resultHandle.fetch() as {}, {value: 'done'});
@@ -739,8 +735,7 @@ describe('particle-api', () => {
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(inputsStore);
     recipe.handles[1].mapToStorage(resultsStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
     assert.sameMembers((await resultsHandle.toList()).map(item => item.value), ['done', 'done', 'HELLO', 'WORLD']);
     await inspector.verify('done', 'done', 'HELLO', 'WORLD');
@@ -793,7 +788,7 @@ describe('particle-api', () => {
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const runtime = new Runtime({context: new Manifest({id}), loader});
-    const arc = runtime.newArc('test');
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -801,9 +796,8 @@ describe('particle-api', () => {
     const outStore = await arc.createStore(new SingletonType(new EntityType(new Schema([], {result: 'Text'}))), 'faz', 'test:2');
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
-    recipe.normalize();
 
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
 
     const inHandle = await handleForStoreInfo(inStore, arc);
     const entityType = Entity.createEntityClass(inStore.type.getEntitySchema(), null);
@@ -850,7 +844,7 @@ describe('particle-api', () => {
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const runtime = new Runtime({loader, context: new Manifest({id})});
-    const arc = runtime.newArc('test');
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -858,9 +852,8 @@ describe('particle-api', () => {
     const outStore = await arc.createStore(new SingletonType(new EntityType(new Schema([], {result: 'Text'}))), 'faz', 'test:2');
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
-    recipe.normalize();
 
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
 
     const inHandle = await handleForStoreInfo(inStore, arc);
     const entityType = Entity.createEntityClass(inStore.type.getEntitySchema(), null);
@@ -907,7 +900,7 @@ describe('particle-api', () => {
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const runtime = new Runtime({context: new Manifest({id}), loader});
-    const arc = runtime.newArc('test');
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -915,9 +908,8 @@ describe('particle-api', () => {
     const outStore = await arc.createStore(new SingletonType(new EntityType(new Schema([], {result: 'Text'}))), 'faz', 'test:2');
     recipe.handles[0].mapToStorage(inStore);
     recipe.handles[1].mapToStorage(outStore);
-    recipe.normalize();
 
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
 
     await arc.idle;
     const inHandle = await handleForStoreInfo(inStore, arc);
@@ -961,7 +953,7 @@ describe('particle-api', () => {
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const runtime = new Runtime({context: new Manifest({id}), loader});
-    const arc = runtime.newArc('test');
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
 
@@ -971,7 +963,7 @@ describe('particle-api', () => {
     recipe.handles[1].mapToStorage(outStore);
     recipe.normalize();
 
-    const {speculativeArc, relevance} = await (new Speculator()).speculate(arc, recipe, 'recipe-hash');
+    const {speculativeArc, relevance} = await (new Speculator(runtime)).speculate(arc, recipe, 'recipe-hash');
     const description = await Description.create(speculativeArc, relevance);
     assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });
@@ -1024,12 +1016,12 @@ describe('particle-api', () => {
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const runtime = new Runtime({context: new Manifest({id}), loader});
-    const arc = runtime.newArc('test');
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
 
-     const {speculativeArc, relevance} = await (new Speculator()).speculate(arc, recipe, 'recipe-hash');
+    const {speculativeArc, relevance} = await (new Speculator(runtime)).speculate(arc, recipe, 'recipe-hash');
     const description = await Description.create(speculativeArc, relevance);
     assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });
@@ -1083,11 +1075,7 @@ describe('particle-api', () => {
     });
     // TODO(lindner): add strict rendering
     const runtime = new Runtime({loader, context});
-    const arc = runtime.newArc('demo');
-    const [recipe] = arc.context.recipes;
-    recipe.normalize();
-
-    await arc.instantiate(recipe);
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo'}));
     await arc.idle;
 
     assert.lengthOf(arc.activeRecipe.particles, 1);

@@ -940,4 +940,64 @@ describe('recipe', () => {
 
     verify(recipe.clone());
   });
+
+  it('tries to resolve unsuccessfully - cannot normalize', async () => {
+    const [recipe] = (await Manifest.parse(`
+      schema S1
+      particle P1
+        s1: writes S1
+      recipe
+        sHandle: map #something
+        P1
+          s1: writes sHandle
+    `)).recipes;
+
+    const errors = new Map();
+    assert.isFalse(recipe.tryResolve({errors}));
+    assert.sameMembers([...errors.values()], [
+      `Invalid fate 'map' for handle 'sHandle: map #something'; it is used for 'writes' P1::s1 connection`
+    ]);
+    assert.isFalse(recipe.isNormalized());
+  });
+
+  it('tries to resolve unsuccessfully - normalizes but fails to resolve', async () => {
+    const [recipe] = (await Manifest.parse(`
+      schema S1
+      particle P1
+        s1: writes S1
+      recipe
+        sHandle: ?
+        P1
+          s1: writes sHandle
+    `)).recipes;
+    assert.isFalse(recipe.isNormalized());
+    const errors = new Map();
+
+    assert.isFalse(recipe.tryResolve({errors}));
+
+    assert.equal(errors.size, 0);
+    assert.isTrue(recipe.isNormalized());
+    const details = [];
+    assert.isFalse(recipe.isResolved({details}));
+    assert.sameMembers(details, ['missing fate']);
+  });
+
+  it('successfully resolves', async () => {
+    const [recipe] = (await Manifest.parse(`
+      schema S1
+      particle P1
+        s1: writes S1
+      recipe
+        sHandle: create
+        P1
+          s1: writes sHandle
+    `)).recipes;
+
+    assert.isTrue(recipe.tryResolve());
+
+    assert.isTrue(recipe.isNormalized());
+    assert.isTrue(recipe.isResolved());
+    // Successfully retries resolving an already resolved recipe.
+    assert.isTrue(recipe.tryResolve());
+  });
 });

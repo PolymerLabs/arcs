@@ -64,7 +64,7 @@ export class PlanProducer {
     this.runtime = runtime;
     this.result = result;
     this.recipeIndex = RecipeIndex.create(this.arc);
-    this.speculator = new Speculator();
+    this.speculator = new Speculator(this.runtime);
     this.searchStore = searchStore;
     this.inspector = inspector;
     if (this.searchStore) {

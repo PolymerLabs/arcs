@@ -148,7 +148,7 @@ describe('entity handle factory', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix}));
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
@@ -160,9 +160,7 @@ describe('entity handle factory', () => {
       new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, '/handle/input:2'), new VolatileStorageKey(arc.id, 'b'))
     );
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     const handleForEntity = await handleForStoreInfo(refModeStore, arc);
@@ -219,7 +217,7 @@ describe('entity handle factory', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix}));
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
@@ -239,9 +237,7 @@ describe('entity handle factory', () => {
       new VolatileStorageKey(arc.id, '/handle/input:2')
     );
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     // create and store an entity in the reference mode store.
@@ -329,7 +325,7 @@ describe('entity handle factory', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test', storageKeyPrefix}));
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
@@ -368,9 +364,7 @@ describe('entity handle factory', () => {
     recipe.handles[0].mapToStorage(dsm1);
     recipe.handles[1].mapToStorage(dsm2);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc.id, recipe);
     await arc.idle;
 
     // create and store an entity in the reference mode store.

@@ -36,12 +36,9 @@ describe('Hot Code Reload for JS Particle', async () => {
       });`
     });
     const runtime = new Runtime({loader, context});
+    const arcId = await runtime.allocator.startArc({arcName: 'HotReload'});
+    const arc = runtime.getArcById(arcId);
 
-    const arc = runtime.newArc('HotReload');
-
-    const [recipe] = arc.context.recipes;
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
-    await arc.instantiate(recipe);
     await arc.idle;
 
     // TODO(sjmiles): render data no longer captured by slot objects

@@ -93,23 +93,17 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       }
     });
 
-    async function setup(recipeName) {
+    async function setup(planName) {
       const runtime = new Runtime({loader, context: await manifestPromise});
-      const arc = runtime.newArc('wasm-test', storageKeyPrefixForTest());
-
-      const recipe = arc.context.allRecipes.find(r => r.name === recipeName);
-      if (!recipe) {
-        throw new Error(`Test recipe '${recipeName}' not found`);
-      }
-      recipe.normalize();
-      await arc.instantiate(recipe);
-      await arc.idle;
-
-      const [info] = arc.loadedParticleInfo.values();
-
-      const slotComposer = arc.peh.slotComposer;
       const slotObserver = new SlotTestObserver();
-      slotComposer.observeSlots(slotObserver);
+      const arc = runtime.getArcById(await runtime.allocator.startArc({
+        arcName: 'wasm-test',
+        storageKeyPrefix: storageKeyPrefixForTest(),
+        planName,
+        slotObserver
+      }));
+      await arc.idle;
+      const [info] = arc.loadedParticleInfo.values();
 
       return {arc, stores: info.stores, slotObserver, runtime};
     }
@@ -485,7 +479,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // extra fields are correctly ignored.
       const manifest = await manifestPromise;
       const runtime = new Runtime({loader, context: manifest});
-      const arc = runtime.newArc('wasm-test', storageKeyPrefixForTest());
+      const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'wasm-test', storageKeyPrefix: storageKeyPrefixForTest()}));
 
       const sliceClass = Entity.createEntityClass(manifest.findSchemaByName('Slice'), null);
       const sngStore = await arc.createStore(new SingletonType(sliceClass.type), undefined, 'test:0');
@@ -506,8 +500,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       recipe.handles[0].mapToStorage(sngStore);
       recipe.handles[1].mapToStorage(colStore);
       recipe.handles[2].mapToStorage(resStore);
-      recipe.normalize();
-      await arc.instantiate(recipe);
+      await runtime.allocator.runPlanInArc(arc.id, recipe);
       await arc.idle;
 
       const res = await handleForStoreInfo(resStore, arc);
@@ -544,7 +537,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       const manifest = await manifestPromise;
 
       const {driverFactory, storageService, storageKeyParser} = runtime;
-      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageService, driverFactory, storageKeyParser});
+      const arc2 = runtime.getArcById(await runtime.allocator.deserialize({serialization, fileName: ''}));
       await arc2.idle;
 
       const fooClass = Entity.createEntityClass(manifest.findSchemaByName('FooHandle'), null);

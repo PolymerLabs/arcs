@@ -73,36 +73,32 @@ describe('Multiplexer', () => {
         }),
         '3', null));
     // version could be set here, but doesn't matter for tests.
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-
-    const observer = new SlotTestObserver();
-    arc.peh.slotComposer.observeSlots(observer);
+    const slotObserver = new SlotTestObserver();
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver}));
 
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     assert.lengthOf(suggestions, 1);
 
     // Render 3 posts
-    observer
+    slotObserver
       .newExpectations()
       .expectRenderSlot('List', 'root')
       .expectRenderSlot('ShowOne', 'item', {times: 2})
-      .expectRenderSlot('ShowTwo', 'item')
-      ;
+      .expectRenderSlot('ShowTwo', 'item');
 
-    await suggestions[0].instantiate(arc);
+    await runtime.allocator.runPlanInArc(arc.id, await suggestions[0].getResolvedPlan(arc));
     await arc.idle;
 
     // Add and render one more post
 
     // new storage doesn't swallow duplicate writes to Singletons, so the multiplexer's behavior of always
     // updating all generated handles when the collection changes is reflected in the rendering pattern.
-    observer
+    slotObserver
       .newExpectations()
       .expectRenderSlot('List', 'root')
       .expectRenderSlot('ShowOne', 'item', {contentTypes: ['templateName', 'model']})
       .expectRenderSlot('ShowOne', 'item', {times: 2})
-      .expectRenderSlot('ShowTwo', 'item')
-      ;
+      .expectRenderSlot('ShowTwo', 'item');
 
     const postsStore = arc.findStoreById(arc.activeRecipe.handles[0].id) as StoreInfo<CollectionEntityType>;
     const postsHandle2 = await handleForStoreInfo(postsStore, arc);
@@ -162,10 +158,7 @@ describe('Multiplexer', () => {
     const runtime = new Runtime({loader});
     const context = await runtime.parseFile('./shells/tests/artifacts/polymorphic-muxing.recipes');
     //
-    const arc = runtime.newArc('fooTest', storageKeyPrefixForTest());
-    const recipe = context.recipes[0];
-    const plan = await runtime.resolveRecipe(arc, recipe);
-    await arc.instantiate(plan);
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'fooTest', storageKeyPrefix: storageKeyPrefixForTest()}));
     await arc.idle;
     //
     // NOTE: a direct translation of this to new storage is unlikely to work as

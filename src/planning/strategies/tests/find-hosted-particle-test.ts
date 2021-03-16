@@ -160,7 +160,7 @@ describe('FindHostedParticle', () => {
     `, {loader, fileName: process.cwd() + '/input.manifest'});
 
     const runtime = new Runtime({loader, context: manifest});
-    const arc = runtime.newArc('test');
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     const strategy = new FindHostedParticle(arc);
 
     const inRecipe = manifest.recipes[0];
@@ -175,7 +175,7 @@ describe('FindHostedParticle', () => {
     assert(outRecipe.isResolved());
 
     assert.isEmpty(arc.stores);
-    await arc.instantiate(outRecipe);
+    await runtime.allocator.runPlanInArc(arc.id, outRecipe);
     const particleSpecStore = arc.stores.find(StoreInfo.isSingletonInterfaceStore);
     const handle = await handleForStoreInfo(particleSpecStore, arc);
     const particleSpec = await handle.fetch();

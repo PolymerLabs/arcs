@@ -43,13 +43,7 @@ describe('Arc integration', () => {
     `);
     runtime.context = manifest;
 
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    assert.lengthOf(arc.stores, 0);
-    assert.isEmpty(Object.keys(arc.storeTagsById));
-
-    const recipe = manifest.recipes[0];
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
-    await arc.instantiate(recipe);
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo'}));
     await arc.idle;
 
     assert.lengthOf(arc.stores, 1);

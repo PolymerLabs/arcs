@@ -58,7 +58,7 @@ describe('plan consumer', () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parse(manifestText);
 
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
     let suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
     const consumer = await createPlanConsumer(arc);
@@ -99,7 +99,7 @@ describe('plan consumer', () => {
     assert.strictEqual(suggestionsChangeCount, 1);
     assert.strictEqual(visibleSuggestionsChangeCount, 3);
 
-    await suggestions[0].instantiate(arc);
+    await runtime.allocator.runPlanInArc(arc.id, suggestions[0].plan);
     suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     await storeResults(consumer, suggestions);
     assert.lengthOf(consumer.result.suggestions, 3);

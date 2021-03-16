@@ -24,10 +24,12 @@ import {handleType, handleForStoreInfo} from '../storage/storage.js';
 import {Runtime} from '../runtime.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {StoreInfo} from '../storage/store-info.js';
+import {newRecipe} from '../recipe/internal/recipe-constructor.js';
+import {VolatileStorageKey} from '../storage/drivers/volatile.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const runtime = new Runtime({context: manifest, loader: new Loader()});
-  const arc = runtime.newArc('test');
+  const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
   // TODO(lindner) stop messing with arc internal state, or provide a way to supply in constructor..
   arc['_activeRecipe'] = recipe;
   arc['_recipeDeltas'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});
@@ -547,7 +549,7 @@ particle C
   otherslot: consumes Slot
   description \`only c\`
 recipe
-  handle0: use 'test:1' // Foo
+  handle0: create 'test:1' // Foo
   slot0: slot 'rootslotid-root'
   A as particle1
     foo: handle0
@@ -618,14 +620,16 @@ recipe
     const recipe = manifest.recipes[0];
     // Cannot use createTestArc here, because capabilities-resolver cannot be set to null,
     // and interface returns a null schema, and cannot generate hash.
-    const arc = new Arc({...runtime.buildArcParams('test'), capabilitiesResolver: null});
+    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
     arc['_activeRecipe'] = recipe;
     arc['_recipeDeltas'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});
 
     const hostedParticle = manifest.findParticleByName('NoDescription');
     const hostedType = manifest.findParticleByName('NoDescMuxer').handleConnections[0].type as InterfaceType;
 
-    const newStore = await arc.createStore(new SingletonType(hostedType), /* name= */ null, 'hosted-particle-handle');
+    const hostedStoreId = 'hosted-particle-handle';
+    const hostedStorageKey = new VolatileStorageKey(arc.id, '').childKeyForHandle(hostedStoreId);
+    const newStore = await arc.createStore(new SingletonType(hostedType), /* name= */ null, hostedStoreId, /* tags= */ [], hostedStorageKey);
     const newHandle = await handleForStoreInfo(newStore, arc);
     await newHandle.set(hostedParticle.clone());
 
