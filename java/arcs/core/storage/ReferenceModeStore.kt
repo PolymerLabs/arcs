@@ -172,6 +172,9 @@ class ReferenceModeStore private constructor(
    */
   var containerStoreId by Delegates.notNull<Int>()
 
+  /** VisibleForTesting */
+  val holdQueueEmpty get() = holdQueue.queue.size == 0
+
   init {
     @Suppress("UNCHECKED_CAST")
     crdtType = requireNotNull(
@@ -343,20 +346,12 @@ class ReferenceModeStore private constructor(
         if (pendingIds.isEmpty()) {
           sendQueue.enqueue(::sender)
         } else {
-          // Start a job that delays for the configured timeout amount, and if still active by the
-          // time the deadline is reached, runs that clears the store to remove potentially stale
-          // references.
-          val timeoutJob = scope.launch {
-            delay(BLOCKING_QUEUE_TIMEOUT_MILLIS)
-            handlePendingReferenceTimeout(proxyMessage)
-          }
 
-          addToHoldQueueFromReferences(pendingIds) {
-            try {
-              sender()
-            } finally {
-              timeoutJob.cancel()
-            }
+          addToHoldQueueFromReferences(
+            pendingIds,
+            onTimeout = { handlePendingReferenceTimeout(proxyMessage) }
+          ) {
+            sender()
           }
         }
       }
@@ -427,7 +422,10 @@ class ReferenceModeStore private constructor(
           val getEntity = if (reference != null) {
             val entityCrdt = getLocalData(reference.id) as? CrdtEntity.Data
             if (entityCrdt == null) {
-              addToHoldQueueFromReferences(listOf(reference)) {
+              addToHoldQueueFromReferences(
+                listOf(reference),
+                onTimeout = {}
+              ) {
                 val updated =
                   getLocalData(reference.id) as? CrdtEntity.Data
 
@@ -478,7 +476,11 @@ class ReferenceModeStore private constructor(
         if (pendingIds.isEmpty()) {
           sendQueue.enqueue(::sender)
         } else {
-          addToHoldQueueFromReferences(pendingIds, ::sender)
+          addToHoldQueueFromReferences(
+            pendingIds,
+            onTimeout = {},
+            ::sender
+          )
         }
       }
       is ProxyMessage.SyncRequest -> sendQueue.enqueue {
@@ -762,13 +764,29 @@ class ReferenceModeStore private constructor(
 
   private suspend fun addToHoldQueueFromReferences(
     refs: Collection<RawReference>,
+    onTimeout: suspend () -> Unit,
     onRelease: suspend () -> Unit
   ): Int {
+    // Start a job that delays for the configured timeout amount, and if still active by the
+    // time the deadline is reached, runs that clears the store to remove potentially stale
+    // references.
+    val timeoutJob = scope.launch {
+      delay(BLOCKING_QUEUE_TIMEOUT_MILLIS)
+      holdQueue.removePendingIds(refs.map { it.id })
+      onTimeout()
+    }
+
     return holdQueue.enqueue(
       refs.map {
         HoldQueue.Entity(it.id, it.version?.copy())
       },
-      onRelease
+      {
+        try {
+          onRelease()
+        } finally {
+          timeoutJob.cancel()
+        }
+      }
     )
   }
 

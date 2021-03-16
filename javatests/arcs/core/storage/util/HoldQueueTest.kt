@@ -73,6 +73,39 @@ class HoldQueueTest {
   }
 
   @Test
+  fun removeAllPendingIds_byReferenceIdCollection_isEmpty() = runBlockingTest {
+    val versions = VersionMap("alice" to 1, "bob" to 2)
+    val callback = suspend { }
+
+    listOf("foo", "bar", "baz")
+      .map { it.toRef() }
+      .enqueueAll(holdQueue, versions.copy(), callback)
+
+    val queueData = holdQueue.queue
+
+    assertThat(queueData.size).isEqualTo(3)
+    holdQueue.removePendingIds(listOf("foo", "bar", "baz").map { it.toRef().id })
+    assertThat(queueData.size).isEqualTo(0)
+  }
+
+  @Test
+  fun removeSomePendingIds_byReferenceIdCollection_isNotEmpty() = runBlockingTest {
+    val versions = VersionMap("alice" to 1, "bob" to 2)
+    val callback = suspend { }
+
+    listOf("foo", "bar", "baz")
+      .map { it.toRef() }
+      .enqueueAll(holdQueue, versions.copy(), callback)
+
+    val queueData = holdQueue.queue
+
+    assertThat(queueData.size).isEqualTo(3)
+    holdQueue.removePendingIds(listOf("foo", "bar").map { it.toRef().id })
+    assertThat(queueData.size).isEqualTo(1)
+    assertThat(queueData.keys).containsExactly("baz")
+  }
+
+  @Test
   fun enqueue_appendsToExistingReferenceRecordList() = runBlockingTest {
     val versions1 = VersionMap("alice" to 1, "bob" to 2)
     val versions2 = VersionMap("alice" to 2, "bob" to 2)

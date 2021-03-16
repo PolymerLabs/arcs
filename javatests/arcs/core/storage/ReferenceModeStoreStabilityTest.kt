@@ -304,6 +304,8 @@ class ReferenceModeStoreStabilityTest {
     assertThat(modelValue.await().values).isEmpty()
     assertThat(RamDisk.memory.get<CrdtSingleton.Data<RawEntity>>(containerKey)?.data?.values)
       .isEmpty()
+    val refmodestore = store as ReferenceModeStore
+    assertThat(refmodestore.holdQueueEmpty).isTrue()
   }
 
   @Test
@@ -373,6 +375,9 @@ class ReferenceModeStoreStabilityTest {
     assertThat(modelValue.await().values).isEmpty()
     assertThat(RamDisk.memory.get<CrdtSet.Data<RawEntity>>(containerKey)?.data?.values)
       .isEmpty()
+
+    val refmodestore = store as ReferenceModeStore
+    assertThat(refmodestore.holdQueueEmpty).isTrue()
   }
 
   @Test

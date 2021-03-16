@@ -68,6 +68,15 @@ class HoldQueue(
   }
 
   /**
+   * Removes a pending item from the [HoldQueue] by collection of reference ids.
+   */
+  suspend fun removePendingIds(ids: Collection<ReferenceId>) {
+    mutex.withLock {
+      ids.forEach { queue.remove(it) }
+    }
+  }
+
+  /**
    * Processes a given [ReferenceId] corresponding to the current [version].
    *
    * See [HoldQueue]'s documentation for more details.
