@@ -19,7 +19,6 @@ import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,59 +47,64 @@ class PolicyTest {
 
     val arc = env.startArc(PersistsEgressesPlan)
 
+    // When the Arc is run...
     env.waitForIdle(arc)
 
     val ingest = env.getParticle<IngressThing>(arc)
     val egressAB = env.getParticle<EgressAB>(arc)
 
-    withTimeout(30000) {
-      ingest.storeFinished.join()
-      egressAB.handleRegistered.join()
-    }
-    // Data is egressed
+    ingest.storeFinished.join()
+    egressAB.handleRegistered.join()
+
+    // Then data with fiends Thing {a, b} will be egressed
     assertThat(egressAB.outputForTest).hasSize(6)
 
     val startingKey = (egressAB.handles.output.getProxy().storageKey as ReferenceModeStorageKey)
       .storageKey
 
-    // Only Thing {a, b} is written to storage
+    // And only Thing {a, b} is written to storage
     var callbackExecuted = false
     env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA)
       .forEach { entity ->
-        assertRawEntity_OnlyHasSingletonFields_AB(entity.rawEntity)
+        assertRawEntityHasFields(entity.rawEntity, setOf("a", "b"))
         callbackExecuted = true
     }
     assertThat(callbackExecuted).isTrue()
 
     env.stopArc(arc)
 
-    // Thing {a, b} data persists after the arc is run
+    // And Thing {a, b} data persists after the arc is run
     callbackExecuted = false
     env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA)
       .forEach { entity ->
-        assertRawEntity_OnlyHasSingletonFields_AB(entity.rawEntity)
+        assertRawEntityHasFields(entity.rawEntity, setOf("a", "b"))
         callbackExecuted = true
       }
     assertThat(callbackExecuted).isTrue()
 
     env.stopRuntime()
 
-    // Thing {a, b} data persists after runtime ends
+    // And Thing {a, b} data persists after runtime ends
     callbackExecuted = false
     env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA)
       .forEach { entity ->
-        assertRawEntity_OnlyHasSingletonFields_AB(entity.rawEntity)
+        assertRawEntityHasFields(entity.rawEntity, setOf("a", "b"))
         callbackExecuted = true
       }
     assertThat(callbackExecuted).isTrue()
   }
 
   companion object {
-    /** Only singleton fields "a" and "b" have data set in the raw entity. */
-    fun assertRawEntity_OnlyHasSingletonFields_AB(rawEntity: RawEntity) {
-      val setEntries = rawEntity.singletons.entries.filter { it.value != null }
-      assertThat(setEntries.map { it.key }.toSet()).isEqualTo(setOf("a", "b"))
-      assertThat(rawEntity.collections).isEmpty()
+    /** Assert that a [RawEntity] contains non-null / non-empty data for target fields. */
+    fun assertRawEntityHasFields(
+      rawEntity: RawEntity,
+      singletons: Set<String> = emptySet(),
+      collections: Set<String> = emptySet()
+    ) {
+      val singletonSetEntries = rawEntity.singletons.entries.filter { it.value != null }
+      val collectionSetEntries = rawEntity.collections.entries.filter { it.value.isNotEmpty() }
+      assertThat(singletonSetEntries.map { it.key }.toSet()).isEqualTo(singletons)
+      assertThat(collectionSetEntries.map { it.key }.toSet()).isEqualTo(collections)
     }
   }
 }

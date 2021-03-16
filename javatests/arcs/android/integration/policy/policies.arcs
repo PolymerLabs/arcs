@@ -51,12 +51,3 @@ recipe PersistsEgresses
   // And the recipe egresses Thing {a, b}
   EgressAB
     output: handle1
-
-  // When the Arc is run
-  // Then data with the schema / fields Thing {a, b} will be stored to disk
-  // And this data will be egressed
-  // And no data with fields Thing {c, d} will be written anywhere
-  // And data with fields Thing {a, b} will be persisted after the arc is finished
-  // And data with fields Thing {a, b} will be persisted after the Arcs’ runtime ends.
-
-
