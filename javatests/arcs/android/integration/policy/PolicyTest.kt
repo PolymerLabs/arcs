@@ -20,6 +20,7 @@ import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -54,8 +55,10 @@ class PolicyTest {
     val ingest = env.getParticle<IngressThing>(arc)
     val egressAB = env.getParticle<EgressAB>(arc)
 
-    ingest.storeFinished.join()
-    egressAB.handleRegistered.join()
+    withTimeout(30000) {
+      ingest.storeFinished.join()
+      egressAB.handleRegistered.join()
+    }
 
     // Then data with fields Thing {a, b} will be egressed
     assertThat(egressAB.outputForTest).hasSize(6)
