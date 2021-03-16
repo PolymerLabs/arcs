@@ -91,7 +91,7 @@ class PolicyTest {
   }
 
   companion object {
-    /** Assert that a [RawEntity] contains non-null / non-empty data for target fields. */
+    /** Assert that a [RawEntity] only contains values for the specified fields. */
     fun assertRawEntityHasFields(
       rawEntity: RawEntity,
       singletons: Set<String> = emptySet(),
