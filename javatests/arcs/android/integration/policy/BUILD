@@ -11,7 +11,7 @@ package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_gen(
     name = "codegen",
-    srcs = ["policies.arcs"],
+    srcs = ["particles.arcs", "scenarios.arcs"],
 )
 
 arcs_kt_android_library(

@@ -10,20 +10,7 @@
 meta
   namespace: arcs.android.integration.policy
 
-schema Thing
-  a: Text
-  b: Text
-  c: Text
-  d: Text
-
-@ingress
-particle IngressThing in '.IngressThing'
-  input: writes [Thing {a, b, c, d}]
-
-@egress('GeneralEgress')
-particle EgressAB in '.EgressAB'
-  output: reads [Thing {a, b}]
-
+import './particles.arcs'
 
 /// Scenario: A policy-compliant recipe with @persistent handles egresses data
 /// and stores ingress-restricted values to disk that is never deleted
