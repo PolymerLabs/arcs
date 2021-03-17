@@ -49,5 +49,22 @@ var RandomBuilder: (seed: Long?) -> KotlinRandom = fn@{ seed ->
 /** Gets the next Arcs-safe random long value. */
 fun KotlinRandom.nextSafeRandomLong(): Long = Random.nextLong(MAX_SAFE_LONG)
 
+/** Gets the next String of [length] that can be safely encoded in a [VersionMap]. */
+fun KotlinRandom.nextVersionMapSafeString(length: Int): String {
+  // Readable chars are 33 '!' to 126 '~'. However, we want to exclude ':' and ";" due to
+  // the encoding of version maps.
+  val map = (1..length)
+    .map { Random.nextInt(33, 124).toChar() }
+    .map {
+      when (it) {
+        ':' -> 125
+        ';' -> 126
+        else -> it
+      }
+    }
+    .joinToString("")
+  return map
+}
+
 private val MAX_SAFE_LONG = 2.0.pow(50).toLong()
 private var globalRandomInstance: KotlinRandom? = null

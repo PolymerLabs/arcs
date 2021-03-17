@@ -47,6 +47,7 @@ import arcs.core.util.Result
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
 import arcs.core.util.computeNotNull
+import arcs.core.util.nextVersionMapSafeString
 import arcs.core.util.nextSafeRandomLong
 import arcs.flags.BuildFlags
 import kotlin.properties.Delegates
@@ -145,7 +146,7 @@ class ReferenceModeStore private constructor(
   /* internal */ val crdtKey = if (!BuildFlags.STORAGE_STRING_REDUCTION) {
     Random.nextSafeRandomLong().toString()
   } else {
-    String(Random.nextBytes(8))
+    Random.nextVersionMapSafeString(10)
   }
 
   /**

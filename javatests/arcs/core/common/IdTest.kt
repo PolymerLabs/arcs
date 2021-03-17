@@ -12,6 +12,7 @@
 package arcs.core.common
 
 import arcs.core.util.RandomBuilder
+import arcs.core.util.nextVersionMapSafeString
 import arcs.core.util.nextSafeRandomLong
 import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
@@ -125,7 +126,7 @@ class IdTest(private val parameters: ParameterizedBuildFlags) {
     val oldRandomBuilder = RandomBuilder
     RandomBuilder = { knownRandom() }
 
-    val expectedRandomValue = String(knownRandom().nextBytes(8))
+    val expectedRandomValue = knownRandom().nextVersionMapSafeString(10)
     val id = Id.Generator.newSession().newMinimizedId()
 
     assertThat(id).isEqualTo(expectedRandomValue)

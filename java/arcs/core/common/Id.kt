@@ -12,6 +12,7 @@
 package arcs.core.common
 
 import arcs.core.util.Random
+import arcs.core.util.nextVersionMapSafeString
 import arcs.core.util.nextSafeRandomLong
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
@@ -71,11 +72,10 @@ interface Id {
      * Create a random 8-Byte string that can be used as an EntityId. This represents an [Id] with
      * a root equal to the string and no tree.
      */
-    fun newMinimizedId(): String {
-      if (!BuildFlags.STORAGE_STRING_REDUCTION) {
-        throw BuildFlagDisabledError("STORAGE_STRING_REDUCTION")
-      }
-      return String(Random.nextBytes(8))
+    fun newMinimizedId(): String = if (!BuildFlags.STORAGE_STRING_REDUCTION) {
+      throw BuildFlagDisabledError("STORAGE_STRING_REDUCTION")
+    } else {
+      Random.nextVersionMapSafeString(10)
     }
 
     companion object {
