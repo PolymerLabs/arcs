@@ -426,9 +426,9 @@ Interface "an interface"
 // split into multiple capture clauses because the combined one is able to match against an empty string (this would
 // cause an infinite loop).
 InterfaceArgument
-  = name:NameWithColon direction:(Direction / SlotDirection)? isOptional:'?'? type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
+  = name:NameWithColon direction:(SlotDirection / Direction)? isOptional:'?'? type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
   { return buildInterfaceArgument(name, direction || 'any', isOptional, optional(type, t => t[1], null)); }
-  / direction:(Direction / SlotDirection) isOptional:'?'? type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
+  / direction:(SlotDirection / Direction) isOptional:'?'? type:(whiteSpace? ParticleHandleConnectionType)? eolWhiteSpace
   { return buildInterfaceArgument(null, direction || 'any', isOptional, optional(type, t => t[1], null)); }
   / isOptional:'?'? type:(whiteSpace? ParticleHandleConnectionType) eolWhiteSpace
   { return buildInterfaceArgument(null, 'any', isOptional, type); }
@@ -579,11 +579,11 @@ Particle
 
 ParticleItem "a particle item"
   = ParticleModality
-  / ParticleSlotConnection
   / Description
-  / ParticleHandleConnection
   / ClaimStatement
   / CheckStatement
+  / ParticleSlotConnection
+  / ParticleHandleConnection
 
 ClaimStatement
   = 'claim' whiteSpace target:dottedFields whiteSpace expression:ClaimExpression eolWhiteSpace
@@ -790,6 +790,9 @@ ParticleHandleConnectionBody
       expression: optional(expression, e => e[3], null)
     });
   }
+  / name:NameWithColon &(!('consumes' / 'provides')) (direction:([a-zA-Z0-0?]+) {
+    expected(`a direction (${AstNode.directions.join(', ')})`);
+  })
 
 Direction "a direction (e.g. reads writes, reads, writes, hosts, `consumes, `provides, any')"
   = (('reads' ('?'?) ' writes') / 'reads' / 'writes' / 'hosts' / '`consumes' / '`provides') &([^a-zA-Z0-9] / !.)
@@ -1185,15 +1188,15 @@ RecipeNode
 
 // RequireHandleSection is intended to replace RecipeHandle but for now we allow for both ways to create a handle.
 RecipeItem
-  = RecipeParticle
-  / RecipeHandle
-  / RecipeSyntheticHandle
+  = Description
   / RequireHandleSection
   / RecipeRequire
-  / RecipeSlot
   / RecipeSearch
+  / RecipeParticle
+  / RecipeSyntheticHandle
+  / RecipeSlot
+  / RecipeHandle
   / RecipeConnection
-  / Description
 
 LocalName
   = 'as' whiteSpace name:(lowerIdent / [a-zA-Z0-9]* { expected(`lower identifier`); })
@@ -1333,6 +1336,9 @@ RecipeConnection
       to,
     });
   }
+  / from:ConnectionTargetWithColon? &(!('consumes' / 'provides')) (direction:([a-zA-Z0-0?]+) {
+    expected(`a direction (${AstNode.directions.join(', ')})`);
+  })
 
 ConnectionTargetWithColon
   = target:ConnectionTarget ':' whiteSpace?

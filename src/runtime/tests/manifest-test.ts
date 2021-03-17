@@ -3042,6 +3042,14 @@ resource SomeName
     assert.strictEqual(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
   });
 
+  it('can parse particles with handle connections with dependent slot connections', async () => {
+    const manifest = await runtime.parse(`
+      particle P2
+        b: reads S {}
+          details: consumes
+    `);
+  });
+
   it('can parse recipes with a require section', async () => {
     const manifest = await runtime.parse(`
       particle P1
