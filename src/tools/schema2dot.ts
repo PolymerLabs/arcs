@@ -38,23 +38,23 @@ digraph {
     for (const particle of manifest.particles) {
       const graph = new SchemaGraph(particle);
       for (const node of graph.nodes) {
-        await node.calculateHash()
+        await node.calculateHash();
       }
       for (const node of graph.walk()) {
         const sources = node.sources.map(s => s.fullName).join(', ');
         const inherited = '(' + Object.keys(node.schema.fields).filter(f => !node.addedFields.includes(f)).join(', ') + ')';
         let fields;
-        if (inherited == '()') {
+        if (inherited === '()') {
           fields = node.addedFields.join(', ');
-        } else if (node.addedFields.length == 0) {
+        } else if (node.addedFields.length === 0) {
           fields = inherited;
         } else {
           fields = [...node.addedFields, inherited].join(', ');
         }
-        dot.push('\n')
-        dot.push(`  "${this.dotName(node)}" [label="${sources}\\n${fields}"]\n`)
+        dot.push('\n');
+        dot.push(`  "${this.dotName(node)}" [label="${sources}\\n${fields}"]\n`);
         for (const c of node.children) {
-          dot.push(`  "${this.dotName(node)}" -> "${this.dotName(c)}"\n`)
+          dot.push(`  "${this.dotName(node)}" -> "${this.dotName(c)}"\n`);
         }
       }
     }
@@ -67,14 +67,14 @@ digraph {
   }
 
   getEntityGenerator(node: SchemaNode): EntityGenerator {
-    throw new Error('unimplemented')
+    throw new Error('unimplemented');
   }
 
-  generateParticleClass(particle: ParticleSpec, nodes: NodeAndGenerator[]): Promise<string> {
-    throw new Error('unimplemented')
+  async generateParticleClass(particle: ParticleSpec, nodes: NodeAndGenerator[]): Promise<string> {
+    throw new Error('unimplemented');
   }
 
-  generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string> {
-    throw new Error('unimplemented')
+  async generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string> {
+    throw new Error('unimplemented');
   }
 }
