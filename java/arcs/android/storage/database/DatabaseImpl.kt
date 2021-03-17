@@ -705,12 +705,13 @@ class DatabaseImpl(
           removeFromCollection(storageKey, op.id, originatingClientId)
         is DatabaseOp.ClearCollection -> clearCollection(storageKey, originatingClientId)
       }
-      notifyClients(storageKey) {
-        // If there is anyone listening, notify of the new data.
-        val data = checkNotNull(get(storageKey, DatabaseData.Collection::class, op.schema)) {
-          "Collection data that was just written cannot be read."
+      notifyClients(storageKey) { client ->
+        // If there is anyone listening, notify of the new data. There could be no data if the
+        // collection has never been written (eg a clear operation on a collection that does not
+        // yet exists).
+        get(storageKey, DatabaseData.Collection::class, op.schema)?.also {
+          client.onDatabaseUpdate(it, it.databaseVersion, originatingClientId)
         }
-        it.onDatabaseUpdate(data, data.databaseVersion, originatingClientId)
       }
     }
   }

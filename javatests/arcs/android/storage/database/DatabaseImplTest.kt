@@ -1456,6 +1456,21 @@ class DatabaseImplTest {
   }
 
   @Test
+  fun applyOp_clearCollection_collectionDidntExist_doesNotNotify() = runBlockingTest {
+    val schema = newSchema("hash")
+    val collectionKey = DummyStorageKey("collection")
+    // Add a client.
+    val collectionClient = FakeDatabaseClient(collectionKey).also { database.addClient(it) }
+
+    database.applyOp(collectionKey, DatabaseOp.ClearCollection(schema))
+
+    assertThat(database.getCollection(collectionKey, schema)).isNull()
+    collectionClient.eventMutex.withLock {
+      assertThat(collectionClient.updates).isEmpty()
+    }
+  }
+
+  @Test
   fun insertAndGet_collection_newEmptyCollection() = runBlockingTest {
     val key = DummyStorageKey("key")
     val schema = newSchema("hash")
