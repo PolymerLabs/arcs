@@ -45,7 +45,11 @@ const getCollectionData = async (arc: Arc, index: number) => {
 const spawnTestArc = async (loader) => {
   const runtime = new Runtime({loader});
   runtime.context = await runtime.parseFile('./manifest');
-  const arcId = await runtime.allocator.startArc({arcName: 'test-arc', storageKeyPrefix: storageKeyPrefixForTest()});
+  const arcId = await runtime.allocator.startArc({
+    arcName: 'test-arc',
+    storageKeyPrefix: storageKeyPrefixForTest(),
+    planName: runtime.context.recipes[0].name
+  });
   const arc = runtime.getArcById(arcId);
   await arc.idle;
   return arc;
@@ -60,7 +64,7 @@ describe('ui-particle-api', () => {
         './manifest': `
           particle TestParticle in 'test-particle.js'
             result: writes Result {ok: Boolean}
-          recipe
+          recipe BadHandleTestRecipe
             result: create *
             TestParticle
               result: result
@@ -109,7 +113,7 @@ describe('ui-particle-api', () => {
             stuff: writes [Stuff {value: Text}]
             thing: writes Thing {value: Text}
             thing2: writes Thing2 {value: Text}
-          recipe
+          recipe SetTestRecipe
             // TODO(sjmiles): 'create with id' parses but doesn't work
             stuff: create 'stuff-store'
             thing: create *
@@ -166,7 +170,7 @@ describe('ui-particle-api', () => {
             stuff: writes [Stuff {value: Text}]
             thing: writes Thing {value: Text}
             result: writes Result {ok: Boolean}
-          recipe
+          recipe AddTestRecipe
             result: create *
             stuff: create *
             thing: create *
@@ -215,7 +219,7 @@ describe('ui-particle-api', () => {
             stuff: reads writes [Stuff {value: Text}]
             thing: writes Thing {value: Text}
             result: writes Result {ok: Boolean}
-          recipe
+          recipe RemoveTestRecipe
             result: create *
             stuff: create *
             thing: create *

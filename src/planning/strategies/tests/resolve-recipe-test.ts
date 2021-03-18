@@ -43,7 +43,7 @@ describe('resolve recipe', () => {
     const [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
 
-    await noResult(createTestArc(manifest), ResolveRecipe, recipe);
+    await noResult(await createTestArc(manifest), ResolveRecipe, recipe);
   });
 
   it('resolves a mapping of a handle with a less specific entity type', async () => {
@@ -71,7 +71,7 @@ describe('resolve recipe', () => {
     let [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
 
-    recipe = await onlyResult(createTestArc(manifest), ResolveRecipe, recipe);
+    recipe = await onlyResult(await createTestArc(manifest), ResolveRecipe, recipe);
     assert.isTrue(recipe.isResolved());
   });
 
@@ -100,7 +100,7 @@ describe('resolve recipe', () => {
     let [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
 
-    recipe = await onlyResult(createTestArc(manifest), ResolveRecipe, recipe);
+    recipe = await onlyResult(await createTestArc(manifest), ResolveRecipe, recipe);
     assert.isTrue(recipe.isResolved());
   });
 
@@ -129,7 +129,7 @@ describe('resolve recipe', () => {
     let [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
 
-    recipe = await onlyResult(createTestArc(manifest), ResolveRecipe, recipe);
+    recipe = await onlyResult(await createTestArc(manifest), ResolveRecipe, recipe);
     assert.isTrue(recipe.isResolved());
   });
 
@@ -146,7 +146,7 @@ describe('resolve recipe', () => {
     let [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
 
-    recipe = await onlyResult(createTestArc(manifest), ResolveRecipe, recipe);
+    recipe = await onlyResult(await createTestArc(manifest), ResolveRecipe, recipe);
     assert.isTrue(recipe.isResolved());
   });
 
@@ -165,7 +165,7 @@ describe('resolve recipe', () => {
           info: consumes #detail
     `);
 
-    const strategy = new ResolveRecipe(createTestArc(manifest));
+    const strategy = new ResolveRecipe(await createTestArc(manifest));
     const results = await strategy.generateFrom([{result: manifest.recipes[0], score: 1}]);
     assert.lengthOf(results, 1);
 
@@ -205,7 +205,7 @@ describe('resolve recipe', () => {
     recipe.normalize();
     assert.isUndefined(recipe.handles[0].storageKey);
 
-    const strategy = new ResolveRecipe(createTestArc(context));
+    const strategy = new ResolveRecipe(await createTestArc(context));
     const results = await strategy.generateFrom([{result: recipe, score: 1}]);
     assert.lengthOf(results, 1);
 
@@ -230,7 +230,7 @@ describe('resolve recipe', () => {
           param: reads h0
     `);
 
-    const arc = createTestArc(manifest);
+    const arc = await createTestArc(manifest);
 
     const car = Entity.createEntityClass(manifest.findSchemaByName('Car'), null);
     await arc.createStore(new SingletonType(car.type), /* name= */ null, 'batmobile');

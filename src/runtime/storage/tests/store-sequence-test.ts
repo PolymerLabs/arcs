@@ -176,7 +176,7 @@ describe('Store Sequence', async () => {
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
       const storageService = runtime.storageService;
-      const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'arc'}));
+      const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'arc'}));
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
       const activeStore1 = await createStore(storageKey, Exists.ShouldCreate, storageService);
       const activeStore2 = await createStore(storageKey, Exists.ShouldExist, storageService);
@@ -273,7 +273,7 @@ describe('Store Sequence', async () => {
     const sequenceTest = new SequenceTest();
     sequenceTest.setTestConstructor(async () => {
       const runtime = new Runtime();
-      const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'arc', storageKeyPrefix: id => new VolatileStorageKey(id, '')}));
+      const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'arc', storageKeyPrefix: id => new VolatileStorageKey(id, '')}));
       const storageKey = new VolatileStorageKey(arc.id, 'unique');
       const activeStore1 = await createStore(storageKey, Exists.ShouldCreate, runtime.storageService);
       const activeStore2 = await createStore(storageKey, Exists.ShouldExist, runtime.storageService);

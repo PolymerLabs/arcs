@@ -38,7 +38,7 @@ describe('MatchRecipeByVerb', () => {
         JumpingBoots.f: reads FootFactory.f
         JumpingBoots.e: reads NuclearReactor.e
     `);
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     const generated = [{result: manifest.recipes[0], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
     const results = await mrv.generateFrom(generated);
@@ -63,7 +63,7 @@ describe('MatchRecipeByVerb', () => {
         P
     `);
 
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     const generated = [{result: manifest.recipes[0], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generateFrom(generated);
@@ -107,7 +107,7 @@ describe('MatchRecipeByVerb', () => {
     const manifest = await Manifest.parse(`
 ${basicHandlesContraintsManifest}
 ${recipesManifest}`);
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     const generated = [{result: manifest.recipes[manifest.recipes.length-1], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
     return mrv.generateFrom(generated);
@@ -140,7 +140,7 @@ ${recipesManifest}`);
     const manifest = await Manifest.parse(`
 ${slandlesSyntaxBasicHandlesContraintsManifest}
 ${recipesManifest}`);
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     const generated = [{result: manifest.recipes[manifest.recipes.length-1], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
     return mrv.generateFrom(generated);
@@ -232,7 +232,7 @@ ${recipesManifest}`);
             bar: provides
     `);
 
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     let generated = [{result: manifest.recipes[3], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generateFrom(generated);
@@ -273,7 +273,7 @@ ${recipesManifest}`);
           b: writes handle0
     `);
 
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     const generated = [{result: manifest.recipes[1], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
     const results = await mrv.generateFrom(generated);
@@ -304,7 +304,7 @@ ${recipesManifest}`);
           b: writes handle0
     `);
 
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     const generated = [{result: manifest.recipes[1], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
     const results = await mrv.generateFrom(generated);
@@ -342,7 +342,7 @@ ${recipesManifest}`);
           b: writes handle0
     `);
 
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     const generated = [{result: manifest.recipes[1], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
     const results = await mrv.generateFrom(generated);
@@ -383,7 +383,7 @@ ${recipesManifest}`);
             foo: provides s0
     `);
 
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     let generated = [{result: manifest.recipes[1], score: 1}];
     const mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generateFrom(generated);
@@ -438,7 +438,7 @@ ${recipesManifest}`);
         foo: consumes s0
   `);
 
-  const arc = StrategyTestHelper.createTestArc(manifest);
+  const arc = await StrategyTestHelper.createTestArc(manifest);
   let generated = [{result: manifest.recipes[1], score: 1}];
   const mrv = new MatchRecipeByVerb(arc);
   let results = await mrv.generateFrom(generated);

@@ -94,7 +94,7 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
   manifestLoadedCallback(loadedManifest);
 
   const runtime = new Runtime({context: loadedManifest, loader});
-  const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test-plan-arc'}));
+  const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-plan-arc'}));
   const planner = new Planner();
   const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc), speculator: new Speculator(runtime)};
   planner.init(arc, options);
@@ -403,7 +403,7 @@ ${recipeManifest}
       tags: [],
     });
 
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
 
     const planner = new Planner();
     const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
@@ -567,7 +567,7 @@ describe('Type variable resolution', () => {
   const loadAndPlan = async manifestStr => {
     const runtime = new Runtime({loader: new NullLoader()});
     const manifest = await runtime.parse(manifestStr);
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     const planner = new Planner();
     const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
     planner.init(arc, options);
@@ -794,7 +794,7 @@ describe('Automatic resolution', () => {
   const loadAndPlan = async (manifestStr: string, arcCreatedCallback?) => {
     return planFromManifest(manifestStr, {
       arcFactory: async manifest => {
-        const arc = StrategyTestHelper.createTestArc(manifest);
+        const arc = await StrategyTestHelper.createTestArc(manifest);
         if (arcCreatedCallback) await arcCreatedCallback(arc, manifest);
         return arc;
       }

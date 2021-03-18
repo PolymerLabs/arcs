@@ -102,7 +102,7 @@ describe('Rulesets', () => {
   });
 
   const planAndComputeStats = async options => {
-    const arc = StrategyTestHelper.createTestArc(options.context);
+    const arc = await StrategyTestHelper.createTestArc(options.context);
     const planner = new Planner();
     planner.init(arc, options);
     const generations: Generation[] = [];

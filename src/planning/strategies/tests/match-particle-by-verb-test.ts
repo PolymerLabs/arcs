@@ -56,7 +56,7 @@ describe('MatchParticleByVerb', () => {
 
   it('particles by verb strategy', async () => {
     const manifest = (await Manifest.parse(manifestStr));
-    const arc = StrategyTestHelper.createTestArc(manifest, {modality: Modality.dom});
+    const arc = await StrategyTestHelper.createTestArc(manifest, {modality: Modality.dom});
     // Apply MatchParticleByVerb strategy.
     const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     const mpv = new MatchParticleByVerb(arc, StrategyTestHelper.createTestStrategyArgs(arc));
@@ -74,7 +74,7 @@ describe('MatchParticleByVerb', () => {
     recipe.handles[0].mapToStorage(new StoreInfo({id: 'test1', type: Entity.createEntityClass(manifest.findSchemaByName('Height'), null).type}));
     recipe.handles[1].mapToStorage(new StoreInfo({id: 'test2', type: Entity.createEntityClass(manifest.findSchemaByName('Energy'), null).type}));
 
-    const arc = StrategyTestHelper.createTestArc(manifest, {modality: Modality.dom});
+    const arc = await StrategyTestHelper.createTestArc(manifest, {modality: Modality.dom});
 
     // Apply all strategies to resolve recipe where particles are referenced by verbs.
     const planner = new Planner();

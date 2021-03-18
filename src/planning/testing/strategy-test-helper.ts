@@ -21,9 +21,9 @@ import {Modality} from '../../runtime/arcs-types/modality.js';
 import {Runtime} from '../../runtime/runtime.js';
 
 export class StrategyTestHelper {
-  static createTestArc(context: Manifest, options: {id?: Id, modality?: Modality, loader?: Loader} = {}) {
+  static async createTestArc(context: Manifest, options: {id?: Id, modality?: Modality, loader?: Loader} = {}): Promise<Arc> {
     const runtime = new Runtime({context, loader: options.loader || new Loader()});
-    return runtime.getArcById(runtime.allocator.newArc({arcName: 'test-arc', ...options}));
+    return runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-arc', ...options}));
   }
   static createTestStrategyArgs(arc: Arc, args?) {
     return {recipeIndex: RecipeIndex.create(arc), ...args};

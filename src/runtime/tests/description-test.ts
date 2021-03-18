@@ -27,9 +27,9 @@ import {StoreInfo} from '../storage/store-info.js';
 import {newRecipe} from '../recipe/internal/recipe-constructor.js';
 import {VolatileStorageKey} from '../storage/drivers/volatile.js';
 
-function createTestArc(recipe: Recipe, manifest: Manifest) {
+async function createTestArc(recipe: Recipe, manifest: Manifest) {
   const runtime = new Runtime({context: manifest, loader: new Loader()});
-  const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
+  const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
   // TODO(lindner) stop messing with arc internal state, or provide a way to supply in constructor..
   arc['_activeRecipe'] = recipe;
   arc['_recipeDeltas'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});
@@ -102,7 +102,7 @@ recipe
     const ofoosHandleConn = newRecipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ofoos');
     const ofoosHandle = ofoosHandleConn ? ofoosHandleConn.handle : null;
 
-    const arc = createTestArc(newRecipe, manifest);
+    const arc = await createTestArc(newRecipe, manifest);
 
     const fooStore = await arc.createStore(new SingletonType(fooType), undefined, 'test:1');
     const fooHandle = await handleForStoreInfo(fooStore, arc);
@@ -350,7 +350,7 @@ recipe
     assert.isTrue(recipe.isResolved());
     recipe = recipe.clone();
 
-    const arc = createTestArc(recipe, manifest);
+    const arc = await createTestArc(recipe, manifest);
     const fooStore1 = await arc.createStore(fooType.collectionOf(), undefined, 'test:1');
     const fooStore2 = await arc.createStore(fooType.collectionOf(), undefined, 'test:2');
     const fooHandle1 = await handleForStoreInfo(fooStore1, arc);
@@ -468,7 +468,7 @@ recipe
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     recipe = recipe.clone();
-    const arc = createTestArc(recipe, manifest);
+    const arc = await createTestArc(recipe, manifest);
     const store = await arc.createStore(new SingletonType(scriptDateType), undefined, 'test:1');
     const handle = await handleForStoreInfo(store, arc);
     await verifySuggestion({arc}, 'Stardate .');
@@ -504,7 +504,7 @@ recipe
     assert.isTrue(recipe.isResolved());
     recipe = recipe.clone();
 
-    const arc = createTestArc(recipe, manifest);
+    const arc = await createTestArc(recipe, manifest);
     const tStore = await arc.createStore(new SingletonType(myBESTType), undefined, 'test:1');
     const tsStore = await arc.createStore(myBESTType.collectionOf(), undefined, 'test:2');
     const tHandle = await handleForStoreInfo(tStore, arc);
@@ -571,7 +571,7 @@ recipe
     const recipe = manifest.recipes[0];
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
-    const arc = createTestArc(recipe, manifest);
+    const arc = await createTestArc(recipe, manifest);
 
     await verifySuggestion({arc}, 'Hello first b and second b, see you at only c.');
   });
@@ -620,7 +620,7 @@ recipe
     const recipe = manifest.recipes[0];
     // Cannot use createTestArc here, because capabilities-resolver cannot be set to null,
     // and interface returns a null schema, and cannot generate hash.
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
     arc['_activeRecipe'] = recipe;
     arc['_recipeDeltas'].push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, patterns: recipe.patterns});
 
@@ -642,7 +642,7 @@ recipe
       const recipe = manifest.recipes[0];
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
-      const arc = createTestArc(recipe, manifest);
+      const arc = await createTestArc(recipe, manifest);
       const description = await Description.create(arc);
 
       const recipeDescription = description.getRecipeSuggestion();
@@ -672,7 +672,7 @@ schema GitHubDash`));
       const recipe = manifest.recipes[0];
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
-      const arc = createTestArc(recipe, manifest);
+      const arc = await createTestArc(recipe, manifest);
       const description = await Description.create(arc);
       const arcDesc = ConCap.capture(() => description.getArcDescription());
       assert.strictEqual(arcDesc.result, expectedSuggestion);
@@ -748,7 +748,7 @@ recipe
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
     recipe = recipe.clone();
-    const arc = createTestArc(recipe, manifest);
+    const arc = await createTestArc(recipe, manifest);
     const fooStore = await arc.createStore(new SingletonType(fooType), undefined, 'test:1');
     const fooHandle = await handleForStoreInfo(fooStore, arc);
     const descriptionStore = await arc.createStore(descriptionType.collectionOf(), undefined, 'test:2');
