@@ -36,6 +36,23 @@ class PolicyTest {
   @get:Rule
   val env = IntegrationEnvironment()
 
+  /** Scenario: No data is written. */
+  @Test
+  fun volatileHandleNoEgress_ingestsAllData_doesNotWriteAnyData() = runBlocking {
+    env.addNewHostWith(::IngressThing.toRegistration())
+
+    // When the Arc is run...
+    val arc = env.startArc(NoDataWrittenPlan)
+    env.waitForIdle(arc)
+
+    val ingest = env.getParticle<IngressThing>(arc)
+    val startingKey = (ingest.handles.input.getProxy().storageKey as ReferenceModeStorageKey)
+      .storageKey
+
+    // Then no data will be written to storage
+    assertThat(env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA)).isEmpty()
+  }
+
   /**
    * Scenario: A policy-compliant recipe with @persistent handles egresses data
    * and stores ingress-restricted values to disk that is never deleted.
@@ -47,9 +64,8 @@ class PolicyTest {
       ::EgressAB.toRegistration()
     )
 
-    val arc = env.startArc(PersistsEgressesPlan)
-
     // When the Arc is run...
+    val arc = env.startArc(PersistsEgressesPlan)
     env.waitForIdle(arc)
 
     val ingest = env.getParticle<IngressThing>(arc)

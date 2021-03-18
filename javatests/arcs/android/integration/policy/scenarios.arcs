@@ -12,6 +12,29 @@ meta
 
 import './particles.arcs'
 
+/// Scenario: No data is written
+@egressType('GeneralEgress')
+policy NoDataWrittenPolicy {
+  @allowedRetention(medium: 'Disk', encryption: false)
+  from Thing access {
+    a,
+    b,
+    c,
+    d
+  }
+}
+
+// Given a recipe that is compliant with a policy
+@policy('NoDataWrittenPolicy')
+recipe NoDataWritten
+  // And the recipe ingresses a schema Thing {a, b, c, d}
+  handle1: create
+
+  IngressThing
+    input: handle1
+
+  // And the recipe does not egress anything
+
 /// Scenario: A policy-compliant recipe with @persistent handles egresses data
 /// and stores ingress-restricted values to disk that is never deleted
 
