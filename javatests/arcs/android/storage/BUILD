@@ -15,6 +15,7 @@ arcs_kt_android_test_suite(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.android.storage",
     deps = [
+        ":generators",
         ":invariants",
         "//java/arcs/android/crdt",
         "//java/arcs/android/storage",  # buildcleaner: keep
@@ -31,6 +32,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/testutil",
+        "//java/arcs/core/testutil",
         "//java/arcs/core/util",
         "//java/arcs/flags/testing",
         "//java/arcs/jvm/util",
@@ -58,5 +60,20 @@ arcs_kt_android_library(
         "//java/arcs/core/storage",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
+    ],
+)
+
+arcs_kt_android_library(
+    name = "generators",
+    testonly = 1,
+    srcs = [
+        "FixtureEntitiesOperationsGenerator.kt",
+    ],
+    deps = [
+        "//java/arcs/core/crdt",
+        "//java/arcs/core/data:rawentity",
+        "//java/arcs/core/entity/testutil",
+        "//java/arcs/core/testutil",
+        "//java/arcs/core/testutil:generator_util",
     ],
 )

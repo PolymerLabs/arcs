@@ -1,15 +1,22 @@
 package arcs.core.entity.testutil
 
 import arcs.core.common.ReferenceId
+import arcs.core.crdt.testutil.RawEntityFromSchema
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaRegistry
+import arcs.core.data.testutil.SchemaWithReferencedSchemas
 import arcs.core.data.util.ReferencableList
 import arcs.core.entity.Reference
 import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.testutil.DummyStorageKey
+import arcs.core.testutil.FuzzingRandom
+import arcs.core.testutil.IntInRange
+import arcs.core.testutil.RandomPositiveLong
+import arcs.core.testutil.midSizedAlphaNumericString
+import arcs.core.testutil.referencableFieldValueFromFieldTypeDbCompatible
 import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
@@ -232,6 +239,30 @@ class FixtureEntities {
       SchemaRegistry.register(InnerEntity.SCHEMA)
       SchemaRegistry.register(MoreNested.SCHEMA)
       SchemaRegistry.register(EmptyEntity.SCHEMA)
+    }
+
+    /**
+     * [SchemaWithReferencedSchemas] instance useful in fuzz testing.
+     */
+    private val SCHEMA_WITH_REFERENCED = SchemaWithReferencedSchemas(
+      FixtureEntity.SCHEMA,
+      mapOf(
+        FixtureEntity.SCHEMA.hash to FixtureEntity.SCHEMA,
+        InnerEntity.SCHEMA.hash to InnerEntity.SCHEMA,
+        MoreNested.SCHEMA.hash to MoreNested.SCHEMA,
+        EmptyEntity.SCHEMA.hash to EmptyEntity.SCHEMA
+      )
+    )
+
+    /** Generates a random raw entity of type FixtureEntity, to be used for fuzz testing. */
+    fun randomRawEntity(s: FuzzingRandom): RawEntity {
+      return RawEntityFromSchema(
+        midSizedAlphaNumericString(s),
+        referencableFieldValueFromFieldTypeDbCompatible(s),
+        IntInRange(s, 1, 5),
+        RandomPositiveLong(s),
+        RandomPositiveLong(s)
+      )(SCHEMA_WITH_REFERENCED)
     }
   }
 }

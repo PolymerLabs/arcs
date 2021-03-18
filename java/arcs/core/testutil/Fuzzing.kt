@@ -181,7 +181,7 @@ interface Generator<T> {
  *
  * ```kotlin
  * invariant_withdrawals_lessThan_initialBalance_willApply(
- *   initalBalance: Int,
+ *   initialBalance: Int,
  *   withdrawal: Withdrawal
  * ) {
  *   assertThat(withdrawal.amount).isLessThan(initialBalance)
@@ -231,6 +231,7 @@ interface FuzzingRandom {
   fun nextInRange(min: Int, max: Int): Int
   fun nextInt(): Int
   fun nextLong(): Long
+  fun nextPositiveLong(): Long
   fun nextBoolean(): Boolean
   fun nextByte(): Byte
   fun nextShort(): Short
@@ -249,6 +250,7 @@ open class SeededRandom(val seed: Long) : FuzzingRandom {
   override fun nextInRange(min: Int, max: Int): Int = random.nextInt(min, max + 1)
   override fun nextInt(): Int = random.nextInt()
   override fun nextLong(): Long = random.nextLong()
+  override fun nextPositiveLong(): Long = random.nextLong(Long.MAX_VALUE)
   override fun nextBoolean(): Boolean = random.nextBoolean()
   override fun nextByte(): Byte = random.nextBytes(1)[0]
   override fun nextShort(): Short = random.nextInt(Short.MAX_VALUE.toInt()).toShort()
@@ -290,6 +292,15 @@ class RandomLong(
 ) : Generator<Long> {
   override fun invoke(): Long {
     return s.nextLong()
+  }
+}
+
+/** A [Generator] that produces a positive long. */
+class RandomPositiveLong(
+  val s: FuzzingRandom
+) : Generator<Long> {
+  override fun invoke(): Long {
+    return s.nextPositiveLong()
   }
 }
 
@@ -408,7 +419,7 @@ class MapOf<T, U>(
  * Taking the following invariant:
  * ```kotlin
  * invariant_withdrawals_lessThan_initialBalance_willApply(
- *   initalBalance: Generator<Int>,
+ *   initialBalance: Generator<Int>,
  *   withdrawal: Transformer<Int, Withdrawal>
  * )
  * ```

@@ -64,6 +64,34 @@ fun freeReferencableFromFieldType(
 }
 
 /**
+ * Returns a [Transformer] that produces [Referencable]s matching a given [FieldType]. The
+ * [Referencable]s are intended to be used as field values in entities (e.g. this will generate
+ * inline entities, not top level ones), and are compatible with their database representation,
+ * ie they can be used to test database roundtrips.
+ */
+fun referencableFieldValueFromFieldTypeDbCompatible(
+  s: FuzzingRandom
+): Transformer<FieldTypeWithReferencedSchemas, Referencable> {
+  // Empty collection in inline entities are not stored in the database.
+  val oneOrMore = IntInRange(s, 1, 5)
+  return transformerWithRecursion {
+    ReferencableFromFieldType(
+      // Turn off unicode for text field, due to b/182713034.
+      ReferencablePrimitiveFromPrimitiveType(s, unicode = false),
+      oneOrMore,
+      RawEntityFromSchema(
+        midSizedAlphaNumericString(s),
+        it,
+        oneOrMore,
+        Value(-1),
+        Value(-1)
+      ),
+      dummyReference(s)
+    )
+  }
+}
+
+/**
  * Returns a [Generator] of reasonably-sized [CrdtEntity] instances with as few constraints as
  * feasible.
  */
