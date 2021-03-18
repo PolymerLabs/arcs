@@ -463,10 +463,7 @@ export class Arc implements ArcInterface {
   // TODO(shanestephens): Once we stop auto-wrapping in singleton types below, convert this to return a well-typed store.
   async createStore<T extends Type>(type: T, name?: string, id?: string, tags?: string[], storageKey?: StorageKey,
         capabilities?: Capabilities): Promise<StoreInfo<T>> {
-    const storeInfo = await this.arcInfo.createStoreInfo({type, name, id, storageKey, capabilities});
-    await this.arcInfo.registerStore(storeInfo, tags, /* registerReferenceMode= */ true);
-    this.arcInfo.addHandleToActiveRecipe(storeInfo);
-
+    const storeInfo = await this.arcInfo.createStoreInfo({type, name, id, storageKey, capabilities, tags});
     await this.createStoreInternal(storeInfo);
     return storeInfo;
   }

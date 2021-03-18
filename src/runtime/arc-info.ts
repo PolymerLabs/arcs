@@ -29,7 +29,7 @@ import {EntityType, ReferenceType, InterfaceType, SingletonType} from '../types/
 import {Capabilities} from './capabilities.js';
 import {StoreInfo} from './storage/store-info.js';
 import {Type} from '../types/lib-types.js';
-import {Handle, Slot} from './recipe//lib-recipe.js';
+import {Handle, Slot} from './recipe/lib-recipe.js';
 import {Exists} from './storage/drivers/driver.js';
 import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {CollectionType, TupleType} from '../types/lib-types.js';
@@ -105,16 +105,21 @@ export class ArcInfo {
     return this.idGenerator.newChildId(this.id, component);
   }
 
-  async createStoreInfo<T extends Type>(opts: {type: T, name?: string, id?: string, storageKey?: StorageKey, capabilities?: Capabilities, exists?: Exists}): Promise<StoreInfo<T>> {
+  async createStoreInfo<T extends Type>(opts: {type: T, name?: string, id?: string, storageKey?: StorageKey, capabilities?: Capabilities, exists?: Exists, tags?: string[]}): Promise<StoreInfo<T>> {
     let id = opts.id;
     if (id == undefined) {
       id = this.generateID().toString();
     }
-
     const storageKey = opts.storageKey ||
         // Consider passing `tags` to capabilities resolver.
         await this.capabilitiesResolver.createStorageKey(opts.capabilities || Capabilities.create(), opts.type, id);
-    return new StoreInfo({id, type: opts.type, name: opts.name, storageKey, exists: opts.exists || Exists.MayExist});
+
+    const storeInfo = new StoreInfo({id, type: opts.type, name: opts.name, storageKey, exists: opts.exists || Exists.MayExist});
+
+    await this.registerStore(storeInfo, opts.tags, /* registerReferenceMode= */ true);
+    this.addHandleToActiveRecipe(storeInfo);
+
+    return storeInfo;
   }
 
   findStoreInfoByStorageKey(storageKey: StorageKey): StoreInfo<Type> {
@@ -150,21 +155,17 @@ export class ArcInfo {
         const refContainedType = new ReferenceType(type.getContainedType());
         const refType = type.isSingleton ? new SingletonType(refContainedType) : new CollectionType(refContainedType);
 
-        const containerStoreInfo = await this.createStoreInfo({
+        await this.createStoreInfo({
           type: refType,
           name: storeInfo.name ? storeInfo.name + '_referenceContainer' : null,
           storageKey: storeInfo.storageKey.storageKey
         });
-        await this.registerStore(containerStoreInfo);
-        this.addHandleToActiveRecipe(containerStoreInfo);
 
-        const backingStoreInfo = await this.createStoreInfo({
+        await this.createStoreInfo({
           type: new CollectionType(type.getContainedType()),
           name: storeInfo.name ? storeInfo.name + '_backingStore' : null,
           storageKey: storeInfo.storageKey.backingKey
         });
-        await this.registerStore(backingStoreInfo);
-        this.addHandleToActiveRecipe(backingStoreInfo);
       }
     }
   }
