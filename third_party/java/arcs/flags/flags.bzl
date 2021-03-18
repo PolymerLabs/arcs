@@ -100,6 +100,15 @@ ARCS_BUILD_FLAGS = [
             "batch.?container.?store.?ops",
         ],
     ),
+    arcs_build_flag(
+        name = "reference_mode_store_fixes",
+        desc = "Resolve several reference mode store bugs",
+        bug_id = "b/176930336",
+        status = "NOT_READY",
+        stopwords = [
+            "reference.?mode.?store.?fixes",
+        ],
+    ),
 ]
 
 validate_flag_list(ARCS_BUILD_FLAGS)

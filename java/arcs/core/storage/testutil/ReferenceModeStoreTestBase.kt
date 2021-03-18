@@ -33,6 +33,8 @@ import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.toReference
 import arcs.core.util.testutil.LogRule
+import arcs.flags.testing.BuildFlagsRule
+import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
@@ -44,19 +46,24 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
 /**
  * Testing base class for [ReferenceModeStore] tests. Subclasses can override this class to run its
  * suite of tests for its own database backend.
  */
+@RunWith(Parameterized::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-abstract class ReferenceModeStoreTestBase {
+abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedBuildFlags) {
   // TODO(b/171729186): Move all tests that are shared between ReferenceModeStoreTest,
   // ReferenceModeStoreDatabaseIntegrationTest and ReferenceModeStoreDatabaseImplIntegrationTest
   // here.
 
   @get:Rule
   val logRule = LogRule()
+
+  @get:Rule val rule = BuildFlagsRule.parameterized(parameters)
 
   protected abstract val TEST_KEY: ReferenceModeStorageKey
 

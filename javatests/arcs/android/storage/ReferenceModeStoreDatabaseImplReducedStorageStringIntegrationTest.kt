@@ -11,6 +11,7 @@
 
 package arcs.android.storage
 
+import androidx.test.core.app.ApplicationProvider
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtSet
@@ -26,17 +27,14 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.ReferenceModeStoreTestBase
 import arcs.core.util.RandomBuilder
-import arcs.flags.testing.BuildFlagsRule
 import arcs.flags.testing.ParameterizedBuildFlags
-import androidx.test.core.app.ApplicationProvider
+import kotlin.random.Random
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
-import org.junit.Rule
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
-import kotlin.random.Random
 
 /**
  * Implementation of [ReferenceModeStoreTestBase] that mirrors
@@ -48,14 +46,15 @@ import kotlin.random.Random
 @RunWith(ParameterizedRobolectricTestRunner::class)
 class ReferenceModeStoreDatabaseImplReducedStorageStringIntegrationTest(
   private val parameters: ParameterizedBuildFlags
-) : ReferenceModeStoreTestBase() {
-
-  @get:Rule val rule = BuildFlagsRule.parameterized(parameters)
+) : ReferenceModeStoreTestBase(parameters) {
 
   companion object {
     @JvmStatic
     @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-    fun params() = ParameterizedBuildFlags.of("STORAGE_STRING_REDUCTION").toList()
+    fun params() = ParameterizedBuildFlags.of(
+      "STORAGE_STRING_REDUCTION",
+      "REFERENCE_MODE_STORE_FIXES"
+    ).toList()
   }
 
   override val TEST_KEY = ReferenceModeStorageKey(

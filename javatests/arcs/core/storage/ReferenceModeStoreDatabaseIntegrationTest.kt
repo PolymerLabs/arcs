@@ -22,6 +22,7 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.RefModeStoreHelper
 import arcs.core.storage.testutil.ReferenceModeStoreTestBase
+import arcs.flags.testing.ParameterizedBuildFlags
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,12 +31,20 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.runners.Parameterized
 
 @Suppress("UNCHECKED_CAST")
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(JUnit4::class)
-class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
+@RunWith(Parameterized::class)
+class ReferenceModeStoreDatabaseIntegrationTest(
+  private val parameters: ParameterizedBuildFlags
+) : ReferenceModeStoreTestBase(parameters) {
+
+  companion object {
+    @get:JvmStatic
+    @get:Parameterized.Parameters(name = "{0}")
+    val PARAMETERS = ParameterizedBuildFlags.of("REFERENCE_MODE_STORE_FIXES")
+  }
 
   override val TEST_KEY = ReferenceModeStorageKey(
     DatabaseStorageKey.Persistent("entities", HASH),
