@@ -92,15 +92,6 @@ ARCS_BUILD_FLAGS = [
         ],
     ),
     arcs_build_flag(
-        name = "batch_container_store_ops",
-        bug_id = "b/182508100",
-        desc = "Batch container store ops in ref mode store for improved performance.",
-        status = "NOT_READY",
-        stopwords = [
-            "batch.?container.?store.?ops",
-        ],
-    ),
-    arcs_build_flag(
         name = "reference_mode_store_fixes",
         desc = "Resolve several reference mode store bugs",
         bug_id = "b/176930336",
