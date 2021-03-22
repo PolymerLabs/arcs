@@ -9,9 +9,12 @@
  */
 import {AllocatorRecipeResolver} from './allocator-recipe-resolver.js';
 import {PlanGenerator} from './plan-generator.js';
+import {FlavoredPlanGenerator} from './flavored-plan-generator.js';
 import {assert} from '../platform/assert-node.js';
 import {encodePlansToProto} from './manifest2proto.js';
 import {Manifest} from '../runtime/manifest.js';
+import {Dictionary} from '../utils/lib-utils.js';
+import {Recipe} from '../runtime/recipe/lib-recipe.js';
 
 export enum OutputFormat { Kotlin, Proto }
 
@@ -45,4 +48,39 @@ export async function recipe2plan(
       return Buffer.from(await encodePlansToProto(plans, manifest));
     default: throw new Error('Output Format should be Kotlin or Proto');
   }
+}
+
+
+/**
+ * Generates Flavored  Plans from recipes in an arcs manifest.
+ *
+ * @param path path/to/manifest.arcs
+ * @param format Kotlin or Proto supported.
+ * @param recipeFilter Optionally, target a single recipe within the manifest.
+ * @return Generated Kotlin code.
+ */
+export async function recipe2flavoredplan(
+    manifest: Manifest,
+    flavoredPolicies: Dictionary<Manifest>,
+    flavorSelector: string,
+    recipeFilter?: string,
+    salt = `salt_${Math.random()}`): Promise<string | Uint8Array> {
+
+  // TODO: If no policy or one policy is specified default to recipe2plan.
+  const flavoredPlans : Dictionary<Recipe[]> = {};
+  const resolvedRecipeNames: Set<string> = new Set();
+  for (const flavor of Object.keys(flavoredPolicies)) {
+    const policiesManifest = flavoredPolicies[flavor];
+    let plans = await (new AllocatorRecipeResolver(manifest, salt, policiesManifest)).resolve();
+    if (recipeFilter) {
+      plans = plans.filter(p => p.name === recipeFilter);
+      if (plans.length === 0) throw Error(`Recipe '${recipeFilter}' not found.`);
+    }
+    plans.forEach(recipe => resolvedRecipeNames.add(recipe.name));
+    flavoredPlans[flavor] = plans;
+  }
+
+  assert(manifest.meta.namespace, `Namespace is required in '${manifest.fileName}' for Kotlin code generation.`);
+  return new FlavoredPlanGenerator(
+    flavoredPlans, resolvedRecipeNames, manifest.meta.namespace, flavorSelector).generate();
 }
