@@ -14,7 +14,6 @@ package arcs.android.storage.database
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.forSingleResult
 import arcs.android.common.getNullableBoolean
 import arcs.android.common.map
@@ -47,6 +46,7 @@ import arcs.core.util.guardedBy
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
+import arcs.flags.testing.ParameterizedBuildFlags
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -61,10 +61,14 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(AndroidJUnit4::class)
-class DatabaseImplTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
+
+  @get:Rule
+  val rule = BuildFlagsRule.parameterized(parameters)
 
   @get:Rule
   val log = AndroidLogRule()
@@ -4047,6 +4051,10 @@ class DatabaseImplTest {
   }
 
   companion object {
+    @JvmStatic
+    @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+    fun params() = ParameterizedBuildFlags.of("STORAGE_STRING_REDUCTION").toList()
+
     /** The first free Type ID after all primitive types have been assigned. */
     private const val FIRST_ENTITY_TYPE_ID = DatabaseImpl.REFERENCE_TYPE_SENTINEL + 1
 

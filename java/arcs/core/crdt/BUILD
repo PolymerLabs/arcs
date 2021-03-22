@@ -16,5 +16,6 @@ arcs_kt_library(
         "//java/arcs/core/type",
         # This may get unwieldy with avoiding circular deps as entity is implemented. We'll see.
         "//java/arcs/core/data:rawentity",
+        "//java/arcs/flags",
     ],
 )

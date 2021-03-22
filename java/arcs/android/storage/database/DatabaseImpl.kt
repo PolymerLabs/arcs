@@ -585,7 +585,8 @@ class DatabaseImpl(
       if (it.getInt(0) > 0) return@transaction
     }
     // If not, we create it.
-    val versionMap = metadata.versionMap.increment(DATABASE_CRDT_ACTOR).toProtoLiteral()
+    val versionMap = metadata.versionMap.increment(DATABASE_CRDT_ACTOR).toLiteral()
+
     update(
       TABLE_COLLECTIONS,
       ContentValues().apply {
@@ -996,10 +997,11 @@ class DatabaseImpl(
       null,
       ContentValues().apply {
         put("type_id", schemaTypeId)
-        put("version_map", versionMap.toProtoLiteral())
+        put("version_map", versionMap.toLiteral())
         put("version_number", databaseVersion)
       }
     )
+
     when (dataType) {
       DataType.Collection ->
         counters?.increment(DatabaseCounters.INSERT_COLLECTION_STORAGEKEY)
@@ -1075,7 +1077,7 @@ class DatabaseImpl(
       update(
         TABLE_COLLECTIONS,
         ContentValues().apply {
-          put("version_map", data.versionMap.toProtoLiteral())
+          put("version_map", data.versionMap.toLiteral())
           put("version_number", data.databaseVersion)
         },
         "id = ?",
@@ -1106,7 +1108,7 @@ class DatabaseImpl(
           null,
           content.apply {
             put("value_id", referenceId)
-            put("version_map", versionMap.toProtoLiteral())
+            put("version_map", versionMap.toLiteral())
           }
         )
       }
@@ -1818,11 +1820,10 @@ class DatabaseImpl(
         put("entity_id", entityId)
         put("creation_timestamp", creationTimestamp)
         put("expiration_timestamp", expirationTimestamp)
-        put("version_map", versionMap.toProtoLiteral())
+        put("version_map", versionMap.toLiteral())
         put("version_number", databaseVersion)
       }
     )
-
     storageKeyId
   }
 
@@ -1857,7 +1858,7 @@ class DatabaseImpl(
       """.trimIndent() to arrayOf(
         rawReference.id,
         rawReference.storageKey.toString(),
-        rawReference.version?.toProtoLiteral(),
+        rawReference.version?.toLiteral(),
         rawReference.creationTimestamp.toString(),
         rawReference.expirationTimestamp.toString(),
         rawReference.isHardReference.toQueryString()
@@ -1880,7 +1881,7 @@ class DatabaseImpl(
           put("entity_storage_key", rawReference.referencedStorageKey().toString())
           put("is_hard_ref", rawReference.isHardReference)
           rawReference.version?.let {
-            put("version_map", it.toProtoLiteral())
+            put("version_map", it.toLiteral())
           } ?: run {
             putNull("version_map")
           }
@@ -2192,25 +2193,32 @@ class DatabaseImpl(
 
   /** Returns a base-64 string representation of the [VersionMapProto] for this [VersionMap]. */
   // TODO(#4889): Find a way to store raw bytes as BLOBs, rather than having to base-64 encode.
-  private fun VersionMap.toProtoLiteral() =
+  private fun VersionMap.toLiteral() = if (BuildFlags.STORAGE_STRING_REDUCTION) {
+    encode()
+  } else {
     Base64.encodeToString(toProto().toByteArray(), Base64.DEFAULT)
+  }
 
   /** Parses a [VersionMap] out of the [Cursor] for the given column. */
   private fun Cursor.getVersionMap(column: Int): VersionMap? {
     if (isNull(column)) return null
 
     val str = getString(column)
-    val bytes = Base64.decode(str, Base64.DEFAULT)
-    val proto: VersionMapProto
-    try {
-      proto = VersionMapProto.parseFrom(bytes)
-    } catch (e: InvalidProtocolBufferException) {
-      // TODO(b/160251910): Make logging detail more cleanly conditional.
-      log.debug(e) { "Parsing serialized VersionMap \"$str\"." }
-      log.info { "Failed to parse serialized version map." }
-      throw e
+    if (BuildFlags.STORAGE_STRING_REDUCTION) {
+      return VersionMap.decode(str)
+    } else {
+      val bytes = Base64.decode(str, Base64.DEFAULT)
+      val proto: VersionMapProto
+      try {
+        proto = VersionMapProto.parseFrom(bytes)
+      } catch (e: InvalidProtocolBufferException) {
+        // TODO(b/160251910): Make logging detail more cleanly conditional.
+        log.debug(e) { "Parsing serialized VersionMap \"$str\"." }
+        log.info { "Failed to parse serialized version map." }
+        throw e
+      }
+      return fromProto(proto)
     }
-    return fromProto(proto)
   }
 
   /** The type of the data stored at a storage key. */
