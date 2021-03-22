@@ -82,12 +82,12 @@ ${imports.join('\n')}
 
   async generateParticleClass(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]): Promise<string> {
     const generator = new KotlinParticleGenerator(this, particle, nodeGenerators);
-    return generator.generateParticleClass()
+    return generator.generateParticleClass();
   }
 
   async generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string> {
     const generator = new KotlinTestHarnessGenerator(this, particle, nodes);
-    return generator.generateTestHarness()
+    return generator.generateTestHarness();
   }
 }
 
