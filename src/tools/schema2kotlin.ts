@@ -143,7 +143,7 @@ export class GeneratorBase {
    *
    * @param particleScope whether the generated declaration will be used inside the particle or outside it.
    */
-  private handleInnerType(connection: HandleConnectionSpec, nodes: SchemaNode[], particleScope: boolean): string {
+  protected handleInnerType(connection: HandleConnectionSpec, nodes: SchemaNode[], particleScope: boolean): string {
     let type = connection.type;
     if (type.isCollection || type.isSingleton) {
       // The top level collection / singleton distinction is handled by the flavour of a handle.
@@ -169,17 +169,17 @@ export class GeneratorBase {
     return generateInnerType(type);
   }
 
-  private handleContainerType(type: Type): string {
+  protected handleContainerType(type: Type): string {
     return type.isCollectionType() ? 'Collection' : 'Singleton';
   }
 
-  private handleMode(connection: HandleConnectionSpec): string {
+  protected handleMode(connection: HandleConnectionSpec): string {
     const direction = this.handleDirection(connection.direction);
     const querySuffix = this.getQueryType(connection) ? 'Query' : '';
     return `${direction}${querySuffix}`;
   }
 
-  private handleDirection(direction: Direction): string {
+  protected handleDirection(direction: Direction): string {
     switch (direction) {
       case 'reads writes':
         return 'ReadWrite';
@@ -192,7 +192,7 @@ export class GeneratorBase {
     }
   }
 
-  private getQueryType(connection: HandleConnectionSpec): string {
+  protected getQueryType(connection: HandleConnectionSpec): string {
     if (!(connection.type instanceof CollectionType)) {
       return null;
     }
