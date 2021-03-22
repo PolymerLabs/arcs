@@ -14,7 +14,7 @@ import {ManifestCodegenUnitTest} from './codegen-unit-test-base.js';
 import {KTExtracter} from '../kotlin-refinement-generator.js';
 import {CodegenUnitTest} from './codegen-unit-test-base.js';
 import {KotlinEntityGenerator} from '../kotlin-entity-generator.js';
-import {Schema2Kotlin} from '../schema2kotlin.js';
+import {Schema2Kotlin, GeneratorBase, KotlinParticleGenerator} from '../schema2kotlin.js';
 import {generateConnectionSpecType, generateType} from '../kotlin-type-generator.js';
 import {generateFields} from '../kotlin-schema-field.js';
 
@@ -113,8 +113,8 @@ export const schema2KotlinTestSuite: CodegenUnitTest[] = [
     }
     async computeFromManifest({particles}) {
       const graph = new SchemaGraph(particles[0]);
-      const schema2kotlin = new Schema2Kotlin({_: []});
-      return particles[0].connections.map(c => schema2kotlin.handleInterfaceType(c, graph.nodes, true));
+      const generatorBase = new GeneratorBase(false, '');
+      return particles[0].connections.map(c => generatorBase.handleInterfaceType(c, graph.nodes, true));
     }
   }(),
   new class extends ManifestCodegenUnitTest {
@@ -126,8 +126,9 @@ export const schema2KotlinTestSuite: CodegenUnitTest[] = [
     }
     async computeFromManifest({particles}) {
       const schema2kotlin = new Schema2Kotlin({_: []});
-      const generators = await schema2kotlin.calculateNodeAndGenerators(particles[0]);
-      const components = await schema2kotlin.generateParticleClassComponents(particles[0], generators);
+      const nodeGenerators = await schema2kotlin.calculateNodeAndGenerators(particles[0]);
+      const particleGenerator = new KotlinParticleGenerator(schema2kotlin, particles[0], nodeGenerators);
+      const components = await particleGenerator.generateParticleClassComponents();
       return components.handleClassDecl;
     }
   }(),
@@ -140,8 +141,9 @@ export const schema2KotlinTestSuite: CodegenUnitTest[] = [
     }
     async computeFromManifest({particles}) {
       const schema2kotlin = new Schema2Kotlin({_: []});
-      const generators = await schema2kotlin.calculateNodeAndGenerators(particles[0]);
-      const components = await schema2kotlin.generateParticleClassComponents(particles[0], generators);
+      const nodeGenerators = await schema2kotlin.calculateNodeAndGenerators(particles[0]);
+      const particleGenerator = new KotlinParticleGenerator(schema2kotlin, particles[0], nodeGenerators);
+      const components = await particleGenerator.generateParticleClassComponents();
       return components.typeAliases.sort();
     }
   }(),
