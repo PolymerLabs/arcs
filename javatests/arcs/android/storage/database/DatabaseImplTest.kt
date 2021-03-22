@@ -51,7 +51,12 @@ import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import kotlin.test.assertFailsWith
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.runBlockingTest
@@ -90,6 +95,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
     )
     db = database.writableDatabase
     StorageKeyManager.GLOBAL_INSTANCE.addParser(DummyStorageKey)
+    FixtureEntities.registerSchemas()
   }
 
   @After
@@ -2364,6 +2370,152 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
     // Finally, nested gets removed.
     database.runGarbageCollection()
     assertThat(database.getEntity(nestedKey, schema)).isEqualTo(null)
+  }
+
+  // Tests that getEntity does not fail if the data that's being read is modified by GC
+  // during the read.
+  @Test
+  fun garbageCollection_doesntBreak_entityReads() = runBlocking {
+    val entity = fixtureEntities.generate().toDatabaseData()
+
+    val key = DummyStorageKey("entity")
+    database.insertOrUpdate(key, entity)
+
+    database.runGarbageCollection()
+    assertThat(database.getEntity(key, entity.schema)).isEqualTo(entity)
+    assertThat(readOrphanField(key)).isTrue()
+
+    var collected = false
+
+    // run GC in parallel to a read
+    val job = launch(newSingleThreadContext("GC")) {
+      database.runGarbageCollection()
+      collected = true
+    }
+
+    while (!collected) {
+      database.getEntity(key, entity.schema)
+    }
+
+    job.join()
+  }
+
+  // Tests that getEntity does not fail if the data that's being read is modified by TTL
+  // expiration during the read.
+  @Test
+  fun expiredEntityClearing_doesntBreak_entityReads() = runBlocking {
+    val entity = fixtureEntities.generate(
+      "alreadyExpired",
+      11L,
+      JvmTime.currentTimeMillis - 100000
+    ).toDatabaseData()
+
+    val key = DummyStorageKey("entity")
+    database.insertOrUpdate(key, entity)
+
+    var removed = false
+
+    val job = launch(newSingleThreadContext("TTL")) {
+      database.removeExpiredEntities()
+      removed = true
+    }
+
+    while (!removed) {
+      database.getEntity(key, entity.schema)
+    }
+
+    job.join()
+  }
+
+  @Test
+  fun aMixtureOfGCAndClearing_doesntBreak_entityReads() = runBlocking {
+    val total_seconds = 10
+
+    val startTime = JvmTime.currentTimeMillis + 15000 // takes about 15 seconds to set up
+    val collectionKey = DummyStorageKey("collection")
+
+    // Set up a few entities that will expire as the test proceeds. We don't want these all
+    // to expire at the same time; so this is somewhat spaced out.
+    val dueToExpire = listOf(1000, 1100, 1200, 1300, 1400, 5000, 5100, 5200, 9800, 9900, 10000)
+      .map {
+        DummyStorageKey("expiresIn$it") to fixtureEntities.generate(
+          "expiresIn$it",
+          11L,
+          startTime + it
+        ).toDatabaseData()
+      }.onEach { (key, entity) -> database.insertOrUpdate(key, entity) }
+
+    // Set up a few entities that will be removed over time as the test proceeds.
+    val toBeRemoved = (1..total_seconds).map {
+      DummyStorageKey("removed$it") to fixtureEntities.generate().toDatabaseData()
+    }.onEach { (key, entity) -> database.insertOrUpdate(key, entity) }
+
+    val actor = "actor"
+    val toBeRemovedReferences = toBeRemoved.map { (key, entity) ->
+      ReferenceWithVersion(
+        RawReference("${entity.rawEntity.id}", key, VersionMap()),
+        VersionMap(actor to 1)
+      )
+    }.toMutableList()
+
+    val dueToExpireReferences = dueToExpire.map { (key, entity) ->
+      ReferenceWithVersion(
+        RawReference("${entity.rawEntity.id}", key, VersionMap()),
+        VersionMap(actor to 1)
+      )
+    }
+
+    val references = (toBeRemovedReferences + dueToExpireReferences).toMutableSet()
+
+    // Add references to all entities to a collection, to pin them as not GC-able initially.
+    // A "remover" thread below will pull some of these out of the collection progressively,
+    // which will expose them to GC.
+    var collection = DatabaseData.Collection(
+      values = references,
+      schema = dueToExpire[0].second.schema,
+      databaseVersion = 1,
+      versionMap = VersionMap(actor to 1)
+    )
+
+    database.insertOrUpdate(collectionKey, collection)
+
+    var running = true
+
+    // Launch a thread that repeatedly runs GC and TTL expiration. We want these to
+    // coincide with getEntity calls at least a few times during the run, to check for
+    // conflict between the two.
+    val job = launch(Dispatchers.Default) {
+      while (running) {
+        database.runGarbageCollection()
+        database.removeExpiredEntities()
+        // Delay is required here, otherwise this process seems to starve out the others
+        // and the test times out.
+        delay(50)
+      }
+    }
+
+    // Launch a thread that occasionally removes an entity from the collection; this renders
+    // the entity able to be labeled as an orphan and eventually GC'd.
+    val job2 = launch(Dispatchers.Default) {
+      repeat(total_seconds) {
+        val ref = toBeRemovedReferences.random()
+        toBeRemovedReferences.remove(ref)
+        references.remove(ref)
+        collection = collection.copy(references, databaseVersion = collection.databaseVersion + 1)
+        database.insertOrUpdate(collectionKey, collection)
+        delay(1000)
+      }
+      running = false
+    }
+
+    // Call getEntity in a tight loop. We want this to collide with GC/TTL.
+    while (running) {
+      dueToExpire.forEach { (key, entity) -> database.getEntity(key, entity.schema) }
+      toBeRemoved.forEach { (key, entity) -> database.getEntity(key, entity.schema) }
+    }
+
+    job.join()
+    job2.join()
   }
 
   @Test
