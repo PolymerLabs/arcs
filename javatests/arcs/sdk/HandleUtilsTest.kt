@@ -46,6 +46,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 private typealias Person = ReadSdkPerson_Person
+private typealias PersonSlice = ReadSdkPerson_Person_Slice
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
@@ -347,7 +348,7 @@ class HandleUtilsTest {
       Person
     ),
     storageKey
-  ).awaitReady() as ReadWriteQueryCollectionHandle<Person, *>
+  ).awaitReady() as ReadWriteQueryCollectionHandle<Person, PersonSlice, *>
 
   private suspend fun createSingletonHandle(
     storageKey: StorageKey
@@ -359,7 +360,7 @@ class HandleUtilsTest {
       Person
     ),
     storageKey
-  ).awaitReady() as ReadWriteSingletonHandle<Person>
+  ).awaitReady() as ReadWriteSingletonHandle<Person, PersonSlice>
 
   private companion object {
     private const val READ_WRITE_HANDLE = "readWriteHandle"

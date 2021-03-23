@@ -9,10 +9,12 @@ import arcs.core.data.SchemaName
 import arcs.core.entity.EntityBase
 import arcs.core.entity.EntitySpec
 import arcs.core.entity.Reference
-import arcs.core.entity.Storable
 import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
+
+// TODO(b/182330900): temporary alias; to be replaced with actual slice interface
+typealias DummyEntitySlice = DummyEntity
 
 /**
  * Subclasses [EntityBase] and makes its protected methods public, so that we can call them
@@ -21,7 +23,7 @@ import arcs.core.util.BigInt
  */
 class DummyEntity(
   entityId: String? = null
-) : EntityBase(ENTITY_CLASS_NAME, SCHEMA, entityId), Storable {
+) : EntityBase(ENTITY_CLASS_NAME, SCHEMA, entityId) {
   var bool: Boolean? by SingletonProperty()
   var nullableBool: Boolean? by SingletonProperty()
   var nullableDouble: Double? by SingletonProperty()
@@ -127,7 +129,7 @@ class DummyEntity(
   }
 }
 
-class InlineDummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA, isInlineEntity = true), Storable {
+class InlineDummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA, isInlineEntity = true) {
   var text: String? by SingletonProperty()
 
   private val nestedEntitySpecs = mapOf(SCHEMA_HASH to InlineDummyEntity)

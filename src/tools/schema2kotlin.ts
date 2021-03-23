@@ -7,17 +7,17 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {EntityGenerator, NodeAndGenerator, Schema2Base} from './schema2base.js';
-import {SchemaNode} from './schema2graph.js';
+import {EntityGenerator, NodeAndGenerator, Schema2Base} from './schema2base';
+import {SchemaNode} from './schema2graph';
 import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
 import {generateConnectionSpecType} from './kotlin-type-generator.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 import {CollectionType, EntityType, Type, TypeVariable} from '../types/lib-types.js';
 import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
 import {Direction} from '../runtime/arcs-types/enums.js';
-import {KotlinEntityGenerator} from './kotlin-entity-generator.js';
+import {KotlinEntityGenerator, interfaceName} from './kotlin-entity-generator.js';
 
-// TODO: use the type lattice to generate interfaces
+// TODO(b/182330900): use the type lattice to generate interfaces
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -28,7 +28,7 @@ export class Schema2Kotlin extends Schema2Base {
     return parts.map(part => part[0].toUpperCase() + part.slice(1)).join('') + '.kt';
   }
 
-  fileHeader(_outName: string): string {
+  fileHeader(outName: string): string {
     const imports = [];
 
     if (this.opts.test_harness) {
@@ -56,6 +56,7 @@ export class Schema2Kotlin extends Schema2Base {
         'import arcs.sdk.ArcsDuration',
         'import arcs.sdk.ArcsInstant',
         'import arcs.sdk.BigInt',
+        'import arcs.sdk.Entity',
         'import arcs.sdk.toBigInt',
         'import javax.annotation.Generated',
       );
@@ -116,8 +117,7 @@ export class GeneratorBase {
     }
 
     const handleMode = this.handleMode(connection);
-    const innerType = this.handleInnerType(connection, nodes, particleScope);
-    const typeArguments: string[] = [innerType];
+    const typeArguments = this.handleTypeArguments(connection, nodes, particleScope);
     const queryType = this.getQueryType(connection);
     if (queryType) {
       typeArguments.push(queryType);
@@ -138,35 +138,54 @@ export class GeneratorBase {
   }
 
   /**
-   * Returns the type of the thing stored in the handle, e.g. MyEntity,
-   * Reference<MyEntity>, Tuple2<Reference<Entity1>, Reference<Entity2>>.
+   * Returns the type(s) required for the handle. Entity handles will use the concrete entity
+   * and/or entity interface depending on the direction of the handle. Reference handles will
+   * only use a reference to the concrete entity class:
+   *
+   *  entity read:          ['MyEntity']
+   *  entity write:         ['MyEntitySlice']
+   *  entity read/write:    ['MyEntity', 'MyEntitySlice']
+   *
+   *  reference read:       ['Reference<MyEntity>']
+   *  reference write:      ['Reference<MyEntity>']
+   *  reference read/write: ['Reference<MyEntity>', 'Reference<MyEntity>']
    *
    * @param particleScope whether the generated declaration will be used inside the particle or outside it.
    */
-  protected handleInnerType(connection: HandleConnectionSpec, nodes: SchemaNode[], particleScope: boolean): string {
+  protected handleTypeArguments(connection: HandleConnectionSpec, nodes: SchemaNode[], particleScope: boolean): string[] {
     let type = connection.type;
     if (type.isCollection || type.isSingleton) {
       // The top level collection / singleton distinction is handled by the flavour of a handle.
       type = type.getContainedType();
     }
 
-    function generateInnerType(type: Type): string {
+    function generateInnerType(type: Type, isInterface: boolean): string {
       if (type.isEntity || type.isVariable) {
           const node = type.isEntity
             ? nodes.find(n => n.variableName === null && n.schema.equals(type.getEntitySchema()))
             : nodes.find(n => n.variableName === (type as TypeVariable).variable.name);
-          return particleScope ? node.humanName(connection) : node.fullName(connection);
+          const name = particleScope ? node.humanName(connection) : node.fullName(connection);
+          return isInterface ? interfaceName(name) : name;
       } else if (type.isReference) {
-        return `arcs.sdk.Reference<${generateInnerType(type.getContainedType())}>`;
+        return `arcs.sdk.Reference<${generateInnerType(type.getContainedType(), false)}>`;
       } else if (type.isTuple) {
         const innerTypes = type.getContainedTypes();
-        return `arcs.core.entity.Tuple${innerTypes.length}<${innerTypes.map(t => generateInnerType(t)).join(', ')}>`;
+        const tupleTypes = innerTypes.map(t => generateInnerType(t, isInterface)).join(', ');
+        return `arcs.core.entity.Tuple${innerTypes.length}<${tupleTypes}>`;
       } else {
         throw new Error(`Type '${type.tag}' not supported on code generated particle handle connections.`);
       }
     }
 
-    return generateInnerType(type);
+    const res = [];
+    if (connection.direction.includes('reads')) {
+      res.push(generateInnerType(type, false));
+    }
+    if (connection.direction.includes('writes')) {
+      // TODO(b/182330900): temporary state; will flip to true when type slicing logic is added
+      res.push(generateInnerType(type, false));
+    }
+    return res;
   }
 
   protected handleContainerType(type: Type): string {
@@ -240,7 +259,7 @@ abstract class Abstract${this.particle.name} : ${this.isWasm ? 'WasmParticleImpl
     const typeAliases: string[] = [];
 
     for (const nodeGenerator of this.nodeGenerators) {
-      const kotlinGenerator = <KotlinEntityGenerator>nodeGenerator.generator;
+      const kotlinGenerator = nodeGenerator.generator as KotlinEntityGenerator;
       classes.push(await kotlinGenerator.generateClasses());
       typeAliases.push(...kotlinGenerator.generateAliases(this.particle.name));
     }

@@ -389,7 +389,7 @@ class StorageCore(val context: Context) {
         StorageMode.PERSISTENT -> TestEntity.clearEntitiesPersistentStorageKey
         else -> TestEntity.clearEntitiesMemoryDatabaseStorageKey
       }
-    ) as WriteCollectionHandle<TestEntity>
+    ) as WriteCollectionHandle<TestEntitySlice>
 
     val elapsedTime = measureTimeMillis { handle.awaitReady() }
     if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
@@ -423,7 +423,7 @@ class StorageCore(val context: Context) {
           StorageMode.MEMORY_DATABASE -> TestEntity.singletonMemoryDatabaseStorageKey
           else -> TestEntity.singletonInMemoryStorageKey
         }
-      ) as ReadWriteSingletonHandle<TestEntity>
+      ) as ReadWriteSingletonHandle<TestEntity, TestEntitySlice>
 
       val elapsedTime = measureTimeMillis { handle.awaitReady() }
       if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
@@ -476,7 +476,7 @@ class StorageCore(val context: Context) {
           StorageMode.MEMORY_DATABASE -> TestEntity.collectionMemoryDatabaseStorageKey
           else -> TestEntity.collectionInMemoryStorageKey
         }
-      ) as ReadWriteCollectionHandle<TestEntity>
+      ) as ReadWriteCollectionHandle<TestEntity, TestEntitySlice>
 
       val elapsedTime = measureTimeMillis { handle.awaitReady() }
       if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
@@ -545,10 +545,10 @@ class StorageCore(val context: Context) {
   ) {
     val timestampStart = System.currentTimeMillis()
     when (val handle = taskHandle.handle) {
-      is ReadWriteSingletonHandle<*> -> withContext(handle.dispatcher) {
+      is ReadWriteSingletonHandle<*, *> -> withContext(handle.dispatcher) {
         handle.fetch()
       }
-      is ReadWriteCollectionHandle<*> -> withContext(handle.dispatcher) {
+      is ReadWriteCollectionHandle<*, *> -> withContext(handle.dispatcher) {
         handle.fetchAll()
       }
     }
@@ -589,15 +589,15 @@ class StorageCore(val context: Context) {
     }
 
     when (val handle = taskHandle.handle) {
-      is ReadWriteSingletonHandle<*> ->
+      is ReadWriteSingletonHandle<*, *> ->
         (
-          handle as? ReadWriteSingletonHandle<TestEntity>
+          handle as? ReadWriteSingletonHandle<TestEntity, TestEntitySlice>
           )?.let {
           withContext(it.dispatcher) { it.store(entity) }.join()
         }
-      is ReadWriteCollectionHandle<*> ->
+      is ReadWriteCollectionHandle<*, *> ->
         (
-          handle as? ReadWriteCollectionHandle<TestEntity>
+          handle as? ReadWriteCollectionHandle<TestEntity, TestEntitySlice>
           )?.let {
           withContext(it.dispatcher) { it.store(entity) }.join()
         }
@@ -610,7 +610,7 @@ class StorageCore(val context: Context) {
     taskHandle: TaskHandle,
     taskController: TaskController,
     settings: Settings
-  ) = (taskHandle.handle as? WriteCollectionHandle<TestEntity>)?.let { handle ->
+  ) = (taskHandle.handle as? WriteCollectionHandle<TestEntitySlice>)?.let { handle ->
     val entities = List(settings.clearedEntities) {
       SystemHealthTestEntity(settings.dataSizeInBytes)
     }

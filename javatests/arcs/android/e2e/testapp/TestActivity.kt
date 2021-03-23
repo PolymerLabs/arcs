@@ -62,8 +62,8 @@ class TestActivity : AppCompatActivity() {
   private var storageMode = TestEntity.StorageMode.IN_MEMORY
   private var isCollection = false
   private var setFromRemoteService = false
-  private var singletonHandle: ReadWriteSingletonHandle<TestEntity>? = null
-  private var collectionHandle: ReadWriteCollectionHandle<TestEntity>? = null
+  private var singletonHandle: ReadWriteSingletonHandle<TestEntity, TestEntitySlice>? = null
+  private var collectionHandle: ReadWriteCollectionHandle<TestEntity, TestEntitySlice>? = null
 
   private var allocator: Allocator? = null
   private var resurrectionArcId: ArcId? = null
@@ -261,7 +261,7 @@ class TestActivity : AppCompatActivity() {
           TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
           else -> TestEntity.collectionInMemoryStorageKey
         }
-      ).awaitReady() as ReadWriteCollectionHandle<TestEntity>
+      ).awaitReady() as ReadWriteCollectionHandle<TestEntity, TestEntitySlice>
 
       collectionHandle?.dispatcher?.let {
         withContext(it) {
@@ -303,7 +303,7 @@ class TestActivity : AppCompatActivity() {
           TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
           else -> TestEntity.singletonInMemoryStorageKey
         }
-      ).awaitReady() as ReadWriteSingletonHandle<TestEntity>
+      ).awaitReady() as ReadWriteSingletonHandle<TestEntity, TestEntitySlice>
 
       singletonHandle?.dispatcher?.let {
         withContext(it) {

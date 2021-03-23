@@ -25,8 +25,11 @@ import arcs.core.entity.awaitReady
 import arcs.core.entity.testutil.EmptyEntity
 import arcs.core.entity.testutil.FixtureEntities
 import arcs.core.entity.testutil.FixtureEntity
+import arcs.core.entity.testutil.FixtureEntitySlice
 import arcs.core.entity.testutil.InnerEntity
+import arcs.core.entity.testutil.InnerEntitySlice
 import arcs.core.entity.testutil.MoreNested
+import arcs.core.entity.testutil.MoreNestedSlice
 import arcs.core.entity.testutil.TestInlineParticle_Entities
 import arcs.core.entity.testutil.TestInlineParticle_Entities_InlineEntityField
 import arcs.core.entity.testutil.TestInlineParticle_Entities_InlineListField
@@ -267,7 +270,7 @@ open class HandlesTestBase(val params: Params) {
         FixtureEntity
       ),
       singletonKey
-    ).awaitReady() as WriteSingletonHandle<FixtureEntity>
+    ).awaitReady() as WriteSingletonHandle<FixtureEntitySlice>
     val readHandle = readHandleManagerImpl.createHandle(
       HandleSpec(
         "readOnlySingleton",
@@ -309,7 +312,7 @@ open class HandlesTestBase(val params: Params) {
         FixtureEntity
       ),
       singletonKey
-    ).awaitReady() as ReadWriteSingletonHandle<FixtureEntity>
+    ).awaitReady() as ReadWriteSingletonHandle<FixtureEntity, FixtureEntitySlice>
 
     val handle2 = readHandleManagerImpl.createHandle(
       HandleSpec(
@@ -319,7 +322,7 @@ open class HandlesTestBase(val params: Params) {
         FixtureEntity
       ),
       singletonKey
-    ).awaitReady() as ReadWriteSingletonHandle<FixtureEntity>
+    ).awaitReady() as ReadWriteSingletonHandle<FixtureEntity, FixtureEntitySlice>
 
     // handle1 -> handle2
     val received1to2 = Job()
@@ -354,7 +357,7 @@ open class HandlesTestBase(val params: Params) {
       createStorageKey("innerEntities", InnerEntity.SCHEMA.hash)
     )
     val innerEntitiesHandle =
-      writeHandleManagerImpl.createSingletonHandle(
+      writeHandleManagerImpl.createSingletonHandle<InnerEntity, InnerEntitySlice>(
         storageKey = innerEntitiesStorageKey,
         entitySpec = InnerEntity
       )
@@ -390,7 +393,7 @@ open class HandlesTestBase(val params: Params) {
         MoreNested
       ),
       moreNestedCollectionKey
-    ) as ReadWriteCollectionHandle<MoreNested>
+    ) as ReadWriteCollectionHandle<MoreNested, MoreNestedSlice>
 
     val nested = fixtureEntities.generateMoreNested()
     moreNestedCollection.dispatchStore(nested)
@@ -713,7 +716,7 @@ open class HandlesTestBase(val params: Params) {
         FixtureEntity
       ),
       collectionKey
-    ).awaitReady() as WriteCollectionHandle<FixtureEntity>
+    ).awaitReady() as WriteCollectionHandle<FixtureEntitySlice>
 
     val readHandle = readHandleManagerImpl.createHandle(
       HandleSpec(
@@ -777,7 +780,7 @@ open class HandlesTestBase(val params: Params) {
         FixtureEntity
       ),
       collectionKey
-    ).awaitReady() as ReadWriteCollectionHandle<FixtureEntity>
+    ).awaitReady() as ReadWriteCollectionHandle<FixtureEntity, FixtureEntitySlice>
 
     val handle2 = readHandleManagerImpl.createHandle(
       HandleSpec(
@@ -787,7 +790,7 @@ open class HandlesTestBase(val params: Params) {
         FixtureEntity
       ),
       collectionKey
-    ).awaitReady() as ReadWriteCollectionHandle<FixtureEntity>
+    ).awaitReady() as ReadWriteCollectionHandle<FixtureEntity, FixtureEntitySlice>
 
     val entity3 = fixtureEntities.generate(entityId = "entity3")
 
@@ -1136,11 +1139,11 @@ open class HandlesTestBase(val params: Params) {
     val moreNestedCollection = writeHandleManagerImpl.createHandle(
       moreNestedSpec,
       moreNestedCollectionKey
-    ).awaitReady() as ReadWriteCollectionHandle<MoreNested>
+    ).awaitReady() as ReadWriteCollectionHandle<MoreNested, MoreNestedSlice>
     val moreNestedMonitor = monitorHandleManagerImpl.createHandle(
       moreNestedSpec,
       moreNestedCollectionKey
-    ).awaitReady() as ReadWriteCollectionHandle<MoreNested>
+    ).awaitReady() as ReadWriteCollectionHandle<MoreNested, MoreNestedSlice>
     val writeHandle = writeHandleManagerImpl.createCollectionHandle()
     val readHandle = readHandleManagerImpl.createCollectionHandle()
 
@@ -1291,11 +1294,15 @@ open class HandlesTestBase(val params: Params) {
     handle.dispatchStore(entity1, entity2)
 
     assertThat(handle.dispatchFetchAll()).containsExactly(entity1, entity2)
-    // Ensure that queries can be performed.
-    (handle as ReadWriteQueryCollectionHandle<FixtureEntity, Double>).dispatchQuery(44.0)
-    // Ensure that queries can be performed.
+
+    // Ensure that queries can be performed with the correct query type.
+    (handle as ReadWriteQueryCollectionHandle<FixtureEntity, FixtureEntitySlice, Double>)
+      .dispatchQuery(44.0)
+
+    // Ensure that queries cannot be performed with an incorrect query type.
     assertFailsWith<ClassCastException> {
-      (handle as ReadWriteQueryCollectionHandle<FixtureEntity, String>).dispatchQuery("44")
+      (handle as ReadWriteQueryCollectionHandle<FixtureEntity, FixtureEntitySlice, String>)
+        .dispatchQuery("44")
     }
   }
 
@@ -1407,11 +1414,11 @@ open class HandlesTestBase(val params: Params) {
     }
   }
 
-  private suspend fun <T : Entity> HandleManagerImpl.createSingletonHandle(
+  private suspend fun <E : I, I : Entity> HandleManagerImpl.createSingletonHandle(
     storageKey: StorageKey = singletonKey,
     name: String = "singletonWriteHandle",
     ttl: Ttl = Ttl.Infinite(),
-    entitySpec: EntitySpec<T>
+    entitySpec: EntitySpec<E>
   ) = createHandle(
     HandleSpec(
       name,
@@ -1421,7 +1428,7 @@ open class HandlesTestBase(val params: Params) {
     ),
     storageKey,
     ttl
-  ).awaitReady() as ReadWriteSingletonHandle<T>
+  ).awaitReady() as ReadWriteSingletonHandle<E, I>
 
   private suspend fun HandleManagerImpl.createSingletonHandle(
     storageKey: StorageKey = singletonKey,
@@ -1435,11 +1442,11 @@ open class HandlesTestBase(val params: Params) {
     ttl: Ttl = Ttl.Infinite()
   ) = createCollectionHandle(storageKey, name, ttl, FixtureEntity)
 
-  private suspend fun <T : Entity> HandleManagerImpl.createCollectionHandle(
+  private suspend fun <E : I, I : Entity> HandleManagerImpl.createCollectionHandle(
     storageKey: StorageKey = collectionKey,
     name: String = "collectionReadHandle",
     ttl: Ttl = Ttl.Infinite(),
-    entitySpec: EntitySpec<T>
+    entitySpec: EntitySpec<E>
   ) = createHandle(
     HandleSpec(
       name,
@@ -1449,7 +1456,7 @@ open class HandlesTestBase(val params: Params) {
     ),
     storageKey,
     ttl
-  ).awaitReady() as ReadWriteQueryCollectionHandle<T, Any>
+  ).awaitReady() as ReadWriteQueryCollectionHandle<E, I, Any>
 
   private suspend fun HandleManagerImpl.createReferenceSingletonHandle(
     storageKey: StorageKey = singletonRefKey,
@@ -1464,7 +1471,7 @@ open class HandlesTestBase(val params: Params) {
     ),
     storageKey,
     ttl
-  ).awaitReady() as ReadWriteSingletonHandle<Reference<FixtureEntity>>
+  ).awaitReady() as ReadWriteSingletonHandle<Reference<FixtureEntity>, Reference<FixtureEntity>>
 
   private suspend fun HandleManagerImpl.createReferenceCollectionHandle(
     storageKey: StorageKey = collectionRefKey,
@@ -1479,7 +1486,8 @@ open class HandlesTestBase(val params: Params) {
     ),
     storageKey,
     ttl
-  ).also { it.awaitReady() } as ReadWriteQueryCollectionHandle<Reference<FixtureEntity>, Any>
+  ).awaitReady() as ReadWriteQueryCollectionHandle<
+    Reference<FixtureEntity>, Reference<FixtureEntity>, Any>
 
   // Note the predicate receives the *handle*, not onUpdate's delta argument.
   private fun <H : ReadableHandle<T, U>, T, U> H.onUpdateDeferred(

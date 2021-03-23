@@ -48,7 +48,7 @@ class CollectionHandlePartitionMap(
         entitySpec
       ),
       STORAGE_KEY
-    ) as ReadWriteCollectionHandle<EntityBase>
+    ) as ReadWriteCollectionHandle<EntityBase, EntityBase>
     handle.awaitReady()
   }
 

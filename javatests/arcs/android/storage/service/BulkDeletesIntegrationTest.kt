@@ -24,6 +24,7 @@ import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.entity.testutil.FixtureEntities
 import arcs.core.entity.testutil.FixtureEntity
+import arcs.core.entity.testutil.FixtureEntitySlice
 import arcs.core.entity.testutil.InnerEntity
 import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
@@ -199,5 +200,5 @@ class BulkDeletesIntegrationTest {
     ),
     databaseKey,
     expiry
-  ).awaitReady() as ReadWriteCollectionHandle<FixtureEntity>
+  ).awaitReady() as ReadWriteCollectionHandle<FixtureEntity, FixtureEntitySlice>
 }

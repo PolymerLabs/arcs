@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.js';
-import {EntityGenerator} from './schema2base.js';
-import {SchemaNode} from './schema2graph.js';
+import {EntityGenerator} from './schema2base';
+import {SchemaNode} from './schema2graph';
 import minimist from 'minimist';
 import {generateSchema} from './kotlin-schema-generator.js';
 import {assert} from '../platform/assert-web.js';
@@ -22,6 +22,10 @@ type ExtendedSchemaField = KotlinSchemaField & {
   escaped: string,
   nullableType: string,
 };
+
+export function interfaceName(className: string): string {
+  return className + (className.includes('_') ? '_Slice' : 'Slice');
+}
 
 export class KotlinEntityGenerator implements EntityGenerator {
 
@@ -59,7 +63,13 @@ export class KotlinEntityGenerator implements EntityGenerator {
   }
 
   generateAliases(particleName: string): string[] {
-    return this.node.sources.map(s => `typealias ${s.fullName} = Abstract${particleName}.${this.className}`);
+    const res = [];
+    for (const s of this.node.sources) {
+      res.push(`typealias ${s.fullName} = Abstract${particleName}.${this.className}`);
+      // TODO(b/182330900): temporary state; will be changed to alias the actual slice interface
+      res.push(`typealias ${interfaceName(s.fullName)} = Abstract${particleName}.${this.className}`);
+    }
+    return res;
   }
 
   generateClassDefinition(): string {

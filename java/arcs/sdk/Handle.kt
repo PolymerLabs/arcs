@@ -27,35 +27,32 @@ import arcs.core.entity.WriteSingletonHandle
 typealias Handle = Handle
 
 /** A singleton handle with read access. */
-typealias ReadSingletonHandle<T> = ReadSingletonHandle<T>
+typealias ReadSingletonHandle<E> = ReadSingletonHandle<E>
 
 /** A singleton handle with write access. */
-typealias WriteSingletonHandle<T> = WriteSingletonHandle<T>
+typealias WriteSingletonHandle<I> = WriteSingletonHandle<I>
 
 /** A singleton handle with read and write access. */
-typealias ReadWriteSingletonHandle<T> = ReadWriteSingletonHandle<T>
+typealias ReadWriteSingletonHandle<E, I> = ReadWriteSingletonHandle<E, I>
 
 /** A collection handle with read access. */
-typealias ReadCollectionHandle<T> = ReadCollectionHandle<T>
+typealias ReadCollectionHandle<E> = ReadCollectionHandle<E>
 
 /** A collection handle with write access. */
-typealias WriteCollectionHandle<T> = WriteCollectionHandle<T>
+typealias WriteCollectionHandle<I> = WriteCollectionHandle<I>
 
 /** A collection handle with query access. */
-typealias QueryCollectionHandle<T, QueryArgs> =
-  QueryCollectionHandle<T, QueryArgs>
+typealias QueryCollectionHandle<E, QueryArgs> = QueryCollectionHandle<E, QueryArgs>
 
 /** A collection handle with read and write access. */
-typealias ReadWriteCollectionHandle<T> = ReadWriteCollectionHandle<T>
+typealias ReadWriteCollectionHandle<E, I> = ReadWriteCollectionHandle<E, I>
 
 /** A collection handle with read and query access. */
-typealias ReadQueryCollectionHandle<T, QueryArgs> =
-  ReadQueryCollectionHandle<T, QueryArgs>
+typealias ReadQueryCollectionHandle<E, QueryArgs> = ReadQueryCollectionHandle<E, QueryArgs>
 
 /** A collection handle with write and query access. */
-typealias WriteQueryCollectionHandle<T, QueryArgs> =
-  WriteQueryCollectionHandle<T, QueryArgs>
+typealias WriteQueryCollectionHandle<I, QueryArgs> = WriteQueryCollectionHandle<I, QueryArgs>
 
 /** A collection handle with read, write and query access. */
-typealias ReadWriteQueryCollectionHandle<T, QueryArgs> =
-  ReadWriteQueryCollectionHandle<T, QueryArgs>
+typealias ReadWriteQueryCollectionHandle<E, I, QueryArgs> =
+  ReadWriteQueryCollectionHandle<E, I, QueryArgs>

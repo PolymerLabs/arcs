@@ -37,10 +37,13 @@ typealias CollectionProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<
  *
  * This class won't be returned directly; instead it will be wrapped in a facade object that
  * exposes only the methods that should be exposed.
+ *
+ * For entity-based handles, [E] is a concrete entity class and [I] is the interface for that.
+ * For reference handles, [E] and [I] are both a [Reference] to a concrete entity class.
  */
-class CollectionHandle<T : Storable, R : Referencable>(
-  config: Config<T, R>
-) : BaseHandle<T>(config), ReadWriteQueryCollectionHandle<T, Any> {
+class CollectionHandle<E : I, I : Storable, R : Referencable>(
+  config: Config<E, I, R>
+) : BaseHandle(config), ReadWriteQueryCollectionHandle<E, I, Any> {
   private val storageProxy = config.proxy
   private val storageAdapter = config.storageAdapter
 
@@ -57,8 +60,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
     }
   }
 
-  // region implement ReadCollectionHandle<T>
-
+  // region implement ReadCollectionHandle<E>
   override fun size() = fetchValidModels().size
 
   override fun isEmpty() = fetchValidModels().isEmpty()
@@ -67,7 +69,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
     adaptValues(storageProxy.getParticleViewUnsafe())
   }
 
-  override fun fetchById(entityId: String): T? = checkPreconditions {
+  override fun fetchById(entityId: String): E? = checkPreconditions {
     storageProxy
       .getParticleViewUnsafe()
       .filter { it.id == entityId && !storageAdapter.isExpired(it) }
@@ -76,13 +78,13 @@ class CollectionHandle<T : Storable, R : Referencable>(
   }
   // endregion
 
-  // region implement QueryCollectionHandle<T, Any>
-  override fun query(args: Any): Set<T> = checkPreconditions {
+  // region implement QueryCollectionHandle<E, Any>
+  override fun query(args: Any): Set<E> = checkPreconditions {
     adaptValues(queryResults(args))
   }
   // endregion
 
-  // region implement RemoveQueryCollectionHandle<T>
+  // region implement RemoveQueryCollectionHandle<I, Any>
   override fun removeByQuery(args: Any): Job {
     if (!BuildFlags.REMOVE_BY_QUERY_HANDLE) {
       throw BuildFlagDisabledError("REMOVE_BY_QUERY_HANDLE")
@@ -94,10 +96,10 @@ class CollectionHandle<T : Storable, R : Referencable>(
   }
   // endregion
 
-  // region implement WriteCollectionHandle<T>
-  override fun store(element: T): Job = storeAll(setOf(element))
+  // region implement WriteCollectionHandle<I>
+  override fun store(element: I): Job = storeAll(setOf(element))
 
-  override fun storeAll(elements: Collection<T>): Job = checkPreconditions {
+  override fun storeAll(elements: Collection<I>): Job = checkPreconditions {
     val versionMap = storageProxy.getVersionMap()
     val ops = elements.map {
       CrdtSet.Operation.Add(
@@ -113,7 +115,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
     storageProxy.applyOp(CrdtSet.Operation.Clear(name, storageProxy.getVersionMap()))
   }
 
-  override fun remove(element: T): Job = checkPreconditions {
+  override fun remove(element: I): Job = checkPreconditions {
     val id = checkNotNull(storageAdapter.getId(element)) { "Cannot remove an item without ID." }
     removeById(id)
   }
@@ -123,8 +125,8 @@ class CollectionHandle<T : Storable, R : Referencable>(
   }
   // endregion
 
-  // region implement ReadableHandle<T>
-  override fun onUpdate(action: (CollectionDelta<T>) -> Unit) =
+  // region implement ReadableHandle<E>
+  override fun onUpdate(action: (CollectionDelta<E>) -> Unit) =
     storageProxy.addOnUpdate(callbackIdentifier) { oldValue, newValue ->
       val oldIds = oldValue.mapTo(mutableSetOf()) { it.id }
       val newIds = newValue.mapTo(mutableSetOf()) { it.id }
@@ -178,7 +180,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
     )
   }
 
-  private fun adaptValues(values: Set<R>): Set<T> {
+  private fun adaptValues(values: Set<R>): Set<E> {
     return values.filterNot {
       storageAdapter.isExpired(it)
     }.mapTo(mutableSetOf()) {
@@ -187,7 +189,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
   }
 
   /** Configuration required to instantiate a [CollectionHandle]. */
-  class Config<T : Storable, R : Referencable>(
+  class Config<E : I, I : Storable, R : Referencable>(
     /** See [BaseHandleConfig.name]. */
     name: String,
     /** See [BaseHandleConfig.spec]. */
@@ -199,7 +201,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
      */
     val proxy: CollectionProxy<R>,
     /** Will ensure that necessary fields are present on the [RawEntity] before storage. */
-    val storageAdapter: StorageAdapter<T, R>,
+    val storageAdapter: StorageAdapter<E, I, R>,
     /** See [BaseHandleConfig.dereferencerFactory]. */
     dereferencerFactory: EntityDereferencerFactory,
     /** See [BaseHandleConfig.particleId]. */

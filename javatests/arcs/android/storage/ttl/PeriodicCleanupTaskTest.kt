@@ -16,6 +16,7 @@ import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.entity.testutil.DummyEntity
+import arcs.core.entity.testutil.DummyEntitySlice
 import arcs.core.entity.testutil.InlineDummyEntity
 import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
@@ -138,5 +139,5 @@ class PeriodicCleanupTaskTest {
       ),
       collectionKey,
       Ttl.Days(2)
-    ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
+    ).awaitReady() as ReadWriteCollectionHandle<DummyEntity, DummyEntitySlice>
 }

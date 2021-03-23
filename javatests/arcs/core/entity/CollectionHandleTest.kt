@@ -17,6 +17,7 @@ import arcs.core.data.expression.query
 import arcs.core.data.expression.text
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.testutil.DummyEntity
+import arcs.core.entity.testutil.DummyEntitySlice
 import arcs.core.entity.testutil.mockCollectionStorageProxy
 import arcs.core.entity.testutil.mockStorageAdapter
 import arcs.core.storage.StorageProxy.CallbackIdentifier
@@ -55,9 +56,9 @@ class CollectionHandleTest {
     type: Type = CollectionType(EntityType(DummyEntity.SCHEMA)),
     spec: EntityBaseSpec = EntityBaseSpec(DummyEntity.SCHEMA),
     proxy: CollectionProxy<R> = mockCollectionStorageProxy() as CollectionProxy<R>,
-    storageAdapter: StorageAdapter<DummyEntity, R> =
-      mockStorageAdapter() as StorageAdapter<DummyEntity, R>
-  ): CollectionHandle<DummyEntity, R> {
+    storageAdapter: StorageAdapter<DummyEntity, DummyEntitySlice, R> =
+      mockStorageAdapter() as StorageAdapter<DummyEntity, DummyEntitySlice, R>
+  ): CollectionHandle<DummyEntity, DummyEntitySlice, R> {
     val config = CollectionHandle.Config(
       handleName,
       HandleSpec("handle", HandleMode.ReadWriteQuery, type, setOf(spec)),

@@ -29,6 +29,7 @@ import arcs.core.entity.ReadableHandle
 import arcs.core.entity.Reference
 import arcs.core.entity.awaitReady
 import arcs.core.entity.testutil.DummyEntity
+import arcs.core.entity.testutil.DummyEntitySlice
 import arcs.core.entity.testutil.InlineDummyEntity
 import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
@@ -358,7 +359,7 @@ class StorageServiceManagerTest {
         DummyEntity
       ),
       storageKey
-    ).awaitReady() as ReadWriteSingletonHandle<DummyEntity>
+    ).awaitReady() as ReadWriteSingletonHandle<DummyEntity, DummyEntitySlice>
 
   private suspend fun createCollectionHandle(storageKey: StorageKey) =
     HandleManagerImpl(
@@ -374,7 +375,7 @@ class StorageServiceManagerTest {
         DummyEntity
       ),
       storageKey
-    ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
+    ).awaitReady() as ReadWriteCollectionHandle<DummyEntity, DummyEntitySlice>
 
   private fun entityWithHardRef(hardRefId: String, backingKey: StorageKey) = DummyEntity().apply {
     num = 1.0

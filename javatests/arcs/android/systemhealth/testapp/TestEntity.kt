@@ -24,6 +24,9 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.sdk.EntityBase
 import arcs.sdk.EntitySpec
 
+// TODO(b/182330900): temporary alias; to be replaced with actual slice interface
+typealias TestEntitySlice = TestEntity
+
 class TestEntity(
   text: String = "",
   number: Double = 0.0,

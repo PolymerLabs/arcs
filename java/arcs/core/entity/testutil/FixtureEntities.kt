@@ -26,6 +26,10 @@ typealias FixtureEntity = AbstractTestParticle.FixtureEntity
 typealias InnerEntity = AbstractTestParticle.InnerEntity
 typealias MoreNested = AbstractTestParticle.MoreNested
 typealias EmptyEntity = AbstractTestParticle.EmptyEntity
+typealias FixtureEntitySlice = AbstractTestParticle.FixtureEntity
+typealias InnerEntitySlice = AbstractTestParticle.InnerEntity
+typealias MoreNestedSlice = AbstractTestParticle.MoreNested
+typealias EmptyEntitySlice = AbstractTestParticle.EmptyEntity
 
 /**
  * Generates entities with a large number of field types, to be used in tests.

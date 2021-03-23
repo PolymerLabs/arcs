@@ -13,6 +13,7 @@ import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.entity.testutil.DummyEntity
+import arcs.core.entity.testutil.DummyEntitySlice
 import arcs.core.entity.testutil.RestrictedDummyEntity
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -101,19 +102,19 @@ abstract class AbstractArcHostTestBase {
   ) {
 
     @Suppress("UNCHECKED_CAST")
-    suspend fun getFooHandle(): ReadWriteSingletonHandle<DummyEntity> {
+    suspend fun getFooHandle(): ReadWriteSingletonHandle<DummyEntity, DummyEntitySlice> {
       val p = getArcHostContext("arcId")!!.particles.first {
         it.planParticle.particleName == "Foobar"
       }.particle as TestParticle
-      return p.handles.getHandle("foo") as ReadWriteSingletonHandle<DummyEntity>
+      return p.handles.getHandle("foo") as ReadWriteSingletonHandle<DummyEntity, DummyEntitySlice>
     }
 
     @Suppress("UNCHECKED_CAST")
     suspend fun makeWriteHandle(
       arcId: String,
       key: StorageKey
-    ): WriteSingletonHandle<DummyEntity> =
-      makeHandle(arcId, key, HandleMode.Write) as WriteSingletonHandle<DummyEntity>
+    ): WriteSingletonHandle<DummyEntitySlice> =
+      makeHandle(arcId, key, HandleMode.Write) as WriteSingletonHandle<DummyEntitySlice>
 
     @Suppress("UNCHECKED_CAST")
     suspend fun makeReadHandle(
@@ -491,7 +492,8 @@ abstract class AbstractArcHostTestBase {
     }
     host.getFooHandle().dispatchStore(entity)
 
-    val thing = (host.getFooHandle() as ReadWriteSingletonHandle<EntityBase>).dispatchFetch()
+    val thing =
+      (host.getFooHandle() as ReadWriteSingletonHandle<EntityBase, EntityBase>).dispatchFetch()
 
     // Monkey patch the entityId
     var storedEntity = EntityBase(

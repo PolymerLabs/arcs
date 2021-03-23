@@ -167,8 +167,8 @@ class HandleManagerImpl(
   }
 
   /** Overload of [createHandle] parameterized by a type [R] of the data that is to be stored. */
-  private suspend fun <T : Storable, R : Referencable> createHandle(
-    config: HandleConfig<T, R>
+  private suspend fun <E : I, I : Storable, R : Referencable> createHandle(
+    config: HandleConfig<E, I, R>
   ): Handle = when (config.spec.containerType) {
     HandleContainerType.Singleton -> createSingletonHandle(config)
     HandleContainerType.Collection -> createCollectionHandle(config)
@@ -193,17 +193,17 @@ class HandleManagerImpl(
     scheduler.close()
   }
 
-  private data class HandleConfig<T : Storable, R : Referencable>(
+  data class HandleConfig<E : I, I : Storable, R : Referencable>(
     val handleName: String,
     val spec: HandleSpec,
     val storageKey: StorageKey,
-    val storageAdapter: StorageAdapter<T, R>,
+    val storageAdapter: StorageAdapter<E, I, R>,
     val particleId: String,
     val immediateSync: Boolean
   )
 
-  private suspend fun <T : Storable, R : Referencable> createSingletonHandle(
-    config: HandleConfig<T, R>
+  private suspend fun <E : I, I : Storable, R : Referencable> createSingletonHandle(
+    config: HandleConfig<E, I, R>
   ): Handle {
     val singletonConfig = SingletonHandle.Config(
       name = config.handleName,
@@ -222,16 +222,16 @@ class HandleManagerImpl(
       singletonConfig.proxy.maybeInitiateSync()
     }
     return when (config.spec.mode) {
-      HandleMode.Read -> object : ReadSingletonHandle<T> by singletonHandle {}
-      HandleMode.Write -> object : WriteSingletonHandle<T> by singletonHandle {}
-      HandleMode.ReadWrite -> object : ReadWriteSingletonHandle<T> by singletonHandle {}
+      HandleMode.Read -> object : ReadSingletonHandle<E> by singletonHandle {}
+      HandleMode.Write -> object : WriteSingletonHandle<I> by singletonHandle {}
+      HandleMode.ReadWrite -> object : ReadWriteSingletonHandle<E, I> by singletonHandle {}
       else ->
         throw IllegalArgumentException("Singleton Handles do not support mode ${config.spec.mode}")
     }
   }
 
-  private suspend fun <T : Storable, R : Referencable> createCollectionHandle(
-    config: HandleConfig<T, R>
+  private suspend fun <E : I, I : Storable, R : Referencable> createCollectionHandle(
+    config: HandleConfig<E, I, R>
   ): Handle {
     val collectionConfig = CollectionHandle.Config(
       name = config.handleName,
@@ -249,16 +249,14 @@ class HandleManagerImpl(
       collectionConfig.proxy.maybeInitiateSync()
     }
     return when (config.spec.mode) {
-      HandleMode.Read -> object : ReadCollectionHandle<T> by collectionHandle {}
-      HandleMode.Write -> object : WriteCollectionHandle<T> by collectionHandle {}
-      HandleMode.Query -> object : ReadQueryCollectionHandle<T, Any> by collectionHandle {}
-      HandleMode.ReadWrite -> object : ReadWriteCollectionHandle<T> by collectionHandle {}
-      HandleMode.ReadQuery ->
-        object : ReadQueryCollectionHandle<T, Any> by collectionHandle {}
-      HandleMode.WriteQuery ->
-        object : WriteQueryCollectionHandle<T, Any> by collectionHandle {}
+      HandleMode.Read -> object : ReadCollectionHandle<E> by collectionHandle {}
+      HandleMode.Write -> object : WriteCollectionHandle<I> by collectionHandle {}
+      HandleMode.Query -> object : ReadQueryCollectionHandle<E, Any> by collectionHandle {}
+      HandleMode.ReadWrite -> object : ReadWriteCollectionHandle<E, I> by collectionHandle {}
+      HandleMode.ReadQuery -> object : ReadQueryCollectionHandle<E, Any> by collectionHandle {}
+      HandleMode.WriteQuery -> object : WriteQueryCollectionHandle<I, Any> by collectionHandle {}
       HandleMode.ReadWriteQuery ->
-        object : ReadWriteQueryCollectionHandle<T, Any> by collectionHandle {}
+        object : ReadWriteQueryCollectionHandle<E, I, Any> by collectionHandle {}
     }
   }
 

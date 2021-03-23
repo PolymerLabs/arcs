@@ -5,6 +5,7 @@ import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.SingletonType
 import arcs.core.entity.testutil.DummyEntity
+import arcs.core.entity.testutil.DummyEntitySlice
 import arcs.core.entity.testutil.mockSingletonStorageProxy
 import arcs.core.entity.testutil.mockStorageAdapter
 import arcs.core.storage.Dereferencer
@@ -28,9 +29,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-private class TestBaseHandle(
-  config: BaseHandleConfig
-) : BaseHandle<DummyEntity>(config) {
+private class TestBaseHandle(config: BaseHandleConfig) : BaseHandle(config) {
   fun callCheckPreconditions() = checkPreconditions {}
 }
 
@@ -43,7 +42,8 @@ class BaseHandleTest {
     type: Type = SingletonType(EntityType(DummyEntity.SCHEMA)),
     handleMode: HandleMode = HandleMode.ReadWriteQuery,
     proxy: SingletonProxy<RawEntity> = mockSingletonStorageProxy(),
-    storageAdapter: StorageAdapter<DummyEntity, RawEntity> = mockStorageAdapter(),
+    storageAdapter: StorageAdapter<DummyEntity, DummyEntitySlice, RawEntity> =
+      mockStorageAdapter(),
     dereferencerFactory: EntityDereferencerFactory = mock<EntityDereferencerFactory>()
   ): TestBaseHandle {
     val config = SingletonHandle.Config(
