@@ -30,8 +30,8 @@ class PTestHarness<P : Particle>(
         setOf(P_H2)
     )
 )) {
-    val h1: arcs.sdk.ReadWriteSingletonHandle<P_H1> by handleMap
-    val h2: arcs.sdk.ReadWriteSingletonHandle<P_H2> by handleMap
+    val h1: arcs.sdk.ReadWriteSingletonHandle<P_H1, P_H1> by handleMap
+    val h2: arcs.sdk.ReadWriteSingletonHandle<P_H2, P_H2> by handleMap
 }
 
 -----[end]-----
@@ -91,11 +91,12 @@ class PTestHarness<P : Particle>(
         setOf(P_CollectionTuples_0, P_CollectionTuples_1)
     )
 )) {
-    val singletonEntity: arcs.sdk.ReadWriteSingletonHandle<P_SingletonEntity> by handleMap
-    val singletonReference: arcs.sdk.ReadWriteSingletonHandle<arcs.sdk.Reference<P_SingletonReference>> by handleMap
-    val collectionEntity: arcs.sdk.ReadWriteCollectionHandle<P_CollectionEntity> by handleMap
-    val collectionReference: arcs.sdk.ReadWriteCollectionHandle<arcs.sdk.Reference<P_CollectionReference>> by handleMap
+    val singletonEntity: arcs.sdk.ReadWriteSingletonHandle<P_SingletonEntity, P_SingletonEntity> by handleMap
+    val singletonReference: arcs.sdk.ReadWriteSingletonHandle<arcs.sdk.Reference<P_SingletonReference>, arcs.sdk.Reference<P_SingletonReference>> by handleMap
+    val collectionEntity: arcs.sdk.ReadWriteCollectionHandle<P_CollectionEntity, P_CollectionEntity> by handleMap
+    val collectionReference: arcs.sdk.ReadWriteCollectionHandle<arcs.sdk.Reference<P_CollectionReference>, arcs.sdk.Reference<P_CollectionReference>> by handleMap
     val collectionTuples: arcs.sdk.ReadWriteCollectionHandle<
+    arcs.core.entity.Tuple2<arcs.sdk.Reference<P_CollectionTuples_0>, arcs.sdk.Reference<P_CollectionTuples_1>>,
     arcs.core.entity.Tuple2<arcs.sdk.Reference<P_CollectionTuples_0>, arcs.sdk.Reference<P_CollectionTuples_1>>
 > by handleMap
 }

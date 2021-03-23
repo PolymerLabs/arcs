@@ -10,10 +10,15 @@ package arcs.golden
 import arcs.sdk.wasm.*
 
 typealias Gold_Data = AbstractGold.Gold_Data
+typealias Gold_Data_Slice = AbstractGold.Gold_Data
 typealias Gold_AllPeople = AbstractGold.Gold_AllPeople
+typealias Gold_AllPeople_Slice = AbstractGold.Gold_AllPeople
 typealias Gold_Alias = AbstractGold.Gold_Alias
+typealias Gold_Alias_Slice = AbstractGold.Gold_Alias
 typealias Gold_Collection = AbstractGold.Foo
+typealias Gold_Collection_Slice = AbstractGold.Foo
 typealias Gold_QCollection = AbstractGold.Gold_QCollection
+typealias Gold_QCollection_Slice = AbstractGold.Gold_QCollection
 
 @Generated("src/tools/schema2kotlin.ts")
 abstract class AbstractGold : WasmParticleImpl() {
