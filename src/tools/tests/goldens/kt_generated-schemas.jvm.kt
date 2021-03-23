@@ -15,16 +15,24 @@ import arcs.core.data.util.toReferencable
 import arcs.sdk.ArcsDuration
 import arcs.sdk.ArcsInstant
 import arcs.sdk.BigInt
+import arcs.sdk.Entity
 import arcs.sdk.toBigInt
 import javax.annotation.Generated
 
 typealias KotlinPrimitivesGolden_Data_Ref = AbstractKotlinPrimitivesGolden.KotlinPrimitivesGolden_Data_Ref
+typealias KotlinPrimitivesGolden_Data_Ref_Slice = AbstractKotlinPrimitivesGolden.KotlinPrimitivesGolden_Data_Ref
 typealias KotlinPrimitivesGolden_Data_Thinglst = AbstractKotlinPrimitivesGolden.Thing
+typealias KotlinPrimitivesGolden_Data_Thinglst_Slice = AbstractKotlinPrimitivesGolden.Thing
 typealias KotlinPrimitivesGolden_Data_Detail_Nested = AbstractKotlinPrimitivesGolden.Nested
+typealias KotlinPrimitivesGolden_Data_Detail_Nested_Slice = AbstractKotlinPrimitivesGolden.Nested
 typealias KotlinPrimitivesGolden_Data_Colors = AbstractKotlinPrimitivesGolden.Color
+typealias KotlinPrimitivesGolden_Data_Colors_Slice = AbstractKotlinPrimitivesGolden.Color
 typealias KotlinPrimitivesGolden_Data_Products = AbstractKotlinPrimitivesGolden.Product
+typealias KotlinPrimitivesGolden_Data_Products_Slice = AbstractKotlinPrimitivesGolden.Product
 typealias KotlinPrimitivesGolden_Data_Detail = AbstractKotlinPrimitivesGolden.Detail
+typealias KotlinPrimitivesGolden_Data_Detail_Slice = AbstractKotlinPrimitivesGolden.Detail
 typealias KotlinPrimitivesGolden_Data = AbstractKotlinPrimitivesGolden.KotlinPrimitivesGolden_Data
+typealias KotlinPrimitivesGolden_Data_Slice = AbstractKotlinPrimitivesGolden.KotlinPrimitivesGolden_Data
 
 @Generated("src/tools/schema2kotlin.ts")
 abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
