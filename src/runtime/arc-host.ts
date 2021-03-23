@@ -27,7 +27,9 @@ import {AbstractSlotObserver} from './slot-observer.js';
 import {Modality} from './arcs-types/modality.js';
 import {EntityType, ReferenceType, InterfaceType, SingletonType} from '../types/lib-types.js';
 import {Capabilities} from './capabilities.js';
-import {PlanPartition, NewArcOptions} from './arc-info.js';
+import {PlanPartition, ArcInfo, RunArcOptions} from './arc-info.js';
+import {StoreInfo} from './storage/store-info.js';
+import {Type} from '../types/lib-types.js';
 
 export interface ArcHost {
   hostId: string;
@@ -38,7 +40,6 @@ export interface ArcHost {
   stop(arcId: ArcId);
   getArcById(arcId: ArcId): Arc;
   isHostForParticle(particle: Particle): boolean;
-  buildArcParams(options: NewArcOptions): ArcOptions;
   findArcByParticleId(particleId: string): Arc;
 }
 
@@ -49,9 +50,9 @@ export class ArcHostImpl implements ArcHost {
   public get storageService() { return this.runtime.storageService; }
 
   async start(partition: PlanPartition) {
-    const arcId = partition.arcOptions.arcId;
+    const arcId = partition.arcInfo.id;
       if (!arcId || !this.arcById.has(arcId)) {
-      const arc = new Arc(this.buildArcParams(partition.arcOptions));
+      const arc = new Arc(this.buildArcParams(partition));
       this.arcById.set(arcId, arc);
       if (partition.arcOptions.slotObserver) {
         arc.peh.slotComposer.observeSlots(partition.arcOptions.slotObserver);
@@ -80,23 +81,19 @@ export class ArcHostImpl implements ArcHost {
 
   isHostForParticle(particle: Particle): boolean { return true; }
 
-  buildArcParams(options: NewArcOptions): ArcOptions {
-    const idGenerator = options.idGenerator || IdGenerator.newSession();
-    const id = options.arcId || idGenerator.newArcId(options.arcName);
+  buildArcParams(partition: PlanPartition): ArcOptions {
     const factories = Object.values(this.runtime.storageKeyFactories);
+    const {arcInfo, arcOptions} = partition;
     return {
-      id,
+      arcInfo,
       loader: this.runtime.loader,
-      context: this.runtime.context,
       pecFactories: [this.runtime.pecFactory],
       slotComposer: new SlotComposer(),
       storageService: this.runtime.storageService,
-      capabilitiesResolver: this.runtime.getCapabilitiesResolver(id),
       driverFactory: this.runtime.driverFactory,
-      storageKey: options.storageKeyPrefix ? options.storageKeyPrefix(id) : new VolatileStorageKey(id, ''),
+      storageKey: arcOptions.storageKeyPrefix ? arcOptions.storageKeyPrefix(arcInfo.id) : new VolatileStorageKey(arcInfo.id, ''),
       storageKeyParser: this.runtime.storageKeyParser,
-      idGenerator,
-      ...options
+      ...arcOptions
     };
   }
 

@@ -24,7 +24,7 @@ export class Speculator {
     const speculativeArc = await arc.cloneForSpeculativeExecution();
     this.speculativeArcs.push(speculativeArc);
     const relevance = Relevance.create(arc, plan);
-    plan = await this.runtime.allocator.assignStorageKeys(speculativeArc.id, plan, speculativeArc.idGenerator);
+    plan = await this.runtime.allocator.assignStorageKeys(speculativeArc.id, plan);
     await speculativeArc.instantiate(plan);
     await this.awaitCompletion(relevance, speculativeArc);
 
