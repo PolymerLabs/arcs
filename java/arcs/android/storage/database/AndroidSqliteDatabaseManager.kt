@@ -103,6 +103,7 @@ class AndroidSqliteDatabaseManager(
   }
 
   override suspend fun getAllHardReferenceIds(backingStorageKey: StorageKey): Set<String> {
+    System.out.println(">>>>>>>> getAllHardReferenceIds")
     return registry
       .fetchAll()
       .flatMap { getDatabase(it.name, it.isPersistent).getAllHardReferenceIds(backingStorageKey) }

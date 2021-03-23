@@ -18,9 +18,18 @@ class HardReferenceManager(
    */
   suspend fun reconcile(storageKey: StorageKey, fullSet: Set<String>): Long {
     val dbIds = dbManager.getAllHardReferenceIds(storageKey)
+    System.out.println("reconcile: fullSet: $fullSet")
+    System.out.println("storageKey: $storageKey")
+    System.out.println("dbIds: $dbIds")
     return dbIds
-      .filterNot { fullSet.contains(it) }
-      .map { triggerDatabaseDeletion(storageKey, it) }
+      .filterNot {
+        System.out.println(">>> Contains check $it -> ${fullSet.contains(it)}")
+        fullSet.contains(it)
+      }
+      .map {
+        System.out.println(">>> Deleting $storageKey, $it")
+        triggerDatabaseDeletion(storageKey, it)
+      }
       .sum()
   }
 }

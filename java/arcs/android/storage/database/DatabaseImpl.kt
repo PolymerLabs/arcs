@@ -1319,10 +1319,18 @@ class DatabaseImpl(
   }
 
   override suspend fun getAllHardReferenceIds(backingStorageKey: StorageKey): Set<String> {
-    return readableDatabase.rawQuery(
+    System.out.println(">>>>>>>> getAllHardReferenceIds (DatabaseImpl)")
+    val allIds = readableDatabase.rawQuery(
+      "SELECT entity_id, is_hard_ref, backing_storage_key FROM entity_refs",
+      arrayOf()
+    ).map { it.getString(0) to it.getBoolean(1) to it.getString(2) }.toSet()
+    System.out.println("All IDS: $allIds")
+    val ids = readableDatabase.rawQuery(
       "SELECT entity_id FROM entity_refs WHERE backing_storage_key = ? AND is_hard_ref",
       arrayOf(backingStorageKey.toString())
     ).map { it.getString(0) }.toSet()
+    System.out.println("RAW IDS: $ids")
+    return ids
   }
 
   override suspend fun removeEntitiesHardReferencing(
@@ -1359,6 +1367,8 @@ class DatabaseImpl(
         """.trimIndent(),
         arrayOf(backingStorageKey.toString(), entityId)
       ).map { it.getInt(0) }
+
+      System.out.println(storageKeyIds)
 
       // Clear regular entities as usual.
       val entitiesRemovedFirstPass = clearEntities(

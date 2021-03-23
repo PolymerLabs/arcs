@@ -12,8 +12,8 @@
 package arcs.core.data
 
 import arcs.core.type.Type
-import arcs.flags.BuildFlags
 import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
 
 /** The possible types for a field in a [Schema]. */
 sealed class FieldType(

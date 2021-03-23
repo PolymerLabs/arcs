@@ -72,7 +72,8 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
     connections,
     claims,
     checks,
-    annotations: spec.annotations.map(a => annotationToProtoPayload(a)),
+    annotations:
+        spec.annotations.filter(a => a).map(a => annotationToProtoPayload(a)),
   };
 }
 

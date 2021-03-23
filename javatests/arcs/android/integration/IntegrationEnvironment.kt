@@ -351,6 +351,7 @@ class IntegrationEnvironment(
   }
 
   suspend fun triggerHardReferenceDelete(namespace: Schema, id: String): Long {
+    System.out.println("IntegrationEnv: triggerHardRefDelete")
     return StorageServiceManagerEndpointImpl(
       TestBindHelper(ApplicationProvider.getApplicationContext()),
       testScope
