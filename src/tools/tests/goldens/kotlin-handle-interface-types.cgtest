@@ -29,7 +29,7 @@ read write singleton entity
 particle P
   h: reads writes Thing {name: Text}
 -----[results]-----
-arcs.sdk.ReadWriteSingletonHandle<Thing>
+arcs.sdk.ReadWriteSingletonHandle<Thing, Thing>
 -----[end]-----
 
 -----[name]-----
@@ -38,7 +38,7 @@ read write anonymous entity
 particle P
   h: reads writes * {name: Text}
 -----[results]-----
-arcs.sdk.ReadWriteSingletonHandle<P_H>
+arcs.sdk.ReadWriteSingletonHandle<P_H, P_H>
 -----[end]-----
 
 -----[name]-----
@@ -65,7 +65,7 @@ read write collection of entities
 particle P
   h: reads writes [Thing {name: Text}]
 -----[results]-----
-arcs.sdk.ReadWriteCollectionHandle<Thing>
+arcs.sdk.ReadWriteCollectionHandle<Thing, Thing>
 -----[end]-----
 
 -----[name]-----
@@ -83,7 +83,7 @@ read write collection of entities and query by number
 particle P
   h: reads writes [Thing {age: Number} [age > ?]]
 -----[results]-----
-arcs.sdk.ReadWriteQueryCollectionHandle<Thing, Double>
+arcs.sdk.ReadWriteQueryCollectionHandle<Thing, Thing, Double>
 -----[end]-----
 
 -----[name]-----
@@ -166,5 +166,5 @@ read write singleton unconstrained variable entity
 particle T
   h: reads writes ~a
 -----[results]-----
-arcs.sdk.ReadWriteSingletonHandle<T_H>
+arcs.sdk.ReadWriteSingletonHandle<T_H, T_H>
 -----[end]-----

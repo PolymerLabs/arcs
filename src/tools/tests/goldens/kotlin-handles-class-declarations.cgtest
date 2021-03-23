@@ -110,6 +110,6 @@ class Handles : arcs.sdk.HandleHolderBase(
     ) {
         val h1: arcs.sdk.ReadSingletonHandle<T_H1> by handles
         val h2: arcs.sdk.WriteSingletonHandle<T_H2> by handles
-        val h3: arcs.sdk.ReadWriteSingletonHandle<T_H3> by handles
+        val h3: arcs.sdk.ReadWriteSingletonHandle<T_H3, T_H3> by handles
     }
 -----[end]-----
