@@ -262,7 +262,17 @@ class ReferenceModeStore private constructor(
       is ProxyMessage.Operations -> {
         val containerOps = mutableListOf<CrdtOperation>()
         val upstreamOps = mutableListOf<RefModeStoreOp>()
-        proxyMessage.operations.toBridgingOps(backingStore.storageKey).forEach { op ->
+        val ops = if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
+          proxyMessage.operations.toBridgingOps(
+            backingStore.storageKey,
+            ::itemVersionGetter
+          )
+        } else {
+          proxyMessage.operations.toBridgingOps(
+            backingStore.storageKey
+          )
+        }
+        ops.forEach { op ->
           when (op) {
             is BridgingOperation.UpdateSingleton,
             is BridgingOperation.ClearSingleton -> {

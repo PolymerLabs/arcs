@@ -22,6 +22,7 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.RefModeStoreHelper
 import arcs.core.storage.testutil.ReferenceModeStoreTestBase
+import arcs.flags.BuildFlags
 import arcs.flags.testing.ParameterizedBuildFlags
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
@@ -74,13 +75,22 @@ class ReferenceModeStoreDatabaseIntegrationTest(
 
     // Read data (using a new store ensures we read from the db instead of using cached values).
     val activeStore2 = collectionReferenceModeStore(scope = this)
+    val e1RefVersionMap = if (BuildFlags.REFERENCE_MODE_STORE_FIXES)
+      VersionMap(activeStore.crdtKey to 1)
+    else
+      VersionMap("me" to 1)
+    val e2RefVersionMap = if (BuildFlags.REFERENCE_MODE_STORE_FIXES)
+      VersionMap(activeStore.crdtKey to 1)
+    else
+      VersionMap("me" to 2)
+
     val e1Ref = CrdtSet.DataValue(
       VersionMap("me" to 1),
-      RawReference("e1", activeStore2.backingStore.storageKey, VersionMap("me" to 1))
+      RawReference("e1", activeStore2.backingStore.storageKey, e1RefVersionMap)
     )
     val e2Ref = CrdtSet.DataValue(
       VersionMap("me" to 2),
-      RawReference("e2", activeStore2.backingStore.storageKey, VersionMap("me" to 2))
+      RawReference("e2", activeStore2.backingStore.storageKey, e2RefVersionMap)
     )
 
     assertThat(activeStore2.containerStore.getLocalData()).isEqualTo(

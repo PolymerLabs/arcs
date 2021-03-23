@@ -26,6 +26,8 @@ import arcs.core.storage.referencemode.BridgingOperation.ClearSingleton
 import arcs.core.storage.referencemode.BridgingOperation.RemoveFromSet
 import arcs.core.storage.referencemode.BridgingOperation.UpdateSingleton
 import arcs.core.storage.toReference
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
 
 /**
  * Represents a bridge between the [CrdtSet]/[CrdtSingleton]'s operations from the
@@ -111,6 +113,27 @@ fun List<RefModeStoreOp>.toBridgingOps(
 ): List<BridgingOperation> = map { it.toBridgingOp(backingStorageKey) }
 
 /**
+ * Converts a [List] of [CrdtOperation]s to a [List] of [BridgingOperation]s. This version of the
+ * `toBridgingOps` method should only be used if the REFERENCE_MODE_STORE_FIXES flag is turned on.
+ * It uses itemVersionGetter callback to obtain the [VersionMap] of a reference whereas the other
+ * `toBridgingOps` method does not.
+ *
+ * Since [arcs.storage.ReferenceModeStore] only supports operations on [CrdtSingleton]s or
+ * [CrdtSet]s, this method will throw [CrdtException] if any member of the list is not one of those
+ * types of [CrdtOperation]s.
+ */
+suspend fun List<RefModeStoreOp>.toBridgingOps(
+  backingStorageKey: StorageKey,
+  // Callback which returns the version of the data being referenced from the backing store.
+  itemVersionGetter: suspend (RawEntity) -> VersionMap
+): List<BridgingOperation> {
+  if (!BuildFlags.REFERENCE_MODE_STORE_FIXES) {
+    throw BuildFlagDisabledError("REFERENCE_MODE_STORE_FIXES")
+  }
+  return map { it.toBridgingOp(backingStorageKey, itemVersionGetter) }
+}
+
+/**
  * Converts a [CrdtOperation] from some referencable-typed operation to [BridgingOperation]
  * using the provided [value] as the full data referenced in the [CrdtSet]/[CrdtSingleton].
  */
@@ -149,6 +172,44 @@ fun RefModeStoreOp.toBridgingOp(backingStorageKey: StorageKey): BridgingOperatio
     ClearSet(CrdtSet.Operation.Clear(actor, versionMap), this)
   }
   else -> throw CrdtException("Unsupported operation: $this")
+}
+
+/**
+ * Bridges the gap between a [RefModeStoreOp] and the appropriate [RawReference]-based collection
+ * operation. This version of the `toBridgingOps` method should only be used if the
+ * REFERENCE_MODE_STORE_FIXES flag is turned on. It uses itemVersionGetter callback to obtain the
+ * [VersionMap] of a reference whereas the other `toBridgingOps` method does not.
+ */
+suspend fun RefModeStoreOp.toBridgingOp(
+  backingStorageKey: StorageKey,
+  // Callback which returns the version of the data being referenced from the acking store.
+  itemVersionGetter: suspend (RawEntity) -> VersionMap
+): BridgingOperation {
+  if (!BuildFlags.REFERENCE_MODE_STORE_FIXES) {
+    throw BuildFlagDisabledError("REFERENCE_MODE_STORE_FIXES")
+  }
+  return when (this) {
+    is RefModeStoreOp.SingletonUpdate -> {
+      val reference = value.toReference(backingStorageKey, itemVersionGetter(value))
+      UpdateSingleton(
+        value, reference, CrdtSingleton.Operation.Update(actor, versionMap, reference), this
+      )
+    }
+    is RefModeStoreOp.SingletonClear -> {
+      ClearSingleton(CrdtSingleton.Operation.Clear(actor, versionMap), this)
+    }
+    is RefModeStoreOp.SetAdd -> {
+      val reference = added.toReference(backingStorageKey, itemVersionGetter(added))
+      AddToSet(added, reference, CrdtSet.Operation.Add(actor, versionMap, reference), this)
+    }
+    is RefModeStoreOp.SetRemove -> {
+      RemoveFromSet(removed, CrdtSet.Operation.Remove(actor, versionMap, removed), this)
+    }
+    is RefModeStoreOp.SetClear -> {
+      ClearSet(CrdtSet.Operation.Clear(actor, versionMap), this)
+    }
+    else -> throw CrdtException("Unsupported operation: $this")
+  }
 }
 
 /**

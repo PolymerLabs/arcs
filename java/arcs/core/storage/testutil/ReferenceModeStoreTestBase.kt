@@ -33,6 +33,7 @@ import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.toReference
 import arcs.core.util.testutil.LogRule
+import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
@@ -187,30 +188,48 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
       VersionMap(actor to 1)
     )
     referenceCollectionHelper.add(bobRef)
+
+    fun updateBob() {
+      bobEntityHelper.update("name", CrdtEntity.ReferenceImpl("bob".toReferencable().id))
+      bobEntityHelper.update("age", CrdtEntity.ReferenceImpl(42.0.toReferencable().id))
+      bobEntityHelper.update(
+        "list",
+        CrdtEntity.WrappedReferencable(
+          listOf(1L, 1L, 2L).map { it.toReferencable() }
+            .toReferencable(FieldType.ListOf(FieldType.Long))
+        )
+      )
+      bobEntityHelper.update(
+        "inline",
+        CrdtEntity.WrappedReferencable(
+          RawEntity("", mapOf("inlineName" to "inline".toReferencable()))
+        )
+      )
+    }
+
     // Apply to expected refMode backingStore data.
-    bobEntityHelper.update("name", CrdtEntity.ReferenceImpl("bob".toReferencable().id))
-    bobEntityHelper.update("age", CrdtEntity.ReferenceImpl(42.0.toReferencable().id))
-    bobEntityHelper.update(
-      "list",
-      CrdtEntity.WrappedReferencable(
-        listOf(1L, 1L, 2L).map { it.toReferencable() }
-          .toReferencable(FieldType.ListOf(FieldType.Long))
-      )
-    )
-    bobEntityHelper.update(
-      "inline",
-      CrdtEntity.WrappedReferencable(
-        RawEntity("", mapOf("inlineName" to "inline".toReferencable()))
-      )
-    )
+    updateBob()
+
+    // TODO(b/175505629): Will not need to update the fields twice once the "version too big" bug
+    //  has been fixed.
+    // As part of the change to fix b/176930336, itemVersionGetter obtains the versionMap that will
+    // be used to create the reference. ItemVersionGetter results in the "version too big" bug.
+    if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
+      updateBob()
+    }
 
     val capturedPeople =
       activeStore.containerStore.driver.getStoredDataForTesting() as CrdtSet.DataImpl<RawReference>
 
+    val referenceVersionMap = if (BuildFlags.REFERENCE_MODE_STORE_FIXES)
+      VersionMap(activeStore.crdtKey to 1)
+    else
+      capturedPeople.versionMap
+
     assertThat(capturedPeople.values.values).containsExactly(
       CrdtSet.DataValue(
         capturedPeople.versionMap,
-        RawReference("an-id", activeStore.backingStore.storageKey, capturedPeople.versionMap)
+        RawReference("an-id", activeStore.backingStore.storageKey, referenceVersionMap)
       )
     )
     val storedBob = activeStore.getLocalData("an-id")
@@ -691,7 +710,7 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
   }
 
   @Test
-  fun syncRequest_fromProxy_withPendingIds() = runBlockingTest {
+  fun syncRequest_fromProxy_withPendingIds_becauseOfMissingBackingData() = runBlockingTest {
     val activeStore = collectionReferenceModeStore(scope = this)
 
     val actor = "me"
@@ -700,8 +719,9 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
     collectionHelper.add(bobEntity)
 
     // Data that will be stored in backing store.
+    // TODO(b/175505629): fix initialVersion once "version too big" bug has been fixed.
     val bobCrdt = CrdtEntity.newAtVersionForTest(
-      VersionMap(actor to 1),
+      VersionMap(activeStore.crdtKey to 2),
       bobEntity
     )
 
@@ -709,7 +729,7 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
     val (refCollection, refCollectionHelper) = createCrdtSet<RawReference>(actor)
     val bobReference = bobEntity.toReference(
       activeStore.backingStore.storageKey,
-      VersionMap(actor to 1)
+      VersionMap(activeStore.crdtKey to 1)
     )
     refCollectionHelper.add(bobReference)
 
@@ -739,6 +759,116 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
       activeStore.backingStoreId
     ).store
     backingDirectStore.onReceive(bobCrdt.data, activeStore.backingStoreId + 1)
+
+    val data = deferredData.await()
+    assertThat(data.values).containsExactlyEntriesIn(collection.data.values)
+  }
+
+  @Test
+  fun syncRequest_fromProxy_withPendingIds_becauseOfOldBackingData() = runBlockingTest {
+    // In this test there are two entities stored in the backing store (alice and bob).
+    // When an entity is stored in the backing store, we expect the reference version to be `n` and
+    // the crdt version to be `n + 1`. This is because when an entity is first stored, it has an
+    // initial reference version of 1 and an initial crdt version of 2 (refer to "version too big"
+    // bug b/175505629). When the entity updates, then both the reference version and the crdt
+    // version will increment by 1.
+    //
+    // In this test, the bob entity has a reference version of 1 and a crdt version of 2 which
+    // follows the rule described above; however, the alice entity has a reference version of 2 and
+    // a crdt version of 2. This does not follow the rule, indicating that the crdt data stored in
+    // the backing store is old. When the reference mode store receives a sync request, it
+    // recognises that the backing store data for alice is old and therefore the corresponding
+    // reference is a pending id. It waits for the pending id to be resolved before responding to
+    // the sync request.
+    val activeStore = collectionReferenceModeStore(scope = this)
+    val actor = "me"
+    val (collection, collectionHelper) = createCrdtSet<RawEntity>(actor)
+    val bobEntity = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
+    val aliceEntity = createPersonEntity("id1", "alice", 10, listOf(10L, 10L), "inline")
+    collectionHelper.add(bobEntity)
+    collectionHelper.add(aliceEntity)
+
+    // Data stored in backing store. bobCrdt is up to date but aliceCrdt represents old backing
+    // data (because it has the same version of the reference).
+    // TODO(b/175505629): fix initialVersion once "version too big" bug has been fixed.
+    val bobCrdt = CrdtEntity.newAtVersionForTest(
+      VersionMap(activeStore.crdtKey to 2),
+      bobEntity
+    )
+    val aliceCrdt = CrdtEntity.newAtVersionForTest(
+      VersionMap(activeStore.crdtKey to 2),
+      aliceEntity
+    )
+
+    // Send data to backing store.
+    val bobBackingStore = activeStore.backingStore.getStore(
+      "an-id",
+      activeStore.backingStoreId
+    ).store
+    bobBackingStore.onReceive(bobCrdt.data, activeStore.backingStoreId + 1)
+    val aliceBackingStore = activeStore.backingStore.getStore(
+      "id1",
+      activeStore.backingStoreId
+    ).store
+    aliceBackingStore.onReceive(aliceCrdt.data, activeStore.backingStoreId + 1)
+
+    // Data stored in container store. Both bobReference and aliceReference are the most up to date
+    // data. bobCrdt is recent enough for bobReference to be satisfied (backing version = reference
+    // version + 1), but aliceCrdt is not (backing version == reference version). This means
+    // aliceReference is a pending id.
+    val refCollection = CrdtSet<RawReference>()
+    val bobReference = bobEntity.toReference(
+      activeStore.backingStore.storageKey,
+      VersionMap(
+        activeStore.crdtKey to 1
+      )
+    )
+    val aliceReference = aliceEntity.toReference(
+      activeStore.backingStore.storageKey,
+      VersionMap(
+        activeStore.crdtKey to 2
+      )
+    )
+
+    // Send data to container store.
+    refCollection.applyOperation(
+      CrdtSet.Operation.Add(actor, VersionMap(actor to 1), bobReference)
+    )
+    refCollection.applyOperation(
+      CrdtSet.Operation.Add(
+        actor,
+        VersionMap(actor to 2),
+        aliceReference
+      )
+    )
+    activeStore.containerStore.onProxyMessage(
+      ProxyMessage.ModelUpdate(
+        refCollection.data,
+        id = 1
+      )
+    )
+
+    activeStore.idle()
+
+    // Set up proxy.
+    val deferredData = CompletableDeferred<RefModeStoreData>()
+    val id = activeStore.on {
+      if (it is ProxyMessage.ModelUpdate) {
+        deferredData.complete(it.model)
+        return@on
+      }
+    }
+
+    // Send sync request.
+    activeStore.onProxyMessage(ProxyMessage.SyncRequest(id))
+
+    // Update backing store to update aliceCrdt. This resolves the aliceReference pending id.
+    // TODO(b/175505629): fix initialVersion once "version too big" bug has been fixed.
+    val updatedAliceCrdt = CrdtEntity.newAtVersionForTest(
+      VersionMap(activeStore.crdtKey to 3),
+      aliceEntity
+    )
+    aliceBackingStore.onReceive(updatedAliceCrdt.data, activeStore.backingStoreId + 1)
 
     val data = deferredData.await()
     assertThat(data.values).containsExactlyEntriesIn(collection.data.values)
@@ -825,13 +955,20 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
 
     storeHelper.sendAddOp(bob)
 
-    // The actor is non-deterministic, we can check that there is only one actor and its version is 1.
-    assertThat(activeStore.getLocalData("an-id").versionMap.backingMap.values).containsExactly(1)
+    // The actor is non-deterministic, we can check that there is only one actor and its version is
+    // the initial version value.
+    // TODO(b/175505629): fix initialVersion once "version too big" bug has been fixed.
+    val initialVersion = if (BuildFlags.REFERENCE_MODE_STORE_FIXES) 2 else 1
+    assertThat(
+      activeStore.getLocalData("an-id").versionMap.backingMap.values
+    ).containsExactly(initialVersion)
 
     storeHelper.sendAddOp(bob)
 
     // Check that the entity version has been incremented.
-    assertThat(activeStore.getLocalData("an-id").versionMap.backingMap.values).containsExactly(2)
+    assertThat(
+      activeStore.getLocalData("an-id").versionMap.backingMap.values
+    ).containsExactly(initialVersion + 1)
   }
 
   @Test
@@ -839,8 +976,13 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
     val activeStore = collectionReferenceModeStore(scope = this)
     val storeHelper = RefModeStoreHelper("me", activeStore)
     val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
+
+    // TODO(b/175505629): fix initialVersion once "version too big" bug has been fixed.
+    val initialVersion = if (BuildFlags.REFERENCE_MODE_STORE_FIXES) 2 else 1
     storeHelper.sendAddOp(bob)
-    assertThat(activeStore.getLocalData("an-id").versionMap.backingMap.values).containsExactly(1)
+    assertThat(
+      activeStore.getLocalData("an-id").versionMap.backingMap.values
+    ).containsExactly(initialVersion)
 
     // Now clear the container store.
     activeStore.containerStore.onProxyMessage(
@@ -855,9 +997,12 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
       )
     )
 
-    // Now re-add Bob. If the versions map was correctly cleared, we should still be at version 1.
+    // Now re-add Bob. If the versions map was correctly cleared, we should still be at initial
+    // version number.
     storeHelper.sendAddOp(bob)
-    assertThat(activeStore.getLocalData("an-id").versionMap.backingMap.values).containsExactly(1)
+    assertThat(
+      activeStore.getLocalData("an-id").versionMap.backingMap.values
+    ).containsExactly(initialVersion)
   }
 
   @Test
@@ -865,8 +1010,13 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
     val activeStore = collectionReferenceModeStore(scope = this)
     val storeHelper = RefModeStoreHelper("me", activeStore)
     val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
+
+    // TODO(b/175505629): fix initialVersion once "version too big" bug has been fixed.
+    val initialVersion = if (BuildFlags.REFERENCE_MODE_STORE_FIXES) 2 else 1
     storeHelper.sendAddOp(bob)
-    assertThat(activeStore.getLocalData("an-id").versionMap.backingMap.values).containsExactly(1)
+    assertThat(
+      activeStore.getLocalData("an-id").versionMap.backingMap.values
+    ).containsExactly(initialVersion)
 
     // Now remove from the container with a remove op.
     activeStore.containerStore.onProxyMessage(
@@ -882,9 +1032,12 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
       )
     )
 
-    // Now re-add Bob. If the versions map was correctly cleared, we should still be at version 1.
+    // Now re-add Bob. If the versions map was correctly cleared, we should still be at the initial
+    // version.
     storeHelper.sendAddOp(bob)
-    assertThat(activeStore.getLocalData("an-id").versionMap.backingMap.values).containsExactly(1)
+    assertThat(
+      activeStore.getLocalData("an-id").versionMap.backingMap.values
+    ).containsExactly(initialVersion)
   }
 
   @Test
@@ -892,8 +1045,13 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
     val activeStore = collectionReferenceModeStore(scope = this)
     val storeHelper = RefModeStoreHelper("me", activeStore)
     val bob = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
+
+    // TODO(b/175505629): fix initialVersion once "version too big" bug has been fixed.
+    val initialVersion = if (BuildFlags.REFERENCE_MODE_STORE_FIXES) 2 else 1
     storeHelper.sendAddOp(bob)
-    assertThat(activeStore.getLocalData("an-id").versionMap.backingMap.values).containsExactly(1)
+    assertThat(
+      activeStore.getLocalData("an-id").versionMap.backingMap.values
+    ).containsExactly(initialVersion)
 
     // Now clear the container store sending an empty model.
     activeStore.containerStore.onProxyMessage(
@@ -903,9 +1061,12 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
       )
     )
 
-    // Now re-add Bob. If the versions map was correctly cleared, we should still be at version 1.
+    // Now re-add Bob. If the versions map was correctly cleared, we should still be the initial
+    // version.
     storeHelper.sendAddOp(bob)
-    assertThat(activeStore.getLocalData("an-id").versionMap.backingMap.values).containsExactly(1)
+    assertThat(
+      activeStore.getLocalData("an-id").versionMap.backingMap.values
+    ).containsExactly(initialVersion)
   }
 
   protected suspend fun collectionReferenceModeStore(scope: CoroutineScope): ReferenceModeStore {
