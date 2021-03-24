@@ -7,6 +7,11 @@
 // grant found at
 // http://polymer.github.io/PATENTS.txt
 
+/// !!!
+/// TODO(b/183554828): Update these tests to make use of compile-time policy
+///   checking when ready!
+/// !!!
+
 meta
   namespace: arcs.android.integration.policy
 
