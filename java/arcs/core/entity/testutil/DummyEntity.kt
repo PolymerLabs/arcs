@@ -6,9 +6,11 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.entity.CollectionProperty
 import arcs.core.entity.EntityBase
 import arcs.core.entity.EntitySpec
 import arcs.core.entity.Reference
+import arcs.core.entity.SingletonProperty
 import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
@@ -24,32 +26,32 @@ typealias DummyEntitySlice = DummyEntity
 class DummyEntity(
   entityId: String? = null
 ) : EntityBase(ENTITY_CLASS_NAME, SCHEMA, entityId) {
-  var bool: Boolean? by SingletonProperty()
-  var nullableBool: Boolean? by SingletonProperty()
-  var nullableDouble: Double? by SingletonProperty()
-  var num: Double? by SingletonProperty()
-  var byte: Byte? by SingletonProperty()
-  var short: Short? by SingletonProperty()
-  var int: Int? by SingletonProperty()
-  var long: Long? by SingletonProperty()
-  var duration: ArcsDuration? by SingletonProperty()
-  var instant: ArcsInstant? by SingletonProperty()
-  var char: Char? by SingletonProperty()
-  var float: Float? by SingletonProperty()
-  var double: Double? by SingletonProperty()
-  var bigInt: BigInt? by SingletonProperty()
-  var text: String? by SingletonProperty()
-  var ref: Reference<DummyEntity>? by SingletonProperty()
-  var hardRef: Reference<DummyEntity>? by SingletonProperty()
-  var primList: List<Double> by SingletonProperty()
-  var refList: List<Reference<DummyEntity>> by SingletonProperty()
-  var inlineEntity: InlineDummyEntity by SingletonProperty()
-  var inlineList: List<InlineDummyEntity> by SingletonProperty()
-  var bools: Set<Boolean> by CollectionProperty()
-  var nums: Set<Double> by CollectionProperty()
-  var texts: Set<String> by CollectionProperty()
-  var refs: Set<Reference<DummyEntity>> by CollectionProperty()
-  var inlines: Set<InlineDummyEntity> by CollectionProperty()
+  var bool: Boolean? by SingletonProperty(this)
+  var nullableBool: Boolean? by SingletonProperty(this)
+  var nullableDouble: Double? by SingletonProperty(this)
+  var num: Double? by SingletonProperty(this)
+  var byte: Byte? by SingletonProperty(this)
+  var short: Short? by SingletonProperty(this)
+  var int: Int? by SingletonProperty(this)
+  var long: Long? by SingletonProperty(this)
+  var duration: ArcsDuration? by SingletonProperty(this)
+  var instant: ArcsInstant? by SingletonProperty(this)
+  var char: Char? by SingletonProperty(this)
+  var float: Float? by SingletonProperty(this)
+  var double: Double? by SingletonProperty(this)
+  var bigInt: BigInt? by SingletonProperty(this)
+  var text: String? by SingletonProperty(this)
+  var ref: Reference<DummyEntity>? by SingletonProperty(this)
+  var hardRef: Reference<DummyEntity>? by SingletonProperty(this)
+  var primList: List<Double> by SingletonProperty(this)
+  var refList: List<Reference<DummyEntity>> by SingletonProperty(this)
+  var inlineEntity: InlineDummyEntity by SingletonProperty(this)
+  var inlineList: List<InlineDummyEntity> by SingletonProperty(this)
+  var bools: Set<Boolean> by CollectionProperty(this)
+  var nums: Set<Double> by CollectionProperty(this)
+  var texts: Set<String> by CollectionProperty(this)
+  var refs: Set<Reference<DummyEntity>> by CollectionProperty(this)
+  var inlines: Set<InlineDummyEntity> by CollectionProperty(this)
 
   private val nestedEntitySpecs = mapOf(
     SCHEMA_HASH to DummyEntity,
@@ -130,7 +132,7 @@ class DummyEntity(
 }
 
 class InlineDummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA, isInlineEntity = true) {
-  var text: String? by SingletonProperty()
+  var text: String? by SingletonProperty(this)
 
   private val nestedEntitySpecs = mapOf(SCHEMA_HASH to InlineDummyEntity)
 

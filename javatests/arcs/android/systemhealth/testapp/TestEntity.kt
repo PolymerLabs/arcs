@@ -17,6 +17,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SchemaRegistry
+import arcs.core.entity.SingletonProperty
 import arcs.core.storage.RawReference
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -36,10 +37,10 @@ class TestEntity(
   val id: String? = null
 ) : EntityBase("TestEntity", SCHEMA, id) {
 
-  var text: String by SingletonProperty()
-  var number: Double by SingletonProperty()
-  var boolean: Boolean by SingletonProperty()
-  var inlineEntity: InlineTestEntity by SingletonProperty()
+  var text: String by SingletonProperty(this)
+  var number: Double by SingletonProperty(this)
+  var boolean: Boolean by SingletonProperty(this)
+  var inlineEntity: InlineTestEntity by SingletonProperty(this)
 
   init {
     this.text = text
@@ -166,7 +167,7 @@ class TestEntity(
 class InlineTestEntity(
   text: String = ""
 ) : EntityBase(ENTITY_CLASS_NAME, SCHEMA, isInlineEntity = true) {
-  var text: String? by SingletonProperty()
+  var text: String? by SingletonProperty(this)
 
   init {
     this.text = text

@@ -6,6 +6,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SchemaRegistry
+import arcs.core.entity.SingletonProperty
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -21,9 +22,9 @@ class TestEntity(
   boolean: Boolean = false
 ) : EntityBase("TestEntity", SCHEMA) {
 
-  var text: String by SingletonProperty()
-  var number: Double by SingletonProperty()
-  var boolean: Boolean by SingletonProperty()
+  var text: String by SingletonProperty(this)
+  var number: Double by SingletonProperty(this)
+  var boolean: Boolean by SingletonProperty(this)
 
   init {
     this.text = text
