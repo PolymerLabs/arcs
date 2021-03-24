@@ -652,12 +652,16 @@ describe('schema', () => {
     const unionT = aType.toLiteral();
     unionT.names = ['A', 'B'];
 
-    assert.deepEqual(Schema.union(aType, bType).toLiteral(), unionT);
+    const unionAB = Schema.union(aType, bType);
+    assert.isNotNull(unionAB, 'union of A and B should exist');
+    assert.deepEqual(unionAB.toLiteral(), unionT);
     assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
     assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
 
     unionT.names = ['B', 'A'];
-    assert.deepEqual(Schema.union(bType, aType).toLiteral(), unionT);
+    const unionBA = Schema.union(bType, aType);
+    assert.isNotNull(unionBA, 'union of B and A should exist');
+    assert.deepEqual(unionBA.toLiteral(), unionT);
     assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
     assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
   };
@@ -685,11 +689,15 @@ describe('schema', () => {
     const intersectT = bType.toLiteral();
     intersectT.names = [];
 
-    assert.deepEqual(Schema.intersect(aType, bType).toLiteral(), intersectT);
+    const intersectionAB = Schema.intersect(aType, bType);
+    assert.isNotNull(intersectionAB, 'intersection of A and B should exist');
+    assert.deepEqual(intersectionAB.toLiteral(), intersectT);
     assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
     assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
 
-    assert.deepEqual(Schema.intersect(bType, aType).toLiteral(), intersectT);
+    const intersectionBA = Schema.intersect(bType, aType);
+    assert.isNotNull(intersectionBA, 'intersection of B and A should exist');
+    assert.deepEqual(intersectionBA.toLiteral(), intersectT);
     assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
     assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
   };
