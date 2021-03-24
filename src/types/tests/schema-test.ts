@@ -631,13 +631,13 @@ describe('schema', () => {
     assert.deepEqual(intersection.refinement, schema3.refinement);
   }));
 
-  const verifyUnionOf = async (typeBuilder: (type: string) => string) => {
+  const verifyUnionOfTypes = async (type1: String, type2: String) => {
     const manifest = await Manifest.parse(`
             schema A
-              foo: ${typeBuilder(`Foo {a: Text, b: Text}`)}
+              foo: ${type1}
 
             schema B
-              foo: ${typeBuilder(`Foo {a: Text}`)}
+              foo: ${type2}
             `);
     const aType = manifest.findSchemaByName('A');
     const bType = manifest.findSchemaByName('B');
@@ -661,13 +661,16 @@ describe('schema', () => {
     assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
     assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
   };
-  const verifyIntersectOf = async (typeBuilder: (type: string) => string) => {
+  const verifyUnionOf = async (typeBuilder: (type: string) => string) => {
+    verifyUnionOfTypes(`${typeBuilder(`Foo {a: Text, b: Text}`)}`, `${typeBuilder(`Foo {a: Text}`)}`);
+  };
+  const verifyIntersectOfTypes = async (type1: String, type2: String) => {
     const manifest = await Manifest.parse(`
             schema A
-              foo: ${typeBuilder(`Foo {a: Text, b: Text}`)}
+              foo: ${type1}
 
             schema B
-              foo: ${typeBuilder(`Foo {a: Text}`)}
+              foo: ${type2}
             `);
     const aType = manifest.findSchemaByName('A');
     const bType = manifest.findSchemaByName('B');
@@ -690,6 +693,27 @@ describe('schema', () => {
     assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
     assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
   };
+  const verifyIntersectOf = async (typeBuilder: (type: string) => string) => {
+    verifyIntersectOfTypes(`${typeBuilder(`Foo {a: Text, b: Text}`)}`, `${typeBuilder(`Foo {a: Text}`)}`);
+  };
+  it('tests schema union, with nullable and non-nullable ints', async () => {
+    await verifyUnionOfTypes(`Int`, `Int?`);
+  });
+  it('tests schema union, with nullable ints', async () => {
+    await verifyUnionOfTypes(`Int?`, `Int?`);
+  });
+  it('tests schema union, with nullable and non-nullable text', async () => {
+    await verifyUnionOfTypes(`Text`, `Text?`);
+  });
+  it('tests schema union, with nullable text', async () => {
+    await verifyUnionOfTypes(`Text?`, `Text?`);
+  });
+  it('tests schema union, with nullable inline entities', async () => {
+    await verifyUnionOfTypes(`inline Foo {a: Text, b: Text}?`, `inline Foo {a: Text}?`);
+  });
+  it('tests schema union, with nullable and non-nullable inline entities', async () => {
+    await verifyUnionOfTypes(`inline Foo {a: Text, b: Text}`, `inline Foo {a: Text}?`);
+  });
   it('tests schema union, with inline entities', async () => {
     await verifyUnionOf((type: string) => `inline ${type}`);
   });
@@ -713,6 +737,24 @@ describe('schema', () => {
   });
 
   it('tests schema intersection, with inline entities', async () => {
+  it('tests schema intersection, with nullable and non-nullable ints', async () => {
+    await verifyIntersectOfTypes(`Int`, `Int?`);
+  });
+  it('tests schema intersection, with nullable ints', async () => {
+    await verifyIntersectOfTypes(`Int?`, `Int?`);
+  });
+  it('tests schema intersection, with nullable and non-nullable text', async () => {
+    await verifyIntersectOfTypes(`Text`, `Text?`);
+  });
+  it('tests schema intersection, with nullable text', async () => {
+    await verifyIntersectOfTypes(`Text?`, `Text?`);
+  });
+  it('tests schema intersection, with nullable inline entities', async () => {
+    await verifyIntersectOfTypes(`inline Foo {a: Text, b: Text}?`, `inline Foo {a: Text}?`);
+  });
+  it('tests schema intersection, with nullable and non-nullable inline entities', async () => {
+    await verifyIntersectOfTypes(`inline Foo {a: Text, b: Text}`, `inline Foo {a: Text}?`);
+  });
     await verifyIntersectOf((type: string) => `inline ${type}`);
   });
   it('tests schema intersection, with referenced entities', async () => {
