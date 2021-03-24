@@ -2226,11 +2226,7 @@ export class Schema {
         return new NullableField(unionSchema);
       }
       default:
-        if (Schema.typesEqual(field1, field2)) {
-          return field1;
-        } else {
-          return null;
-        }
+        return Schema.typesEqual(field1, field2) ? field1 : null;
     }
   }
 
