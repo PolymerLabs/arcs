@@ -15,25 +15,29 @@ import kotlinx.coroutines.Job
 /** Ingresses Things. */
 class IngressThing : AbstractIngressThing() {
   lateinit var storeFinished: Job
-  override fun onFirstStart() {
-    storeFinished = handles.input.storeAll(listOf(
-      Thing("Once", "upon", "a", "midnight"),
-      Thing("dreary", "while", "I", "pondered"),
-      Thing("weak", "and", "weary", "over"),
-      Thing("many", "a", "quaint", "and"),
-      Thing("curious", "volumes", "of", "forgotten"),
-      Thing("lore", "while", "I", "nodded")
-    ))
+  override fun onFirstStart() = triggerWrite()
+  fun triggerWrite() {
+    storeFinished = handles.input.storeAll(
+      listOf(
+        Thing("Once", "upon", "a", "midnight"),
+        Thing("dreary", "while", "I", "pondered"),
+        Thing("weak", "and", "weary", "over"),
+        Thing("many", "a", "quaint", "and"),
+        Thing("curious", "volumes", "of", "forgotten"),
+        Thing("lore", "while", "I", "nodded")
+      )
+    )
   }
 }
 
 /** Egresses Thing { a, b }. */
 class EgressAB : AbstractEgressAB() {
   val handleRegistered = Job()
-  val outputForTest = mutableSetOf<Thing>()
 
   override fun onReady() {
-    outputForTest.addAll(handles.output.fetchAll())
+    triggerRead()
     handleRegistered.complete()
   }
+
+  fun triggerRead(): Set<Thing> = handles.output.fetchAll()
 }

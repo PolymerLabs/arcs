@@ -38,3 +38,31 @@ recipe PersistsEgresses
   // And the recipe egresses Thing {a, b}
   EgressAB
     output: handle1
+
+/// Scenario: A policy-compliant recipe with @ttl handles egresses data and
+/// stores ingress-restricted values to RAM that are deleted when the TTL expires
+/// and at the runtime’s end.
+
+@egressType('GeneralEgress')
+policy SimpleTtlPolicy {
+  @allowedRetention(medium: 'Ram', encryption: false)
+  from Thing access {
+    a,
+    b
+  }
+}
+
+// Given a recipe is compliant with a policy
+@policy('SimplePersistencePolicy')
+recipe TtlEgresses
+  // And the recipe's store is marked @ttl('2h')
+  handle1: create @ttl('2h')
+
+  // And the recipe ingresses a schema Thing {a, b, c, d}
+  IngressThing
+    input: handle1
+
+  // And the recipe egresses Thing {a, b}
+  EgressAB
+    output: handle1
+
