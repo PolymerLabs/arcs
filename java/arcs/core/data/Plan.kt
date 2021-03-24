@@ -92,6 +92,15 @@ data class Plan(
     val annotations: List<Annotation> = emptyList(),
     val expression: Expression<*>? = null
   ) {
+    init {
+      val actor = annotations.find { it.name == "actor" }?.getStringParam("name") ?: ""
+      if (actor.contains(':') || actor.contains(';')) {
+        throw IllegalArgumentException(
+          "Actor annotation $actor contains illegal character ':' or ';'."
+        )
+      }
+    }
+
     val storageKey: StorageKey
       get() = handle.storageKey
 

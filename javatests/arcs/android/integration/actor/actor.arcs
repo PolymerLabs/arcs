@@ -10,3 +10,17 @@ recipe ReadWriteRecipe
 
   Writer
     output: fooA
+
+@arcId('testArc')
+recipe ReadWriteRecipeColon
+  fooB: create 'fooB' @persistent @actor('b:')
+
+  Writer
+    output: fooB
+
+@arcId('testArc')
+recipe ReadWriteRecipeSemicolon
+  fooC: create 'fooC' @persistent @actor('c;')
+
+  Writer
+    output: fooC

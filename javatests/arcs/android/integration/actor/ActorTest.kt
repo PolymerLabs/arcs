@@ -7,6 +7,7 @@ import arcs.core.host.toRegistration
 import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -50,5 +51,25 @@ class ActorTest {
   fun actorAnnotation_setsHandleName() = runBlocking {
     writer.write(AbstractWriter.Foo(5))
     assertThat(writer.handles.getHandle("output").name).isEqualTo("a")
+  }
+
+  @Test
+  fun actorAnnotation_withColon_fails() = runBlocking {
+    val e = assertFailsWith<IllegalArgumentException> {
+      val colonPlan = env.startArc(ReadWriteRecipeColonPlan)
+    }
+    assertThat(e)
+      .hasMessageThat()
+      .isEqualTo("Actor annotation b: contains illegal character ':' or ';'.")
+  }
+
+  @Test
+  fun actorAnnotation_withSemicolon_fails() = runBlocking {
+    val e = assertFailsWith<IllegalArgumentException> {
+      env.startArc(ReadWriteRecipeSemicolonPlan)
+    }
+    assertThat(e)
+      .hasMessageThat()
+      .isEqualTo("Actor annotation c; contains illegal character ':' or ';'.")
   }
 }
