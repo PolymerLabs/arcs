@@ -11,6 +11,8 @@ class FakeStorageEndpointManager(
     callback: ProxyCallback<Data, Op, T>
   ): StorageEndpoint<Data, Op, T> {
     @Suppress("UNCHECKED_CAST")
-    return fakeEndpoint as StorageEndpoint<Data, Op, T>
+    return fakeEndpoint.also {
+      it.callback = callback as ProxyCallback<*, *, *>
+    } as StorageEndpoint<Data, Op, T>
   }
 }
