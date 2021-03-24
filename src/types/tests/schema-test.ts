@@ -631,7 +631,7 @@ describe('schema', () => {
     assert.deepEqual(intersection.refinement, schema3.refinement);
   }));
 
-  const verifyUnionOfTypes = async (type1: String, type2: String) => {
+  const verifyUnionOfTypes = async (type1: string, type2: string) => {
     const manifest = await Manifest.parse(`
             schema A
               foo: ${type1}
@@ -668,7 +668,7 @@ describe('schema', () => {
   const verifyUnionOf = async (typeBuilder: (type: string) => string) => {
     verifyUnionOfTypes(`${typeBuilder(`Foo {a: Text, b: Text}`)}`, `${typeBuilder(`Foo {a: Text}`)}`);
   };
-  const verifyIntersectOfTypes = async (type1: String, type2: String) => {
+  const verifyIntersectOfTypes = async (type1: string, type2: string) => {
     const manifest = await Manifest.parse(`
             schema A
               foo: ${type1}
