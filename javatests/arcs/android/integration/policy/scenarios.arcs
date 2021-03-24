@@ -13,19 +13,21 @@ meta
 import './particles.arcs'
 
 /// Scenario: No data is written
-@egressType('GeneralEgress')
-policy NoDataWrittenPolicy {
-  @allowedRetention(medium: 'Disk', encryption: false)
-  from Thing access {
-    a,
-    b,
-    c,
-    d
-  }
-}
+// // TODO(b/183554828): Ingress restricting should allow the fields mentioned
+// //  in the policy to be persisted.
+// @egressType('GeneralEgress')
+// policy NoDataWrittenPolicy {
+//   @allowedRetention(medium: 'Disk', encryption: false)
+//   from Thing access {
+//     a,
+//     b,
+//     c,
+//     d
+//   }
+// }
 
 // Given a recipe that is compliant with a policy
-@policy('NoDataWrittenPolicy')
+// @policy('NoDataWrittenPolicy')
 recipe NoDataWritten
   // And the recipe ingresses a schema Thing {a, b, c, d}
   handle1: create
