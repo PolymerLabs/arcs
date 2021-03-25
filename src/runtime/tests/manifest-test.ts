@@ -4372,19 +4372,6 @@ particle A
     assert.lengthOf(manifest.errors, 1);
     assert.equal(manifest.errors[0].key, 'externalSchemas');
   });
-
-  it('can round-trip external particles', async () => {
-    const manifestString = `external particle TestParticle
-  input: reads [Product {}]
-  modality dom`;
-
-    const manifest = await runtime.parse(manifestString);
-    assert.lengthOf(manifest.particles, 1);
-    const particle = manifest.particles[0];
-    assert.isTrue(particle.external);
-    assert.isNull(particle.implFile);
-    assert.strictEqual(manifestString, particle.toString());
-  });
   it('parses JVM class path', async () => {
     const manifest = await runtime.parse(`
       particle Particle in 'com.wow.Particle'
