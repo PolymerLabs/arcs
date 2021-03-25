@@ -6,6 +6,7 @@ import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.SingletonType
+import arcs.core.entity.Entity
 import arcs.core.entity.EntityBase
 import arcs.core.entity.EntityBaseSpec
 import arcs.core.entity.HandleSpec
@@ -493,7 +494,7 @@ abstract class AbstractArcHostTestBase {
     host.getFooHandle().dispatchStore(entity)
 
     val thing =
-      (host.getFooHandle() as ReadWriteSingletonHandle<EntityBase, EntityBase>).dispatchFetch()
+      (host.getFooHandle() as ReadWriteSingletonHandle<EntityBase, Entity>).dispatchFetch()
 
     // Monkey patch the entityId
     var storedEntity = EntityBase(

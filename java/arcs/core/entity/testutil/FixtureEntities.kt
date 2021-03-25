@@ -26,6 +26,7 @@ typealias FixtureEntity = AbstractTestParticle.FixtureEntity
 typealias InnerEntity = AbstractTestParticle.InnerEntity
 typealias MoreNested = AbstractTestParticle.MoreNested
 typealias EmptyEntity = AbstractTestParticle.EmptyEntity
+// TODO(b/182330900): temporarily aliasing to concrete entities; to be replaced with slice interface
 typealias FixtureEntitySlice = AbstractTestParticle.FixtureEntity
 typealias InnerEntitySlice = AbstractTestParticle.InnerEntity
 typealias MoreNestedSlice = AbstractTestParticle.MoreNested
