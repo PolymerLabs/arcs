@@ -253,7 +253,7 @@ describe('particle-api', () => {
     await arc.idle;
 
     assert.deepStrictEqual(await resultHandle.fetch() as {}, {value: 'done'});
-    const [innerArc] = arc.findInnerArcs(arcInfo.activeRecipe.particles[0]);
+    const [innerArc] = arcInfo.findInnerArcs(arcInfo.activeRecipe.particles[0]);
     const newStore = innerArc.findStoresByType(new SingletonType(result.type))[0];
     assert.strictEqual(newStore.name, 'hello');
 
@@ -337,7 +337,7 @@ describe('particle-api', () => {
     await arc.idle;
 
     assert.deepStrictEqual(await resultHandle.fetch() as {}, {value: 'done'});
-    const [innerArc] = arc.findInnerArcs(arcInfo.activeRecipe.particles[0]);
+    const [innerArc] = arcInfo.findInnerArcs(arcInfo.activeRecipe.particles[0]);
     const newStore = innerArc.findStoresByType(new SingletonType(result.type))[1];
     assert.strictEqual(newStore.name, 'the-out');
 
@@ -435,7 +435,7 @@ describe('particle-api', () => {
     await arc.idle;
 
     assert.deepStrictEqual(await resultHandle.fetch() as {}, {value: 'done'});
-    const [innerArc] = arc.findInnerArcs(arcInfo.activeRecipe.particles[0]);
+    const [innerArc] = arcInfo.findInnerArcs(arcInfo.activeRecipe.particles[0]);
     const newStore = innerArc.findStoresByType(new SingletonType(result.type))[1];
     assert.strictEqual(newStore.name, 'the-out');
 
@@ -535,7 +535,7 @@ describe('particle-api', () => {
     await arc.idle;
 
     assert.deepStrictEqual(await resultHandle.fetch() as {}, {value: 'done'});
-    const [innerArc] = arc.findInnerArcs(arcInfo.activeRecipe.particles[0]);
+    const [innerArc] = arcInfo.findInnerArcs(arcInfo.activeRecipe.particles[0]);
     const newStore = innerArc.findStoresByType(new SingletonType(result.type))[1];
     assert.strictEqual(newStore.name, 'the-out');
 
@@ -638,7 +638,7 @@ describe('particle-api', () => {
     await arc.idle;
 
     assert.deepStrictEqual(await resultHandle.fetch() as {}, {value: 'done'});
-    const [innerArc] = arc.findInnerArcs(arcInfo.activeRecipe.particles[0]);
+    const [innerArc] = arcInfo.findInnerArcs(arcInfo.activeRecipe.particles[0]);
     const newStore = innerArc.findStoresByType(new SingletonType(result.type))[1];
     assert.strictEqual(newStore.name, 'the-out');
 
@@ -744,7 +744,7 @@ describe('particle-api', () => {
     assert.sameMembers((await resultsHandle.toList()).map(item => item.value), ['done', 'done', 'HELLO', 'WORLD']);
     await inspector.verify('done', 'done', 'HELLO', 'WORLD');
 
-    const [innerArc] = arc.findInnerArcs(arcInfo.activeRecipe.particles[0]);
+    const [innerArc] = arcInfo.findInnerArcs(arcInfo.activeRecipe.particles[0]);
     const innerArcStores = innerArc.findStoresByType(new SingletonType(result.type));
 
     let newStore = innerArcStores[1];
@@ -1088,7 +1088,7 @@ describe('particle-api', () => {
     const [transformationParticle] = arcInfo.activeRecipe.particles;
 
     assert.lengthOf(arcInfo.recipeDeltas, 1);
-    const [innerArc] = arc.findInnerArcs(transformationParticle);
+    const [innerArc] = arcInfo.findInnerArcs(transformationParticle);
 
     const sessionId = innerArc.idGenerator.currentSessionIdForTesting;
     assert.strictEqual(innerArc.activeRecipe.toString(), `recipe

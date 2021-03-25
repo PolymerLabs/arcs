@@ -61,12 +61,12 @@ export class InitPopulation extends Strategy {
         }
       }
     }
-    for (const handle of ([] as Handle[]).concat(...this.arc.allDescendingArcs.map(arc => arc.activeRecipe.handles))) {
+    for (const handle of ([] as Handle[]).concat(...this.arc.arcInfo.allDescendingArcs.map(arc => arc.activeRecipe.handles))) {
       results.push(...this._recipeIndex.findHandleMatch(handle, ['use', '?', '`slot']).map(
           otherHandle => ({recipe: otherHandle.recipe})));
     }
 
-    for (const arc of this.arc.allDescendingArcs) {
+    for (const arc of this.arc.arcInfo.allDescendingArcs) {
       for (const {particle, connSpec} of arc.activeRecipe.getFreeConnections()) {
         results.push(...this._recipeIndex.findHandleConnectionMatch(connSpec, particle, ['use', '?', '`slot']).map(
           otherHandle => ({recipe: otherHandle.recipe})));

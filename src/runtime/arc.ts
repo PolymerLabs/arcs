@@ -36,16 +36,17 @@ import {StoreInfo} from './storage/store-info.js';
 import {ActiveStore} from './storage/active-store.js';
 import {StorageService} from './storage/storage-service.js';
 import {ArcInfo} from './arc-info.js';
+import { Allocator } from './allocator';
 
 export type ArcOptions = Readonly<{
   arcInfo: ArcInfo,
   storageService: StorageService;
   pecFactories?: PecFactory[];
+  allocator?: Allocator;
   slotComposer?: SlotComposer;
   loader: Loader;
   storageKey?: StorageKey;
   speculative?: boolean;
-  innerArc?: boolean;
   stub?: boolean;
   inspectorFactory?: ArcInspectorFactory;
   ports?: MessagePort[];
@@ -58,7 +59,7 @@ export type ArcOptions = Readonly<{
 export class Arc implements ArcInterface {
   private readonly pecFactories: PecFactory[];
   public readonly isSpeculative: boolean;
-  public readonly isInnerArc: boolean;
+  public get isInnerArc(): boolean { return this.arcInfo.isInnerArc; }
   public readonly isStub: boolean;
   public _modality: Modality;
   // Public for debug access
@@ -76,7 +77,7 @@ export class Arc implements ArcInterface {
   private waitForIdlePromise: Promise<void> | null;
   private readonly inspectorFactory?: ArcInspectorFactory;
   public readonly inspector?: ArcInspector;
-  private readonly innerArcsByParticle: Map<Particle, Arc[]> = new Map();
+  /*private*/ readonly innerArcsByParticle: Map<Particle, Arc[]> = new Map();
   private readonly instantiateMutex = new Mutex();
 
   readonly arcInfo: ArcInfo;
@@ -93,31 +94,30 @@ export class Arc implements ArcInterface {
   readonly volatileMemory = new VolatileMemory();
   private readonly volatileStorageDriverProvider: VolatileStorageDriverProvider;
 
-  constructor({arcInfo, storageService, pecFactories, slotComposer, loader, storageKey, speculative, innerArc, stub, inspectorFactory, modality, driverFactory, storageKeyParser} : ArcOptions) {
+  constructor({arcInfo, storageService, pecFactories, allocator, slotComposer, loader, storageKey, speculative, stub, inspectorFactory, modality, driverFactory, storageKeyParser} : ArcOptions) {
     this.modality = modality;
     this.driverFactory = driverFactory;
     this.storageKeyParser = storageKeyParser;
     // TODO: pecFactories should not be optional. update all callers and fix here.
     this.pecFactories = pecFactories && pecFactories.length > 0 ? pecFactories.slice() : [FakePecFactory(loader).bind(null)];
 
-    // TODO(sjmiles): currently some UiBrokers need to recover arc from composer in order to forward events
-    if (slotComposer && !slotComposer['arc']) {
-      slotComposer['arc'] = this;
-    }
-
     this.arcInfo = arcInfo;
     this.isSpeculative = !!speculative; // undefined => false
-    this.isInnerArc = !!innerArc; // undefined => false
     this.isStub = !!stub;
     this._loader = loader;
     this.inspectorFactory = inspectorFactory;
     this.inspector = inspectorFactory && inspectorFactory.create(this);
     this.storageKey = storageKey;
     const ports = this.pecFactories.map(f => f(this.generateID(), this.idGenerator, this.storageKeyParser));
-    this.peh = new ParticleExecutionHost({slotComposer, arc: this, ports});
+    this.peh = new ParticleExecutionHost({slotComposer, arc: this, ports, allocator});
     this.volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
     this.driverFactory.register(this.volatileStorageDriverProvider);
     this.storageService = storageService;
+    // TODO(sjmiles): currently some UiBrokers need to recover arc from composer in order to forward events
+    if (slotComposer && !slotComposer['arc']) {
+      slotComposer['arc'] = this.arcInfo;
+      slotComposer['peh'] = this.peh;
+    }
   }
 
   get loader(): Loader {
@@ -145,9 +145,6 @@ export class Arc implements ArcInterface {
   }
 
   dispose(): void {
-    for (const innerArc of this.innerArcs) {
-      innerArc.dispose();
-    }
     // TODO: disconnect all associated store event handlers
     this.peh.stop();
     this.peh.close();
@@ -200,44 +197,17 @@ export class Arc implements ArcInterface {
     return promise;
   }
 
-  findInnerArcs(particle: Particle): Arc[] {
-    return this.innerArcsByParticle.get(particle) || [];
-  }
-
   // Inner arcs of this arc's transformation particles.
   // Does *not* include inner arcs of this arc's inner arcs.
   get innerArcs(): Arc[] {
     return ([] as Arc[]).concat( ...this.innerArcsByParticle.values());
   }
 
-  // This arc and all its descendants.
-  // *Does* include inner arcs of this arc's inner arcs.
-  get allDescendingArcs(): Arc[] {
-    return [this as Arc].concat(...this.innerArcs.map(arc => arc.allDescendingArcs));
-  }
-
-  createInnerArc(transformationParticle: Particle): Arc {
-    const id = this.generateID('inner');
-    const innerArc = new Arc({
-      arcInfo: new ArcInfo({id, context: this.context, capabilitiesResolver: this.capabilitiesResolver}),
-      storageService: this.storageService,
-      pecFactories: this.pecFactories,
-      slotComposer: this.peh.slotComposer,
-      loader: this._loader,
-      innerArc: true,
-      speculative: this.isSpeculative,
-      inspectorFactory: this.inspectorFactory,
-      driverFactory: this.driverFactory,
-      storageKeyParser: this.storageKeyParser
-    });
-
-    let particleInnerArcs = this.innerArcsByParticle.get(transformationParticle);
-    if (!particleInnerArcs) {
-      particleInnerArcs = [];
-      this.innerArcsByParticle.set(transformationParticle, particleInnerArcs);
+  addInnerArc(particle: Particle, innerArc: Arc) {
+    if (!this.innerArcsByParticle.has(particle)) {
+      this.innerArcsByParticle.set(particle, []);
     }
-    particleInnerArcs.push(innerArc);
-    return innerArc;
+    this.innerArcsByParticle.get(particle).push(innerArc);
   }
 
   async serialize(): Promise<string> {
@@ -322,11 +292,15 @@ export class Arc implements ArcInterface {
   // Makes a copy of the arc used for speculative execution.
   async cloneForSpeculativeExecution(): Promise<Arc> {
     const arc = new Arc({
-      arcInfo: new ArcInfo({id: this.generateID(), context: this.context, capabilitiesResolver: this.capabilitiesResolver}),
+      arcInfo: new ArcInfo({
+        id: this.generateID(),
+        context: this.context,
+        capabilitiesResolver: this.capabilitiesResolver,
+        outerArcId: this.arcInfo.outerArcId
+      }),
       pecFactories: this.pecFactories,
       loader: this._loader,
       speculative: true,
-      innerArc: this.isInnerArc,
       inspectorFactory: this.inspectorFactory,
       storageService: this.storageService,
       driverFactory: this.driverFactory,

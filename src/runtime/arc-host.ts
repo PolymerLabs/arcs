@@ -78,11 +78,13 @@ export class ArcHostImpl implements ArcHost {
   buildArcParams(partition: PlanPartition): ArcOptions {
     const factories = Object.values(this.runtime.storageKeyFactories);
     const {arcInfo, arcOptions} = partition;
+    const slotComposer = arcInfo.isInnerArc ? this.getArcById(arcInfo.outerArcId).peh.slotComposer: new SlotComposer();
     return {
       arcInfo,
       loader: this.runtime.loader,
       pecFactories: [this.runtime.pecFactory],
-      slotComposer: new SlotComposer(),
+      allocator: this.runtime.allocator,
+      slotComposer,
       storageService: this.runtime.storageService,
       driverFactory: this.runtime.driverFactory,
       storageKey: arcOptions.storageKeyPrefix ? arcOptions.storageKeyPrefix(arcInfo.id) : new VolatileStorageKey(arcInfo.id, ''),

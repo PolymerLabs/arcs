@@ -25,6 +25,7 @@ export class SlotComposer {
   readonly modality: Modality;
   protected _contexts = [];
   arc?;
+  peh?;
 
   /**
    * |options| must contain:
@@ -92,10 +93,9 @@ export class SlotComposer {
 
   sendEvent(particleId: string, eventlet) {
     log('sendEvent:', particleId, eventlet);
-    const arc = this.arc;
-    if (arc && arc.activeRecipe) {
-      const particle = arc.activeRecipe.findParticle(particleId);
-      arc.peh.sendEvent(particle, '', eventlet);
+    if (this.peh && this.arc.activeRecipe) {
+      const particle = this.arc.activeRecipe.findParticle(particleId);
+      this.peh.sendEvent(particle, '', eventlet);
     }
   }
 

@@ -65,17 +65,18 @@ export class AllocatorImpl implements Allocator {
     idGenerator = idGenerator || IdGenerator.newSession();
     if (!this.arcInfoById.has(arcId)) {
       assert(idGenerator, 'or maybe need to create one anyway?');
-      this.arcInfoById.set(arcId, new ArcInfo(this.buildArcInfoOptions(arcId, idGenerator)));
+      this.arcInfoById.set(arcId, new ArcInfo(this.buildArcInfoOptions(arcId, idGenerator, options.outerArcId)));
     }
     return this.arcInfoById.get(arcId);
   }
 
-  private buildArcInfoOptions(id: ArcId, idGenerator? : IdGenerator): ArcInfoOptions {
+  private buildArcInfoOptions(id: ArcId, idGenerator? : IdGenerator, outerArcId?: ArcId): ArcInfoOptions {
     return {
       id,
       context: this.runtime.context,
       capabilitiesResolver: this.runtime.getCapabilitiesResolver(id),
-      idGenerator
+      idGenerator,
+      outerArcId
     };
   }
 
@@ -160,8 +161,12 @@ export class AllocatorImpl implements Allocator {
   }
 
   public stopArc(arcId: ArcId) {
-    assert(this.arcInfoById.get(arcId));
-    for (const partition of this.arcInfoById.get(arcId).partitions) {
+    const arcInfo = this.arcInfoById.get(arcId);
+    assert(arcInfo);
+    for (const innerArcInfo of arcInfo.innerArcs) {
+      this.stopArc(innerArcInfo.id);
+    }
+    for (const partition of arcInfo.partitions) {
       const host = this.hostById[partition.arcHostId];
       assert(host);
       host.stop(arcId);
