@@ -63,23 +63,23 @@ class PolicyTest {
     }
 
     // Then data with fields Thing {a, b} will be egressed
-    assertThat(egressAB.triggerRead()).hasSize(6)
+    assertThat(egressAB.fetchThings()).hasSize(6)
 
     val startingKey = (egressAB.handles.output.getProxy().storageKey as ReferenceModeStorageKey)
       .storageKey
 
     // And only Thing {a, b} is written to storage
-    assertOnlySingletonAbIsPersisted(startingKey)
+    assertStorageContains(startingKey, setOf("a", "b"))
 
     env.stopArc(arc)
 
     // And Thing {a, b} data persists after the arc is run
-    assertOnlySingletonAbIsPersisted(startingKey)
+    assertStorageContains(startingKey, setOf("a", "b"))
 
     env.stopRuntime()
 
     // And Thing {a, b} data persists after runtime ends
-    assertOnlySingletonAbIsPersisted(startingKey)
+    assertStorageContains(startingKey, setOf("a", "b"))
   }
 
   /**
@@ -108,37 +108,32 @@ class PolicyTest {
       }
 
       // Then data with fields Thing {a, b} will be egressed
-      assertThat(egressAB.triggerRead()).hasSize(6)
+      assertThat(egressAB.fetchThings()).hasSize(6)
 
       val startingKey = (egressAB.handles.output.getProxy().storageKey as ReferenceModeStorageKey)
         .storageKey
 
       // And only Thing {a, b} is written to storage (RAM)
-      assertOnlySingletonAbIsPersisted(startingKey)
-      env
+      assertStorageContains(startingKey, setOf("a", "b"))
 
       // And the egress data with fields Thing {a, b} will be exfiltrated (filtered with no output
       //  read) after 2 hours have passed.
-      ingest.triggerWrite()
-      withTimeout(30000) {
-        ingest.storeFinished.join()
-      }
       env.advanceClock(3.hours)
-      assertThat(egressAB.triggerRead()).isEmpty()
+      assertThat(egressAB.fetchThings()).isEmpty()
 
       // And the data is removed from storage after 2 hours have passed.
       env.triggerCleanupWork()
       assertThat(env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA)).isEmpty()
 
       // When new data is ingressed...
-      ingest.triggerWrite()
+      ingest.writeThings()
       withTimeout(30000) {
         ingest.storeFinished.join()
       }
       env.stopArc(arc)
 
       // Then Thing {a, b} data persists after the arc is finished
-      assertOnlySingletonAbIsPersisted(startingKey)
+      assertStorageContains(startingKey, setOf("a", "b"))
 
       env.stopRuntime()
 
@@ -146,11 +141,8 @@ class PolicyTest {
       assertThat(env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA)).isEmpty()
     }
 
-  private suspend fun assertOnlySingletonAbIsPersisted(startingKey: StorageKey) =
-    assertIsPresent(startingKey, setOf("a", "b"))
-
   /** Assert that all entities only contains values for the specified fields. */
-  private suspend fun assertIsPresent(
+  private suspend fun assertStorageContains(
     startingKey: StorageKey,
     singletons: Set<String> = emptySet(),
     collections: Set<String> = emptySet()

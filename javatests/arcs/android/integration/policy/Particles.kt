@@ -15,8 +15,8 @@ import kotlinx.coroutines.Job
 /** Ingresses Things. */
 class IngressThing : AbstractIngressThing() {
   lateinit var storeFinished: Job
-  override fun onFirstStart() = triggerWrite()
-  fun triggerWrite() {
+  override fun onFirstStart() = writeThings()
+  fun writeThings() {
     storeFinished = handles.input.storeAll(
       listOf(
         Thing("Once", "upon", "a", "midnight"),
@@ -35,7 +35,7 @@ class EgressAB : AbstractEgressAB() {
   val handleRegistered = Job()
 
   override fun onReady() {
-    triggerRead()
+    fetchThings()
     handleRegistered.complete()
   }
 
