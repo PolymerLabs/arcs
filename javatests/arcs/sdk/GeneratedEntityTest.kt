@@ -12,24 +12,40 @@ import arcs.core.entity.testutil.FixtureEntities
 import arcs.core.entity.testutil.FixtureEntity
 import arcs.core.entity.testutil.InnerEntity
 import arcs.core.testutil.runTest
+import arcs.core.util.RandomBuilder
 import arcs.core.util.testutil.LogRule
+import arcs.flags.BuildFlags
+import arcs.flags.testing.BuildFlagsRule
+import arcs.flags.testing.ParameterizedBuildFlags
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import kotlin.random.Random
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.runners.Parameterized
 
 /** Tests for code-generated entity classes. */
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(JUnit4::class)
-class GeneratedEntityTest {
+@RunWith(Parameterized::class)
+class GeneratedEntityTest(private val parameters: ParameterizedBuildFlags) {
+
+  @get:Rule
+  val rule = BuildFlagsRule.parameterized(parameters)
+
+  companion object {
+    @get:JvmStatic
+    @get:Parameterized.Parameters(name = "{0}")
+    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_STRING_REDUCTION")
+  }
 
   private lateinit var idGenerator: Id.Generator
   private var currentTime: Long = 500L
   private val fixtureEntities = FixtureEntities()
+  private lateinit var oldRandomBuilder: (Long?) -> Random
 
   @get:Rule
   val log = LogRule()
@@ -37,6 +53,17 @@ class GeneratedEntityTest {
   @Before
   fun setUp() {
     idGenerator = Id.Generator.newForTest("session")
+    val seed = 0
+    val knownRandom = { kotlin.random.Random(seed) }
+
+    // Set the global random builder.
+    oldRandomBuilder = RandomBuilder
+    RandomBuilder = { knownRandom() }
+  }
+
+  @After
+  fun tearDown() {
+    RandomBuilder = oldRandomBuilder
   }
 
   @Test
@@ -172,6 +199,7 @@ class GeneratedEntityTest {
 
   @Test
   fun ensureEntityFields() {
+
     val entity = FixtureEntity()
     assertThat(entity.entityId).isNull()
 
@@ -182,7 +210,12 @@ class GeneratedEntityTest {
     assertThat(entityId).isNotNull()
     assertThat(entityId).isNotEmpty()
     assertThat(entityId).isNotEqualTo(NO_REFERENCE_ID)
-    assertThat(entityId).contains("handle")
+    if (BuildFlags.STORAGE_STRING_REDUCTION) {
+      // Randomly generated string by ID. It is all "b"s due to the seeding of Random.
+      assertThat(entityId).contains("bbbbbbbbbb")
+    } else {
+      assertThat(entityId).contains("handle")
+    }
 
     val creationTimestamp = entity.serialize().creationTimestamp
 

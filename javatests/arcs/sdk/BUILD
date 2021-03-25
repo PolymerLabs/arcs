@@ -35,6 +35,8 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/util",
         "//java/arcs/core/util:utils-platform-dependencies",
         "//java/arcs/core/util/testutil",
+        "//java/arcs/flags:build_flags",
+        "//java/arcs/flags/testing:testing-kt",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk:sdk-kt",
         "//third_party/java/junit:junit-android",
