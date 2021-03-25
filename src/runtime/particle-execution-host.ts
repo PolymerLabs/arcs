@@ -31,11 +31,13 @@ import {CRDTMuxEntity} from './storage/storage.js';
 import {StoreInfo} from './storage/store-info.js';
 // import {StorageService} from './storage/storage-service.js';
 import {Consumer} from '../utils/lib-utils.js';
+import { Allocator, SingletonAllocator } from './allocator';
 
 export type ParticleExecutionHostOptions = Readonly<{
   slotComposer: SlotComposer;
   arc: Arc;
   ports: MessagePort[];
+  allocator?: Allocator;
 }>;
 
 @SystemTrace
@@ -50,14 +52,16 @@ export class ParticleExecutionHost {
   private idlePromise: Promise<Map<Particle, number[]>> | undefined;
   private idleResolve: ((relevance: Map<Particle, number[]>) => void) | undefined;
   public readonly particles: Particle[] = [];
+  readonly allocator: Allocator|null;
 
-  constructor({slotComposer, arc, ports}: ParticleExecutionHostOptions) {
+  constructor({slotComposer, arc, ports, allocator}: ParticleExecutionHostOptions) {
     this.close = () => {
       this.apiPorts.forEach(apiPort => apiPort.close());
     };
     this.arc = arc;
     this.slotComposer = slotComposer;
     this.apiPorts = ports.map(port => new PECOuterPortImpl(port, arc));
+    this.allocator = allocator;
   }
 
   private choosePortForParticle(particle: Particle): PECOuterPort {
@@ -200,9 +204,16 @@ class PECOuterPortImpl extends PECOuterPort {
     this.GetDirectStoreMuxerCallback(store, store, callback, type.toString(), storageKey);
   }
 
-  onConstructInnerArc(callback: number, particle: Particle) {
-    const arc = this.arc.createInnerArc(particle);
-    this.ConstructArcCallback(callback, arc);
+  async onConstructInnerArc(callback: number, particle: Particle) {
+    assert(this.arc.peh.allocator);
+    const arcInfo = await this.arc.peh.allocator.startArc({arcId: this.arc.generateID('inner'), outerArcId: this.arc.arcInfo.id});
+    this.arc.arcInfo.addInnerArc(particle, arcInfo);
+
+    // TODO(mmandlis): get rid of innerArcs in arc.ts
+    const innerArc = (this.arc.peh.allocator as SingletonAllocator).host.getArcById(arcInfo.id);
+    this.arc.addInnerArc(particle, innerArc);
+
+    this.ConstructArcCallback(callback, innerArc);
   }
 
   async onArcCreateHandle(callback: number, arc: Arc, type: Type, name: string) {

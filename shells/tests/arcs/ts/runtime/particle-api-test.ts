@@ -69,7 +69,7 @@ describe('particle-api', () => {
     const [transformationParticle] = arcInfo.activeRecipe.particles;
 
     assert.lengthOf(arcInfo.recipeDeltas, 1);
-    const [innerArc] = arc.findInnerArcs(transformationParticle);
+    const [innerArc] = arcInfo.findInnerArcs(transformationParticle);
 
     const sessionId = innerArc.idGenerator.currentSessionIdForTesting;
     assert.strictEqual(innerArc.activeRecipe.toString(), `recipe

@@ -36,6 +36,7 @@ export type NewArcInfoOptions = Readonly<{
   arcName?: string;
   arcId?: ArcId;
   idGenerator?: IdGenerator;
+  outerArcId?: ArcId;
 }>;
 
 export type RunArcOptions = Readonly<{
@@ -76,6 +77,7 @@ export type ArcInfoOptions = Readonly<{
   context: Manifest;
   capabilitiesResolver: CapabilitiesResolver;
   idGenerator?: IdGenerator;
+  outerArcId?: ArcId;
 }>;
 
 export class ArcInfo {
@@ -83,6 +85,8 @@ export class ArcInfo {
   public readonly context: Manifest;
   public readonly capabilitiesResolver: CapabilitiesResolver;
   public readonly idGenerator: IdGenerator;
+  get isInnerArc(): boolean { return this.outerArcId !== null; }
+  public readonly outerArcId: ArcId|null;
   public readonly partitions: PlanPartition[] = [];
   readonly storeInfoById: Dictionary<StoreInfo<Type>> = {};
   public readonly storeTagsById: Dictionary<Set<string>> = {};
@@ -92,11 +96,14 @@ export class ArcInfo {
   readonly recipeDeltas: {handles: Handle[], particles: Particle[], slots: Slot[], patterns: string[]}[] = [];
   private readonly instantiateMutex = new Mutex();
 
+  /*private*/ readonly innerArcsByParticle: Map<Particle, ArcInfo[]> = new Map();
+
   constructor(opts: ArcInfoOptions) {
     this.id = opts.id;
     this.context = opts.context;
     this.capabilitiesResolver = opts.capabilitiesResolver;
     this.idGenerator = opts.idGenerator || IdGenerator.newSession();
+    this.outerArcId = opts.outerArcId || null;
   }
 
   generateID(component: string = ''): Id {
@@ -323,5 +330,27 @@ export class ArcInfo {
 
   getStoreDescription(storeInfo: StoreInfo<Type>): string {
     return this.storeDescriptions.get(storeInfo) || storeInfo.description;
+  }
+
+  findInnerArcs(particle: Particle): ArcInfo[] {
+    return this.innerArcsByParticle.get(particle) || [];
+  }
+
+  get innerArcs(): ArcInfo[] {
+    return ([] as ArcInfo[]).concat( ...this.innerArcsByParticle.values());
+  }
+
+  // This arc and all its descendants.
+  // *Does* include inner arcs of this arc's inner arcs.
+  get allDescendingArcs(): ArcInfo[] {
+    return [this as ArcInfo].concat(...this.innerArcs.map(arc => arc.allDescendingArcs));
+  }
+
+
+  addInnerArc(particle: Particle, innerArcInfo: ArcInfo) {
+    if (!this.innerArcsByParticle.has(particle)) {
+      this.innerArcsByParticle.set(particle, []);
+    }
+    this.innerArcsByParticle.get(particle).push(innerArcInfo);
   }
 }
