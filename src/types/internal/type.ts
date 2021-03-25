@@ -2170,7 +2170,15 @@ export class Schema {
     // Ensure that changes to the field types are non-side-effecting
     const field1 = infield1 && infield1.clone();
     const field2 = infield2 && infield2.clone();
-    if (field1.kind !== field2.kind) return null;
+    if (field1.kind !== field2.kind) {
+      if (field1.kind === 'schema-nullable') {
+        return Schema.fieldTypeUnion(field1.getFieldType(), field2);
+      }
+      if (field2.kind === 'schema-nullable') {
+        return Schema.fieldTypeUnion(field1, field2.getFieldType());
+      }
+      return null;
+    }
     switch (field1.kind) {
       case 'schema-collection': {
         const unionSchema = Schema.fieldTypeUnion(field1.getFieldType(), field2.getFieldType());
@@ -2210,6 +2218,13 @@ export class Schema {
         }
         return new OrderedListField(unionSchema);
       }
+      case 'schema-nullable': {
+        const unionSchema = Schema.fieldTypeUnion(field1.getFieldType(), field2.getFieldType());
+        if (!unionSchema) {
+          return null;
+        }
+        return new NullableField(unionSchema);
+      }
       default:
         return Schema.typesEqual(field1, field2) ? field1 : null;
     }
@@ -2247,6 +2262,14 @@ export class Schema {
       // TODO(b/174115805, b/144507619, b/144507352): Handle nullables
       // (with make it possible to store 'true' unions)
       return null;
+    }
+    if (field1.kind !== field2.kind) {
+      if (field1.kind === 'schema-nullable') {
+        return new NullableField(Schema.fieldTypeUnion(field1.getFieldType(), field2));
+      }
+      if (field2.kind === 'schema-nullable') {
+        return new NullableField(Schema.fieldTypeUnion(field1, field2.getFieldType()));
+      }
     }
     // TODO: non-eq Kinds?
     if (field1.kind !== field2.kind) return null;
@@ -2288,6 +2311,13 @@ export class Schema {
           return null;
         }
         return new OrderedListField(intersectSchema);
+      }
+      case 'schema-nullable': {
+        const intersectSchema = Schema.fieldTypeIntersection(field1.getFieldType(), field2.getFieldType());
+        if (!intersectSchema) {
+          return null;
+        }
+        return new NullableField(intersectSchema);
       }
       default:
         return Schema.typesEqual(field1, field2) ? field1 : null;
