@@ -7,8 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {EntityGenerator, NodeAndGenerator, Schema2Base} from './schema2base';
-import {SchemaNode} from './schema2graph';
+import {EntityGenerator, NodeAndGenerator, Schema2Base} from './schema2base.js';
+import {SchemaNode} from './schema2graph.js';
 import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
 import {generateConnectionSpecType} from './kotlin-type-generator.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
