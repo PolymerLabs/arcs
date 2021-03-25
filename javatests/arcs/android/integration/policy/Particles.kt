@@ -39,5 +39,5 @@ class EgressAB : AbstractEgressAB() {
     handleRegistered.complete()
   }
 
-  fun triggerRead(): Set<Thing> = handles.output.fetchAll()
+  fun fetchThings(): Set<Thing> = handles.output.fetchAll()
 }
