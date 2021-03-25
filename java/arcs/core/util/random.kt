@@ -51,14 +51,14 @@ fun KotlinRandom.nextSafeRandomLong(): Long = Random.nextLong(MAX_SAFE_LONG)
 
 /** Gets the next String of [length] that can be safely encoded in a [VersionMap]. */
 fun KotlinRandom.nextVersionMapSafeString(length: Int): String {
-  // Readable chars are 33 '!' to 126 '~'. However, we want to exclude ':' and ";" due to
+  // Readable chars are 33 '!' to 126 '~'. However, we want to exclude '|' and ";" due to
   // the encoding of version maps.
   val map = (1..length)
     .map { Random.nextInt(33, 124).toChar() }
     .map {
       when (it) {
-        ':' -> 125
-        ';' -> 126
+        ENTRIES_SEPARATOR -> 125
+        ACTOR_VERSION_DELIMITER -> 126
         else -> it
       }
     }

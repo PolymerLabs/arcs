@@ -14,6 +14,7 @@ import arcs.core.data.Capability.Ttl
 import arcs.core.data.expression.Expression
 import arcs.core.storage.StorageKey
 import arcs.core.type.Type
+import arcs.core.util.FORBIDDEN_STRINGS
 import arcs.core.util.lens
 
 /**
@@ -94,9 +95,9 @@ data class Plan(
   ) {
     init {
       val actor = annotations.find { it.name == "actor" }?.getStringParam("name") ?: ""
-      if (actor.contains(':') || actor.contains(';')) {
+      if (actor.findAnyOf(FORBIDDEN_STRINGS) != null) {
         throw IllegalArgumentException(
-          "Actor annotation $actor contains illegal character ':' or ';'."
+          "Actor annotation $actor contains illegal character in set $FORBIDDEN_STRINGS."
         )
       }
     }

@@ -51,6 +51,7 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageProxyImpl
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.FORBIDDEN_STRINGS
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
@@ -120,6 +121,12 @@ class HandleManagerImpl(
         ).toString()
       } else {
         actor
+      }.also { handleName ->
+        if (handleName.findAnyOf(FORBIDDEN_STRINGS) != null) {
+          throw IllegalArgumentException(
+            "Handle name $handleName contains illegal char in set $FORBIDDEN_STRINGS."
+          )
+        }
       }
     } else {
       idGenerator.newChildId(

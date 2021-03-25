@@ -12,8 +12,8 @@ recipe ReadWriteRecipe
     output: fooA
 
 @arcId('testArc')
-recipe ReadWriteRecipeColon
-  fooB: create 'fooB' @persistent @actor('b:')
+recipe ReadWriteRecipePipe
+  fooB: create 'fooB' @persistent @actor('b|')
 
   Writer
     output: fooB

@@ -240,7 +240,7 @@ class VersionMapTest {
   @Test
   fun encoding_simple_roundTrip() {
     val versionMap = VersionMap("foo", 1)
-    val str = "foo:1"
+    val str = "foo|1"
     assertThat(versionMap.encode()).isEqualTo(str)
     assertThat(VersionMap.decode(str)).isEqualTo(versionMap)
   }
@@ -252,7 +252,7 @@ class VersionMapTest {
       "g'day" to 3132,
       "hi" to 971
     )
-    val str = "hello:1;g'day:3132;hi:971"
+    val str = "hello|1;g'day|3132;hi|971"
     val versionMap = VersionMap.decode(str)
     assertThat(VersionMap.decode(versionMap.encode())).isEqualTo(versionMap)
     assertThat(VersionMap.decode(str)).isEqualTo(versionMap)
@@ -269,46 +269,46 @@ class VersionMapTest {
   @Test
   fun encode_emptyActor() {
     val versionMap = VersionMap("" to 123)
-    val str = ":123"
+    val str = "|123"
     assertThat(versionMap.encode()).isEqualTo(str)
     assertThat(VersionMap.decode(str)).isEqualTo(versionMap)
   }
 
   @Test
   fun encode_extraActor_fails() {
-    val str = "foo1:foo2:123"
+    val str = "foo1|foo2|123"
     assertFailsWith<IllegalStateException> { (VersionMap.decode(str)) }
   }
 
   @Test
   fun encode_emptyPair_fails() {
-    val str = "foo1:971;;"
+    val str = "foo1|971;;"
     assertFailsWith<IllegalStateException> { (VersionMap.decode(str)) }
   }
 
   @Test
   fun encode_singleTrailingColon_fails() {
-    val str = "bar2:3132;"
+    val str = "bar2|3132;"
     assertFailsWith<IllegalStateException> { (VersionMap.decode(str)) }
   }
 
   @Test
   fun encode_invalidVersion_fails() {
-    val str = "bar2:boo"
+    val str = "bar2|boo"
     assertFailsWith<NumberFormatException> { (VersionMap.decode(str)) }
   }
 
   @Test
   fun encode_negativeVersion() {
     val versionMap = VersionMap("bar2" to -123)
-    val str = "bar2:-123"
+    val str = "bar2|-123"
     assertThat(versionMap.encode()).isEqualTo(str)
     assertThat(VersionMap.decode(str)).isEqualTo(versionMap)
   }
 
   @Test
   fun encode_versionBiggerThanMaxInt_fails() {
-    val str = "bar2:${Int.MAX_VALUE}0"
+    val str = "bar2|${Int.MAX_VALUE}0"
     assertFailsWith<NumberFormatException> { (VersionMap.decode(str)) }
   }
 }
