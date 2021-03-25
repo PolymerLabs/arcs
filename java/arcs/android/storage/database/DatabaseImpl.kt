@@ -2270,7 +2270,11 @@ class DatabaseImpl(
 
   companion object {
     @VisibleForTesting
-    const val DB_VERSION = 6
+    val DB_VERSION = if (BuildFlags.STORAGE_STRING_REDUCTION) {
+      7
+    } else {
+      6
+    }
 
     // Crdt actor used for edits applied by this class.
     const val DATABASE_CRDT_ACTOR = "db"
@@ -2582,6 +2586,7 @@ class DatabaseImpl(
       """.trimIndent().split("\n\n")
     private val CREATE_VERSION_4 = CREATE_VERSION_3
     private val CREATE_VERSION_5 = CREATE_VERSION_3
+    private val CREATE_VERSION_7 = CREATE_VERSION_6
 
     private val DROP_VERSION_2 =
       """
@@ -2618,6 +2623,8 @@ class DatabaseImpl(
     private val VERSION_6_MIGRATION = arrayOf(
       "ALTER TABLE entity_refs ADD COLUMN is_hard_ref INTEGER;"
     )
+    private val VERSION_7_MIGRATION =
+      listOf(DROP_VERSION_3, CREATE_VERSION_7).flatten().toTypedArray()
 
     @VisibleForTesting
     val MIGRATION_STEPS = mapOf(
@@ -2625,7 +2632,8 @@ class DatabaseImpl(
       3 to VERSION_3_MIGRATION,
       4 to VERSION_4_MIGRATION,
       5 to VERSION_5_MIGRATION,
-      6 to VERSION_6_MIGRATION
+      6 to VERSION_6_MIGRATION,
+      7 to VERSION_7_MIGRATION
     )
 
     @VisibleForTesting
@@ -2633,7 +2641,8 @@ class DatabaseImpl(
       3 to CREATE_VERSION_3,
       4 to CREATE_VERSION_4,
       5 to CREATE_VERSION_5,
-      6 to CREATE_VERSION_6
+      6 to CREATE_VERSION_6,
+      7 to CREATE_VERSION_7
     )
 
     private val CREATE = checkNotNull(CREATES_BY_VERSION[DB_VERSION])
