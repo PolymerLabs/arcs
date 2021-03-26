@@ -8,7 +8,7 @@ schema Place
 schema Message
   message: Text
 
-external particle CaptureEntity
+particle CaptureEntity
   entities: writes [IncomingEntity]
 
 particle CopyEntities in './source/CopyEntities.js'
@@ -17,7 +17,7 @@ particle CopyEntities in './source/CopyEntities.js'
   people: writes [Person]
   messages: writes [Message]
 
-external particle ToastParticle
+particle ToastParticle
   alert: reads [Message]
 
 recipe Ingestion

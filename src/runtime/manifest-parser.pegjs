@@ -458,7 +458,7 @@ MetaNamespace = 'namespace' whiteSpace? ':' whiteSpace? namespace:dottedName eol
 };
 
 Particle
-  = external:('external' whiteSpace)? 'particle' whiteSpace name:upperIdent verbs:(whiteSpace VerbList)? implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
+  = 'particle' whiteSpace name:upperIdent verbs:(whiteSpace VerbList)? implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
     const args: AstNode.ParticleHandleConnection[] = [];
     const modality: string[] = [];
@@ -468,11 +468,7 @@ Particle
     let description: AstNode.Description | null = null;
     let hasDeprecatedParticleArgument = false;
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
-    external = !!external;
     implFile = optional(implFile, implFile => implFile[3], null);
-    if (external && implFile) {
-      error('Particles marked external cannot have an implementation file.');
-    }
     items = optional(items, extractIndented, []);
     items.forEach(item => {
       if (item.kind === 'particle-interface') {
@@ -564,7 +560,6 @@ Particle
     return  toAstNode<AstNode.Particle>({
       kind: 'particle',
       name,
-      external,
       implFile,
       verbs,
       args,
@@ -2247,7 +2242,6 @@ ReservedWord
   / 'schema'
   / 'require'
   / 'handle'
-  / 'external'
   ) ([^a-zA-Z0-9_] / !.)  // '!.' matches end-of-input
 {
   error(`Expected an identifier (but found reserved word '${keyword}')`);

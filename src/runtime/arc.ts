@@ -281,9 +281,7 @@ export class Arc implements ArcInterface {
     this.loadedParticleInfo.set(recipeParticle.id.toString(), info);
 
     // if supported, provide particle caching via a BlobUrl representing spec.implFile
-    if (!recipeParticle.isExternalParticle()) {
-      await this._provisionSpecUrl(recipeParticle.spec);
-    }
+    await this._provisionSpecUrl(recipeParticle.spec);
 
     for (const [name, connection] of Object.entries(recipeParticle.connections)) {
       if (connection.handle.fate !== '`slot') {
