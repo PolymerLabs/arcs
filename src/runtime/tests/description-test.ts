@@ -34,7 +34,7 @@ type VerifySuggestionOptions = {
 };
 
 async function verifySuggestion({arcInfo, runtime, relevance}: VerifySuggestionOptions, expectedSuggestion) {
-  const description = await Description.create(runtime.getArcById(arcInfo.id), runtime, relevance);
+  const description = await Description.create(arcInfo, runtime, relevance);
   assert.strictEqual(description.getArcDescription(), expectedSuggestion);
   return description;
 }
@@ -99,42 +99,41 @@ recipe
     const ofoosHandleConn = arcInfo.activeRecipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ofoos');
     const ofoosHandle = ofoosHandleConn ? ofoosHandleConn.handle : null;
 
-    const arc = runtime.getArcById(arcInfo.id);
-    return {runtime, arc, recipe: arcInfo.activeRecipe, ifooHandle, ofoosHandle, fooHandle, foosHandle};
+    return {runtime, arcInfo, ifooHandle, ofoosHandle, fooHandle, foosHandle};
   }
 
   it('one particle description', async () => {
-    const {runtime, arc, recipe, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
+    const {runtime, arcInfo, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo} and populate \${ofoos}\`
 ${recipeManifest}
     `));
 
-    let description = await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Read from foo and populate foo list.');
+    let description = await verifySuggestion({arcInfo, runtime}, 'Read from foo and populate foo list.');
     assert.strictEqual(description.getHandleDescription(ifooHandle), 'foo');
     assert.strictEqual(description.getHandleDescription(ofoosHandle), 'foo list');
 
     // Add value to a singleton handle.
     await fooHandle.set(new fooHandle.entityClass({name: 'foo-name', fooValue: 'the-FOO'}));
-    description = await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Read from foo-name and populate foo list.');
+    description = await verifySuggestion({arcInfo, runtime}, 'Read from foo-name and populate foo list.');
     assert.strictEqual(description.getHandleDescription(ifooHandle), 'foo');
     assert.strictEqual(description.getHandleDescription(ofoosHandle), 'foo list');
 
     // Add values to a collection handle.
     await foosHandle.add(new foosHandle.entityClass({name: 'foo-1', fooValue: 'foo-value-1'}));
     await foosHandle.add(new foosHandle.entityClass({name: 'foo-2', fooValue: 'foo-value-2'}));
-    description = await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Read from foo-name and populate foo list (foo-1, foo-2).');
+    description = await verifySuggestion({arcInfo, runtime}, 'Read from foo-name and populate foo list (foo-1, foo-2).');
     assert.strictEqual(description.getHandleDescription(ifooHandle), 'foo');
     assert.strictEqual(description.getHandleDescription(ofoosHandle), 'foo list');
 
     // Add more values to the collection handle.
     await foosHandle.add(new foosHandle.entityClass({name: 'foo-name', fooValue: 'foo-3'}));
-    await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Read from foo-name and populate foo list (foo-1 plus 2 other items).');
+    await verifySuggestion({arcInfo, runtime}, 'Read from foo-name and populate foo list (foo-1 plus 2 other items).');
   });
 
   it('one particle and connections descriptions', async () => {
-    const {runtime, arc, recipe, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
+    const {runtime, arcInfo, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo} and populate \${ofoos}\`
@@ -143,29 +142,29 @@ ${aParticleManifest}
 ${recipeManifest}
     `));
 
-    let description = await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Read from my-in-foo and populate my-out-foos.');
+    let description = await verifySuggestion({arcInfo, runtime}, 'Read from my-in-foo and populate my-out-foos.');
     assert.strictEqual(description.getHandleDescription(ifooHandle), 'my-in-foo');
     assert.strictEqual(description.getHandleDescription(ofoosHandle), 'my-out-foos');
 
     // Add value to a singleton handle.
     await fooHandle.set(new fooHandle.entityClass({name: 'foo-name', fooValue: 'the-FOO'}));
-    description = await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Read from my-in-foo (foo-name) and populate my-out-foos.');
+    description = await verifySuggestion({arcInfo, runtime}, 'Read from my-in-foo (foo-name) and populate my-out-foos.');
 
     // Add values to a collection handle.
     await foosHandle.add(new foosHandle.entityClass({name: 'foo-1', fooValue: 'foo-value-1'}));
     await foosHandle.add(new foosHandle.entityClass({name: 'foo-2', fooValue: 'foo-value-2'}));
-    description = await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Read from my-in-foo (foo-name) and populate my-out-foos (foo-1, foo-2).');
+    description = await verifySuggestion({arcInfo, runtime}, 'Read from my-in-foo (foo-name) and populate my-out-foos (foo-1, foo-2).');
 
     // Add more values to the collection handle.
     await foosHandle.add(new foosHandle.entityClass({name: 'foo-name', fooValue: 'foo-3'}));
-    description = await verifySuggestion({arcInfo: arc.arcInfo, runtime},
+    description = await verifySuggestion({arcInfo, runtime},
         'Read from my-in-foo (foo-name) and populate my-out-foos (foo-1 plus 2 other items).');
     assert.strictEqual(description.getHandleDescription(ifooHandle), 'my-in-foo');
     assert.strictEqual(description.getHandleDescription(ofoosHandle), 'my-out-foos');
   });
 
   it('one particle and connections descriptions references', async () => {
-    const {runtime, arc, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
+    const {runtime, arcInfo, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo} and populate \${ofoos}\`
@@ -174,21 +173,21 @@ ${aParticleManifest}
 ${recipeManifest}
     `));
 
-    let description = await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Read from my-in-foo and populate The Foos from my-in-foo.');
+    let description = await verifySuggestion({arcInfo, runtime}, 'Read from my-in-foo and populate The Foos from my-in-foo.');
     assert.strictEqual(description.getHandleDescription(ifooHandle), 'my-in-foo');
     assert.strictEqual(description.getHandleDescription(ofoosHandle), 'The Foos from my-in-foo');
 
     await fooHandle.set(new fooHandle.entityClass({name: 'foo-name', fooValue: 'the-FOO'}));
     await foosHandle.add(new foosHandle.entityClass({name: 'foo-1', fooValue: 'foo-value-1'}));
     await foosHandle.add(new foosHandle.entityClass({name: 'foo-2', fooValue: 'foo-value-2'}));
-    description = await verifySuggestion({arcInfo: arc.arcInfo, runtime},
+    description = await verifySuggestion({arcInfo, runtime},
         'Read from my-in-foo (foo-name) and populate The Foos from my-in-foo (foo-1, foo-2).');
     assert.strictEqual(description.getHandleDescription(ifooHandle), 'my-in-foo');
     assert.strictEqual(description.getHandleDescription(ofoosHandle), 'The Foos from my-in-foo');
   });
 
   it('one particle and connections descriptions references no pattern', async () => {
-    const {runtime, arc, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
+    const {runtime, arcInfo, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo} and populate \${ofoos}\`
@@ -196,21 +195,21 @@ ${aParticleManifest}
 ${recipeManifest}
     `));
 
-    let description = await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Read from foo and populate The Foos from foo.');
+    let description = await verifySuggestion({arcInfo, runtime}, 'Read from foo and populate The Foos from foo.');
     assert.strictEqual(description.getHandleDescription(ifooHandle), 'foo');
     assert.strictEqual(description.getHandleDescription(ofoosHandle), 'The Foos from foo');
 
     await fooHandle.set(new fooHandle.entityClass({name: 'foo-name', fooValue: 'the-FOO'}));
     await foosHandle.add(new foosHandle.entityClass({name: 'foo-1', fooValue: 'foo-value-1'}));
     await foosHandle.add(new foosHandle.entityClass({name: 'foo-2', fooValue: 'foo-value-2'}));
-    description = await verifySuggestion({arcInfo: arc.arcInfo, runtime},
+    description = await verifySuggestion({arcInfo, runtime},
         'Read from foo-name and populate The Foos from foo-name (foo-1, foo-2).');
     assert.strictEqual(description.getHandleDescription(ifooHandle), 'foo');
     assert.strictEqual(description.getHandleDescription(ofoosHandle), 'The Foos from foo');
   });
 
   it('one particle and connections descriptions with extras', async () => {
-    const {runtime, arc, recipe, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
+    const {runtime, arcInfo, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo} and populate \${ofoos}._name_\`
@@ -223,7 +222,7 @@ ${recipeManifest}
     await foosHandle.add(new foosHandle.entityClass({name: 'foo-1', fooValue: 'foo-value-1'}));
     await foosHandle.add(new foosHandle.entityClass({name: 'foo-2', fooValue: 'foo-value-2'}));
 
-    const description = await verifySuggestion({arcInfo: arc.arcInfo, runtime},
+    const description = await verifySuggestion({arcInfo, runtime},
         'Read from [fooValue: the-FOO] (foo-name) and populate [A list of foo with values: foo-1, foo-2].');
 
     assert.strictEqual(description.getHandleDescription(ifooHandle), '[fooValue: the-FOO]');
@@ -232,7 +231,7 @@ ${recipeManifest}
   });
 
   it('connection description from another particle', async () => {
-    const {runtime, arc, recipe, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
+    const {runtime, arcInfo, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo} and populate \${ofoos}\`
@@ -245,23 +244,23 @@ ${recipeManifest}
     ofoo: writes fooHandle
     `));
 
-    let description = await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Read from best-new-foo and populate my-foos.');
+    let description = await verifySuggestion({arcInfo, runtime}, 'Read from best-new-foo and populate my-foos.');
     assert.strictEqual(description.getHandleDescription(ifooHandle), 'best-new-foo');
-    const oBFooHandle = recipe.handleConnections.find(hc => hc.particle.name === 'B' && hc.name === 'ofoo').handle;
+    const oBFooHandle = arcInfo.activeRecipe.handleConnections.find(hc => hc.particle.name === 'B' && hc.name === 'ofoo').handle;
     assert.strictEqual(description.getHandleDescription(oBFooHandle), 'best-new-foo');
     assert.strictEqual(description.getHandleDescription(ofoosHandle), 'my-foos');
 
     await fooHandle.set(new fooHandle.entityClass({name: 'foo-name', fooValue: 'the-FOO'}));
     await foosHandle.add(new foosHandle.entityClass({name: 'foo-1', fooValue: 'foo-value-1'}));
     await foosHandle.add(new foosHandle.entityClass({name: 'foo-2', fooValue: 'foo-value-2'}));
-    description = await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Read from best-new-foo (foo-name) and populate my-foos (foo-1, foo-2).');
+    description = await verifySuggestion({arcInfo, runtime}, 'Read from best-new-foo (foo-name) and populate my-foos (foo-1, foo-2).');
     assert.strictEqual(description.getHandleDescription(ifooHandle), 'best-new-foo');
     assert.strictEqual(description.getHandleDescription(oBFooHandle), 'best-new-foo');
     assert.strictEqual(description.getHandleDescription(ofoosHandle), 'my-foos');
   });
 
   it('multiple particles', async () => {
-    const {runtime, arc, recipe} = (await prepareRecipeAndArc(`
+    const {runtime, arcInfo} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 particle X1
   ofoo: writes Foo
@@ -294,21 +293,22 @@ recipe
     root: consumes slot0
       action: provides slot1
     `));
+    const recipe = arcInfo.activeRecipe;
     const aFooHandle = recipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ifoo').handle;
 
     let description = await verifySuggestion(
-        {arcInfo: arc.arcInfo, runtime}, 'Display X1-foo, create X1::X1-foo, and create X2::X2-foo.');
+        {arcInfo, runtime}, 'Display X1-foo, create X1::X1-foo, and create X2::X2-foo.');
     assert.strictEqual(description.getHandleDescription(aFooHandle), 'X1-foo');
 
     // Rank X2 higher than X2
-    const relevance = Relevance.create(arc, recipe);
+    const relevance = Relevance.create(runtime.getArcById(arcInfo.id), recipe);
 
     relevance.relevanceMap.set(recipe.particles.find(p => p.name === 'A'), [7]);
     relevance.relevanceMap.set(recipe.particles.find(p => p.name === 'X1'), [5]);
     relevance.relevanceMap.set(recipe.particles.find(p => p.name === 'X2'), [10]);
 
     description = await verifySuggestion(
-        {arcInfo: arc.arcInfo, runtime, relevance}, 'Display X2-foo, create X2::X2-foo, and create X1::X1-foo.');
+        {arcInfo, runtime, relevance}, 'Display X2-foo, create X2::X2-foo, and create X1::X1-foo.');
     assert.strictEqual(description.getHandleDescription(aFooHandle), 'X2-foo');
   });
 
@@ -371,7 +371,7 @@ recipe
   });
 
   it('duplicate particles', async () => {
-    const {runtime, arc, recipe, ifooHandle, fooHandle} = (await prepareRecipeAndArc(`
+    const {runtime, arcInfo, ifooHandle, fooHandle} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
     action: provides Slot
@@ -402,25 +402,26 @@ recipe
 
     // Add values to both Foo handles
     await fooHandle.setFromData({name: 'the-FOO'});
-    const fooStore2 = arc.arcInfo.findStoreById('test:3');
-    const fooHandle2 = await runtime.host.handleForStoreInfo(fooStore2, arc.arcInfo) as SingletonEntityHandle;
+    const fooStore2 = arcInfo.findStoreById('test:3');
+    const fooHandle2 = await runtime.host.handleForStoreInfo(fooStore2, arcInfo) as SingletonEntityHandle;
     await fooHandle2.setFromData({name: 'another-FOO'});
-    const description = await verifySuggestion({arcInfo: arc.arcInfo, runtime},
+    const description = await verifySuggestion({arcInfo, runtime},
         'Do A with b-foo (the-FOO), output B to b-foo, and output B to b-foo (another-FOO).');
     assert.strictEqual(description.getHandleDescription(ifooHandle), 'b-foo');
 
     // Rank B bound to fooHandle2 higher than B that is bound to fooHandle1.
-    const relevance = Relevance.create(arc, recipe);
+    const recipe = arcInfo.activeRecipe;
+    const relevance = Relevance.create(runtime.getArcById(arcInfo.id), recipe);
     relevance.relevanceMap.set(recipe.particles.find(p => p.name === 'A'), [7]);
     relevance.relevanceMap.set(recipe.particles.filter(p => p.name === 'B')[0], [1]);
     relevance.relevanceMap.set(recipe.particles.filter(p => p.name === 'B')[1], [10]);
 
-    await verifySuggestion({arcInfo: arc.arcInfo, runtime, relevance},
+    await verifySuggestion({arcInfo, runtime, relevance},
         'Do A with b-foo (the-FOO), output B to b-foo (another-FOO), and output B to b-foo.');
   });
 
   it('sanitize description', async () => {
-    const {runtime, arc, recipe} = (await prepareRecipeAndArc(`
+    const {runtime, arcInfo} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 particle A
   ofoo: writes Foo
@@ -436,8 +437,8 @@ recipe
     root: consumes slot0
     `));
 
-    const description = await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Create &lt;new> &lt;&lt;my-foo>>.');
-    const handle = recipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ofoo').handle;
+    const description = await verifySuggestion({arcInfo, runtime}, 'Create &lt;new> &lt;&lt;my-foo>>.');
+    const handle = arcInfo.activeRecipe.handleConnections.find(hc => hc.particle.name === 'A' && hc.name === 'ofoo').handle;
     assert.strictEqual(description.getHandleDescription(handle), '&lt;my-foo>');
   });
 
@@ -510,8 +511,7 @@ recipe
     const tHandle = await runtime.host.handleForStoreInfo(tStore, arcInfo);
     const tsHandle = await runtime.host.handleForStoreInfo(tsStore, arcInfo);
 
-    const arc = runtime.getArcById(arcInfo.id);
-    const description = await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Make my best type list from my best type.');
+    const description = await verifySuggestion({arcInfo, runtime}, 'Make my best type list from my best type.');
     const tRecipeHandle = recipe.handleConnections.find(hc => hc.particle.name === 'P' && hc.name === 't').handle;
     const tsRecipeHandle = recipe.handleConnections.find(hc => hc.particle.name === 'P' && hc.name === 'ts').handle;
     assert.strictEqual(description.getHandleDescription(tRecipeHandle), 'my best type');
@@ -520,11 +520,11 @@ recipe
     // Add values to handles.
     await tHandle.set(new tHandle.entityClass({property: 'value1'}));
     await tsHandle.add(new tsHandle.entityClass({property: 'value2'}));
-    await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Make my best type list (1 items) from my best type.');
+    await verifySuggestion({arcInfo, runtime}, 'Make my best type list (1 items) from my best type.');
 
     await tsHandle.add(new tsHandle.entityClass({property: 'value3'}));
     await tsHandle.add(new tsHandle.entityClass({property: 'value4'}));
-    await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Make my best type list (3 items) from my best type.');
+    await verifySuggestion({arcInfo, runtime}, 'Make my best type list (3 items) from my best type.');
   });
 
   it('particle slots description', async () => {
@@ -581,7 +581,7 @@ recipe
   });
 
   it('particle without UI description', async () => {
-    const {runtime, arc, recipe, fooHandle} = (await prepareRecipeAndArc(`
+    const {runtime, arcInfo, fooHandle} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${bParticleManifest}
   description \`Populate \${ofoo}\`
@@ -591,11 +591,11 @@ recipe
     ofoo: writes fooHandle
     `));
 
-    await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Populate foo.');
+    await verifySuggestion({arcInfo, runtime}, 'Populate foo.');
 
     // Add value to a singleton handle.
     await fooHandle.set(new fooHandle.entityClass({name: 'foo-name', fooValue: 'the-FOO'}));
-    await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Populate foo-name.');
+    await verifySuggestion({arcInfo, runtime}, 'Populate foo-name.');
   });
 
   it('capitalizes when some particles do not have descriptions', async () => {
@@ -648,7 +648,7 @@ recipe
       const arcInfo = await runtime.allocator.startArc({arcName: 'testArc'});
       await arcInfo.instantiate(recipe);
 
-      const description = await Description.create(runtime.getArcById(arcInfo.id), runtime);
+      const description = await Description.create(arcInfo, runtime);
       const recipeDescription = description.getRecipeSuggestion();
       assert.strictEqual(recipeDescription, expectedDescription);
     };
@@ -677,7 +677,7 @@ schema GitHubDash`));
       const arcInfo = await runtime.allocator.startArc({arcName: 'testArc'});
       await arcInfo.instantiate(manifest.recipes[0]);
 
-      const description = await Description.create(runtime.getArcById(arcInfo.id), runtime);
+      const description = await Description.create(arcInfo, runtime);
       const arcDesc = ConCap.capture(() => description.getArcDescription());
       assert.strictEqual(arcDesc.result, expectedSuggestion);
       assert.match(arcDesc.warn[0][0], expectedWarning);
@@ -744,7 +744,7 @@ recipe
 `;
     const manifest = (await Manifest.parse(manifestStr));
     assert.lengthOf(manifest.recipes, 1);
-    let recipe = manifest.recipes[0];
+    const recipe = manifest.recipes[0];
     const fooType = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null).type;
     const descriptionType = Entity.createEntityClass(manifest.findSchemaByName('Description'), null).type;
     const runtime = new Runtime({context: manifest});
@@ -755,13 +755,10 @@ recipe
     const descriptionStore = await arcInfo.createStoreInfo(descriptionType.collectionOf(), {id: 'test:2'});
     recipe.handles[1].mapToStorage(descriptionStore);
     await arcInfo.instantiate(recipe);
-    recipe = arcInfo.activeRecipe;
-    const arc = runtime.getArcById(arcInfo.id);
 
     return {
       runtime,
-      arc,
-      recipe,
+      arcInfo,
       fooHandle,
       DescriptionType: Entity.createEntityClass((descriptionStore.type.getContainedType() as EntityType).entitySchema, null),
       descriptionHandle: await runtime.host.handleForStoreInfo(descriptionStore, arcInfo),
@@ -769,67 +766,67 @@ recipe
   }
 
   it('particle dynamic description', async () => {
-    const {runtime, arc, recipe, fooHandle, DescriptionType, descriptionHandle} = await prepareRecipeAndArc();
+    const {runtime, arcInfo, fooHandle, DescriptionType, descriptionHandle} = await prepareRecipeAndArc();
 
-    const description = await Description.create(arc, runtime);
+    const description = await Description.create(arcInfo, runtime);
     assert.isUndefined(description.getArcDescription());
 
     // Particle (static) spec pattern.
-    recipe.particles[0].spec.pattern = 'hello world';
-    await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Hello world.');
+    arcInfo.activeRecipe.particles[0].spec.pattern = 'hello world';
+    await verifySuggestion({arcInfo, runtime}, 'Hello world.');
 
     // Particle (dynamic) description handle (override static description).
     await descriptionHandle.add(new DescriptionType({key: 'pattern', value: 'Return my foo'}));
-    await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Return my foo.');
+    await verifySuggestion({arcInfo, runtime}, 'Return my foo.');
 
     // Particle description handle with handle connections.
     await descriptionHandle.add(new DescriptionType({key: 'pattern', value: 'Return my temporary foo'}));
     await descriptionHandle.add(new DescriptionType({key: 'pattern', value: 'Return my ${ofoo}'}));
     const ofooDesc = new DescriptionType({key: 'ofoo', value: 'best-foo'});
     await descriptionHandle.add(ofooDesc);
-    await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Return my best-foo.');
+    await verifySuggestion({arcInfo, runtime}, 'Return my best-foo.');
 
     // Add value to connection's handle.
     await fooHandle.set(new fooHandle.entityClass({name: 'foo-name', fooValue: 'the-FO4'}));
-    await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Return my best-foo (foo-name).');
+    await verifySuggestion({arcInfo, runtime}, 'Return my best-foo (foo-name).');
 
     // Remove connection's description.
     await fooHandle.set(new fooHandle.entityClass({name: 'foo-name', fooValue: 'the-FOO'}));
     await descriptionHandle.remove(ofooDesc);
-    await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Return my foo-name.');
+    await verifySuggestion({arcInfo, runtime}, 'Return my foo-name.');
   });
 
   it('particle recipe description', async () => {
-    const {runtime, arc, recipe, fooHandle, DescriptionType, descriptionHandle} = await prepareRecipeAndArc();
+    const {runtime, arcInfo, fooHandle, DescriptionType, descriptionHandle} = await prepareRecipeAndArc();
 
-    const description = await Description.create(arc, runtime);
+    const description = await Description.create(arcInfo, runtime);
     assert.isUndefined(description.getArcDescription());
 
-    const recipeClone = recipe.clone();
-    arc.arcInfo['activeRecipe'] = recipeClone;
-    arc.arcInfo['recipeDeltas'].splice(0, arc.arcInfo['recipeDeltas'].length, recipeClone);
+    const recipeClone = arcInfo.activeRecipe.clone();
+    arcInfo['activeRecipe'] = recipeClone;
+    arcInfo['recipeDeltas'].splice(0, arcInfo['recipeDeltas'].length, recipeClone);
 
 
     // Particle (static) spec pattern.
     recipeClone.particles[0].spec.pattern = 'hello world';
-    await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Hello world.');
+    await verifySuggestion({arcInfo, runtime}, 'Hello world.');
 
     recipeClone.patterns = [`Here it is: \${B}`];
-    await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Here it is: hello world.');
+    await verifySuggestion({arcInfo, runtime}, 'Here it is: hello world.');
 
     // Particle (dynamic) description handle (override static description).
     await descriptionHandle.add(new DescriptionType({key: 'pattern', value: 'dynamic B description'}));
-    await verifySuggestion({arcInfo: arc.arcInfo, runtime}, 'Here it is: dynamic B description.');
+    await verifySuggestion({arcInfo, runtime}, 'Here it is: dynamic B description.');
   });
 
   it('particle dynamic dom description', async () => {
-    const {runtime, arc, recipe, fooHandle, DescriptionType, descriptionHandle} = await prepareRecipeAndArc();
+    const {runtime, arcInfo, fooHandle, DescriptionType, descriptionHandle} = await prepareRecipeAndArc();
     await descriptionHandle.add(new DescriptionType({key: 'pattern', value: 'return my ${ofoo} (text)'}));
     await descriptionHandle.add(new DescriptionType({key: '_template_', value: 'Return my <span>{{ofoo}}</span> (dom)'}));
     await descriptionHandle.add(new DescriptionType({key: '_model_', value: JSON.stringify({'ofoo': '${ofoo}'})}));
-    await verifySuggestion({arcInfo: arc.arcInfo, runtime}, `Return my foo (text).`);
+    await verifySuggestion({arcInfo, runtime}, `Return my foo (text).`);
 
     await fooHandle.set(new fooHandle.entityClass({name: 'foo-name'}));
-    await verifySuggestion({arcInfo: arc.arcInfo, runtime}, `Return my foo-name (text).`);
+    await verifySuggestion({arcInfo, runtime}, `Return my foo-name (text).`);
   });
 });

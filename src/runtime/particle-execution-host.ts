@@ -29,9 +29,8 @@ import {Exists} from './storage/drivers/driver.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {CRDTMuxEntity} from './storage/storage.js';
 import {StoreInfo} from './storage/store-info.js';
-// import {StorageService} from './storage/storage-service.js';
 import {Consumer} from '../utils/lib-utils.js';
-import { Allocator, SingletonAllocator } from './allocator';
+import {Allocator, SingletonAllocator} from './allocator.js';
 
 export type ParticleExecutionHostOptions = Readonly<{
   slotComposer: SlotComposer;
@@ -211,7 +210,6 @@ class PECOuterPortImpl extends PECOuterPort {
 
     // TODO(mmandlis): get rid of innerArcs in arc.ts
     const innerArc = (this.arc.peh.allocator as SingletonAllocator).host.getArcById(arcInfo.id);
-    this.arc.addInnerArc(particle, innerArc);
 
     this.ConstructArcCallback(callback, innerArc);
   }
@@ -243,14 +241,14 @@ class PECOuterPortImpl extends PECOuterPort {
   onArcCreateSlot(callback: number, arc: Arc, transformationParticle: Particle, transformationSlotName: string, handleId: string) {
     let hostedSlotId;
     if (this.arc.peh.slotComposer) {
-      hostedSlotId = this.arc.peh.slotComposer.createHostedSlot(arc, transformationParticle, transformationSlotName, handleId);
+      hostedSlotId = this.arc.peh.slotComposer.createHostedSlot(arc.arcInfo, transformationParticle, transformationSlotName, handleId);
     }
     this.CreateSlotCallback({}, callback, hostedSlotId);
   }
 
   async onArcLoadRecipe(arc: Arc, recipe: string, callback: number) {
     try {
-      const manifest = await Manifest.parse(recipe, {loader: arc.loader, fileName: ''});
+      const manifest = await Manifest.parse(recipe, {loader: this.arc.loader, fileName: ''});
       const successResponse = {
         providedSlotIds: {}
       };

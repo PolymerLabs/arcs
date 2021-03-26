@@ -48,7 +48,7 @@ describe('Runtime', () => {
   it('gets an arc description for an arc', async () => {
     const runtime = new Runtime();
     const arcInfo = await runtime.allocator.startArc({arcId: ArcId.newForTest('test')});
-    const description = await Description.create(runtime.getArcById(arcInfo.id), runtime);
+    const description = await Description.create(arcInfo, runtime);
     const expected = await description.getArcDescription();
     const actual = await runtime.getArcDescription(arcInfo.id);
     assert.strictEqual(expected, actual);

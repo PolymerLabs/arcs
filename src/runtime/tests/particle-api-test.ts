@@ -969,7 +969,7 @@ describe('particle-api', () => {
     recipe.normalize();
 
     const {speculativeArc, relevance} = await (new Speculator(runtime)).speculate(runtime.getArcById(arcInfo.id), recipe, 'recipe-hash');
-    const description = await Description.create(speculativeArc, runtime, relevance);
+    const description = await Description.create(speculativeArc.arcInfo, runtime, relevance);
     assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });
 
@@ -1027,7 +1027,7 @@ describe('particle-api', () => {
     assert.isTrue(recipe.normalize());
 
     const {speculativeArc, relevance} = await (new Speculator(runtime)).speculate(arc, recipe, 'recipe-hash');
-    const description = await Description.create(speculativeArc, runtime, relevance);
+    const description = await Description.create(speculativeArc.arcInfo, runtime, relevance);
     assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });
 

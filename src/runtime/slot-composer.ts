@@ -9,6 +9,7 @@
  */
 
 import {Arc} from './arc.js';
+import {ArcInfo} from './arc-info.js';
 import {Modality} from './arcs-types/modality.js';
 import {Particle} from './recipe/lib-recipe.js';
 import {ProvideSlotConnectionSpec} from './arcs-types/particle-spec.js';
@@ -62,7 +63,7 @@ export class SlotComposer {
     return this._contexts.concat(this.arc.activeRecipe.slots);
   }
 
-  createHostedSlot(innerArc: Arc, particle: Particle, slotName: string, storeId: string): string {
+  createHostedSlot(innerArc: ArcInfo, particle: Particle, slotName: string, storeId: string): string {
     // TODO(sjmiles): rationalize snatching off the zero-th entry
     const connection = particle.getSlandleConnections()[0];
     // TODO(sjmiles): this slot-id is created dynamically and was not available to the particle

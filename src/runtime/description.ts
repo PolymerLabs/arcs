@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Arc} from './arc.js';
 import {DescriptionFormatter, DescriptionValue, ParticleDescription} from './description-formatter.js';
 import {Relevance} from './relevance.js';
 import {EntityType, InterfaceType, SingletonType, CollectionType} from '../types/lib-types.js';
@@ -47,11 +46,9 @@ export class Description {
    * Create a new Description object for the given Arc with an
    * optional Relevance object.
    */
-  // TODO(b/182410550): pass `arcInfo` instead of `arc`, once ArcInfo contains inner arcs info.
-  static async create(arc: Arc, runtime: Runtime, relevance?: Relevance): Promise<Description> {
+  static async create(arcInfo: ArcInfo, runtime: Runtime, relevance?: Relevance): Promise<Description> {
     // Execute async related code here
-    const arcInfo = arc.arcInfo;
-    const allParticles = ([] as Particle[]).concat(...arc.arcInfo.allDescendingArcs.map(arc => arc.activeRecipe.particles));
+    const allParticles = ([] as Particle[]).concat(...arcInfo.allDescendingArcs.map(arcInfo => arcInfo.activeRecipe.particles));
     const particleDescriptions = await Description.initDescriptionHandles(allParticles, arcInfo, runtime, relevance);
 
     const storeDescById: {[id: string]: string} = {};

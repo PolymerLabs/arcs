@@ -290,14 +290,14 @@ export class Planner implements InspectablePlanner {
       }
       const speculativeArc = result.speculativeArc;
       relevance = result.relevance;
-      description = await Description.create(speculativeArc, this.runtime, relevance);
+      description = await Description.create(speculativeArc.arcInfo, this.runtime, relevance);
       //log(`[${plan.name}] => [${description.getRecipeSuggestion()}]`);
     } else {
       const speculativeArc = await arc.cloneForSpeculativeExecution();
       plan = await this.runtime.allocator.assignStorageKeys(arc.id, plan);
       await speculativeArc.mergeIntoActiveRecipe(plan);
       relevance = Relevance.create(arc, plan);
-      description = await Description.create(speculativeArc, this.runtime, relevance);
+      description = await Description.create(speculativeArc.arcInfo, this.runtime, relevance);
     }
     const suggestion = Suggestion.create(plan, hash, relevance);
     suggestion.setDescription(description, this.arc.modality);
