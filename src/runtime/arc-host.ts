@@ -59,6 +59,11 @@ export class ArcHostImpl implements ArcHost {
       // TODO(b/182410550): add await to instantiate and return arc.idle here!
       // TODO(b/182410550): move the call to ParticleExecutionHost's DefineHandle to here
     }
+    if (partition.arcInfo.outerArcId) {
+      const outerArc = this.arcById.get(partition.arcInfo.outerArcId);
+      assert(outerArc);
+      outerArc.addInnerArc(arc);
+    }
     return arc;
   }
 

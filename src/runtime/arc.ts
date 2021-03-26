@@ -36,7 +36,7 @@ import {StoreInfo} from './storage/store-info.js';
 import {ActiveStore} from './storage/active-store.js';
 import {StorageService} from './storage/storage-service.js';
 import {ArcInfo} from './arc-info.js';
-import { Allocator } from './allocator';
+import {Allocator} from './allocator.js';
 
 export type ArcOptions = Readonly<{
   arcInfo: ArcInfo,
@@ -77,7 +77,7 @@ export class Arc implements ArcInterface {
   private waitForIdlePromise: Promise<void> | null;
   private readonly inspectorFactory?: ArcInspectorFactory;
   public readonly inspector?: ArcInspector;
-  /*private*/ readonly innerArcsByParticle: Map<Particle, Arc[]> = new Map();
+  readonly innerArcs: Arc[]= [];
   private readonly instantiateMutex = new Mutex();
 
   readonly arcInfo: ArcInfo;
@@ -197,17 +197,8 @@ export class Arc implements ArcInterface {
     return promise;
   }
 
-  // Inner arcs of this arc's transformation particles.
-  // Does *not* include inner arcs of this arc's inner arcs.
-  get innerArcs(): Arc[] {
-    return ([] as Arc[]).concat( ...this.innerArcsByParticle.values());
-  }
-
-  addInnerArc(particle: Particle, innerArc: Arc) {
-    if (!this.innerArcsByParticle.has(particle)) {
-      this.innerArcsByParticle.set(particle, []);
-    }
-    this.innerArcsByParticle.get(particle).push(innerArc);
+  addInnerArc(innerArc: Arc) {
+    this.innerArcs.push(innerArc);
   }
 
   async serialize(): Promise<string> {
@@ -337,9 +328,8 @@ export class Arc implements ArcInterface {
       patterns: recipe.patterns
     }));
 
-    for (const [particle, innerArcs] of this.innerArcsByParticle.entries()) {
-      arc.innerArcsByParticle.set(cloneMap.get(particle), await Promise.all(
-          innerArcs.map(async arc => arc.cloneForSpeculativeExecution())));
+    for (const innerArc of this.innerArcs) {
+      arc.addInnerArc(await innerArc.cloneForSpeculativeExecution());
     }
 
     for (const v of storeMap.values()) {
