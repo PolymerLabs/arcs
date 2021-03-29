@@ -10,27 +10,22 @@ package arcs.golden
 import arcs.sdk.wasm.*
 
 typealias Gold_Data = AbstractGold.Gold_Data
-typealias Gold_Data_Slice = AbstractGold.Gold_Data_Slice
+typealias Gold_Data_Slice = AbstractGold.Gold_Data
 typealias Gold_AllPeople = AbstractGold.Gold_AllPeople
-typealias Gold_AllPeople_Slice = AbstractGold.Gold_AllPeople_Slice
+typealias Gold_AllPeople_Slice = AbstractGold.Gold_AllPeople
 typealias Gold_Alias = AbstractGold.Gold_Alias
-typealias Gold_Alias_Slice = AbstractGold.Gold_Alias_Slice
+typealias Gold_Alias_Slice = AbstractGold.Gold_Alias
 typealias Gold_Collection = AbstractGold.Foo
-typealias Gold_Collection_Slice = AbstractGold.FooSlice
+typealias Gold_Collection_Slice = AbstractGold.Foo
 typealias Gold_QCollection = AbstractGold.Gold_QCollection
-typealias Gold_QCollection_Slice = AbstractGold.Gold_QCollection_Slice
+typealias Gold_QCollection_Slice = AbstractGold.Gold_QCollection
 
 @Generated("src/tools/schema2kotlin.ts")
 abstract class AbstractGold : WasmParticleImpl() {
     val handles: Handles = Handles(this)
 
 
-    interface Gold_Data_Slice : WasmEntity {
-        val num: Double
-        val txt: String
-        val lnk: String
-        val flg: Boolean
-    }
+
 
     @Suppress("UNCHECKED_CAST")
     class Gold_Data(
@@ -38,24 +33,24 @@ abstract class AbstractGold : WasmParticleImpl() {
         txt: String = "",
         lnk: String = "",
         flg: Boolean = false
-    ) : WasmEntity, Gold_Data_Slice {
+    ) : WasmEntity {
 
-        override var num = num
+        var num = num
             get() = field
             private set(_value) {
                 field = _value
             }
-        override var txt = txt
+        var txt = txt
             get() = field
             private set(_value) {
                 field = _value
             }
-        override var lnk = lnk
+        var lnk = lnk
             get() = field
             private set(_value) {
                 field = _value
             }
-        override var flg = flg
+        var flg = flg
             get() = field
             private set(_value) {
                 field = _value
@@ -148,15 +143,7 @@ abstract class AbstractGold : WasmParticleImpl() {
         }
     }
 
-    interface Gold_AllPeople_Slice : WasmEntity {
-        val name: String
-        val age: Double
-        val lastCall: Double
-        val address: String
-        val favoriteColor: String
-        val birthDayMonth: Double
-        val birthDayDOM: Double
-    }
+
 
     @Suppress("UNCHECKED_CAST")
     class Gold_AllPeople(
@@ -167,39 +154,39 @@ abstract class AbstractGold : WasmParticleImpl() {
         favoriteColor: String = "",
         birthDayMonth: Double = 0.0,
         birthDayDOM: Double = 0.0
-    ) : WasmEntity, Gold_AllPeople_Slice {
+    ) : WasmEntity {
 
-        override var name = name
+        var name = name
             get() = field
             private set(_value) {
                 field = _value
             }
-        override var age = age
+        var age = age
             get() = field
             private set(_value) {
                 field = _value
             }
-        override var lastCall = lastCall
+        var lastCall = lastCall
             get() = field
             private set(_value) {
                 field = _value
             }
-        override var address = address
+        var address = address
             get() = field
             private set(_value) {
                 field = _value
             }
-        override var favoriteColor = favoriteColor
+        var favoriteColor = favoriteColor
             get() = field
             private set(_value) {
                 field = _value
             }
-        override var birthDayMonth = birthDayMonth
+        var birthDayMonth = birthDayMonth
             get() = field
             private set(_value) {
                 field = _value
             }
-        override var birthDayDOM = birthDayDOM
+        var birthDayDOM = birthDayDOM
             get() = field
             private set(_value) {
                 field = _value
@@ -332,14 +319,12 @@ abstract class AbstractGold : WasmParticleImpl() {
         }
     }
 
-    interface Gold_Alias_Slice : WasmEntity {
-        val val_: String
-    }
+
 
     @Suppress("UNCHECKED_CAST")
-    class Gold_Alias(val_: String = "") : WasmEntity, Gold_Alias_Slice {
+    class Gold_Alias(val_: String = "") : WasmEntity {
 
-        override var val_ = val_
+        var val_ = val_
             get() = field
             private set(_value) {
                 field = _value
@@ -406,14 +391,12 @@ abstract class AbstractGold : WasmParticleImpl() {
         }
     }
 
-    interface FooSlice : WasmEntity {
-        val num: Double
-    }
+
 
     @Suppress("UNCHECKED_CAST")
-    class Foo(num: Double = 0.0) : WasmEntity, FooSlice {
+    class Foo(num: Double = 0.0) : WasmEntity {
 
-        override var num = num
+        var num = num
             get() = field
             private set(_value) {
                 field = _value
@@ -480,9 +463,7 @@ abstract class AbstractGold : WasmParticleImpl() {
         }
     }
 
-    interface Gold_QCollection_Slice : Gold_AllPeople_Slice {
 
-    }
 
     @Suppress("UNCHECKED_CAST")
     class Gold_QCollection(
@@ -493,39 +474,39 @@ abstract class AbstractGold : WasmParticleImpl() {
         favoriteColor: String = "",
         birthDayMonth: Double = 0.0,
         birthDayDOM: Double = 0.0
-    ) : WasmEntity, Gold_QCollection_Slice {
+    ) : WasmEntity {
 
-        override var name = name
+        var name = name
             get() = field
             private set(_value) {
                 field = _value
             }
-        override var age = age
+        var age = age
             get() = field
             private set(_value) {
                 field = _value
             }
-        override var lastCall = lastCall
+        var lastCall = lastCall
             get() = field
             private set(_value) {
                 field = _value
             }
-        override var address = address
+        var address = address
             get() = field
             private set(_value) {
                 field = _value
             }
-        override var favoriteColor = favoriteColor
+        var favoriteColor = favoriteColor
             get() = field
             private set(_value) {
                 field = _value
             }
-        override var birthDayMonth = birthDayMonth
+        var birthDayMonth = birthDayMonth
             get() = field
             private set(_value) {
                 field = _value
             }
-        override var birthDayDOM = birthDayDOM
+        var birthDayDOM = birthDayDOM
             get() = field
             private set(_value) {
                 field = _value
