@@ -1309,7 +1309,6 @@ class CrdtEntityTest {
 
     val entity1 = CrdtEntity.newWithEmptyEntity(rawEntity)
     val entity2 = CrdtEntity.newWithEmptyEntity(rawEntity)
-    val initialEntity = CrdtEntity.newWithEmptyEntity(rawEntity)
 
     val setOp = SetSingleton(
       "me",
@@ -1918,6 +1917,7 @@ class CrdtEntityTest {
     val primitive = "a string"
     val returnPrimitive = defaultReferenceBuilder(primitive.toReferencable()).unwrap()
     assertThat(returnPrimitive).isInstanceOf(ReferencablePrimitive::class.java)
+    @Suppress("UNCHECKED_CAST")
     assertThat((returnPrimitive as ReferencablePrimitive<String>).value).isEqualTo(primitive)
   }
 
@@ -1936,6 +1936,7 @@ class CrdtEntityTest {
       .toReferencable(FieldType.ListOf(FieldType.Text))
     val returnPrimitive = defaultReferenceBuilder(primitive).unwrap()
     assertThat(returnPrimitive).isInstanceOf(ReferencableList::class.java)
+    @Suppress("UNCHECKED_CAST")
     assertThat(returnPrimitive as ReferencableList<Referencable>).isEqualTo(primitive)
   }
 }

@@ -64,7 +64,7 @@ class CrdtSingleton<T : Referencable>(
 
   override fun merge(other: Data<T>): MergeChanges<Data<T>, IOperation<T>> {
     if (data == other) {
-      return MergeChanges.EMPTY as MergeChanges<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>>
+      return MergeChanges(CrdtChange.Operations(), CrdtChange.Operations())
     }
 
     val result = set.merge(other.asCrdtSetData())
@@ -75,7 +75,7 @@ class CrdtSingleton<T : Referencable>(
     // If the other changes were empty, we should actually just return empty changes, rather
     // than the model..
     val otherChange: CrdtChange<Data<T>, IOperation<T>> = if (result.otherChange.isEmpty()) {
-      CrdtChange.Operations(mutableListOf())
+      CrdtChange.Operations()
     } else {
       CrdtChange.Data(data)
     }

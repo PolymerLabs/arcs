@@ -126,7 +126,7 @@ data class ParticleInfo(val registration: ParticleRegistration, val plan: Plan.P
  * which in turn creates a [Particle] with the correct handle structure.
  */
 // TODO(shanestephens): the minimal dependency here is actually that ParticleRegistration
-// needs the location of the particle (to generate the ParticleIdentifier correctly) and 
+// needs the location of the particle (to generate the ParticleIdentifier correctly) and
 // the name of the particle and handleConnections (to generate the ParticleConstructor
 // correctly). This should allow the rest of the details of connection to be filled in
 // later.
@@ -371,19 +371,19 @@ class ReferencableFromFieldType(
   val rawEntity: Transformer<SchemaWithReferencedSchemas, RawEntity>,
   val rawReference: Generator<RawReference>
 ) : Transformer<FieldTypeWithReferencedSchemas, Referencable>() {
-  override fun invoke(fieldType: FieldTypeWithReferencedSchemas): Referencable {
-    return when (fieldType.fieldType) {
-      is FieldType.Primitive -> referencablePrimitive(fieldType.fieldType.primitiveType)
+  override fun invoke(i: FieldTypeWithReferencedSchemas): Referencable {
+    return when (i.fieldType) {
+      is FieldType.Primitive -> referencablePrimitive(i.fieldType.primitiveType)
       is FieldType.ListOf -> {
         val primitiveField = FieldTypeWithReferencedSchemas(
-          fieldType.fieldType.primitiveType,
-          fieldType.schemas
+          i.fieldType.primitiveType,
+          i.schemas
         )
-        (1..listLength()).map { invoke(primitiveField) }.toReferencable(fieldType.fieldType)
+        (1..listLength()).map { invoke(primitiveField) }.toReferencable(i.fieldType)
       }
       is FieldType.InlineEntity -> {
-        val schema = fieldType.schemas[fieldType.fieldType.schemaHash]!!
-        rawEntity(SchemaWithReferencedSchemas(schema, fieldType.schemas))
+        val schema = i.schemas[i.fieldType.schemaHash]!!
+        rawEntity(SchemaWithReferencedSchemas(schema, i.schemas))
       }
       is FieldType.EntityRef -> rawReference()
       is FieldType.Tuple ->

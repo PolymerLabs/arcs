@@ -65,6 +65,7 @@ class Timer(val time: Time) {
    * Times the execution of the given [block], and both logs the result and records it in
    * [TimingMeasurements].
    */
+  @Suppress("REDUNDANT_INLINE_SUSPEND_FUNCTION_TYPE") // It's not redundant.
   suspend inline fun <T> timeAndLogSuspending(metric: String, block: suspend () -> T): T {
     val result = timeSuspending(block)
     val timeMs = result.elapsedNanos / 1_000_000

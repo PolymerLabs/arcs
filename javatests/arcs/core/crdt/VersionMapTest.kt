@@ -249,15 +249,15 @@ class VersionMapTest {
 
   @Test
   fun encoding_complex_roundTrip() {
-    val map = mapOf(
+    val versionMap = VersionMap(
       "hello" to 1,
       "g'day" to 3132,
       "hi" to 971
     )
-    val str = "hello|1;g'day|3132;hi|971"
-    val versionMap = VersionMap.decode(str)
-    assertThat(VersionMap.decode(versionMap.encode())).isEqualTo(versionMap)
-    assertThat(VersionMap.decode(str)).isEqualTo(versionMap)
+    val encoded = versionMap.encode()
+    val decoded = VersionMap.decode(encoded)
+    assertThat(decoded).isEqualTo(versionMap)
+    assertThat(decoded.encode()).isEqualTo(encoded)
   }
 
   @Test

@@ -65,6 +65,7 @@ private suspend fun getModelFromStore(store: UntypedActiveStore): CrdtSet.Data<R
   val modelReceived = CompletableDeferred<CrdtSet.Data<RawEntity>>()
   val callbackToken = store.on {
     if (it is ProxyMessage.ModelUpdate) {
+      @Suppress("UNCHECKED_CAST")
       modelReceived.complete(it.model as CrdtSet.Data<RawEntity>)
     }
   }
