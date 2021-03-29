@@ -13,7 +13,7 @@ import {Schema2Kotlin} from './schema2kotlin.js';
 import {Schema2Dot} from './schema2dot.js';
 
 const opts = minimist(process.argv.slice(2), {
-  boolean: ['cpp', 'kotlin', 'graph', 'update', 'wasm', 'test_harness', 'help'],
+  boolean: ['cpp', 'kotlin', 'graph', 'update', 'wasm', 'test_harness', 'type_slicing', 'help'],
   string: ['outdir', 'outfile'],
   alias: {c: 'cpp', k: 'kotlin', g: 'graph', u: 'update', d: 'outdir', f: 'outfile'},
   default: {outdir: '.'}
@@ -28,15 +28,17 @@ Description
   Generates entity class code from schemas for use in wasm particles.
 
 Options
-  --cpp, -c      generate C++ code
-  --kotlin, -k   generate Kotlin code
-  --graph, -g    generate a Graphviz (.dot) file for the type lattice
-  --wasm         whether to output wasm-specific code (applies to Kotlin only)
-  --test_harness whether to output a particle test harness only (applies to Kotlin only)
-  --outdir, -d   output directory; defaults to '.'
-  --outfile, -f  output filename; if omitted, generated from the manifest name
-  --update, -u   only generate if the source file is newer than the destination
-  --help         usage info
+  --cpp, -c       generate C++ code
+  --kotlin, -k    generate Kotlin code
+  --graph, -g     generate a Graphviz (.dot) file for the type lattice
+  --outdir, -d    output directory; defaults to '.'
+  --outfile, -f   output filename; if omitted, generated from the manifest name
+  --update, -u    only generate if the source file is newer than the destination
+  --help          usage info
+Kotlin-specific options
+  --wasm          whether to output wasm-specific code
+  --test_harness  whether to output particle test harnesses only
+  --type_slicing  whether to enable type slicing interfaces
 `);
   process.exit(0);
 }

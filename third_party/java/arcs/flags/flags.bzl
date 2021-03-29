@@ -118,6 +118,15 @@ ARCS_BUILD_FLAGS = [
             "storage.?key.?reduction",
         ],
     ),
+    arcs_build_flag(
+        name = "particle_type_slicing",
+        desc = "Output of entity type slicing interfaces in generated particle classes",
+        bug_id = "b/182330900",
+        status = "NOT_READY",
+        stopwords = [
+            "particle.?type.?slicing",
+        ],
+    ),
 ]
 
 validate_flag_list(ARCS_BUILD_FLAGS)
