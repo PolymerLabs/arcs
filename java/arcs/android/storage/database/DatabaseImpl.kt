@@ -236,7 +236,11 @@ class DatabaseImpl(
     clients.remove(identifier)
     if (clients.isEmpty()) {
       onDatabaseClose()
-      // TODO: track bulk deletes, and if none is in progress we can close the connection.
+      /**
+       * TODO: track bulk deletes, and if none is in progress we can close the connection and
+       * remove this instance from the AndroidSqliteDatabaseManager dbCache (we cannot remove from
+       * the cache if the connection is still open - see b/183670485).
+       */
     }
     Unit
   }

@@ -2,6 +2,7 @@ package arcs.android.integration.deletepropagation
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.integration.IntegrationEnvironment
+import arcs.android.util.testutil.AndroidLogRule
 import arcs.core.allocator.Arc
 import arcs.core.entity.ForeignReferenceChecker
 import arcs.core.entity.ForeignReferenceCheckerImpl
@@ -53,6 +54,9 @@ class Writer : AbstractWriter() {
 // Tells Robolectric to intercept the calls to JvmTime.
 @Config(instrumentedPackages = ["arcs.jvm.util"])
 class DeletePropagationTest {
+
+  @get:Rule
+  val log = AndroidLogRule()
 
   @get:Rule
   val env = IntegrationEnvironment(

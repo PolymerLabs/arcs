@@ -58,13 +58,10 @@ class AndroidSqliteDatabaseManager(
     val entry = registry.register(name, persistent)
     return mutex.withLock {
       dbCache[entry.name to entry.isPersistent]
-        ?: DatabaseImpl(context, storageKeyManager, name, persistent) {
-          mutex.withLock {
-            dbCache.remove(entry.name to entry.isPersistent)
+        ?: DatabaseImpl(context, storageKeyManager, name, persistent)
+          .also {
+            dbCache[entry.name to entry.isPersistent] = it
           }
-        }.also {
-          dbCache[entry.name to entry.isPersistent] = it
-        }
     }
   }
 

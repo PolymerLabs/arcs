@@ -20,6 +20,7 @@ arcs_kt_android_test_suite(
     shard_count = 2,
     deps = [
         ":codegen",
+        "//java/arcs/android/util/testutil",
         "//java/arcs/core/allocator",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
