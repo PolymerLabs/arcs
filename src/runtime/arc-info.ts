@@ -57,7 +57,7 @@ export type PlanPartition = Readonly<{
   // TODO(b/182410550): plan should be mandatory, when Arc class is refactored
   // into ArcState (like) structure, and there is no need to call ArcHost when
   // an Arc with no running recipes is created.
-  plan?: Recipe;
+  plan?: {particles: Particle[], handles: Handle[]};
   reinstantiate?: boolean;
   arcInfo: ArcInfo;
   arcOptions: RunArcOptions;
@@ -257,13 +257,15 @@ export class ArcInfo {
     handle['_type'] = handle.mappedType;
   }
 
-  async instantiate(recipe: Recipe) {
+  async instantiate(recipe: Recipe): Promise<{particles: Particle[], handles: Handle[]}> {
     const release = await this.instantiateMutex.acquire();
+    let result: {particles: Particle[], handles: Handle[]} = {particles: [], handles: []};
     try {
-      await this.mergeIntoActiveRecipe(recipe);
+      result = await this.mergeIntoActiveRecipe(recipe);
     } finally {
       release();
     }
+    return result;
   }
 
   async mergeIntoActiveRecipe(recipe: Recipe) {
