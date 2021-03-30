@@ -315,7 +315,7 @@ class PECOuterPortImpl extends PECOuterPort {
               // TODO: Awaiting this promise causes tests to fail...
               const instantiateAndCaptureError = async () => {
                 try {
-                  await arc.instantiate(recipe0);
+                  await this.arc.peh.allocator.runPlanInArc(arc.arcInfo, recipe0);
                 } catch (e) {
                   this.SimpleCallback(callback, {error: e.message + e.stack});
                 }
