@@ -54,7 +54,6 @@ export class ArcHostImpl implements ArcHost {
     }
     const arc = this.arcById.get(arcId);
     if (partition.plan) {
-      assert(partition.plan.isResolved(), `Unresolved partition plan: ${partition.plan.toString({showUnresolved: true})}`);
       await arc.instantiate(partition.plan, partition.reinstantiate);
       // TODO(b/182410550): add await to instantiate and return arc.idle here!
       // TODO(b/182410550): move the call to ParticleExecutionHost's DefineHandle to here
@@ -89,6 +88,7 @@ export class ArcHostImpl implements ArcHost {
       loader: this.runtime.loader,
       pecFactories: [this.runtime.pecFactory],
       allocator: this.runtime.allocator,
+      host: this,
       slotComposer,
       storageService: this.runtime.storageService,
       driverFactory: this.runtime.driverFactory,

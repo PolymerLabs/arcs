@@ -14,12 +14,12 @@ import {FakePecFactory} from './fake-pec-factory.js';
 import {Id, IdGenerator} from './id.js';
 import {Loader} from '../platform/loader.js';
 import {CapabilitiesResolver} from './capabilities-resolver.js';
-import {Dictionary, Runnable, compareComparables, Mutex} from '../utils/lib-utils.js';
+import {Dictionary, Runnable, compareComparables} from '../utils/lib-utils.js';
 import {MessagePort} from './message-channel.js';
 import {Modality} from './arcs-types/modality.js';
 import {ParticleExecutionHost} from './particle-execution-host.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
-import {Recipe, Particle, Slot} from './recipe/lib-recipe.js';
+import {Particle, Slot, Handle} from './recipe/lib-recipe.js';
 import {SlotComposer} from './slot-composer.js';
 import {InterfaceType, Type} from '../types/lib-types.js';
 import {PecFactory} from './particle-execution-context.js';
@@ -37,12 +37,14 @@ import {ActiveStore} from './storage/active-store.js';
 import {StorageService} from './storage/storage-service.js';
 import {ArcInfo} from './arc-info.js';
 import {Allocator} from './allocator.js';
+import {ArcHost} from './arc-host.js';
 
 export type ArcOptions = Readonly<{
   arcInfo: ArcInfo,
   storageService: StorageService;
   pecFactories?: PecFactory[];
   allocator?: Allocator;
+  host?: ArcHost;
   slotComposer?: SlotComposer;
   loader: Loader;
   storageKey?: StorageKey;
@@ -78,7 +80,6 @@ export class Arc implements ArcInterface {
   private readonly inspectorFactory?: ArcInspectorFactory;
   public readonly inspector?: ArcInspector;
   readonly innerArcs: Arc[]= [];
-  private readonly instantiateMutex = new Mutex();
 
   readonly arcInfo: ArcInfo;
   public get id(): Id { return this.arcInfo.id; }
@@ -94,7 +95,7 @@ export class Arc implements ArcInterface {
   readonly volatileMemory = new VolatileMemory();
   private readonly volatileStorageDriverProvider: VolatileStorageDriverProvider;
 
-  constructor({arcInfo, storageService, pecFactories, allocator, slotComposer, loader, storageKey, speculative, stub, inspectorFactory, modality, driverFactory, storageKeyParser} : ArcOptions) {
+  constructor({arcInfo, storageService, pecFactories, allocator, host, slotComposer, loader, storageKey, speculative, stub, inspectorFactory, modality, driverFactory, storageKeyParser} : ArcOptions) {
     this.modality = modality;
     this.driverFactory = driverFactory;
     this.storageKeyParser = storageKeyParser;
@@ -109,7 +110,7 @@ export class Arc implements ArcInterface {
     this.inspector = inspectorFactory && inspectorFactory.create(this);
     this.storageKey = storageKey;
     const ports = this.pecFactories.map(f => f(this.generateID(), this.idGenerator, this.storageKeyParser));
-    this.peh = new ParticleExecutionHost({slotComposer, arc: this, ports, allocator});
+    this.peh = new ParticleExecutionHost({slotComposer, arc: this, ports, allocator, host});
     this.volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
     this.driverFactory.register(this.volatileStorageDriverProvider);
     this.storageService = storageService;
@@ -344,7 +345,6 @@ export class Arc implements ArcInterface {
    *
    * Executes the following steps:
    *
-   * - Merges the recipe into the Active Recipe
    * - Populates missing slots.
    * - Processes the Handles and creates stores for them.
    * - Instantiates the new Particles
@@ -352,22 +352,8 @@ export class Arc implements ArcInterface {
    *
    * Waits for completion of an existing Instantiate before returning.
    */
-  async instantiate(recipe: Recipe, reinstantiate: boolean = false): Promise<void> {
-    assert(recipe.isResolved(), `Cannot instantiate an unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
-    assert(recipe.isCompatible(this.modality),
-      `Cannot instantiate recipe ${recipe.toString()} with [${recipe.modality.names}] modalities in '${this.modality.names}' arc`);
-
-    const release = await this.instantiateMutex.acquire();
-    try {
-      await this._doInstantiate(recipe, reinstantiate);
-    } finally {
-      release();
-    }
-  }
-
-  async mergeIntoActiveRecipe(recipe: Recipe) {
-    assert(this.arcInfo.recipeDeltas.length > 0);
-    const {particles, handles, slots} = this.arcInfo.recipeDeltas[this.arcInfo.recipeDeltas.length - 1];
+  async instantiate({particles, handles}: {particles: Particle[], handles: Handle[]}, reinstantiate: boolean = false): Promise<void> {
+    // Create handles, as needed.
     for (const recipeHandle of handles) {
       const fate = recipeHandle.originalFate && recipeHandle.originalFate !== '?'
           ? recipeHandle.originalFate : recipeHandle.fate;
@@ -406,12 +392,7 @@ export class Arc implements ArcInterface {
         }
       }
     }
-    return {handles, particles, slots};
-  }
 
-  // Critical section for instantiate,
-  private async _doInstantiate(recipe: Recipe, reinstantiate: boolean = false): Promise<void> {
-    const {particles} = await this.mergeIntoActiveRecipe(recipe);
     await Promise.all(particles.map(recipeParticle => this._instantiateParticle(recipeParticle, reinstantiate)));
     if (this.inspector) {
       await this.inspector.recipeInstantiated(particles, this.activeRecipe.toString());

@@ -17,7 +17,6 @@ import {Runtime} from './runtime.js';
 import {Dictionary} from '../utils/lib-utils.js';
 import {newRecipe} from './recipe/lib-recipe.js';
 import {VolatileStorageKey} from './storage/drivers/volatile.js';
-import {Modality} from './arcs-types/modality.js';
 import {Capabilities} from './capabilities.js';
 import {ArcInfo, StartArcOptions, DeserializeArcOptions, ArcInfoOptions, NewArcInfoOptions, RunArcOptions} from './arc-info.js';
 import {ArcHost, ArcHostFactory, SingletonArcHostFactory} from './arc-host.js';
@@ -92,6 +91,9 @@ export class AllocatorImpl implements Allocator {
 
   async runPlanInArc(arcInfo: ArcInfo, plan: Recipe, arcOptions?: RunArcOptions, reinstantiate?: boolean): Promise<void[]> {
     assert(plan.tryResolve(), `Cannot run an unresolved recipe: ${plan.toString({showUnresolved: true})}.`);
+    if (arcOptions?.modality) {
+      assert(plan.isCompatible(arcOptions?.modality), `Cannot instantiate recipe ${plan.toString()} with [${plan.modality.names}] modalities in '${arcOptions?.modality.names}' arc`);
+    }
 
     const partitionByFactory = new Map<ArcHostFactory, Particle[]>();
     // Partition the `plan` into particles by ArcHostFactory.
@@ -122,10 +124,15 @@ export class AllocatorImpl implements Allocator {
       });
       assert(partial.tryResolve());
 
-      const partition = {arcHostId: host.hostId, arcInfo, arcOptions, plan: partial, reinstantiate};
-      arcInfo.partitions.push(partition);
+      const {particles, handles} = await arcInfo.instantiate(partial);
 
-      await arcInfo.instantiate(partial);
+      const partition = {
+        arcHostId: host.hostId,
+        arcInfo,
+        arcOptions,
+        plan: {particles, handles},
+        reinstantiate};
+      arcInfo.partitions.push(partition);
 
       return host.start(partition);
     }));
