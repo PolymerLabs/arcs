@@ -41,3 +41,15 @@ class EgressAB : AbstractEgressAB() {
 
   fun fetchThings(): Set<Thing> = handles.output.fetchAll()
 }
+
+/** Egresses Thing { b, c }. */
+class EgressBC : AbstractEgressBC() {
+  val handleRegistered = Job()
+
+  override fun onReady() {
+    fetchThings()
+    handleRegistered.complete()
+  }
+
+  fun fetchThings(): Set<Thing> = handles.output.fetchAll()
+}

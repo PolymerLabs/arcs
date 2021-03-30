@@ -17,6 +17,7 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
+import kotlin.time.days
 import kotlin.time.hours
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -92,7 +93,8 @@ class PolicyTest {
     runBlocking {
       env.addNewHostWith(
         ::IngressThing.toRegistration(),
-        ::EgressAB.toRegistration()
+        ::EgressAB.toRegistration(),
+        ::EgressBC.toRegistration()
       )
 
       // When the Arc is run...
@@ -101,44 +103,62 @@ class PolicyTest {
 
       val ingest = env.getParticle<IngressThing>(arc)
       val egressAB = env.getParticle<EgressAB>(arc)
+      val egressBC = env.getParticle<EgressBC>(arc)
 
       withTimeout(30000) {
         ingest.storeFinished.join()
         egressAB.handleRegistered.join()
+        egressBC.handleRegistered.join()
       }
 
       // Then data with fields Thing {a, b} will be egressed
       assertThat(egressAB.fetchThings()).hasSize(6)
+      // Then data with fields Thing {b, c} will be egressed
+      assertThat(egressBC.fetchThings()).hasSize(6)
 
-      val startingKey = (egressAB.handles.output.getProxy().storageKey as ReferenceModeStorageKey)
+      val keyAB = (egressAB.handles.output.getProxy().storageKey as ReferenceModeStorageKey)
+        .storageKey
+      val keyBC = (egressBC.handles.output.getProxy().storageKey as ReferenceModeStorageKey)
         .storageKey
 
-      // And only Thing {a, b} is written to storage (RAM)
-      assertStorageContains(startingKey, setOf("a", "b"))
+      // And Thing {a, b, c} is written to storage (RAM)
+      assertStorageContains(keyAB, setOf("a", "b"))
+      assertStorageContains(keyBC, setOf("b", "c"))
 
-      // And the egress data with fields Thing {a, b} will be exfiltrated (filtered with no output
-      //  read) after 2 hours have passed.
+      // And the egress data with fields Thing {a, b, c} will be exfiltrated (filtered with no
+      // output read) after 2 hours have passed.
       env.advanceClock(3.hours)
       assertThat(egressAB.fetchThings()).isEmpty()
+      assertThat(egressBC.fetchThings()).isNotEmpty()
 
-      // And the data is removed from storage after 2 hours have passed.
+      // And the data Thing {a, b} is removed from storage after 2 hours have passed.
       env.triggerCleanupWork()
-      assertThat(env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA)).isEmpty()
+      assertThat(env.getDatabaseEntities(keyAB, AbstractIngressThing.Thing.SCHEMA)).isEmpty()
+      assertThat(env.getDatabaseEntities(keyBC, AbstractIngressThing.Thing.SCHEMA)).isNotEmpty()
+
+      // And the egress data with fields Thing {a, b, c} will be exfiltrated (filtered with no
+      // output read) after 5 days have passed.
+      env.advanceClock(6.days)
+      assertThat(egressAB.fetchThings()).isEmpty()
+      assertThat(egressBC.fetchThings()).isEmpty()
+
+      // And the data is removed from storage after 5 days have passed.
+      env.triggerCleanupWork()
+      assertThat(env.getDatabaseEntities(keyBC, AbstractIngressThing.Thing.SCHEMA)).isEmpty()
 
       // When new data is ingressed...
       ingest.writeThings()
       withTimeout(30000) {
         ingest.storeFinished.join()
       }
-      env.stopArc(arc)
 
       // Then Thing {a, b} data persists after the arc is finished
-      assertStorageContains(startingKey, setOf("a", "b"))
-
-      env.stopRuntime()
+      env.stopArc(arc)
+      assertStorageContains(keyAB, setOf("a", "b"))
 
       // And Thing {a, b} data will be deleted at Arcs' runtime end
-      assertThat(env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA)).isEmpty()
+      env.stopRuntime()
+      assertThat(env.getDatabaseEntities(keyAB, AbstractIngressThing.Thing.SCHEMA)).isEmpty()
     }
 
   /** Assert that all entities only contains values for the specified fields. */

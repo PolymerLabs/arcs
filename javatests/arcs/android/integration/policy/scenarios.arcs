@@ -60,8 +60,9 @@ policy SimpleTtlPolicy {
 // Given a recipe is compliant with a policy
 @policy('SimplePersistencePolicy')
 recipe TtlEgresses
-  // And the recipe's store is marked @ttl('2h')
+  // And the recipe's stores are marked @ttl('2h') and @ttl('5d')
   handle1: create @ttl('2h')
+  handle2: create @ttl('5d')
 
   // And the recipe ingresses a schema Thing {a, b, c, d}
   IngressThing
@@ -71,3 +72,10 @@ recipe TtlEgresses
   EgressAB
     output: handle1
 
+  // And the recipe ingresses a schema Thing {a, b, c, d}
+  IngressThing
+    input: handle2
+
+  // And the recipe egresses Thing {b, c}
+  EgressBC
+    output: handle2
