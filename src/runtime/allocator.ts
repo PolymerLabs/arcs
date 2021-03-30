@@ -64,18 +64,19 @@ export class AllocatorImpl implements Allocator {
     idGenerator = idGenerator || IdGenerator.newSession();
     if (!this.arcInfoById.has(arcId)) {
       assert(idGenerator, 'or maybe need to create one anyway?');
-      this.arcInfoById.set(arcId, new ArcInfo(this.buildArcInfoOptions(arcId, idGenerator, options.outerArcId)));
+      this.arcInfoById.set(arcId, new ArcInfo(this.buildArcInfoOptions(arcId, idGenerator, options.outerArcId, options.isSpeculative)));
     }
     return this.arcInfoById.get(arcId);
   }
 
-  private buildArcInfoOptions(id: ArcId, idGenerator? : IdGenerator, outerArcId?: ArcId): ArcInfoOptions {
+  private buildArcInfoOptions(id: ArcId, idGenerator? : IdGenerator, outerArcId?: ArcId, isSpeculative?: boolean): ArcInfoOptions {
     return {
       id,
       context: this.runtime.context,
       capabilitiesResolver: this.runtime.getCapabilitiesResolver(id),
       idGenerator,
-      outerArcId
+      outerArcId,
+      isSpeculative
     };
   }
 

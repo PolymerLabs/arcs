@@ -295,6 +295,9 @@ export class Planner implements InspectablePlanner {
     const suggestion = Suggestion.create(plan, hash, result.relevance);
     suggestion.setDescription(description, this.arc.modality);
     this.getCache().set(hash, suggestion);
+
+    this.runtime.allocator.stopArc(speculativeArc.id);
+
     return suggestion;
   }
 
