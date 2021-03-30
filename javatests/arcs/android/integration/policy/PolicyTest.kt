@@ -70,17 +70,17 @@ class PolicyTest {
       .storageKey
 
     // And only Thing {a, b} is written to storage
-    assertStorageContains(startingKey, setOf("a", "b"))
+    assertStorageContains(startingKey, singletons = setOf("a", "b"))
 
     env.stopArc(arc)
 
     // And Thing {a, b} data persists after the arc is run
-    assertStorageContains(startingKey, setOf("a", "b"))
+    assertStorageContains(startingKey, singletons = setOf("a", "b"))
 
     env.stopRuntime()
 
     // And Thing {a, b} data persists after runtime ends
-    assertStorageContains(startingKey, setOf("a", "b"))
+    assertStorageContains(startingKey, singletons = setOf("a", "b"))
   }
 
   /**
@@ -111,9 +111,8 @@ class PolicyTest {
         egressBC.handleRegistered.join()
       }
 
-      // Then data with fields Thing {a, b} will be egressed
+      // Then data with fields Thing {a, b, c} will be egressed
       assertThat(egressAB.fetchThings()).hasSize(6)
-      // Then data with fields Thing {b, c} will be egressed
       assertThat(egressBC.fetchThings()).hasSize(6)
 
       val keyAB = (egressAB.handles.output.getProxy().storageKey as ReferenceModeStorageKey)
@@ -125,24 +124,25 @@ class PolicyTest {
       assertStorageContains(keyAB, setOf("a", "b"))
       assertStorageContains(keyBC, setOf("b", "c"))
 
-      // And the egress data with fields Thing {a, b, c} will be exfiltrated (filtered with no
+      // And the egress data with fields Thing {a, b} will be exfiltrated (filtered with no
       // output read) after 2 hours have passed.
       env.advanceClock(3.hours)
       assertThat(egressAB.fetchThings()).isEmpty()
       assertThat(egressBC.fetchThings()).isNotEmpty()
 
-      // And the data Thing {a, b} is removed from storage after 2 hours have passed.
+      // And the data Thing {a, b} is removed from storage after 2 hours have passed. However, data
+      // Thing {b, c} will persist.
       env.triggerCleanupWork()
       assertThat(env.getDatabaseEntities(keyAB, AbstractIngressThing.Thing.SCHEMA)).isEmpty()
       assertThat(env.getDatabaseEntities(keyBC, AbstractIngressThing.Thing.SCHEMA)).isNotEmpty()
 
-      // And the egress data with fields Thing {a, b, c} will be exfiltrated (filtered with no
+      // And the egress data with fields Thing {b, c} will be exfiltrated (filtered with no
       // output read) after 5 days have passed.
       env.advanceClock(6.days)
       assertThat(egressAB.fetchThings()).isEmpty()
       assertThat(egressBC.fetchThings()).isEmpty()
 
-      // And the data is removed from storage after 5 days have passed.
+      // And the data Thing {b, c} is removed from storage after 5 days have passed.
       env.triggerCleanupWork()
       assertThat(env.getDatabaseEntities(keyBC, AbstractIngressThing.Thing.SCHEMA)).isEmpty()
 

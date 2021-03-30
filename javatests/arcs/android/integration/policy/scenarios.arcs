@@ -67,14 +67,12 @@ recipe TtlEgresses
   // And the recipe ingresses a schema Thing {a, b, c, d}
   IngressThing
     input: handle1
+  IngressThing
+    input: handle2
 
   // And the recipe egresses Thing {a, b}
   EgressAB
     output: handle1
-
-  // And the recipe ingresses a schema Thing {a, b, c, d}
-  IngressThing
-    input: handle2
 
   // And the recipe egresses Thing {b, c}
   EgressBC
