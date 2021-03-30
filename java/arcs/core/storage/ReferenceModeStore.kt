@@ -609,10 +609,18 @@ class ReferenceModeStore private constructor(
 
         val backingModel = getLocalData(refId)
 
-        // If the version that was requested is newer than what the backing store has,
-        // consider it pending.
-        if (version dominates backingModel.versionMap) {
-          pendingIds += RawReference(refId, backingStore.storageKey, version)
+        if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
+          // if the backing store version is not newer than the version that was requested, consider
+          // it pending.
+          if (backingModel.versionMap doesNotDominate version) {
+            pendingIds += RawReference(refId, backingStore.storageKey, version)
+          }
+        } else {
+          // If the version that was requested is newer than what the backing store has,
+          // consider it pending.
+          if (version dominates backingModel.versionMap) {
+            pendingIds += RawReference(refId, backingStore.storageKey, version)
+          }
         }
       }
     }

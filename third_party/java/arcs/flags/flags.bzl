@@ -57,7 +57,7 @@ ARCS_BUILD_FLAGS = [
         name = "storage_string_reduction",
         desc = "Reduction of size of storage keys/ids",
         bug_id = "b/179216388",
-        status = "NOT_READY",
+        status = "READY",
         stopwords = [
             "storage.?string.?reduction",
         ],
@@ -66,7 +66,7 @@ ARCS_BUILD_FLAGS = [
         name = "direct_store_muxer_lru_ttl",
         desc = "Expire stores in the muxer cache after a ttl",
         bug_id = "b/179046054",
-        status = "NOT_READY",
+        status = "READY",
         stopwords = [
             "direct.?store?.muxer.?lru?.ttl",
         ],

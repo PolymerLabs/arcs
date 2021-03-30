@@ -103,6 +103,7 @@ arcs_kt_jvm_library(
     testonly = 1,
     srcs = [
         "NoOpArcHost.kt",
+        "TestHost.kt",
         "TestingHost.kt",
         "TestingJvmProdHost.kt",
     ],
@@ -113,8 +114,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
         "//java/arcs/core/host/api",
-        "//java/arcs/core/storage:storage-kt",
-        "//java/arcs/core/util",
+        "//java/arcs/core/storage/testutil",
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk:sdk-kt",
@@ -139,7 +139,6 @@ arcs_kt_jvm_library(
         "//java/arcs/core/storage/driver:ramdisk",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
-        "//java/arcs/core/storage/testutil",
         "//java/arcs/core/testutil/handles",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk:sdk-kt",
@@ -156,7 +155,6 @@ arcs_kt_jvm_library(
         "LifecycleParticles.kt",
         "NonRelevant.kt",
         "ReadPerson.kt",
-        "TestHost.kt",
         "TestHostParticle.kt",
         "TestProdParticle.kt",
         "TestReflectiveParticle.kt",
@@ -164,11 +162,8 @@ arcs_kt_jvm_library(
     ],
     deps = [
         ":plans",
-        ":pure-particles-jvm",  # buildcleaner: keep
+        ":pure-particles-jvm",  # unuseddeps: keep
         ":schemas",
-        "//java/arcs/core/host",
-        "//java/arcs/core/storage/testutil",
-        "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",

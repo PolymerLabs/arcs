@@ -80,7 +80,6 @@ describe('particle interface loading', () => {
 
     const outerParticleSpec = new ParticleSpec({
       name: 'outerParticle',
-      external: false,
       implBlobUrl: '',
       modality: ['dom'],
       slotConnections: [],

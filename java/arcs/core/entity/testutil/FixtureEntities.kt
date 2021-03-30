@@ -26,6 +26,7 @@ typealias FixtureEntity = AbstractTestParticle.FixtureEntity
 typealias InnerEntity = AbstractTestParticle.InnerEntity
 typealias MoreNested = AbstractTestParticle.MoreNested
 typealias EmptyEntity = AbstractTestParticle.EmptyEntity
+// TODO(b/182330900): temporarily aliasing to concrete entities; to be replaced with slice interface
 typealias FixtureEntitySlice = AbstractTestParticle.FixtureEntity
 typealias InnerEntitySlice = AbstractTestParticle.InnerEntity
 typealias MoreNestedSlice = AbstractTestParticle.MoreNested
@@ -52,7 +53,7 @@ class FixtureEntities {
       entityId = entityId,
       creationTimestamp = creationTimestamp ?: RawEntity.UNINITIALIZED_TIMESTAMP,
       expirationTimestamp = expirationTimestamp ?: RawEntity.UNINITIALIZED_TIMESTAMP,
-      textField = "text $entityCounter",
+      textField = "text $UNICODE_STRING $entityCounter",
       numField = entityCounter.toDouble(),
       boolField = entityCounter % 2 == 0,
       byteField = entityCounter.toByte(),
@@ -67,7 +68,7 @@ class FixtureEntities {
       bigintField = entityCounter.toBigInt(),
       boolsField = setOf(true, false),
       numsField = setOf(-1.0, entityCounter.toDouble()),
-      textsField = setOf("a", "$entityCounter"),
+      textsField = setOf("a", "$entityCounter", UNICODE_STRING),
       bytesField = setOf(-1, entityCounter.toByte()),
       shortsField = setOf(-1, entityCounter.toShort()),
       intsField = setOf(-1, entityCounter),
@@ -75,7 +76,7 @@ class FixtureEntities {
       charsField = setOf('A', 'B'),
       floatsField = setOf(-1f, entityCounter.toFloat()),
       doublesField = setOf(-1.0, entityCounter.toDouble()),
-      textListField = listOf("text $entityCounter", "text $entityCounter", "text $entityCounter"),
+      textListField = List(3) { "text $UNICODE_STRING $entityCounter" },
       numListField = listOf(entityCounter.toDouble(), entityCounter.toDouble(), 123.0),
       boolListField = listOf(true, false, true),
       longListField = listOf(entityCounter.toLong(), entityCounter.toLong(), 5432L),
@@ -194,6 +195,13 @@ class FixtureEntities {
   )
 
   companion object {
+    /**
+     * A bunch of (valid) unicode characters, to test round-tripping of arbitrary unicode through
+     * the system.
+     */
+    private const val UNICODE_STRING =
+      "⬽⎂⭑⳽℈⫰‱ⅷ⪬⯆ⓕ⌰⯞⿉\t\n={\rx\u001F\uFFBD\uFFB8\uFF9A\uFFFD\u776D\u5B18\u253B\u8A92\u009C"
+
     /** Number of [InnerEntity] instances in each [FixtureEntity]. */
     const val NUM_INNER_ENTITIES = 4
 

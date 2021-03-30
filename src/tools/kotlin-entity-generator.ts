@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.js';
-import {EntityGenerator} from './schema2base';
-import {SchemaNode} from './schema2graph';
+import {EntityGenerator} from './schema2base.js';
+import {SchemaNode} from './schema2graph.js';
 import minimist from 'minimist';
 import {generateSchema} from './kotlin-schema-generator.js';
 import {assert} from '../platform/assert-web.js';

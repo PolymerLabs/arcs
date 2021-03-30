@@ -12,6 +12,7 @@ package arcs.android.integration.allocator
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.integration.IntegrationEnvironment
+import arcs.android.util.testutil.AndroidLogRule
 import arcs.core.host.MultiplePersonPlan
 import arcs.core.host.NonRelevant
 import arcs.core.host.PersonPlan
@@ -21,7 +22,6 @@ import arcs.core.host.ReadPerson2
 import arcs.core.host.WritePerson
 import arcs.core.host.WritePerson2
 import arcs.core.host.toRegistration
-import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -34,7 +34,7 @@ import org.junit.runner.RunWith
 class AllocatorTest {
 
   @get:Rule
-  val log = LogRule()
+  val log = AndroidLogRule()
 
   /** Note, a new IntegrationEnvironment is allocated for each test method. */
   @get:Rule

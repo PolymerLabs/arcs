@@ -11,6 +11,8 @@
 
 package arcs.core.crdt
 
+import arcs.core.util.ACTOR_VERSION_DELIMITER
+import arcs.core.util.ENTRIES_SEPARATOR
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import kotlin.math.max
@@ -106,15 +108,15 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
 
   /**
    * Encode the version map for storage in as short a format as possible. The format is
-   * "actorA:versionA;actorB:versionB". So if the version map holds a backing map of
-   * `{foo: 1, bar:2, fooBar: 3}` this would be encoded as "foo:1;bar:2;fooBar:3".
+   * "actorA|versionA;actorB|versionB". So if the version map holds a backing map of
+   * `{foo: 1, bar:2, fooBar: 3}` this would be encoded as "foo|1;bar|2;fooBar|3".
    */
   fun encode(): String {
     if (!BuildFlags.STORAGE_STRING_REDUCTION) {
       throw BuildFlagDisabledError("STORAGE_STRING_REDUCTION")
     }
-    return backingMap.asSequence().joinToString(separator = ";") { (actor, version) ->
-      "$actor:$version"
+    return backingMap.asSequence().joinToString(ENTRIES_SEPARATOR.toString()) { (actor, version) ->
+      "$actor$ACTOR_VERSION_DELIMITER$version"
     }
   }
 
@@ -144,9 +146,9 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
         throw BuildFlagDisabledError("STORAGE_STRING_REDUCTION")
       }
       if (str.isEmpty()) return VersionMap()
-      val versions = str.split(";")
+      val versions = str.split(ENTRIES_SEPARATOR)
       val backingMap = versions.associate { version ->
-        val pair = version.split(":")
+        val pair = version.split(ACTOR_VERSION_DELIMITER)
         check(pair.size == 2) { "Tried to decode invalid VersionMap: $str" }
         pair[0] to pair[1].toInt()
       }

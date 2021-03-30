@@ -22,11 +22,16 @@ import arcs.core.storage.RawReference
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.sdk.Entity
 import arcs.sdk.EntityBase
 import arcs.sdk.EntitySpec
 
-// TODO(b/182330900): temporary alias; to be replaced with actual slice interface
-typealias TestEntitySlice = TestEntity
+interface TestEntitySlice : Entity {
+  var text: String
+  var number: Double
+  var boolean: Boolean
+  var inlineEntity: InlineTestEntity
+}
 
 class TestEntity(
   text: String = "",
@@ -35,12 +40,12 @@ class TestEntity(
   inlineText: String = "",
   var rawReference: RawReference? = null,
   val id: String? = null
-) : EntityBase("TestEntity", SCHEMA, id) {
+) : EntityBase("TestEntity", SCHEMA, id), TestEntitySlice {
 
-  var text: String by SingletonProperty(this)
-  var number: Double by SingletonProperty(this)
-  var boolean: Boolean by SingletonProperty(this)
-  var inlineEntity: InlineTestEntity by SingletonProperty(this)
+  override var text: String by SingletonProperty(this)
+  override var number: Double by SingletonProperty(this)
+  override var boolean: Boolean by SingletonProperty(this)
+  override var inlineEntity: InlineTestEntity by SingletonProperty(this)
 
   init {
     this.text = text

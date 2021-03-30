@@ -23,7 +23,7 @@ import kotlin.reflect.KClass
 /**
  * Represents a primitive which can be referenced - and thus used by Crdts.
  */
-data class ReferencablePrimitive<T> private constructor(
+data class ReferencablePrimitive<T : Any> private constructor(
   /** Type of primitive being referencable-ified. */
   val klass: String,
   /** The actual value. */
@@ -32,7 +32,7 @@ data class ReferencablePrimitive<T> private constructor(
 
   /** Represent a primitive (which can be referenced) from a Kotlin class. */
   // TODO: consider other 'serialization' mechanisms.
-  constructor(klass: KClass<*>, value: T) : this(primitiveKClassMap.getValue(klass), value)
+  constructor(klass: KClass<T>, value: T) : this(primitiveKClassMap.getValue(klass), value)
 
   val valueRepr: String
     get() = when (value) {

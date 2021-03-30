@@ -54,13 +54,13 @@ class ActorTest {
   }
 
   @Test
-  fun actorAnnotation_withColon_fails() = runBlocking {
+  fun actorAnnotation_withPipe_fails() = runBlocking {
     val e = assertFailsWith<IllegalArgumentException> {
-      val colonPlan = env.startArc(ReadWriteRecipeColonPlan)
+      env.startArc(ReadWriteRecipePipePlan)
     }
     assertThat(e)
       .hasMessageThat()
-      .isEqualTo("Actor annotation b: contains illegal character ':' or ';'.")
+      .isEqualTo("Actor annotation b| contains illegal character in set [{, }, ;, |].")
   }
 
   @Test
@@ -70,6 +70,6 @@ class ActorTest {
     }
     assertThat(e)
       .hasMessageThat()
-      .isEqualTo("Actor annotation c; contains illegal character ':' or ';'.")
+      .isEqualTo("Actor annotation c; contains illegal character in set [{, }, ;, |].")
   }
 }

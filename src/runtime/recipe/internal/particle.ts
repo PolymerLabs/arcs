@@ -381,10 +381,6 @@ export class Particle implements PublicParticle {
     this.recipe.removeParticle(this);
   }
 
-  isExternalParticle(): boolean {
-    return this.spec && this.spec.external;
-  }
-
   toString(options: ToStringOptions = {}, nameMap?: Map<RecipeComponent, string>): string {
     let result: string[] = [];
     // TODO: we need at least name or verb(s)

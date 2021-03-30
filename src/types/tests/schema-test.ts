@@ -631,13 +631,13 @@ describe('schema', () => {
     assert.deepEqual(intersection.refinement, schema3.refinement);
   }));
 
-  const verifyUnionOf = async (typeBuilder: (type: string) => string) => {
+  const verifyUnionOfTypes = async (type1: string, type2: string) => {
     const manifest = await Manifest.parse(`
             schema A
-              foo: ${typeBuilder(`Foo {a: Text, b: Text}`)}
+              foo: ${type1}
 
             schema B
-              foo: ${typeBuilder(`Foo {a: Text}`)}
+              foo: ${type2}
             `);
     const aType = manifest.findSchemaByName('A');
     const bType = manifest.findSchemaByName('B');
@@ -652,22 +652,29 @@ describe('schema', () => {
     const unionT = aType.toLiteral();
     unionT.names = ['A', 'B'];
 
-    assert.deepEqual(Schema.union(aType, bType).toLiteral(), unionT);
+    const unionAB = Schema.union(aType, bType);
+    assert.isNotNull(unionAB, 'union of A and B should exist');
+    assert.deepEqual(unionAB.toLiteral(), unionT);
     assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
     assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
 
     unionT.names = ['B', 'A'];
-    assert.deepEqual(Schema.union(bType, aType).toLiteral(), unionT);
+    const unionBA = Schema.union(bType, aType);
+    assert.isNotNull(unionBA, 'union of B and A should exist');
+    assert.deepEqual(unionBA.toLiteral(), unionT);
     assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
     assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
   };
-  const verifyIntersectOf = async (typeBuilder: (type: string) => string) => {
+  const verifyUnionOf = async (typeBuilder: (type: string) => string) => {
+    await verifyUnionOfTypes(`${typeBuilder(`Foo {a: Text, b: Text}`)}`, `${typeBuilder(`Foo {a: Text}`)}`);
+  };
+  const verifyIntersectOfTypes = async (type1: string, type2: string) => {
     const manifest = await Manifest.parse(`
             schema A
-              foo: ${typeBuilder(`Foo {a: Text, b: Text}`)}
+              foo: ${type1}
 
             schema B
-              foo: ${typeBuilder(`Foo {a: Text}`)}
+              foo: ${type2}
             `);
     const aType = manifest.findSchemaByName('A');
     const bType = manifest.findSchemaByName('B');
@@ -682,14 +689,39 @@ describe('schema', () => {
     const intersectT = bType.toLiteral();
     intersectT.names = [];
 
-    assert.deepEqual(Schema.intersect(aType, bType).toLiteral(), intersectT);
+    const intersectionAB = Schema.intersect(aType, bType);
+    assert.isNotNull(intersectionAB, 'intersection of A and B should exist');
+    assert.deepEqual(intersectionAB.toLiteral(), intersectT);
     assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
     assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
 
-    assert.deepEqual(Schema.intersect(bType, aType).toLiteral(), intersectT);
+    const intersectionBA = Schema.intersect(bType, aType);
+    assert.isNotNull(intersectionBA, 'intersection of B and A should exist');
+    assert.deepEqual(intersectionBA.toLiteral(), intersectT);
     assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
     assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
   };
+  const verifyIntersectOf = async (typeBuilder: (type: string) => string) => {
+    await verifyIntersectOfTypes(`${typeBuilder(`Foo {a: Text, b: Text}`)}`, `${typeBuilder(`Foo {a: Text}`)}`);
+  };
+  it('tests schema union, with nullable and non-nullable ints', async () => {
+    await verifyUnionOfTypes(`Int`, `Int?`);
+  });
+  it('tests schema union, with nullable ints', async () => {
+    await verifyUnionOfTypes(`Int?`, `Int?`);
+  });
+  it('tests schema union, with nullable and non-nullable text', async () => {
+    await verifyUnionOfTypes(`Text`, `Text?`);
+  });
+  it('tests schema union, with nullable text', async () => {
+    await verifyUnionOfTypes(`Text?`, `Text?`);
+  });
+  it('tests schema union, with nullable inline entities', async () => {
+    await verifyUnionOfTypes(`inline Foo {a: Text, b: Text}?`, `inline Foo {a: Text}?`);
+  });
+  it('tests schema union, with nullable and non-nullable inline entities', async () => {
+    await verifyUnionOfTypes(`inline Foo {a: Text, b: Text}`, `inline Foo {a: Text}?`);
+  });
   it('tests schema union, with inline entities', async () => {
     await verifyUnionOf((type: string) => `inline ${type}`);
   });
@@ -713,6 +745,24 @@ describe('schema', () => {
   });
 
   it('tests schema intersection, with inline entities', async () => {
+  it('tests schema intersection, with nullable and non-nullable ints', async () => {
+    await verifyIntersectOfTypes(`Int`, `Int?`);
+  });
+  it('tests schema intersection, with nullable ints', async () => {
+    await verifyIntersectOfTypes(`Int?`, `Int?`);
+  });
+  it('tests schema intersection, with nullable and non-nullable text', async () => {
+    await verifyIntersectOfTypes(`Text`, `Text?`);
+  });
+  it('tests schema intersection, with nullable text', async () => {
+    await verifyIntersectOfTypes(`Text?`, `Text?`);
+  });
+  it('tests schema intersection, with nullable inline entities', async () => {
+    await verifyIntersectOfTypes(`inline Foo {a: Text, b: Text}?`, `inline Foo {a: Text}?`);
+  });
+  it('tests schema intersection, with nullable and non-nullable inline entities', async () => {
+    await verifyIntersectOfTypes(`inline Foo {a: Text, b: Text}`, `inline Foo {a: Text}?`);
+  });
     await verifyIntersectOf((type: string) => `inline ${type}`);
   });
   it('tests schema intersection, with referenced entities', async () => {
