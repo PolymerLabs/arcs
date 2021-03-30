@@ -125,6 +125,8 @@ export class AllocatorImpl implements Allocator {
       const partition = {arcHostId: host.hostId, arcInfo, arcOptions, plan: partial, reinstantiate};
       arcInfo.partitions.push(partition);
 
+      await arcInfo.instantiate(partial);
+
       return host.start(partition);
     }));
   }

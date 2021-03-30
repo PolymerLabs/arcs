@@ -366,7 +366,6 @@ export class Arc implements ArcInterface {
   }
 
   async mergeIntoActiveRecipe(recipe: Recipe) {
-    await this.arcInfo.instantiate(recipe);
     assert(this.arcInfo.recipeDeltas.length > 0);
     const {particles, handles, slots} = this.arcInfo.recipeDeltas[this.arcInfo.recipeDeltas.length - 1];
     for (const recipeHandle of handles) {

@@ -25,7 +25,10 @@ export class Speculator {
     this.speculativeArcs.push(speculativeArc);
     const relevance = Relevance.create(arc, plan);
     plan = await this.runtime.allocator.assignStorageKeys(speculativeArc.id, plan);
+
+    await speculativeArc.arcInfo.instantiate(plan);
     await speculativeArc.instantiate(plan);
+
     await this.awaitCompletion(relevance, speculativeArc);
 
     if (!relevance.isRelevant(plan)) {
