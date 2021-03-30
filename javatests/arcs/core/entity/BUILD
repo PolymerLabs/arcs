@@ -14,7 +14,6 @@ arcs_kt_jvm_test_suite(
     ),
     package = "arcs.core.entity",
     deps = [
-        "//java/arcs/core/allocator",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
@@ -41,9 +40,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/flags:flags-kt",
         "//java/arcs/flags:unit_test_build_flags",
         "//java/arcs/flags/testing:testing-kt",
-        "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
-        "//javatests/arcs/core/host:testhost",
         "//third_party/java/junit:junit-android",
         "//third_party/java/mockito",
         "//third_party/java/truth:truth-android",
