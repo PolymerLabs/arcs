@@ -251,17 +251,29 @@ class ReferenceModeStore private constructor(
     log.verbose { "handleProxyMessage: $proxyMessage" }
     suspend fun itemVersionGetter(item: RawEntity): VersionMap {
       val localBackingVersion = getLocalData(item.id).versionMap
-      if (localBackingVersion.isNotEmpty()) return localBackingVersion
-
-      updateBackingStore(item)
-
-      return requireNotNull(getLocalData(item.id)).versionMap
+      if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
+        check(localBackingVersion.isNotEmpty()) { "Local backing version map is empty." }
+        return localBackingVersion
+      } else {
+        if (localBackingVersion.isNotEmpty()) return localBackingVersion
+        updateBackingStore(item)
+        return requireNotNull(getLocalData(item.id)).versionMap
+      }
     }
 
     when (proxyMessage) {
       is ProxyMessage.Operations -> {
         val containerOps = mutableListOf<CrdtOperation>()
         val upstreamOps = mutableListOf<RefModeStoreOp>()
+
+        // Update the backing store (if REFERENCE_MODE_STORE_FIXES flag is on).
+        if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
+          proxyMessage.operations.forEach { op ->
+            handleOpForBackingStore(op)
+          }
+        }
+
+        // Create bridging operations.
         val ops = if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
           proxyMessage.operations.toBridgingOps(
             backingStore.storageKey,
@@ -272,24 +284,29 @@ class ReferenceModeStore private constructor(
             backingStore.storageKey
           )
         }
+
         ops.forEach { op ->
-          when (op) {
-            is BridgingOperation.UpdateSingleton,
-            is BridgingOperation.ClearSingleton -> {
-              // Free up the memory used by the previous instance (for a Singleton,
-              // there would be only one instance).
-              backingStore.clearStoresCache()
-              op.entityValue?.let { updateBackingStore(it) }
+          // Update the backing store (if REFERENCE_MODE_STORE_FIXES flag is off).
+          if (!BuildFlags.REFERENCE_MODE_STORE_FIXES) {
+            when (op) {
+              is BridgingOperation.UpdateSingleton,
+              is BridgingOperation.ClearSingleton -> {
+                // Free up the memory used by the previous instance (for a Singleton,
+                // there would be only one instance).
+                backingStore.clearStoresCache()
+                op.entityValue?.let { updateBackingStore(it) }
+              }
+
+              is BridgingOperation.AddToSet ->
+                op.entityValue?.let { updateBackingStore(it) }
+
+              is BridgingOperation.RemoveFromSet -> clearEntityInBackingStore(op.referenceId)
+
+              is BridgingOperation.ClearSet -> clearAllEntitiesInBackingStore()
             }
-
-            is BridgingOperation.AddToSet ->
-              op.entityValue?.let { updateBackingStore(it) }
-
-            is BridgingOperation.RemoveFromSet -> clearEntityInBackingStore(op.referenceId)
-
-            is BridgingOperation.ClearSet -> clearAllEntitiesInBackingStore()
           }
 
+          // Update container store and other clients.
           if (BuildFlags.BATCH_CONTAINER_STORE_OPS) {
             containerOps.add(op.containerOp)
             upstreamOps.add(op.refModeOp)
@@ -321,13 +338,25 @@ class ReferenceModeStore private constructor(
         }
       }
       is ProxyMessage.ModelUpdate -> {
+        // Update the backing store (if REFERENCE_MODE_STORE_FIXES flag is on).
+        if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
+          handleModelForBackingStore(proxyMessage.model)
+        }
+
+        // Create bridging data.
         val newModelsResult = proxyMessage.model.toBridgingData(
           backingStore.storageKey,
           ::itemVersionGetter
         )
+
         when (newModelsResult) {
           is Result.Ok -> {
-            newModelsResult.value.backingModels.forEach { updateBackingStore(it) }
+            // Update the backing store (if REFERENCE_MODE_STORE_FIXES flag is off).
+            if (!BuildFlags.REFERENCE_MODE_STORE_FIXES) {
+              newModelsResult.value.backingModels.forEach { updateBackingStore(it) }
+            }
+
+            // Update container store and other clients.
             containerStore.onProxyMessage(
               ProxyMessage.ModelUpdate(
                 newModelsResult.value.collectionModel.data,
@@ -545,6 +574,31 @@ class ReferenceModeStore private constructor(
     backingStore.onProxyMessage(
       MuxedProxyMessage(referencable.id, ProxyMessage.ModelUpdate(model, id = backingStoreId))
     )
+  }
+
+  private suspend fun handleOpForBackingStore(op: RefModeStoreOp) {
+    when (op) {
+      is RefModeStoreOp.SingletonUpdate -> {
+        backingStore.clearStoresCache()
+        updateBackingStore(op.value)
+      }
+      is RefModeStoreOp.SingletonClear -> {
+        backingStore.clearStoresCache()
+      }
+      is RefModeStoreOp.SetAdd -> {
+        updateBackingStore(op.added)
+      }
+      is RefModeStoreOp.SetRemove -> {
+        clearEntityInBackingStore(op.removed)
+      }
+      is RefModeStoreOp.SetClear -> {
+        clearAllEntitiesInBackingStore()
+      }
+    }
+  }
+
+  private suspend fun handleModelForBackingStore(model: RefModeStoreData) {
+    model.values.values.map { updateBackingStore(it.value) }
   }
 
   /** Clear the provided entity in the backing store. */
