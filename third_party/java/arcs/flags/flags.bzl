@@ -75,7 +75,7 @@ ARCS_BUILD_FLAGS = [
         name = "nullable_value_support",
         desc = "Support returning nullable values",
         bug_id = "b/174115805",
-        status = "NOT_READY",
+        status = "READY",
         stopwords = [
             "nullable.?value.?support",
             "NullableOf",
