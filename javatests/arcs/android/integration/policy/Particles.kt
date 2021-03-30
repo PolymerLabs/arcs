@@ -16,7 +16,7 @@ import kotlinx.coroutines.Job
 class IngressThing : AbstractIngressThing() {
   lateinit var storeFinished: Job
   override fun onFirstStart() {
-    storeFinished = handles.input.storeAll(listOf(
+    storeFinished = handles.ingress.storeAll(listOf(
       Thing("Once", "upon", "a", "midnight"),
       Thing("dreary", "while", "I", "pondered"),
       Thing("weak", "and", "weary", "over"),
@@ -33,7 +33,7 @@ class EgressAB : AbstractEgressAB() {
   val outputForTest = mutableSetOf<Thing>()
 
   override fun onReady() {
-    outputForTest.addAll(handles.output.fetchAll())
+    outputForTest.addAll(handles.egress.fetchAll())
     handleRegistered.complete()
   }
 }

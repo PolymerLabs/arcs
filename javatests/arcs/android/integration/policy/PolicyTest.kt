@@ -46,7 +46,7 @@ class PolicyTest {
     env.waitForIdle(arc)
 
     val ingest = env.getParticle<IngressThing>(arc)
-    val startingKey = (ingest.handles.input.getProxy().storageKey as ReferenceModeStorageKey)
+    val startingKey = (ingest.handles.ingress.getProxy().storageKey as ReferenceModeStorageKey)
       .storageKey
 
     // Then no data will be written to storage
@@ -79,7 +79,7 @@ class PolicyTest {
     // Then data with fields Thing {a, b} will be egressed
     assertThat(egressAB.outputForTest).hasSize(6)
 
-    val startingKey = (egressAB.handles.output.getProxy().storageKey as ReferenceModeStorageKey)
+    val startingKey = (egressAB.handles.egress.getProxy().storageKey as ReferenceModeStorageKey)
       .storageKey
 
     // And only Thing {a, b} is written to storage

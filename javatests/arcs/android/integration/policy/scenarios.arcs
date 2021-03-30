@@ -33,7 +33,7 @@ recipe NoDataWritten
   handle1: create
 
   IngressThing
-    input: handle1
+    ingress: handle1
 
   // And the recipe does not egress anything
 
@@ -58,8 +58,8 @@ recipe PersistsEgresses
 
   // And the recipe ingresses a schema Thing {a, b, c, d}
   IngressThing
-    input: handle1
+    ingress: handle1
 
   // And the recipe egresses Thing {a, b}
   EgressAB
-    output: handle1
+    egress: handle1
