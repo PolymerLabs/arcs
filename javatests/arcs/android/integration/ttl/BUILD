@@ -34,6 +34,8 @@ arcs_kt_android_test_suite(
     name = "ttl-tests",
     size = "medium",
     srcs = glob(["*Test.kt"]),
+    # TODO(b/183993595): deflake.
+    flaky = True,
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.android.integration.ttl",
     deps = [
