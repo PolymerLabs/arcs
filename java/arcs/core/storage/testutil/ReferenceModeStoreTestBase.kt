@@ -249,9 +249,14 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
     bobCollectionHelper.add(bob)
 
     val (referenceCollection, referenceCollectionHelper) = createCrdtSet<RawReference>("me")
+    val versionMap = if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
+      VersionMap(activeStore.crdtKey to 1)
+    } else {
+      bobCollectionHelper.versionMap
+    }
     val bobRef = bob.toReference(
       activeStore.backingStore.storageKey,
-      bobCollectionHelper.versionMap
+      versionMap
     )
     referenceCollectionHelper.add(bobRef)
 
