@@ -48,7 +48,6 @@ export type ArcOptions = Readonly<{
   slotComposer?: SlotComposer;
   loader: Loader;
   storageKey?: StorageKey;
-  speculative?: boolean;
   stub?: boolean;
   inspectorFactory?: ArcInspectorFactory;
   ports?: MessagePort[];
@@ -60,7 +59,7 @@ export type ArcOptions = Readonly<{
 @SystemTrace
 export class Arc implements ArcInterface {
   private readonly pecFactories: PecFactory[];
-  public readonly isSpeculative: boolean;
+  public get isSpeculative(): boolean { return this.arcInfo.isSpeculative; };
   public get isInnerArc(): boolean { return this.arcInfo.isInnerArc; }
   public readonly isStub: boolean;
   public _modality: Modality;
@@ -95,7 +94,7 @@ export class Arc implements ArcInterface {
   readonly volatileMemory = new VolatileMemory();
   private readonly volatileStorageDriverProvider: VolatileStorageDriverProvider;
 
-  constructor({arcInfo, storageService, pecFactories, allocator, host, slotComposer, loader, storageKey, speculative, stub, inspectorFactory, modality, driverFactory, storageKeyParser} : ArcOptions) {
+  constructor({arcInfo, storageService, pecFactories, allocator, host, slotComposer, loader, storageKey, stub, inspectorFactory, modality, driverFactory, storageKeyParser} : ArcOptions) {
     this.modality = modality;
     this.driverFactory = driverFactory;
     this.storageKeyParser = storageKeyParser;
@@ -103,7 +102,6 @@ export class Arc implements ArcInterface {
     this.pecFactories = pecFactories && pecFactories.length > 0 ? pecFactories.slice() : [FakePecFactory(loader).bind(null)];
 
     this.arcInfo = arcInfo;
-    this.isSpeculative = !!speculative; // undefined => false
     this.isStub = !!stub;
     this._loader = loader;
     this.inspectorFactory = inspectorFactory;
@@ -283,12 +281,11 @@ export class Arc implements ArcInterface {
 
   // Makes a copy of the arc used for speculative execution.
   async cloneForSpeculativeExecution(): Promise<Arc> {
-    const arcInfo = await this.peh.allocator.startArc({arcId: this.generateID(), outerArcId: this.arcInfo.outerArcId});
+    const arcInfo = await this.peh.allocator.startArc({arcId: this.generateID(), outerArcId: this.arcInfo.outerArcId, isSpeculative: true});
     const arc = new Arc({
       arcInfo,
       pecFactories: this.pecFactories,
       loader: this._loader,
-      speculative: true,
       inspectorFactory: this.inspectorFactory,
       storageService: this.storageService,
       driverFactory: this.driverFactory,
