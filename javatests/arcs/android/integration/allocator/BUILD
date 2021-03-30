@@ -15,8 +15,8 @@ arcs_kt_android_test_suite(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.android.integration.allocator",
     deps = [
+        "//java/arcs/android/util/testutil",
         "//java/arcs/core/host",
-        "//java/arcs/core/util/testutil",
         "//javatests/arcs/android/integration",
         "//javatests/arcs/core/allocator:allocator-test-util",
         "//javatests/arcs/core/host:particle",

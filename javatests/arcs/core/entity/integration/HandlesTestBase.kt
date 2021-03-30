@@ -1341,7 +1341,16 @@ open class HandlesTestBase(val params: Params) {
     assertThat(references).containsExactly(entity1Ref, entity2Ref)
 
     // References should be alive.
-    assertThat(references.map { it.dereference() }).containsExactly(entity1, entity2)
+    // TODO(b/163308113): There's no way to wait for a reference's value to update right now,
+    // so polling is required.
+    var values = emptyList<FixtureEntity?>()
+    while (true) {
+      values = references.map { it.dereference() }
+      if (values.containsAll(listOf(entity1, entity2))) {
+        break
+      }
+    }
+    assertThat(values).containsExactly(entity1, entity2)
     references.forEach {
       val storageReference = it.toReferencable()
       assertThat(storageReference.isAlive()).isTrue()
@@ -1362,8 +1371,16 @@ open class HandlesTestBase(val params: Params) {
     waitForEntity(writeEntityHandle, modEntity2)
 
     // Reference should still be alive.
+    // TODO(b/163308113): There's no way to wait for a reference's value to update right now,
+    // so polling is required.
     references = readRefHandle.dispatchFetchAll()
-    assertThat(references.map { it.dereference() }).containsExactly(modEntity1, modEntity2)
+    while (true) {
+      values = references.map { it.dereference() }
+      if (values[0]?.textField == "Ben" && values[1]?.textField == "Ben") {
+        break
+      }
+    }
+    assertThat(values).containsExactly(modEntity1, modEntity2)
     references.forEach {
       val storageReference = it.toReferencable()
       assertThat(storageReference.isAlive()).isTrue()

@@ -9,7 +9,9 @@ import arcs.core.entity.Reference
 import arcs.core.host.toRegistration
 import arcs.core.storage.testutil.waitForEntity
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.Before
@@ -19,6 +21,12 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 class Reader : AbstractReader() {
+  var currentJob: CompletableJob? = null
+  fun updateBarrier(): CompletableJob = Job().also { currentJob = it }
+  override fun onUpdate() {
+    currentJob?.complete()
+    currentJob = null
+  }
   suspend fun read() = withContext(handles.input.dispatcher) {
     handles.input.fetchAll()
   }
@@ -85,7 +93,11 @@ class DeletePropagationTest {
     val reference = writer.createForeignReference(ID1)
     val entity1 = Writer_Output(foreign = reference)
 
-    writer.write(entity1)
+    reader.updateBarrier().also {
+      writer.write(entity1)
+      it.join()
+    }
+
     val entityOut = reader.read().single()
     val referenceOut = entityOut.foreign!!
 
