@@ -19,7 +19,7 @@ export class Speculator {
 
   constructor(public readonly runtime: Runtime) {}
 
-  async speculate(arc: Arc, plan: Recipe, hash: string): Promise<{speculativeArc: Arc, relevance: Relevance}|null> {
+  async speculate(arc: Arc, plan: Recipe, hash: string, shouldSpeculate: boolean = true): Promise<{speculativeArc: Arc, relevance: Relevance}|null> {
     assert(plan.isResolved(), `Cannot speculate on an unresolved plan: ${plan.toString({showUnresolved: true})}`);
     const speculativeArc = await arc.cloneForSpeculativeExecution();
     this.speculativeArcs.push(speculativeArc);
@@ -27,11 +27,11 @@ export class Speculator {
     plan = await this.runtime.allocator.assignStorageKeys(speculativeArc.id, plan);
 
     const {particles, handles} = await speculativeArc.arcInfo.instantiate(plan);
-    await speculativeArc.instantiate({particles, handles}); // plan
+    await speculativeArc.instantiate({particles: shouldSpeculate ? particles : [], handles});
 
     await this.awaitCompletion(relevance, speculativeArc);
 
-    if (!relevance.isRelevant(plan)) {
+    if (shouldSpeculate && !relevance.isRelevant(plan)) {
       return null;
     }
 

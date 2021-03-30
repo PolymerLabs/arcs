@@ -66,6 +66,7 @@ export class ParticleExecutionHost {
     this.apiPorts = ports.map(port => new PECOuterPortImpl(port, arc));
     this.allocator = allocator;
     this.host = host;
+    assert(this.allocator && this.host);
   }
 
   private choosePortForParticle(particle: Particle): PECOuterPort {

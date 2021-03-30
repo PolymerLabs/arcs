@@ -78,23 +78,27 @@ export class Planner implements InspectablePlanner {
   runtime: Runtime;
   // public for debug tools
   strategizer: Strategizer;
-  speculator?: Speculator;
+  speculator: Speculator;
   inspector?: PlannerInspector;
   noSpecEx: boolean;
 
   // TODO: Use context.arc instead of arc
   // TODO: promote runtime out of options, it's not optional
-  init(arc: Arc, {runtime, strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, speculator = undefined, inspectorFactory = undefined, noSpecEx = false}: PlannerInitOptions) {
+  init(arc: Arc, {runtime, strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, speculator, inspectorFactory, noSpecEx = false}: PlannerInitOptions) {
     this.arc = arc;
     this.runtime = runtime;
     this.strategizer = this.initStrategizer(arc, strategies, ruleset, strategyArgs);
-    this.speculator = speculator;
+    this.speculator = speculator || new Speculator(runtime);
     this.inspector = inspectorFactory ? inspectorFactory.create(this) : null;
     this.noSpecEx = noSpecEx;
     // TODO(sjmiles): remove static method `clearCache` that actually depends on runtime
     if (runtime) {
       lastRuntime = runtime;
     }
+  }
+
+  dispose() {
+    this.speculator.dispose();
   }
 
   initStrategizer(arc, strategies, ruleset, strategyArgs) {
@@ -280,36 +284,22 @@ export class Planner implements InspectablePlanner {
     if (cachedSuggestion && cachedSuggestion.isUpToDate(arc, plan)) {
       return cachedSuggestion;
     }
-    let relevance: Relevance|undefined = undefined;
-    let description: Description|null = null;
-    if (this._shouldSpeculate(plan)) {
-      //log(`speculatively executing [${plan.name}]`);
-      const result = await this.speculator.speculate(this.arc, plan, hash);
-      if (!result) {
-        return undefined;
-      }
-      const speculativeArc = result.speculativeArc;
-      relevance = result.relevance;
-      description = await Description.create(speculativeArc.arcInfo, this.runtime, relevance);
-      //log(`[${plan.name}] => [${description.getRecipeSuggestion()}]`);
-    } else {
-      const speculativeArc = await arc.cloneForSpeculativeExecution();
-      plan = await this.runtime.allocator.assignStorageKeys(arc.id, plan);
-
-      const {handles} = await speculativeArc.arcInfo.instantiate(plan);
-      await speculativeArc.instantiate({particles: [], handles});
-
-      relevance = Relevance.create(arc, plan);
-      description = await Description.create(speculativeArc.arcInfo, this.runtime, relevance);
+    const shouldSpeculate = this._shouldSpeculate(plan);
+    const result = await this.speculator.speculate(this.arc, plan, hash, shouldSpeculate);
+    if (shouldSpeculate && !result) {
+      return undefined;
     }
-    const suggestion = Suggestion.create(plan, hash, relevance);
+    const speculativeArc = result.speculativeArc;
+    const description = await Description.create(speculativeArc.arcInfo, this.runtime, result.relevance);
+
+    const suggestion = Suggestion.create(plan, hash, result.relevance);
     suggestion.setDescription(description, this.arc.modality);
     this.getCache().set(hash, suggestion);
     return suggestion;
   }
 
   _shouldSpeculate(plan) {
-    if (!this.speculator || this.noSpecEx) {
+    if (this.noSpecEx) {
       return false;
     }
 

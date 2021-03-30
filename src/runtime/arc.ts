@@ -283,20 +283,18 @@ export class Arc implements ArcInterface {
 
   // Makes a copy of the arc used for speculative execution.
   async cloneForSpeculativeExecution(): Promise<Arc> {
+    const arcInfo = await this.peh.allocator.startArc({arcId: this.generateID(), outerArcId: this.arcInfo.outerArcId});
     const arc = new Arc({
-      arcInfo: new ArcInfo({
-        id: this.generateID(),
-        context: this.context,
-        capabilitiesResolver: this.capabilitiesResolver,
-        outerArcId: this.arcInfo.outerArcId
-      }),
+      arcInfo,
       pecFactories: this.pecFactories,
       loader: this._loader,
       speculative: true,
       inspectorFactory: this.inspectorFactory,
       storageService: this.storageService,
       driverFactory: this.driverFactory,
-      storageKeyParser: this.storageKeyParser
+      storageKeyParser: this.storageKeyParser,
+      allocator: this.peh.allocator,
+      host: this.peh.host
     });
     const storeMap: Map<StoreInfo<Type>, StoreInfo<Type>> = new Map();
     for (const storeInfo of this.stores) {
