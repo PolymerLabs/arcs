@@ -14,7 +14,6 @@ import {logsFactory} from '../../platform/logs-factory.js';
 import {Arc} from '../../runtime/arc.js';
 import {Planner, Generation} from '../planner.js';
 import {RecipeIndex} from '../recipe-index.js';
-import {Speculator} from '../speculator.js';
 import {InitSearch} from '../strategies/init-search.js';
 import {StrategyDerived} from '../strategizer.js';
 import {PlanningResult} from './planning-result.js';
@@ -44,7 +43,6 @@ export class PlanProducer {
   result: PlanningResult;
   planner: Planner|null = null;
   recipeIndex: RecipeIndex;
-  speculator: Speculator;
   needReplan = false;
   replanOptions: SuggestionOptions = {};
   _isPlanning = false;
@@ -72,7 +70,6 @@ export class PlanProducer {
     this.runtime = runtime;
     this.result = result;
     this.recipeIndex = RecipeIndex.create(this.arc);
-    this.speculator = new Speculator(this.runtime);
     this.searchStore = searchStore;
     this.searchHandle = searchHandle;
     if (this.searchStore) {
@@ -201,7 +198,6 @@ export class PlanProducer {
         search: options.search,
         recipeIndex: this.recipeIndex
       },
-      speculator: this.speculator,
       noSpecEx: this.noSpecEx
     });
 
@@ -216,9 +212,9 @@ export class PlanProducer {
 
   protected _cancelPlanning() {
     if (this.planner) {
+      this.planner.dispose();
       this.planner = null;
     }
-    this.speculator.dispose();
     this.needReplan = false;
     this.isPlanning = false; // using the setter method to trigger callbacks.
     log(`Cancel planning`);

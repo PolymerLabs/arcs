@@ -45,7 +45,7 @@ export class ArcHostImpl implements ArcHost {
 
   async start(partition: PlanPartition) {
     const arcId = partition.arcInfo.id;
-      if (!arcId || !this.arcById.has(arcId)) {
+    if (!arcId || !this.arcById.has(arcId)) {
       const arc = new Arc(this.buildArcParams(partition));
       this.arcById.set(arcId, arc);
       if (partition.arcOptions.slotObserver) {

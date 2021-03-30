@@ -30,7 +30,7 @@ export class StrategyTestHelper {
   }
   static async planForArc(runtime: Runtime, arc: Arc): Promise<Suggestion[]> {
     const planner = new Planner();
-    planner.init(arc, {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
+    planner.init(arc, {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc), noSpecEx: true});
     return planner.suggest();
   }
 

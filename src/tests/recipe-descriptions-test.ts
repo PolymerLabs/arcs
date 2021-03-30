@@ -116,8 +116,8 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
       {fileName: 'foo.js'}
     );
     const storageKeyPrefix = (id: ArcId) => new VolatileStorageKey(id, '');
-    const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix})).id);
-
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix});
+    const arc = runtime.getArcById(arcInfo.id);
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     assert.lengthOf(suggestions, 1);
     const result = suggestions[0].getDescription(arc.modality.names[0]);
