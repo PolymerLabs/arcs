@@ -14,7 +14,6 @@ import arcs.core.entity.testutil.InnerEntity
 import arcs.core.testutil.runTest
 import arcs.core.util.RandomBuilder
 import arcs.core.util.testutil.LogRule
-import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import arcs.flags.testing.ParameterizedBuildFlags
 import arcs.jvm.util.testutil.FakeTime
@@ -210,12 +209,6 @@ class GeneratedEntityTest(private val parameters: ParameterizedBuildFlags) {
     assertThat(entityId).isNotNull()
     assertThat(entityId).isNotEmpty()
     assertThat(entityId).isNotEqualTo(NO_REFERENCE_ID)
-    if (BuildFlags.STORAGE_STRING_REDUCTION) {
-      // Randomly generated string by ID. It is all "b"s due to the seeding of Random.
-      assertThat(entityId).contains("bbbbbbbbbb")
-    } else {
-      assertThat(entityId).contains("handle")
-    }
 
     val creationTimestamp = entity.serialize().creationTimestamp
 

@@ -11,6 +11,8 @@
 
 package arcs.core.crdt
 
+import arcs.core.util.FORBIDDEN_STRINGS
+import arcs.core.util.SAFE_CHARS
 import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import com.google.common.truth.Truth.assertThat
@@ -310,5 +312,12 @@ class VersionMapTest {
   fun encode_versionBiggerThanMaxInt_fails() {
     val str = "bar2|${Int.MAX_VALUE}0"
     assertFailsWith<NumberFormatException> { (VersionMap.decode(str)) }
+  }
+
+  @Test
+  fun safeChars_noForbiddenStrings() {
+    SAFE_CHARS.forEach { char ->
+      assertThat(FORBIDDEN_STRINGS.contains(char.toString())).isFalse()
+    }
   }
 }
