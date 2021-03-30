@@ -39,7 +39,7 @@ describe('InitPopulation', () => {
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     const runtime = new Runtime({loader, context: manifest});
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test-plan-arc'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-plan-arc'}));
 
     async function scoreOfInitPopulationOutput() {
       const results = await new InitPopulation(arc, StrategyTestHelper.createTestStrategyArgs(
@@ -66,7 +66,7 @@ describe('InitPopulation', () => {
       'A.js': 'defineParticle(({Particle}) => class extends Particle {})'
     });
     const runtime = new Runtime({loader, context: new Manifest({id: ArcId.newForTest('test')})});
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test-plan-arc'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-plan-arc'}));
 
     const results = await new InitPopulation(arc, {contextual: false,
         recipeIndex: {recipes: manifest.recipes}}).generate({generation: 0});
@@ -125,7 +125,7 @@ describe('InitPopulation', () => {
           burger: writes burger
     `);
 
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
 
     async function openRestaurantWith(foodType: string) {
       const restaurant = manifest.recipes.find(recipe => recipe.name === `${foodType}Restaurant`);

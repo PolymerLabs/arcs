@@ -7,11 +7,12 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.entity.EntityBase
 import arcs.core.entity.EntitySpec
+import arcs.core.entity.SingletonProperty
 import arcs.core.entity.Storable
 
 // A restricted version of DummyEntity with less fields.
 class RestrictedDummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
-  var text: String? by SingletonProperty()
+  var text: String? by SingletonProperty(this)
 
   companion object : EntitySpec<RestrictedDummyEntity> {
     override fun deserialize(data: RawEntity) =

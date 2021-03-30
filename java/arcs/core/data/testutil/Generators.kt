@@ -25,8 +25,11 @@ import arcs.core.testutil.FuzzingRandom
 import arcs.core.testutil.Generator
 import arcs.core.testutil.Transformer
 import arcs.core.testutil.Value
+import arcs.core.testutil.midSizedAlphaNumericString
 import arcs.core.testutil.midSizedUnicodeString
 import arcs.core.type.Type
+import arcs.core.util.ArcsDuration
+import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
 
 /**
@@ -106,7 +109,7 @@ class CreatableStorageKeyGenerator(
 /**
  * Pairs a [ParticleRegistration] with a [Plan.Particle]. These two objects need to
  * have similar information in order for a plan to successfully start:
- * - the location in Plan.Particle has to match the ParticelRegistration's ParticleIdentifier
+ * - the location in Plan.Particle has to match the ParticleRegistration's ParticleIdentifier
  * - the Particle instance returned by the ParticleRegistration's ParticleConstructor needs
  * - to have a handle field with a HandleHolder that recognizes any handleConnections listed in
  * - the Plan.Particle as valid.
@@ -334,7 +337,8 @@ class FieldTypeGenerator(
  * with appropriate data.
  */
 class ReferencablePrimitiveFromPrimitiveType(
-  val s: FuzzingRandom
+  val s: FuzzingRandom,
+  val unicode: Boolean = true
 ) : Transformer<PrimitiveType, ReferencablePrimitive<*>>() {
   override fun invoke(i: PrimitiveType): ReferencablePrimitive<*> {
     return when (i) {
@@ -343,14 +347,16 @@ class ReferencablePrimitiveFromPrimitiveType(
       PrimitiveType.Byte -> s.nextByte().toReferencable()
       PrimitiveType.Char -> s.nextChar().toReferencable()
       PrimitiveType.Double -> s.nextDouble().toReferencable()
-      PrimitiveType.Duration -> s.nextLong().toReferencable()
+      PrimitiveType.Duration -> ArcsDuration.valueOf(s.nextLong()).toReferencable()
       PrimitiveType.Float -> s.nextFloat().toReferencable()
-      PrimitiveType.Instant -> s.nextLong().toReferencable()
+      PrimitiveType.Instant -> ArcsInstant.ofEpochMilli(s.nextLong()).toReferencable()
       PrimitiveType.Int -> s.nextInt().toReferencable()
       PrimitiveType.Long -> s.nextLong().toReferencable()
       PrimitiveType.Number -> s.nextDouble().toReferencable()
       PrimitiveType.Short -> s.nextShort().toReferencable()
-      PrimitiveType.Text -> midSizedUnicodeString(s)().toReferencable()
+      PrimitiveType.Text ->
+        (if (unicode) midSizedUnicodeString(s) else midSizedAlphaNumericString(s))()
+          .toReferencable()
     }
   }
 }

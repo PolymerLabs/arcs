@@ -37,7 +37,7 @@ describe('A Strategy Sequence', () => {
     `);
 
     let recipe = manifest.recipes[1];
-    const arc = createTestArc(manifest);
+    const arc = await createTestArc(manifest);
 
     recipe = await onlyResult(arc, MatchRecipeByVerb, recipe);
     // In this example, the first run of the ResolveRecipe strategy will map potential
@@ -74,7 +74,7 @@ describe('A Strategy Sequence', () => {
     `);
 
     let recipe = manifest.recipes[1];
-    const arc = createTestArc(manifest);
+    const arc = await createTestArc(manifest);
 
     recipe = await onlyResult(arc, MatchRecipeByVerb, recipe);
     recipe = await onlyResult(arc, ConvertConstraintsToConnections, recipe);
@@ -113,7 +113,7 @@ describe('A Strategy Sequence', () => {
     `);
 
     let recipe = manifest.recipes[1];
-    const arc = createTestArc(manifest);
+    const arc = await createTestArc(manifest);
 
     recipe = await onlyResult(arc, MatchRecipeByVerb, recipe);
     recipe = await onlyResult(arc, ConvertConstraintsToConnections, recipe);
@@ -208,7 +208,7 @@ describe('A Strategy Sequence', () => {
     `);
 
     let recipe = manifest.recipes[1];
-    const arc = createTestArc(manifest);
+    const arc = await createTestArc(manifest);
 
     recipe = await onlyResult(arc, MatchRecipeByVerb, recipe);
     const recipes = await theResults(arc, ConvertConstraintsToConnections, recipe);
@@ -227,7 +227,7 @@ describe('A Strategy Sequence', () => {
     `);
 
     let recipe = manifest.recipes[0];
-    const arc = createTestArc(manifest);
+    const arc = await createTestArc(manifest);
 
     recipe = await onlyResult(arc, ConvertConstraintsToConnections, recipe);
     recipe = await onlyResult(arc, CreateHandleGroup, recipe);
@@ -248,7 +248,7 @@ describe('A Strategy Sequence', () => {
     `);
 
     let recipe = manifest.recipes[0];
-    const arc = createTestArc(manifest);
+    const arc = await createTestArc(manifest);
 
     recipe = await onlyResult(arc, ConvertConstraintsToConnections, recipe);
     await noResult(arc, ResolveRecipe, recipe);
@@ -271,7 +271,7 @@ describe('A Strategy Sequence', () => {
     `);
 
     let recipe = manifest.recipes[0];
-    const arc = createTestArc(manifest);
+    const arc = await createTestArc(manifest);
 
     recipe = await onlyResult(arc, ConvertConstraintsToConnections, recipe);
     recipe = await onlyResult(arc, CreateHandleGroup, recipe);

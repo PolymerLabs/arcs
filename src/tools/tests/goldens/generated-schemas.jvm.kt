@@ -15,15 +15,22 @@ import arcs.core.data.util.toReferencable
 import arcs.sdk.ArcsDuration
 import arcs.sdk.ArcsInstant
 import arcs.sdk.BigInt
+import arcs.sdk.Entity
 import arcs.sdk.toBigInt
 import javax.annotation.Generated
 
 typealias Gold_Data_Ref = AbstractGold.GoldInternal1
+typealias Gold_Data_Ref_Slice = AbstractGold.GoldInternal1
 typealias Gold_Alias = AbstractGold.GoldInternal1
+typealias Gold_Alias_Slice = AbstractGold.GoldInternal1
 typealias Gold_AllPeople = AbstractGold.Gold_AllPeople
+typealias Gold_AllPeople_Slice = AbstractGold.Gold_AllPeople
 typealias Gold_Collection = AbstractGold.Foo
+typealias Gold_Collection_Slice = AbstractGold.Foo
 typealias Gold_Data = AbstractGold.Gold_Data
+typealias Gold_Data_Slice = AbstractGold.Gold_Data
 typealias Gold_QCollection = AbstractGold.Gold_QCollection
+typealias Gold_QCollection_Slice = AbstractGold.Gold_QCollection
 
 @Generated("src/tools/schema2kotlin.ts")
 abstract class AbstractGold : arcs.sdk.BaseParticle() {

@@ -18,7 +18,6 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.VersionMap
 import arcs.core.storage.StorageProxy.CallbackIdentifier
 import arcs.core.storage.StorageProxy.StorageEvent
-import arcs.core.util.ArcsStrictMode
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
@@ -377,12 +376,6 @@ class StorageProxyImpl<Data : CrdtData, Op : CrdtOperation, T> private construct
         }
       }
     }
-  }
-
-  private fun checkInDispatcher() = check(
-    !ArcsStrictMode.strictHandles || scheduler.isCurrentDispatcher()
-  ) {
-    "Operations can only be used performed Scheduler's Dispatcher"
   }
 
   private fun checkNotClosed() = check(state.value != ProxyState.CLOSED) {

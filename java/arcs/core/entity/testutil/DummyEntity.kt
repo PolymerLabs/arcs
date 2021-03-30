@@ -6,13 +6,44 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.entity.CollectionProperty
+import arcs.core.entity.Entity
 import arcs.core.entity.EntityBase
 import arcs.core.entity.EntitySpec
 import arcs.core.entity.Reference
-import arcs.core.entity.Storable
+import arcs.core.entity.SingletonProperty
 import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
+
+interface DummyEntitySlice : Entity {
+  var bool: Boolean?
+  var nullableBool: Boolean?
+  var nullableDouble: Double?
+  var num: Double?
+  var byte: Byte?
+  var short: Short?
+  var int: Int?
+  var long: Long?
+  var duration: ArcsDuration?
+  var instant: ArcsInstant?
+  var char: Char?
+  var float: Float?
+  var double: Double?
+  var bigInt: BigInt?
+  var text: String?
+  var ref: Reference<DummyEntity>?
+  var hardRef: Reference<DummyEntity>?
+  var primList: List<Double>
+  var refList: List<Reference<DummyEntity>>
+  var inlineEntity: InlineDummyEntity
+  var inlineList: List<InlineDummyEntity>
+  var bools: Set<Boolean>
+  var nums: Set<Double>
+  var texts: Set<String>
+  var refs: Set<Reference<DummyEntity>>
+  var inlines: Set<InlineDummyEntity>
+}
 
 /**
  * Subclasses [EntityBase] and makes its protected methods public, so that we can call them
@@ -21,33 +52,33 @@ import arcs.core.util.BigInt
  */
 class DummyEntity(
   entityId: String? = null
-) : EntityBase(ENTITY_CLASS_NAME, SCHEMA, entityId), Storable {
-  var bool: Boolean? by SingletonProperty()
-  var nullableBool: Boolean? by SingletonProperty()
-  var nullableDouble: Double? by SingletonProperty()
-  var num: Double? by SingletonProperty()
-  var byte: Byte? by SingletonProperty()
-  var short: Short? by SingletonProperty()
-  var int: Int? by SingletonProperty()
-  var long: Long? by SingletonProperty()
-  var duration: ArcsDuration? by SingletonProperty()
-  var instant: ArcsInstant? by SingletonProperty()
-  var char: Char? by SingletonProperty()
-  var float: Float? by SingletonProperty()
-  var double: Double? by SingletonProperty()
-  var bigInt: BigInt? by SingletonProperty()
-  var text: String? by SingletonProperty()
-  var ref: Reference<DummyEntity>? by SingletonProperty()
-  var hardRef: Reference<DummyEntity>? by SingletonProperty()
-  var primList: List<Double> by SingletonProperty()
-  var refList: List<Reference<DummyEntity>> by SingletonProperty()
-  var inlineEntity: InlineDummyEntity by SingletonProperty()
-  var inlineList: List<InlineDummyEntity> by SingletonProperty()
-  var bools: Set<Boolean> by CollectionProperty()
-  var nums: Set<Double> by CollectionProperty()
-  var texts: Set<String> by CollectionProperty()
-  var refs: Set<Reference<DummyEntity>> by CollectionProperty()
-  var inlines: Set<InlineDummyEntity> by CollectionProperty()
+) : EntityBase(ENTITY_CLASS_NAME, SCHEMA, entityId), DummyEntitySlice {
+  override var bool: Boolean? by SingletonProperty(this)
+  override var nullableBool: Boolean? by SingletonProperty(this)
+  override var nullableDouble: Double? by SingletonProperty(this)
+  override var num: Double? by SingletonProperty(this)
+  override var byte: Byte? by SingletonProperty(this)
+  override var short: Short? by SingletonProperty(this)
+  override var int: Int? by SingletonProperty(this)
+  override var long: Long? by SingletonProperty(this)
+  override var duration: ArcsDuration? by SingletonProperty(this)
+  override var instant: ArcsInstant? by SingletonProperty(this)
+  override var char: Char? by SingletonProperty(this)
+  override var float: Float? by SingletonProperty(this)
+  override var double: Double? by SingletonProperty(this)
+  override var bigInt: BigInt? by SingletonProperty(this)
+  override var text: String? by SingletonProperty(this)
+  override var ref: Reference<DummyEntity>? by SingletonProperty(this)
+  override var hardRef: Reference<DummyEntity>? by SingletonProperty(this)
+  override var primList: List<Double> by SingletonProperty(this)
+  override var refList: List<Reference<DummyEntity>> by SingletonProperty(this)
+  override var inlineEntity: InlineDummyEntity by SingletonProperty(this)
+  override var inlineList: List<InlineDummyEntity> by SingletonProperty(this)
+  override var bools: Set<Boolean> by CollectionProperty(this)
+  override var nums: Set<Double> by CollectionProperty(this)
+  override var texts: Set<String> by CollectionProperty(this)
+  override var refs: Set<Reference<DummyEntity>> by CollectionProperty(this)
+  override var inlines: Set<InlineDummyEntity> by CollectionProperty(this)
 
   private val nestedEntitySpecs = mapOf(
     SCHEMA_HASH to DummyEntity,
@@ -127,8 +158,8 @@ class DummyEntity(
   }
 }
 
-class InlineDummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA, isInlineEntity = true), Storable {
-  var text: String? by SingletonProperty()
+class InlineDummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA, isInlineEntity = true) {
+  var text: String? by SingletonProperty(this)
 
   private val nestedEntitySpecs = mapOf(SCHEMA_HASH to InlineDummyEntity)
 

@@ -11,6 +11,10 @@
 
 package arcs.core.crdt
 
+import arcs.core.util.ACTOR_VERSION_DELIMITER
+import arcs.core.util.ENTRIES_SEPARATOR
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
 import kotlin.math.max
 
 /** Denotes an individual actor responsible for modifications to a CRDT. */
@@ -102,6 +106,20 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
     )
   }
 
+  /**
+   * Encode the version map for storage in as short a format as possible. The format is
+   * "actorA|versionA;actorB|versionB". So if the version map holds a backing map of
+   * `{foo: 1, bar:2, fooBar: 3}` this would be encoded as "foo|1;bar|2;fooBar|3".
+   */
+  fun encode(): String {
+    if (!BuildFlags.STORAGE_STRING_REDUCTION) {
+      throw BuildFlagDisabledError("STORAGE_STRING_REDUCTION")
+    }
+    return backingMap.asSequence().joinToString(ENTRIES_SEPARATOR.toString()) { (actor, version) ->
+      "$actor$ACTOR_VERSION_DELIMITER$version"
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     return other is VersionMap && backingMap == other.backingMap
@@ -118,5 +136,23 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
   companion object {
     /** Default starting version for any actor. */
     const val DEFAULT_VERSION: Version = 0
+
+    /**
+     * Create a new VersionMap by decoding an encoded version map. Version maps can be encoded by
+     * calling [encode]. See [encode] for details about the encoding format.
+     */
+    fun decode(str: String): VersionMap {
+      if (!BuildFlags.STORAGE_STRING_REDUCTION) {
+        throw BuildFlagDisabledError("STORAGE_STRING_REDUCTION")
+      }
+      if (str.isEmpty()) return VersionMap()
+      val versions = str.split(ENTRIES_SEPARATOR)
+      val backingMap = versions.associate { version ->
+        val pair = version.split(ACTOR_VERSION_DELIMITER)
+        check(pair.size == 2) { "Tried to decode invalid VersionMap: $str" }
+        pair[0] to pair[1].toInt()
+      }
+      return VersionMap(backingMap)
+    }
   }
 }

@@ -12,6 +12,7 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
+import arcs.core.util.ArcsStrictMode
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import kotlinx.atomicfu.atomic
@@ -160,5 +161,11 @@ abstract class StorageProxyImplBase<Data : CrdtData, Op : CrdtOperation, T>(
     log.verbose {
       "Queueing successful for message (pos: $queueNum) for sending to the store: $message"
     }
+  }
+
+  protected fun checkInDispatcher() = check(
+    !ArcsStrictMode.strictHandles || scheduler.isCurrentDispatcher()
+  ) {
+    "Operations can only be performed using the Scheduler's Dispatcher"
   }
 }

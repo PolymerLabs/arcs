@@ -221,7 +221,6 @@ export type MetaItem = MetaStorageKey | MetaName;
 export interface Particle extends BaseNode {
   kind: 'particle';
   name: string;
-  external: boolean;
   implFile: string;
   implBlobUrl?: string;
   verbs: VerbList;

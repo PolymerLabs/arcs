@@ -12,6 +12,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.entity.Entity
 import arcs.core.entity.EntityBase
 import arcs.core.entity.EntityBaseSpec
 import arcs.core.entity.HandleSpec
@@ -48,7 +49,7 @@ class CollectionHandlePartitionMap(
         entitySpec
       ),
       STORAGE_KEY
-    ) as ReadWriteCollectionHandle<EntityBase>
+    ) as ReadWriteCollectionHandle<EntityBase, Entity>
     handle.awaitReady()
   }
 

@@ -30,7 +30,7 @@ describe('Arc integration', () => {
         name: Text
       particle P in './p.js'
         thing: reads writes Thing
-      recipe
+      recipe ThingPlan
         thingHandle: copy 'mything'
         P
           thing: thingHandle
@@ -43,7 +43,7 @@ describe('Arc integration', () => {
     `);
     runtime.context = manifest;
 
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', planName: 'ThingPlan'}));
     await arc.idle;
 
     assert.lengthOf(arc.stores, 1);

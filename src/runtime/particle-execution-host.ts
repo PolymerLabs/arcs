@@ -62,7 +62,7 @@ export class ParticleExecutionHost {
 
   private choosePortForParticle(particle: Particle): PECOuterPort {
     assert(!this._portByParticle.has(particle), `port already found for particle '${particle.spec.name}'`);
-    const port = this.apiPorts.find(port => particle.isExternalParticle() === port.supportsExternalParticle());
+    const port = this.apiPorts[0];
     assert(!!port, `No port found for '${particle.spec.name}'`);
     this._portByParticle.set(particle, port);
     return this.getPort(particle);
@@ -301,7 +301,7 @@ class PECOuterPortImpl extends PECOuterPort {
               // TODO: pass tags through too, and reconcile with similar logic
               // in Arc.deserialize.
               for (const store of manifest.stores) {
-                await this.arc._registerStore(store, []);
+                await this.arc.arcInfo.registerStore(store, []);
               }
               // TODO: Awaiting this promise causes tests to fail...
               const instantiateAndCaptureError = async () => {

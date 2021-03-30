@@ -9,7 +9,9 @@ import arcs.sdk.Reference
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
 
-suspend fun <T : Entity> T.toReference(handle: ReadWriteCollectionHandle<T>): Reference<T> {
+suspend fun <E : I, I : Entity> E.toReference(
+  handle: ReadWriteCollectionHandle<E, I>
+): Reference<E> {
   if (this@toReference.entityId == null) {
     handle.store(this@toReference)
   }

@@ -7,6 +7,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaRegistry
 import arcs.core.entity.testutil.DummyEntity
+import arcs.core.entity.testutil.DummyEntitySlice
 import arcs.core.entity.testutil.InlineDummyEntity
 import arcs.core.host.HandleManagerImpl
 import arcs.core.storage.RawEntityDereferencer
@@ -43,7 +44,7 @@ class ReferenceTest {
   private lateinit var scheduler: Scheduler
   private lateinit var dereferencer: RawEntityDereferencer
   private lateinit var handleManagerImpl: HandleManagerImpl
-  private lateinit var handle: ReadWriteCollectionHandle<DummyEntity>
+  private lateinit var handle: ReadWriteCollectionHandle<DummyEntity, DummyEntitySlice>
 
   private val STORAGE_KEY = ReferenceModeStorageKey(
     RamDiskStorageKey("backing"),
@@ -77,7 +78,7 @@ class ReferenceTest {
         DummyEntity
       ),
       STORAGE_KEY
-    ) as ReadWriteCollectionHandle<DummyEntity>
+    ) as ReadWriteCollectionHandle<DummyEntity, DummyEntitySlice>
   }
 
   @After

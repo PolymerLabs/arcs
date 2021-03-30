@@ -27,6 +27,8 @@ import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.host.AbstractReadPerson.Person
+// TODO(b/182330900): temporary alias; to be replaced with actual slice interface
+import arcs.core.host.ReadPerson_Person_Slice as PersonSlice
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
@@ -166,7 +168,8 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
 
   @Test
   fun singleton_noOpsAfterClose() = runTest {
-    val handle = createHandle(mode = HandleMode.ReadWrite) as ReadWriteSingletonHandle<Person>
+    val handle =
+      createHandle(mode = HandleMode.ReadWrite) as ReadWriteSingletonHandle<Person, PersonSlice>
 
     handle.dispatchStore(Person("test"))
     handle.dispatchClose()
@@ -215,7 +218,7 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
     val handle = createHandle(
       mode = HandleMode.ReadWriteQuery,
       type = COLLECTION_TYPE
-    ) as ReadWriteQueryCollectionHandle<Person, Any>
+    ) as ReadWriteQueryCollectionHandle<Person, PersonSlice, Any>
     val testPerson = Person("test")
     val otherPerson = Person("other")
 
@@ -336,6 +339,48 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
       storageKey = STORAGE_KEY
     )
     assertThat(handle.name.toId().idTree).contains(WRITE_ONLY_HANDLE + "1")
+  }
+
+  @Test
+  fun createHandle_handleName_withPipeInActor_Fails() = runTest {
+    assume().that(BuildFlags.STORAGE_STRING_REDUCTION).isTrue()
+
+    val e = assertFailsWith<IllegalArgumentException> {
+      managerImpl.createHandle(
+        spec = HandleSpec(
+          WRITE_ONLY_HANDLE,
+          HandleMode.Write,
+          SINGLETON_TYPE,
+          Person
+        ),
+        storageKey = STORAGE_KEY,
+        actor = "b|b"
+      )
+    }
+    assertThat(e)
+      .hasMessageThat()
+      .isEqualTo("Handle name b|b contains illegal char in set [{, }, ;, |].")
+  }
+
+  @Test
+  fun createHandle_handleName_withSemiColonInActor_Fails() = runTest {
+    assume().that(BuildFlags.STORAGE_STRING_REDUCTION).isTrue()
+
+    val e = assertFailsWith<IllegalArgumentException> {
+      managerImpl.createHandle(
+        spec = HandleSpec(
+          WRITE_ONLY_HANDLE,
+          HandleMode.Write,
+          SINGLETON_TYPE,
+          Person
+        ),
+        storageKey = STORAGE_KEY,
+        actor = "b;b;"
+      )
+    }
+    assertThat(e)
+      .hasMessageThat()
+      .isEqualTo("Handle name b;b; contains illegal char in set [{, }, ;, |].")
   }
 
   private suspend fun createHandle(

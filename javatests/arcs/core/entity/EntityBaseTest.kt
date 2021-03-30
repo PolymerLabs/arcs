@@ -19,9 +19,9 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaRegistry
-import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.testutil.DummyEntity
+import arcs.core.entity.testutil.DummyVariableEntity
 import arcs.core.entity.testutil.InlineDummyEntity
 import arcs.core.storage.RawReference
 import arcs.core.storage.testutil.DummyStorageKey
@@ -653,24 +653,6 @@ class EntityBaseTest {
   }
 
   @Test
-  fun deserialize_referencablePrimitive_isNotNull() {
-    val rawEntity = RawEntity(
-      singletons = mapOf(
-        "num" to ReferencablePrimitive<Double?>(Double::class, null)
-      ),
-      collections = mapOf()
-    )
-
-    assertFailsWith<IllegalArgumentException> {
-      DummyEntity().deserialize(rawEntity, nestedEntitySpecs = emptyMap())
-    }.also {
-      assertThat(it).hasMessageThat().isEqualTo(
-        "ReferencablePrimitive encoded an unexpected null value."
-      )
-    }
-  }
-
-  @Test
   fun deserialize_list() {
     val rawEntity = RawEntity(
       singletons = mapOf(
@@ -978,6 +960,46 @@ class EntityBaseTest {
         "Unknown schema with hash ${InlineDummyEntity.SCHEMA_HASH}."
       )
     }
+  }
+
+  @Test
+  fun propertyDelegationForHelperClasses() {
+    val entity1 = testWrapper(
+      DummyEntity().apply {
+        text = "abc"
+        nums = setOf(5.0)
+        int = 6
+      }
+    )
+    assertThat(entity1.text).isEqualTo("abc!!")
+    assertThat(entity1.nums).isEqualTo(setOf(5.0, 8.0))
+    assertThat(entity1.int).isEqualTo(6)
+
+    val entity2 = testWrapper(
+      DummyVariableEntity().apply {
+        text = "abc"
+        nums = setOf(5.0)
+        bools = setOf(true)
+      }
+    )
+    assertThat(entity2.text).isEqualTo("abc!!")
+    assertThat(entity2.nums).isEqualTo(setOf(5.0, 8.0))
+    assertThat(entity2.bools).isEqualTo(setOf(true))
+  }
+
+  class Wrapper(val e: EntityBase) {
+    var text: String by SingletonProperty(e)
+    var nums: Set<Double> by CollectionProperty(e)
+  }
+
+  // Tests that the Wrapper class can read and modify the underlying entity via field accessors.
+  private fun <T : EntityBase> testWrapper(entity: T): T {
+    val w = Wrapper(entity)
+    w.text += "!!"
+    w.nums += 8.0
+    assertThat(w.text).isEqualTo("abc!!")
+    assertThat(w.nums).isEqualTo(setOf(5.0, 8.0))
+    return entity
   }
 
   private fun createReference(id: String) = Reference(

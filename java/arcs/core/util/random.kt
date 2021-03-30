@@ -51,20 +51,22 @@ fun KotlinRandom.nextSafeRandomLong(): Long = Random.nextLong(MAX_SAFE_LONG)
 
 /** Gets the next String of [length] that can be safely encoded in a [VersionMap]. */
 fun KotlinRandom.nextVersionMapSafeString(length: Int): String {
-  // Readable chars are 33 '!' to 126 '~'. However, we want to exclude ':' and ";" due to
-  // the encoding of version maps.
-  val map = (1..length)
-    .map { Random.nextInt(33, 124).toChar() }
-    .map {
-      when (it) {
-        ':' -> 125
-        ';' -> 126
-        else -> it
-      }
-    }
+  return (1..length)
+    .map { SAFE_CHARS.random(Random) }
     .joinToString("")
-  return map
 }
 
 private val MAX_SAFE_LONG = 2.0.pow(50).toLong()
 private var globalRandomInstance: KotlinRandom? = null
+
+/** Set of strings not allowed in [VersionMaps], entity [Id]s and [StorageKey]s. */
+val FORBIDDEN_STRINGS = setOf(
+  "{",
+  "}",
+  ENTRIES_SEPARATOR.toString(),
+  ACTOR_VERSION_DELIMITER.toString()
+)
+
+// Readable chars are 33 '!' to 126 '~'. However, we want to exclude the [FORBIDDEN_STRINGS].
+/** Chars that are safe to use in encoding. */
+val SAFE_CHARS = ('!'..'~') - FORBIDDEN_STRINGS.map { s -> s[0] }

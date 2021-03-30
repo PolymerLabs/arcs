@@ -8,6 +8,7 @@ import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.SingletonType
 import arcs.core.entity.testutil.DummyEntity
+import arcs.core.entity.testutil.DummyEntitySlice
 import arcs.core.entity.testutil.mockSingletonStorageProxy
 import arcs.core.entity.testutil.mockStorageAdapter
 import arcs.core.storage.StorageProxy.CallbackIdentifier
@@ -38,8 +39,8 @@ class SingletonHandleTest {
     particleName: String = "defaultParticle",
     type: Type = SingletonType(EntityType(DummyEntity.SCHEMA)),
     proxy: SingletonProxy<RawEntity> = mockSingletonStorageProxy(),
-    storageAdapter: StorageAdapter<DummyEntity, RawEntity> = mockStorageAdapter()
-  ): SingletonHandle<DummyEntity, RawEntity> {
+    storageAdapter: StorageAdapter<DummyEntity, DummyEntitySlice, RawEntity> = mockStorageAdapter()
+  ): SingletonHandle<DummyEntity, DummyEntitySlice, RawEntity> {
     val config = SingletonHandle.Config(
       handleName,
       HandleSpec(

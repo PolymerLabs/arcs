@@ -20,7 +20,7 @@ describe('CoalesceRecipes', () => {
     const recipes = manifest.recipes;
     assert.isTrue(recipes.every(recipe => recipe.normalize()));
     assert.isFalse(recipes.every(recipe => recipe.isResolved()));
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     const strategy = new CoalesceRecipes(arc, StrategyTestHelper.createTestStrategyArgs(arc));
     const inputParams = {generated: [], terminal: recipes.map(recipe => ({result: recipe, score: 1}))};
     return strategy.generate(inputParams);

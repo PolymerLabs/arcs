@@ -122,4 +122,3 @@ recipe Actor
   myPerson: create 'myPerson'
 
   ActorPerson: writes myPerson
-

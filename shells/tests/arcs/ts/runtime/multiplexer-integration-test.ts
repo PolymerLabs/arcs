@@ -74,7 +74,7 @@ describe('Multiplexer', () => {
         '3', null));
     // version could be set here, but doesn't matter for tests.
     const slotObserver = new SlotTestObserver();
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver}));
 
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     assert.lengthOf(suggestions, 1);
@@ -158,7 +158,11 @@ describe('Multiplexer', () => {
     const runtime = new Runtime({loader});
     const context = await runtime.parseFile('./shells/tests/artifacts/polymorphic-muxing.recipes');
     //
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'fooTest', storageKeyPrefix: storageKeyPrefixForTest()}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({
+      arcName: 'fooTest',
+      planName: 'MultiFoo',
+      storageKeyPrefix: storageKeyPrefixForTest()
+    }));
     await arc.idle;
     //
     // NOTE: a direct translation of this to new storage is unlikely to work as

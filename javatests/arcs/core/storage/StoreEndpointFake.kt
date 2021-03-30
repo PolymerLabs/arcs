@@ -18,6 +18,8 @@ class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> : StorageEndpoin
   private var proxyMessages = emptyList<ProxyMessage<Data, Op, T>>()
   private val targetMutex = Mutex()
   private var target: Target<Data, Op, T>? = null
+  var callback: ProxyCallback<Data, Op, T>? = null
+
   var closed = false
 
   override suspend fun idle() = Unit

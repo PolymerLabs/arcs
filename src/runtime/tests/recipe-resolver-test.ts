@@ -24,9 +24,9 @@ describe('RecipeResolver', () => {
     return Manifest.load('./manifest', loader, {registry});
   };
 
-  const createArc = (manifest) => {
+  const createArc = async (manifest) => {
     const runtime = new Runtime({loader: new Loader(), context: manifest});
-    return runtime.getArcById(runtime.allocator.newArc({arcName: 'test'}));
+    return runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
   };
 
   it('resolves a recipe', async () => {
@@ -41,7 +41,7 @@ describe('RecipeResolver', () => {
       `
     });
     const recipe = manifest.recipes[0];
-    const arc = createArc(manifest);
+    const arc = await createArc(manifest);
     const resolver = new RecipeResolver(arc);
 
     // Initially the recipe should not be normalized (after which it's srozen).
@@ -69,7 +69,7 @@ describe('RecipeResolver', () => {
       `
     });
     const recipe = manifest.recipes[0];
-    const arc = createArc(manifest);
+    const arc = await createArc(manifest);
     const resolver = new RecipeResolver(arc);
     const result = await resolver.resolve(recipe);
     assert.isFalse(result.isResolved());
@@ -86,7 +86,7 @@ describe('RecipeResolver', () => {
       `
     });
     const recipe = manifest.recipes[0];
-    const arc = createArc(manifest);
+    const arc = await createArc(manifest);
     const resolver = new RecipeResolver(arc);
     assert.isNull(await resolver.resolve(recipe));
   });

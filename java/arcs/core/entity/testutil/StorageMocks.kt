@@ -20,7 +20,7 @@ import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.mock
 import kotlinx.coroutines.CompletableDeferred
 
-fun mockStorageAdapter(): StorageAdapter<DummyEntity, RawEntity> {
+fun mockStorageAdapter(): StorageAdapter<DummyEntity, DummyEntitySlice, RawEntity> {
   return mock {
     on { referencableToStorable(any()) }.then {
       DummyEntity((it.arguments[0] as RawEntity).id)

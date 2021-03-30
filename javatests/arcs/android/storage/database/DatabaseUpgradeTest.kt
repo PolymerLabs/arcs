@@ -3,17 +3,25 @@ package arcs.android.storage.database
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.map
 import arcs.android.common.transaction
 import arcs.core.util.testutil.LogRule
+import arcs.flags.BuildFlags
+import arcs.flags.testing.BuildFlagsRule
+import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.TruthJUnit.assume
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
-@RunWith(AndroidJUnit4::class)
-class DatabaseUpgradeTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+class DatabaseUpgradeTest(private val parameters: ParameterizedBuildFlags) {
+
+  @get:Rule
+  val rule = BuildFlagsRule.parameterized(parameters)
+
   @get:Rule
   val log = LogRule()
 
@@ -24,6 +32,7 @@ class DatabaseUpgradeTest {
    */
   @Test
   fun canMigrateVersions() {
+    assume().that(BuildFlags.STORAGE_STRING_REDUCTION).isTrue()
     // Record the schema at the final version.
     val finalSchema = getFinalSchema()
 
@@ -99,9 +108,13 @@ class DatabaseUpgradeTest {
   )
 
   private companion object {
+    @JvmStatic
+    @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+    fun params() = ParameterizedBuildFlags.of("STORAGE_STRING_REDUCTION").toList()
+
     // We start from 3 because we didn't record create statements for versions 1 and 2.
     private const val FIRST_RECORDED_VERSION = 3
 
-    private const val FINAL_VERSION = DatabaseImpl.DB_VERSION
+    private val FINAL_VERSION = DatabaseImpl.DB_VERSION
   }
 }

@@ -26,13 +26,11 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.ReferenceModeStoreTestBase
-import arcs.flags.testing.BuildFlagsRule
 import arcs.flags.testing.ParameterizedBuildFlags
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
-import org.junit.Rule
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 
@@ -41,14 +39,15 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 @RunWith(ParameterizedRobolectricTestRunner::class)
 class ReferenceModeStoreDatabaseImplIntegrationTest(
   private val parameters: ParameterizedBuildFlags
-) : ReferenceModeStoreTestBase() {
-
-  @get:Rule val rule = BuildFlagsRule.parameterized(parameters)
+) : ReferenceModeStoreTestBase(parameters) {
 
   companion object {
     @JvmStatic
     @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-    fun params() = ParameterizedBuildFlags.of("STORAGE_STRING_REDUCTION").toList()
+    fun params() = ParameterizedBuildFlags.of(
+      "STORAGE_STRING_REDUCTION",
+      "REFERENCE_MODE_STORE_FIXES"
+    ).toList()
   }
 
   override val TEST_KEY = ReferenceModeStorageKey(

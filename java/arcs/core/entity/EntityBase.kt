@@ -33,6 +33,46 @@ import arcs.core.util.Time
 import arcs.flags.BuildFlags
 import kotlin.reflect.KProperty
 
+/**
+ * This is a convenience for exposing singleton entity fields conveniently in subclasses of
+ * [EntityBase] and other helper classes.
+ *
+ * It will delegate the getter/setter of the property to the `getSingletonValue` and
+ * `setSingletonValue` methods of EntityBase.
+ *
+ * ```kotlin
+ *   var myProperty: String by SingletonProperty(entity)
+ * ```
+ */
+@Suppress("UNCHECKED_CAST")
+class SingletonProperty<T>(private val entity: EntityBase) {
+  operator fun getValue(thisRef: Any?, property: KProperty<*>) =
+    entity.getSingletonValue(property.name) as T
+
+  operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) =
+    entity.setSingletonValue(property.name, value)
+}
+
+/**
+ * This is a convenience for exposing collection entity fields conveniently in subclasses of
+ * [EntityBase] and other helper classes.
+ *
+ * It will delegate the getter/setter of the property to the `getCollectionValue` and
+ * `setCollectionValue` methods of EntityBase.
+ *
+ * ```kotlin
+ *   var myProperty: Set<String> by CollectionProperty(entity)
+ * ```
+ */
+@Suppress("UNCHECKED_CAST")
+class CollectionProperty<T>(private val entity: EntityBase) {
+  operator fun getValue(thisRef: Any?, property: KProperty<*>) =
+    entity.getCollectionValue(property.name) as Set<T>
+
+  operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Set<T>) =
+    entity.setCollectionValue(property.name, value as Set<Any>)
+}
+
 open class EntityBase(
   private val entityClassName: String,
   private val schema: Schema,
@@ -60,46 +100,6 @@ open class EntityBase(
   // it will not be considered a valid field for the entity.
   init {
     reset()
-  }
-
-  /**
-   * This is a convenience for exposing singleton entity fields conveniently in subclasses of
-   * [EntityBase].
-   *
-   * It will delegate the getter/setter of the property to the `getSingletonValue` and
-   * `setSingletonValue` methods.
-   *
-   * ```kotlin
-   *   var myProperty: String by SingletonProperty()
-   * ```
-   */
-  @Suppress("UNCHECKED_CAST")
-  protected inner class SingletonProperty<T> {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>) =
-      getSingletonValue(property.name) as T
-
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) =
-      setSingletonValue(property.name, value)
-  }
-
-  /**
-   * This is a convenience for exposing collection entity fields conveniently in subclasses of
-   * [EntityBase].
-   *
-   * It will delegate the getter/setter of the property to the `getCollectionValue` and
-   * `setCollectionValue` methods.
-   *
-   * ```kotlin
-   *   var myProperty: Set<String> by CollectionProperty()
-   * ```
-   */
-  @Suppress("UNCHECKED_CAST")
-  protected inner class CollectionProperty<T> {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>) =
-      getCollectionValue(property.name) as Set<T>
-
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Set<T>) =
-      setCollectionValue(property.name, value as Set<Any>)
   }
 
   /** Returns the value for the given singleton field. */

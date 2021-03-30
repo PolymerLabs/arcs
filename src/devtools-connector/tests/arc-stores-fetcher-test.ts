@@ -29,7 +29,7 @@ describe('ArcStoresFetcher', () => {
       schema Foo
         value: Text`);
     const runtime = new Runtime({context});
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), inspectorFactory: devtoolsArcInspectorFactory}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), inspectorFactory: devtoolsArcInspectorFactory}));
 
     const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
     const fooStore = await arc.createStore(new SingletonType(foo.type), 'fooStoreName', 'fooStoreId', ['awesome', 'arcs']);
@@ -108,13 +108,14 @@ describe('ArcStoresFetcher', () => {
         value: Text
       particle P in 'p.js'
         foo: reads writes Foo
-      recipe
+      recipe DemoRecipe
         foo: create *
         P
           foo: foo`);
     const runtime = new Runtime({loader, context});
     const arc = runtime.getArcById(await runtime.allocator.startArc({
       arcName: 'demo',
+      planName: 'DemoRecipe',
       storageKeyPrefix: storageKeyPrefixForTest(),
       inspectorFactory: devtoolsArcInspectorFactory
     }));

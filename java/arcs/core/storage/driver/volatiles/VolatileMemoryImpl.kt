@@ -32,11 +32,16 @@ class VolatileMemoryImpl : VolatileMemory {
     key: StorageKey,
     value: VolatileEntry<Data>
   ): VolatileEntry<Data>? = lock.withLock {
-    val originalValue = entries[key]
-    entries[key] = value
-    token = Random.nextInt().toString()
-    listeners.forEach { it(key, value.data) }
-    return@withLock originalValue as VolatileEntry<Data>?
+    val currentEntry: VolatileEntry<Data>? = entries[key] as VolatileEntry<Data>?
+    val isChanged = currentEntry != value
+    if (isChanged) {
+      entries[key] = value
+      token = Random.nextInt().toString()
+      listeners.forEach {
+        it(key, value.data)
+      }
+    }
+    return@withLock currentEntry
   }
 
   @Suppress("UNCHECKED_CAST")

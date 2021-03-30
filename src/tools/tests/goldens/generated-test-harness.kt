@@ -50,9 +50,9 @@ class GoldTestHarness<P : Particle>(
         setOf(Gold_Collection)
     )
 )) {
-    val data: arcs.sdk.ReadWriteSingletonHandle<Gold_Data> by handleMap
-    val allPeople: arcs.sdk.ReadWriteCollectionHandle<Gold_AllPeople> by handleMap
-    val qCollection: arcs.sdk.ReadWriteQueryCollectionHandle<Gold_QCollection, String> by handleMap
-    val alias: arcs.sdk.ReadWriteSingletonHandle<Gold_Alias> by handleMap
-    val collection: arcs.sdk.ReadWriteCollectionHandle<Gold_Collection> by handleMap
+    val data: arcs.sdk.ReadWriteSingletonHandle<Gold_Data, Gold_Data> by handleMap
+    val allPeople: arcs.sdk.ReadWriteCollectionHandle<Gold_AllPeople, Gold_AllPeople> by handleMap
+    val qCollection: arcs.sdk.ReadWriteQueryCollectionHandle<Gold_QCollection, Gold_QCollection, String> by handleMap
+    val alias: arcs.sdk.ReadWriteSingletonHandle<Gold_Alias, Gold_Alias> by handleMap
+    val collection: arcs.sdk.ReadWriteCollectionHandle<Gold_Collection, Gold_Collection> by handleMap
 }

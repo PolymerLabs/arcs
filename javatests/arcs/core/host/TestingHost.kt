@@ -89,23 +89,23 @@ open class TestingHost(
   }
 
   /** Create a read/write singleton handle for tests to access an arc's stores. */
-  suspend fun <T : Storable> singletonForTest(
+  suspend fun <E : I, I : Storable> singletonForTest(
     arcId: ArcId,
     particleName: String,
     handleName: String
-  ): ReadWriteSingletonHandle<T> {
+  ): ReadWriteSingletonHandle<E, I> {
     @Suppress("UNCHECKED_CAST")
-    return createHandleForTest(arcId, particleName, handleName) as ReadWriteSingletonHandle<T>
+    return createHandleForTest(arcId, particleName, handleName) as ReadWriteSingletonHandle<E, I>
   }
 
   /** Create a read/write collection handle for tests to access an arc's stores. */
-  suspend fun <T : Storable> collectionForTest(
+  suspend fun <E : I, I : Storable> collectionForTest(
     arcId: ArcId,
     particleName: String,
     handleName: String
-  ): ReadWriteCollectionHandle<T> {
+  ): ReadWriteCollectionHandle<E, I> {
     @Suppress("UNCHECKED_CAST")
-    return createHandleForTest(arcId, particleName, handleName) as ReadWriteCollectionHandle<T>
+    return createHandleForTest(arcId, particleName, handleName) as ReadWriteCollectionHandle<E, I>
   }
 
   // TODO: is there a simpler way to do this?

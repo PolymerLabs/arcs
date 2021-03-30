@@ -75,7 +75,7 @@ describe('common particles test', () => {
   it('copy handle test', async () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile('./src/tests/particles/artifacts/copy-collection-test.recipes');
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
 
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
     assert.lengthOf(suggestions, 1);

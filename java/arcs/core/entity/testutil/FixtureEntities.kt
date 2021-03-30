@@ -1,15 +1,22 @@
 package arcs.core.entity.testutil
 
 import arcs.core.common.ReferenceId
+import arcs.core.crdt.testutil.RawEntityFromSchema
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaRegistry
+import arcs.core.data.testutil.SchemaWithReferencedSchemas
 import arcs.core.data.util.ReferencableList
 import arcs.core.entity.Reference
 import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.testutil.DummyStorageKey
+import arcs.core.testutil.FuzzingRandom
+import arcs.core.testutil.IntInRange
+import arcs.core.testutil.RandomPositiveLong
+import arcs.core.testutil.midSizedAlphaNumericString
+import arcs.core.testutil.referencableFieldValueFromFieldTypeDbCompatible
 import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
@@ -19,6 +26,11 @@ typealias FixtureEntity = AbstractTestParticle.FixtureEntity
 typealias InnerEntity = AbstractTestParticle.InnerEntity
 typealias MoreNested = AbstractTestParticle.MoreNested
 typealias EmptyEntity = AbstractTestParticle.EmptyEntity
+// TODO(b/182330900): temporarily aliasing to concrete entities; to be replaced with slice interface
+typealias FixtureEntitySlice = AbstractTestParticle.FixtureEntity
+typealias InnerEntitySlice = AbstractTestParticle.InnerEntity
+typealias MoreNestedSlice = AbstractTestParticle.MoreNested
+typealias EmptyEntitySlice = AbstractTestParticle.EmptyEntity
 
 /**
  * Generates entities with a large number of field types, to be used in tests.
@@ -41,7 +53,7 @@ class FixtureEntities {
       entityId = entityId,
       creationTimestamp = creationTimestamp ?: RawEntity.UNINITIALIZED_TIMESTAMP,
       expirationTimestamp = expirationTimestamp ?: RawEntity.UNINITIALIZED_TIMESTAMP,
-      textField = "text $entityCounter",
+      textField = "text $UNICODE_STRING $entityCounter",
       numField = entityCounter.toDouble(),
       boolField = entityCounter % 2 == 0,
       byteField = entityCounter.toByte(),
@@ -56,7 +68,7 @@ class FixtureEntities {
       bigintField = entityCounter.toBigInt(),
       boolsField = setOf(true, false),
       numsField = setOf(-1.0, entityCounter.toDouble()),
-      textsField = setOf("a", "$entityCounter"),
+      textsField = setOf("a", "$entityCounter", UNICODE_STRING),
       bytesField = setOf(-1, entityCounter.toByte()),
       shortsField = setOf(-1, entityCounter.toShort()),
       intsField = setOf(-1, entityCounter),
@@ -64,7 +76,7 @@ class FixtureEntities {
       charsField = setOf('A', 'B'),
       floatsField = setOf(-1f, entityCounter.toFloat()),
       doublesField = setOf(-1.0, entityCounter.toDouble()),
-      textListField = listOf("text $entityCounter", "text $entityCounter", "text $entityCounter"),
+      textListField = List(3) { "text $UNICODE_STRING $entityCounter" },
       numListField = listOf(entityCounter.toDouble(), entityCounter.toDouble(), 123.0),
       boolListField = listOf(true, false, true),
       longListField = listOf(entityCounter.toLong(), entityCounter.toLong(), 5432L),
@@ -183,6 +195,13 @@ class FixtureEntities {
   )
 
   companion object {
+    /**
+     * A bunch of (valid) unicode characters, to test round-tripping of arbitrary unicode through
+     * the system.
+     */
+    private const val UNICODE_STRING =
+      "⬽⎂⭑⳽℈⫰‱ⅷ⪬⯆ⓕ⌰⯞⿉\t\n={\rx\u001F\uFFBD\uFFB8\uFF9A\uFFFD\u776D\u5B18\u253B\u8A92\u009C"
+
     /** Number of [InnerEntity] instances in each [FixtureEntity]. */
     const val NUM_INNER_ENTITIES = 4
 
@@ -232,6 +251,30 @@ class FixtureEntities {
       SchemaRegistry.register(InnerEntity.SCHEMA)
       SchemaRegistry.register(MoreNested.SCHEMA)
       SchemaRegistry.register(EmptyEntity.SCHEMA)
+    }
+
+    /**
+     * [SchemaWithReferencedSchemas] instance useful in fuzz testing.
+     */
+    private val SCHEMA_WITH_REFERENCED = SchemaWithReferencedSchemas(
+      FixtureEntity.SCHEMA,
+      mapOf(
+        FixtureEntity.SCHEMA.hash to FixtureEntity.SCHEMA,
+        InnerEntity.SCHEMA.hash to InnerEntity.SCHEMA,
+        MoreNested.SCHEMA.hash to MoreNested.SCHEMA,
+        EmptyEntity.SCHEMA.hash to EmptyEntity.SCHEMA
+      )
+    )
+
+    /** Generates a random raw entity of type FixtureEntity, to be used for fuzz testing. */
+    fun randomRawEntity(s: FuzzingRandom): RawEntity {
+      return RawEntityFromSchema(
+        midSizedAlphaNumericString(s),
+        referencableFieldValueFromFieldTypeDbCompatible(s),
+        IntInRange(s, 1, 5),
+        RandomPositiveLong(s),
+        RandomPositiveLong(s)
+      )(SCHEMA_WITH_REFERENCED)
     }
   }
 }

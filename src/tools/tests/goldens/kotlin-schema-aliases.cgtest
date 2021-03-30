@@ -12,6 +12,8 @@ particle P
   h1: reads Person {name: Text}
 -----[results]-----
 typealias P_H1 = AbstractP.Person
+-----[next]-----
+typealias P_H1_Slice = AbstractP.Person
 -----[end]-----
 
 -----[name]-----
@@ -23,8 +25,11 @@ particle P
   h3: reads [&Person {name: Text}]
 -----[results:per-line]-----
 typealias P_H1 = AbstractP.Person
+typealias P_H1_Slice = AbstractP.Person
 typealias P_H2 = AbstractP.Person
+typealias P_H2_Slice = AbstractP.Person
 typealias P_H3 = AbstractP.Person
+typealias P_H3_Slice = AbstractP.Person
 -----[end]-----
 
 -----[name]-----
@@ -45,6 +50,9 @@ particle P
 typealias P_H1 = AbstractP.Person
 typealias P_H1_Home = AbstractP.Accommodation
 typealias P_H1_Home_Address = AbstractP.Address
+typealias P_H1_Home_Address_Slice = AbstractP.Address
+typealias P_H1_Home_Slice = AbstractP.Accommodation
+typealias P_H1_Slice = AbstractP.Person
 -----[end]-----
 
 -----[name]-----
@@ -58,8 +66,11 @@ particle P
   )
 -----[results:per-line]-----
 typealias P_H1_0 = AbstractP.Person
+typealias P_H1_0_Slice = AbstractP.Person
 typealias P_H1_1 = AbstractP.Accommodation
+typealias P_H1_1_Slice = AbstractP.Accommodation
 typealias P_H1_2 = AbstractP.Address
+typealias P_H1_2_Slice = AbstractP.Address
 -----[end]-----
 
 -----[name]-----
@@ -70,7 +81,9 @@ particle T
   h2: writes ~a
 -----[results:per-line]-----
 typealias T_H1 = AbstractT.TInternal1
+typealias T_H1_Slice = AbstractT.TInternal1
 typealias T_H2 = AbstractT.TInternal1
+typealias T_H2_Slice = AbstractT.TInternal1
 -----[end]-----
 
 -----[name]-----
@@ -82,8 +95,11 @@ particle T
   h3: reads writes ~a with {name: Text, age: Number}
 -----[results:per-line]-----
 typealias T_H1 = AbstractT.TInternal1
+typealias T_H1_Slice = AbstractT.TInternal1
 typealias T_H2 = AbstractT.TInternal1
+typealias T_H2_Slice = AbstractT.TInternal1
 typealias T_H3 = AbstractT.TInternal1
+typealias T_H3_Slice = AbstractT.TInternal1
 -----[end]-----
 
 -----[name]-----
@@ -96,7 +112,11 @@ particle T
   h4: reads [~b with {a: Text}]
 -----[results:per-line]-----
 typealias T_H1 = AbstractT.TInternal1
+typealias T_H1_Slice = AbstractT.TInternal1
 typealias T_H2 = AbstractT.TInternal1
+typealias T_H2_Slice = AbstractT.TInternal1
 typealias T_H3 = AbstractT.TInternal2
+typealias T_H3_Slice = AbstractT.TInternal2
 typealias T_H4 = AbstractT.TInternal2
+typealias T_H4_Slice = AbstractT.TInternal2
 -----[end]-----

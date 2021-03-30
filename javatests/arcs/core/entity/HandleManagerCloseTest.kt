@@ -7,6 +7,7 @@ import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
 import arcs.core.entity.testutil.FixtureEntities
 import arcs.core.entity.testutil.FixtureEntity
+import arcs.core.entity.testutil.FixtureEntitySlice
 import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageKey
@@ -175,7 +176,7 @@ class HandleManagerCloseTest {
       ),
       storageKey,
       ttl
-    ) as ReadWriteSingletonHandle<FixtureEntity>
+    ) as ReadWriteSingletonHandle<FixtureEntity, FixtureEntitySlice>
     ).awaitReady()
 
   @Suppress("UNCHECKED_CAST")
@@ -193,6 +194,6 @@ class HandleManagerCloseTest {
       ),
       storageKey,
       ttl
-    ) as ReadWriteCollectionHandle<FixtureEntity>
+    ) as ReadWriteCollectionHandle<FixtureEntity, FixtureEntitySlice>
     ).awaitReady()
 }

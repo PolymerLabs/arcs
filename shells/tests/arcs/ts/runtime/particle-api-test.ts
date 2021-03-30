@@ -20,7 +20,7 @@ describe('particle-api', () => {
       particle TransformationParticle in 'TransformationParticle.js'
         root: consumes Slot
 
-      recipe
+      recipe ApiTestRecipe
         slot0: slot 'rootslotid-root'
         TransformationParticle
           root: consumes slot0`);
@@ -61,7 +61,7 @@ describe('particle-api', () => {
       '*': `defineParticle(({UiParticle}) => class extends UiParticle {});`,
     });
     const runtime = new Runtime({loader, context});
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo'}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', planName: 'ApiTestRecipe'}));
     await arc.idle;
 
     assert.lengthOf(arc.activeRecipe.particles, 1);

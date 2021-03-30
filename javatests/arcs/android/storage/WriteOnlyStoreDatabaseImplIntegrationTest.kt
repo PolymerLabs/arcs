@@ -31,6 +31,7 @@ import arcs.core.storage.FixedDriverFactory
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.RawReference
 import arcs.core.storage.ReferenceModeStore
+import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.UntypedActiveStore
@@ -45,6 +46,8 @@ import arcs.core.storage.keys.DATABASE_NAME_DEFAULT
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.testWriteBackProvider
+import arcs.core.testutil.IntInRange
+import arcs.core.testutil.runFuzzTest
 import arcs.flags.BuildFlags
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
@@ -104,6 +107,23 @@ class WriteOnlyStoreDatabaseImplIntegrationTest {
   }
 
   @Test
+  fun writeOnlyStore_sequenceOfOps_readByReferenceModeStore_FuzzTest() = runFuzzTest {
+    // Write in write-only-mode, read with ref-mode-store.
+    val writeOnlyStack = StoresStack(
+      createStore(true, TEST_KEY),
+      createStore(false, TEST_KEY)
+    )
+    // Write and read with ref-mode-store.
+    val refModeStack = StoresStack(
+      createStore(false, TEST_KEY_2),
+      createStore(false, TEST_KEY_2)
+    )
+    val ops = FixtureEntitiesOperationsGenerator(it, IntInRange(it, 1, 20))
+
+    invariant_storeRoundTrip_sameAsCrdtModelReadBack(writeOnlyStack, refModeStack, ops())
+  }
+
+  @Test
   fun writeOnlyStore_propagatesToDatabase() = runBlockingTest {
     val (writeStore, _) = createStores()
     val entity = entity(ID)
@@ -137,10 +157,10 @@ class WriteOnlyStoreDatabaseImplIntegrationTest {
     return writeStore to readStore
   }
 
-  private suspend fun createStore(writeOnly: Boolean) =
+  private suspend fun createStore(writeOnly: Boolean, storageKey: StorageKey = TEST_KEY) =
     ActiveStore<CrdtData, CrdtOperation, Any?>(
       StoreOptions(
-        TEST_KEY,
+        storageKey,
         CollectionType(EntityType(FixtureEntity.SCHEMA)),
         writeOnly = writeOnly
       ),
@@ -173,6 +193,10 @@ class WriteOnlyStoreDatabaseImplIntegrationTest {
     private val TEST_KEY = ReferenceModeStorageKey(
       DatabaseStorageKey.Persistent("entities", HASH),
       DatabaseStorageKey.Persistent("set", HASH)
+    )
+    private val TEST_KEY_2 = ReferenceModeStorageKey(
+      DatabaseStorageKey.Persistent("entities2", HASH),
+      DatabaseStorageKey.Persistent("set2", HASH)
     )
   }
 }

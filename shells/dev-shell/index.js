@@ -127,7 +127,7 @@ async function createRecipeArc(recipe, runtime, index) {
   // attach arc to bespoke shell ui
   const slotObserver = new SlotObserver(arcPanel.shadowRoot);
   // construct the arc
-  const arc = runtime.getArcById(runtime.allocator.newArc({arcId, slotObserver, ...extraArcParams}));
+  const arc = runtime.getArcById(await runtime.allocator.startArc({arcId, slotObserver, ...extraArcParams}));
   arcPanel.attachArc(arc);
   arc.arcPanel = arcPanel;
   try {

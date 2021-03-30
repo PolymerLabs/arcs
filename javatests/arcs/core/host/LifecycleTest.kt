@@ -119,7 +119,8 @@ class LifecycleTest {
     val name = "SingleReadHandleParticle"
     val arc = allocator.startArcForPlan(SingleReadHandleTestPlan).waitForStart()
     val particle: SingleReadHandleParticle = testHost.getParticle(arc.id, name)
-    val data = testHost.singletonForTest<SingleReadHandleParticle_Data>(arc.id, name, "data")
+    val data = testHost.singletonForTest<
+      SingleReadHandleParticle_Data, SingleReadHandleParticle_Data_Slice>(arc.id, name, "data")
 
     data.dispatchStore(SingleReadHandleParticle_Data(5.0))
     arc.stop()
@@ -152,7 +153,8 @@ class LifecycleTest {
     val name = "SingleWriteHandleParticle"
     val arc = allocator.startArcForPlan(SingleWriteHandleTestPlan).waitForStart()
     val particle: SingleWriteHandleParticle = testHost.getParticle(arc.id, name)
-    val data = testHost.singletonForTest<SingleWriteHandleParticle_Data>(arc.id, name, "data")
+    val data = testHost.singletonForTest<
+      SingleWriteHandleParticle_Data, SingleWriteHandleParticle_Data_Slice>(arc.id, name, "data")
 
     data.dispatchStore(SingleWriteHandleParticle_Data(12.0))
     arc.stop()
@@ -182,10 +184,14 @@ class LifecycleTest {
     val name = "MultiHandleParticle"
     val arc = allocator.startArcForPlan(MultiHandleTestPlan).waitForStart()
     val particle: MultiHandleParticle = testHost.getParticle(arc.id, name)
-    val data = testHost.singletonForTest<MultiHandleParticle_Data>(arc.id, name, "data")
-    val list = testHost.collectionForTest<MultiHandleParticle_List>(arc.id, name, "list")
-    val result = testHost.collectionForTest<MultiHandleParticle_Result>(arc.id, name, "result")
-    val config = testHost.singletonForTest<MultiHandleParticle_Config>(arc.id, name, "config")
+    val data = testHost.singletonForTest<
+      MultiHandleParticle_Data, MultiHandleParticle_Data_Slice>(arc.id, name, "data")
+    val list = testHost.collectionForTest<
+      MultiHandleParticle_List, MultiHandleParticle_List_Slice>(arc.id, name, "list")
+    val result = testHost.collectionForTest<
+      MultiHandleParticle_Result, MultiHandleParticle_Result_Slice>(arc.id, name, "result")
+    val config = testHost.singletonForTest<
+      MultiHandleParticle_Config, MultiHandleParticle_Config_Slice>(arc.id, name, "config")
 
     data.dispatchStore(MultiHandleParticle_Data(3.2))
     list.dispatchStore(MultiHandleParticle_List("hi"))
@@ -236,8 +242,10 @@ class LifecycleTest {
     // TODO: allow test handles to persist across arc shutdown?
     val makeHandles = suspend {
       Pair(
-        testHost.singletonForTest<PausingParticle_Data>(arc.id, name, "data"),
-        testHost.collectionForTest<PausingParticle_List>(arc.id, name, "list")
+        testHost.singletonForTest<
+          PausingParticle_Data, PausingParticle_Data_Slice>(arc.id, name, "data"),
+        testHost.collectionForTest<
+          PausingParticle_List, PausingParticle_List_Slice>(arc.id, name, "list")
       )
     }
     val (data1, list1) = makeHandles()
@@ -359,8 +367,10 @@ class LifecycleTest {
     val name = "UpdateDeltasParticle"
     val arc = allocator.startArcForPlan(UpdateDeltasTestPlan).waitForStart()
     val particle: UpdateDeltasParticle = testHost.getParticle(arc.id, name)
-    val sng = testHost.singletonForTest<UpdateDeltasParticle_Sng>(arc.id, name, "sng")
-    val col = testHost.collectionForTest<UpdateDeltasParticle_Col>(arc.id, name, "col")
+    val sng = testHost.singletonForTest<
+      UpdateDeltasParticle_Sng, UpdateDeltasParticle_Sng_Slice>(arc.id, name, "sng")
+    val col = testHost.collectionForTest<
+      UpdateDeltasParticle_Col, UpdateDeltasParticle_Col_Slice>(arc.id, name, "col")
 
     sng.dispatchStore(UpdateDeltasParticle_Sng(1))
     val two = UpdateDeltasParticle_Sng(2)
@@ -448,7 +458,8 @@ class LifecycleTest {
       arc.onError { deferred.complete(arc.arcState) }
 
       val name = "FailingReadParticle"
-      val data = testHost.singletonForTest<FailingReadParticle_Data>(arc.id, name, "data")
+      val data = testHost.singletonForTest<
+        FailingReadParticle_Data, FailingReadParticle_Data_Slice>(arc.id, name, "data")
       data.dispatchStore(FailingReadParticle_Data())
 
       val state = deferred.await()

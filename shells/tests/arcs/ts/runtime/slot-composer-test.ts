@@ -33,7 +33,7 @@ async function init(recipeStr) {
   runtime.context = await runtime.parse(recipeStr);
 
   const observer = new SlotTestObserver();
-  const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'test-arc', slotObserver: observer}));
+  const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-arc', slotObserver: observer}));
 
   const planner = new Planner();
   const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
@@ -105,7 +105,7 @@ recipe
     runtime.context = await runtime.parseFile(manifest);
 
     const slotObserver = new SlotTestObserver();
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver}));
     const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
 
     const suggestion = suggestions.find(s => s.plan.name === 'FilterAndDisplayBooks');
@@ -227,7 +227,7 @@ recipe
     const contextText = `
       particle TransformationParticle in './TransformationParticle.js'
         root: consumes
-      recipe
+      recipe TransformRecipe
         slot0: slot 'rootslotid-root'
         TransformationParticle
           root: consumes slot0
@@ -243,7 +243,12 @@ recipe
         .expectRenderSlot('B', 'detail')
         ;
 
-    await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver});
+    await runtime.allocator.startArc({
+      arcName: 'demo',
+      storageKeyPrefix: storageKeyPrefixForTest(),
+      planName: 'TransformRecipe',
+      slotObserver
+    });
 
     await slotObserver.expectationsCompleted();
   });

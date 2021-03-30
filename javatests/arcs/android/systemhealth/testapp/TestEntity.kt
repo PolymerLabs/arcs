@@ -17,12 +17,21 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SchemaRegistry
+import arcs.core.entity.SingletonProperty
 import arcs.core.storage.RawReference
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.sdk.Entity
 import arcs.sdk.EntityBase
 import arcs.sdk.EntitySpec
+
+interface TestEntitySlice : Entity {
+  var text: String
+  var number: Double
+  var boolean: Boolean
+  var inlineEntity: InlineTestEntity
+}
 
 class TestEntity(
   text: String = "",
@@ -31,12 +40,12 @@ class TestEntity(
   inlineText: String = "",
   var rawReference: RawReference? = null,
   val id: String? = null
-) : EntityBase("TestEntity", SCHEMA, id) {
+) : EntityBase("TestEntity", SCHEMA, id), TestEntitySlice {
 
-  var text: String by SingletonProperty()
-  var number: Double by SingletonProperty()
-  var boolean: Boolean by SingletonProperty()
-  var inlineEntity: InlineTestEntity by SingletonProperty()
+  override var text: String by SingletonProperty(this)
+  override var number: Double by SingletonProperty(this)
+  override var boolean: Boolean by SingletonProperty(this)
+  override var inlineEntity: InlineTestEntity by SingletonProperty(this)
 
   init {
     this.text = text
@@ -163,7 +172,7 @@ class TestEntity(
 class InlineTestEntity(
   text: String = ""
 ) : EntityBase(ENTITY_CLASS_NAME, SCHEMA, isInlineEntity = true) {
-  var text: String? by SingletonProperty()
+  var text: String? by SingletonProperty(this)
 
   init {
     this.text = text

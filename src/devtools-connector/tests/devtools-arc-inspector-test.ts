@@ -41,7 +41,7 @@ describe('DevtoolsArcInspector', () => {
         P
           foo: foo`);
     const runtime = new Runtime({loader, context});
-    const arc = runtime.getArcById(runtime.allocator.newArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), inspectorFactory: devtoolsArcInspectorFactory}));
+    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), inspectorFactory: devtoolsArcInspectorFactory}));
 
     const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
     const fooStore = await arc.createStore(new SingletonType(foo.type), undefined, 'fooStore');
@@ -70,7 +70,6 @@ describe('DevtoolsArcInspector', () => {
       spec: {
         name: 'P',
         description: null,
-        external: false,
         implFile: 'p.js',
         modality: ['dom'],
         slotConnections: [],

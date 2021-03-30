@@ -37,8 +37,8 @@ describe('SearchTokensToHandles', () => {
         {"root": {}, "locations": {}}
     `);
 
-    const arc = StrategyTestHelper.createTestArc(manifest);
-    await arc._registerStore(arc.context.findStoreById('thing-id'), ['mything']);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
+    await arc.arcInfo.registerStore(arc.context.findStoreById('thing-id'), ['mything']);
 
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
@@ -77,7 +77,7 @@ recipe
     inFoos: reads h0
     outFoo: writes h1
     `));
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArc(manifest);
     arc.context.imports.push(storeManifest);
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());

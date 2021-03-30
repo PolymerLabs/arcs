@@ -86,9 +86,6 @@ export interface Particle extends Comparable<Particle> {
   // TODO(shanestephens): what is this?
   matches(particle: Particle): boolean;
 
-  // TODO(shanestephens): we can probably delete all of this.
-  isExternalParticle(): boolean;
-
   // TODO(shanestephens): should these be on a separate constructor interface?
   addSlotConnection(name: string): SlotConnection;
   addUnnamedConnection(): HandleConnection;

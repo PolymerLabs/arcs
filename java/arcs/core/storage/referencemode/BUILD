@@ -20,5 +20,7 @@ arcs_kt_library(
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
+        "//java/arcs/flags:build_flags",
+        "//java/arcs/flags:flags-kt",
     ],
 )

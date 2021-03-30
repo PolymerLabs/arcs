@@ -21,13 +21,13 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Time
 
-/** Converts instances of developer-facing type [T] into a raw storage instances of type [R]. */
-sealed class StorageAdapter<T : Storable, R : Referencable> {
-  /** Converts a [Storable] of type [T] into a [Referencable] of type [R]. */
-  abstract fun storableToReferencable(value: T): R
+/** Converts between developer-facing types [E] and [I] and raw storage instances of type [R]. */
+sealed class StorageAdapter<E : Storable, I : Storable, R : Referencable> {
+  /** Converts a [Storable] of type [I] into a [Referencable] of type [R]. */
+  abstract fun storableToReferencable(value: I): R
 
-  /** Converts a [Referencable] of type [R] into a [Storable] of type [T]. */
-  abstract fun referencableToStorable(referencable: R): T
+  /** Converts a [Referencable] of type [R] into a [Storable] of type [E]. */
+  abstract fun referencableToStorable(referencable: R): E
 
   /** Checks if the [Referencable] is expired (its expiration time is in the past). */
   abstract fun isExpired(value: R): Boolean
@@ -55,22 +55,22 @@ sealed class StorageAdapter<T : Storable, R : Referencable> {
     }
   }
 
-  /** Returns the ID of the given [Referencable]. */
-  abstract fun getId(value: T): String?
+  /** Returns the ID of the given [Storable]. */
+  abstract fun getId(value: I): String?
 }
 
 /** [StorageAdapter] for converting [Entity] to/from [RawEntity]. */
-class EntityStorageAdapter<T : Entity>(
+class EntityStorageAdapter<E : I, I : Entity>(
   private val handleName: String,
   private val idGenerator: Id.Generator,
-  private val entitySpec: EntitySpec<T>,
+  private val entitySpec: EntitySpec<E>,
   private val ttl: Ttl,
   private val time: Time,
   private val dereferencerFactory: EntityDereferencerFactory,
   private val storageKey: StorageKey,
   private val storeSchema: Schema? = null
-) : StorageAdapter<T, RawEntity>() {
-  override fun storableToReferencable(value: T): RawEntity {
+) : StorageAdapter<E, I, RawEntity>() {
+  override fun storableToReferencable(value: I): RawEntity {
     value.ensureEntityFields(idGenerator, handleName, time, ttl)
 
     val rawEntity = value.serialize(storeSchema)
@@ -88,7 +88,7 @@ class EntityStorageAdapter<T : Entity>(
     return rawEntity
   }
 
-  override fun referencableToStorable(referencable: RawEntity): T {
+  override fun referencableToStorable(referencable: RawEntity): E {
     dereferencerFactory.injectDereferencers(entitySpec.SCHEMA, referencable)
     return entitySpec.deserialize(referencable)
   }
@@ -98,7 +98,7 @@ class EntityStorageAdapter<T : Entity>(
       value.expirationTimestamp < time.currentTimeMillis
   }
 
-  override fun getId(value: T) = value.entityId
+  override fun getId(value: I) = value.entityId
 }
 
 /** [StorageAdapter] for converting [Reference] to/from [StorageReference]. */
@@ -108,7 +108,7 @@ class ReferenceStorageAdapter<E : Entity>(
   private val ttl: Ttl,
   private val time: Time,
   private val storageKey: StorageKey
-) : StorageAdapter<Reference<E>, RawReference>() {
+) : StorageAdapter<Reference<E>, Reference<E>, RawReference>() {
   override fun storableToReferencable(value: Reference<E>): RawReference {
     value.ensureTimestampsAreSet(time, ttl)
     val referencable = value.toReferencable()

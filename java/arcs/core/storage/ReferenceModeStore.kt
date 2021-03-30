@@ -262,7 +262,17 @@ class ReferenceModeStore private constructor(
       is ProxyMessage.Operations -> {
         val containerOps = mutableListOf<CrdtOperation>()
         val upstreamOps = mutableListOf<RefModeStoreOp>()
-        proxyMessage.operations.toBridgingOps(backingStore.storageKey).forEach { op ->
+        val ops = if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
+          proxyMessage.operations.toBridgingOps(
+            backingStore.storageKey,
+            ::itemVersionGetter
+          )
+        } else {
+          proxyMessage.operations.toBridgingOps(
+            backingStore.storageKey
+          )
+        }
+        ops.forEach { op ->
           when (op) {
             is BridgingOperation.UpdateSingleton,
             is BridgingOperation.ClearSingleton -> {
@@ -599,10 +609,18 @@ class ReferenceModeStore private constructor(
 
         val backingModel = getLocalData(refId)
 
-        // If the version that was requested is newer than what the backing store has,
-        // consider it pending.
-        if (version dominates backingModel.versionMap) {
-          pendingIds += RawReference(refId, backingStore.storageKey, version)
+        if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
+          // if the backing store version is not newer than the version that was requested, consider
+          // it pending.
+          if (backingModel.versionMap doesNotDominate version) {
+            pendingIds += RawReference(refId, backingStore.storageKey, version)
+          }
+        } else {
+          // If the version that was requested is newer than what the backing store has,
+          // consider it pending.
+          if (version dominates backingModel.versionMap) {
+            pendingIds += RawReference(refId, backingStore.storageKey, version)
+          }
         }
       }
     }

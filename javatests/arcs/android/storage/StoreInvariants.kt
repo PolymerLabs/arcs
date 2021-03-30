@@ -38,6 +38,29 @@ suspend fun invariant_storeRoundTrip_sameAsCrdtModel(
   assertThat(model.values).isEqualTo(set.values)
 }
 
+/**
+ * Given a list of [ops], applies them to [stack1] (write through one store, read back through the
+ * other). Then compares it to sending an equivalent CrdtModel (to which the same [ops] are applied)
+ * through the second stack.
+ */
+suspend fun invariant_storeRoundTrip_sameAsCrdtModelReadBack(
+  stack1: StoresStack,
+  stack2: StoresStack,
+  ops: List<CrdtSet.Operation<RawEntity>>
+) {
+  stack1.writeStore.onProxyMessage(ProxyMessage.Operations(ops, null))
+  val model1 = getModelFromStore(stack1.readStore)
+  stack2.writeStore.onProxyMessage(ProxyMessage.ModelUpdate(applyOpsToSet(ops).data, null))
+  val model2 = getModelFromStore(stack2.readStore)
+
+  assertThat(model1).isEqualTo(model2)
+}
+
+data class StoresStack(
+  val writeStore: UntypedActiveStore,
+  val readStore: UntypedActiveStore
+)
+
 private suspend fun getModelFromStore(store: UntypedActiveStore): CrdtSet.Data<RawEntity> {
   val modelReceived = CompletableDeferred<CrdtSet.Data<RawEntity>>()
   val callbackToken = store.on {
