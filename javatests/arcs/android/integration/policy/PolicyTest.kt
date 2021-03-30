@@ -121,8 +121,8 @@ class PolicyTest {
         .storageKey
 
       // And Thing {a, b, c} is written to storage (RAM)
-      assertStorageContains(keyAB, setOf("a", "b"))
-      assertStorageContains(keyBC, setOf("b", "c"))
+      assertStorageContains(keyAB, singletons = setOf("a", "b"))
+      assertStorageContains(keyBC, singletons = setOf("b", "c"))
 
       // And the egress data with fields Thing {a, b} will be exfiltrated (filtered with no
       // output read) after 2 hours have passed.
@@ -154,7 +154,7 @@ class PolicyTest {
 
       // Then Thing {a, b} data persists after the arc is finished
       env.stopArc(arc)
-      assertStorageContains(keyAB, setOf("a", "b"))
+      assertStorageContains(keyAB, singletons = setOf("a", "b"))
 
       // And Thing {a, b} data will be deleted at Arcs' runtime end
       env.stopRuntime()
