@@ -704,6 +704,7 @@ class DatabaseImpl(
     }
     stats.insertUpdate.timeSuspending { counters ->
       // Use an assignment to make the when-expression required to be exhaustive.
+      @Suppress("UNUSED_VARIABLE")
       val unused = when (op) {
         is DatabaseOp.AddToCollection -> addToCollection(storageKey, op, counters)
         is DatabaseOp.RemoveFromCollection ->

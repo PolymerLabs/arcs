@@ -6,6 +6,7 @@ import arcs.core.storage.Driver
 import arcs.core.storage.StorageKey
 import kotlin.reflect.KClass
 
+@Suppress("UNCHECKED_CAST")
 class FakeDriver<T : Any>(
   override val storageKey: StorageKey,
   override val dataClass: KClass<T> = CrdtCount.Data::class as KClass<T>

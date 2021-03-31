@@ -12,9 +12,11 @@ package arcs.core.util.statistics
 
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class TransactionStatisticsImplTest {
   private val testTime = FakeTime()
   private val transactionStatisticsImpl = TransactionStatisticsImpl(testTime)

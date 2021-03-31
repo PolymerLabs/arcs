@@ -246,7 +246,7 @@ class AllocatorUnitTest {
   @Test
   fun lookupArcHost_throwsWhenNotFound() = scope.runBlockingTest {
     assertFailsWith<ArcHostNotFoundException> {
-      allocator.lookupArcHost(arcHost = "Definitely not registered")
+      allocator.lookupArcHost(hostId = "Definitely not registered")
     }
   }
 

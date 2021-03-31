@@ -1,9 +1,3 @@
-package arcs.core.util.statistics
-
-import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.test.runBlockingTest
-import org.junit.Test
-
 /*
  * Copyright 2021 Google LLC.
  *
@@ -14,7 +8,14 @@ import org.junit.Test
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+package arcs.core.util.statistics
 
+import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runBlockingTest
+import org.junit.Test
+
+@OptIn(ExperimentalCoroutinesApi::class)
 class TransactionStatisticsSinkTest {
   class TestTransactionStatisticsSink : TransactionStatisticsSink {
     var traceCalled = false

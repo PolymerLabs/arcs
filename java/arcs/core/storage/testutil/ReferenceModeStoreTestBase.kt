@@ -142,6 +142,7 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
     logRule("ModelUpdate sent")
 
     val actor = activeStore.crdtKey
+    @Suppress("UNCHECKED_CAST")
     val capturedCollection =
       activeStore.containerStore.driver.getStoredDataForTesting() as CrdtSet.DataImpl<RawReference>
 
@@ -207,6 +208,7 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
       )
     )
 
+    @Suppress("UNCHECKED_CAST")
     val capturedPeople =
       activeStore.containerStore.driver.getStoredDataForTesting() as CrdtSet.DataImpl<RawReference>
 
@@ -392,6 +394,7 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
     storeHelper.sendAddOp(bob)
 
     // Verify that they've been stored.
+    @Suppress("UNCHECKED_CAST")
     val storedRefs = activeStore.containerStore.getLocalData() as CrdtSet.Data<RawReference>
     assertThat(storedRefs.values.keys).containsExactly("id1", "id2")
 
@@ -404,6 +407,7 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
     // Clear!
     storeHelper.sendCollectionClearOp()
 
+    @Suppress("UNCHECKED_CAST")
     val clearedRefs = activeStore.containerStore.getLocalData() as CrdtSet.Data<RawReference>
     assertThat(clearedRefs.values.keys).isEmpty()
 

@@ -171,8 +171,6 @@ class WriteOnlyStorageProxyImplTest {
   @Test
   fun applyOpsSucceeds() = runTest {
     val proxy = mockProxy()
-    val onReady: () -> Unit = mock()
-
     assertThat(proxy.applyOps(listOf(mockCrdtOperation, mockCrdtOperation)).await()).isTrue()
     assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
       ProxyMessage.Operations<CrdtData, CrdtOperation, String>(
