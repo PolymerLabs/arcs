@@ -158,6 +158,7 @@ class PolicyTest {
 
       // And Thing {a, b} data will be deleted at Arcs' runtime end
       env.stopRuntime()
+      env.triggerCleanupWork()
       assertThat(env.getDatabaseEntities(keyAB, AbstractIngressThing.Thing.SCHEMA)).isEmpty()
     }
 
