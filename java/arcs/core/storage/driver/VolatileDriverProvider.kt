@@ -81,12 +81,12 @@ class VolatileDriverProvider : DriverProvider {
   }
 
   override suspend fun getEntitiesCount(inMemory: Boolean): Long {
-    if (inMemory) {
-      arcMemoryMutex.withLock {
-        return arcMemories.values.map { it.memory.count() }.sum()
-      }
+    if (!inMemory) {
+      return 0L
     }
-    return 0L
+    arcMemoryMutex.withLock {
+      return arcMemories.values.map { it.memory.count() }.sum()
+    }
   }
 
   private suspend fun deactivateDriverOrLogWarning(driver: VolatileDriver<*>) {
