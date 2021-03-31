@@ -2275,10 +2275,10 @@ class DatabaseImpl(
 
   companion object {
     @VisibleForTesting
-    val DB_VERSION = if (BuildFlags.STORAGE_STRING_REDUCTION) {
-      7
-    } else {
-      6
+    val DB_VERSION get() = when {
+      BuildFlags.STORAGE_STRING_REDUCTION && BuildFlags.REFERENCE_MODE_STORE_FIXES -> 8
+      BuildFlags.STORAGE_STRING_REDUCTION -> 7
+      else -> 6
     }
 
     // Crdt actor used for edits applied by this class.
@@ -2592,6 +2592,7 @@ class DatabaseImpl(
     private val CREATE_VERSION_4 = CREATE_VERSION_3
     private val CREATE_VERSION_5 = CREATE_VERSION_3
     private val CREATE_VERSION_7 = CREATE_VERSION_6
+    private val CREATE_VERSION_8 = CREATE_VERSION_6
 
     private val DROP_VERSION_2 =
       """
@@ -2631,6 +2632,9 @@ class DatabaseImpl(
     private val VERSION_7_MIGRATION =
       listOf(DROP_VERSION_3, CREATE_VERSION_7).flatten().toTypedArray()
 
+    private val VERSION_8_MIGRATION =
+      listOf(DROP_VERSION_3, CREATE_VERSION_8).flatten().toTypedArray()
+
     @VisibleForTesting
     val MIGRATION_STEPS = mapOf(
       2 to VERSION_2_MIGRATION,
@@ -2638,7 +2642,8 @@ class DatabaseImpl(
       4 to VERSION_4_MIGRATION,
       5 to VERSION_5_MIGRATION,
       6 to VERSION_6_MIGRATION,
-      7 to VERSION_7_MIGRATION
+      7 to VERSION_7_MIGRATION,
+      8 to VERSION_8_MIGRATION
     )
 
     @VisibleForTesting
@@ -2647,7 +2652,8 @@ class DatabaseImpl(
       4 to CREATE_VERSION_4,
       5 to CREATE_VERSION_5,
       6 to CREATE_VERSION_6,
-      7 to CREATE_VERSION_7
+      7 to CREATE_VERSION_7,
+      8 to CREATE_VERSION_8
     )
 
     private val CREATE = checkNotNull(CREATES_BY_VERSION[DB_VERSION])

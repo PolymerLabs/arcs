@@ -6,11 +6,9 @@ import androidx.test.core.app.ApplicationProvider
 import arcs.android.common.map
 import arcs.android.common.transaction
 import arcs.core.util.testutil.LogRule
-import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.TruthJUnit.assume
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,7 +30,6 @@ class DatabaseUpgradeTest(private val parameters: ParameterizedBuildFlags) {
    */
   @Test
   fun canMigrateVersions() {
-    assume().that(BuildFlags.STORAGE_STRING_REDUCTION).isTrue()
     // Record the schema at the final version.
     val finalSchema = getFinalSchema()
 
@@ -110,11 +107,14 @@ class DatabaseUpgradeTest(private val parameters: ParameterizedBuildFlags) {
   private companion object {
     @JvmStatic
     @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-    fun params() = ParameterizedBuildFlags.of("STORAGE_STRING_REDUCTION").toList()
+    fun params() = ParameterizedBuildFlags.of(
+      "STORAGE_STRING_REDUCTION",
+      "REFERENCE_MODE_STORE_FIXES"
+    ).toList()
 
     // We start from 3 because we didn't record create statements for versions 1 and 2.
     private const val FIRST_RECORDED_VERSION = 3
 
-    private val FINAL_VERSION = DatabaseImpl.DB_VERSION
+    private val FINAL_VERSION get() = DatabaseImpl.DB_VERSION
   }
 }
