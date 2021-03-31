@@ -102,6 +102,18 @@ class VolatileMemoryImplTest {
   }
 
   @Test
+  fun count_whenNoEntries_returnsZero() {
+    assertThat(memory.count()).isEqualTo(0)
+  }
+
+  @Test
+  fun count_whenEntriesAdded_returnsNumberOfElements() = runBlockingTest {
+    memory.set(bar, VolatileEntry(data = 41))
+    memory.set(baz,  VolatileEntry(data = 42))
+    assertThat(memory.count()).isEqualTo(2)
+  }
+
+  @Test
   fun update_returnsValueWithIdOrDefaultFunction() = runBlockingTest {
 
     assertThat(memory.update<Int>(bar) { expectedValue }).isEqualTo(true to expectedValue)
