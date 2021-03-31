@@ -8,12 +8,11 @@ licenses(["notice"])
 
 arcs_kt_jvm_test_suite(
     name = "entity",
-    srcs = glob(
-        ["*.kt"],
-        exclude = ["TypeSlicingTest.kt"]
-    ),
+    srcs = glob(["*.kt"]),
     package = "arcs.core.entity",
     deps = [
+        ":codegen",
+        "//java/arcs/core/allocator",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
@@ -40,7 +39,9 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/flags:flags-kt",
         "//java/arcs/flags:unit_test_build_flags",
         "//java/arcs/flags/testing:testing-kt",
+        "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
+        "//javatests/arcs/core/host:testhost",
         "//third_party/java/junit:junit-android",
         "//third_party/java/mockito",
         "//third_party/java/truth:truth-android",
@@ -51,31 +52,9 @@ arcs_kt_jvm_test_suite(
     ],
 )
 
-# TODO(b/182330900): fold back into the 'entity' rule once type slicing has been fully launched.
-arcs_kt_jvm_test_suite(
-    name = "type_slicing",
-    srcs = ["TypeSlicingTest.kt"],
-    package = "arcs.core.entity",
-    build_flag = "particle_type_slicing",
-    deps = [
-        ":codegen",
-        "//java/arcs/core/allocator",
-        "//java/arcs/core/entity/testutil",
-        "//java/arcs/core/host",
-        "//java/arcs/core/storage/api",
-        "//java/arcs/core/storage/driver:ramdisk",
-        "//java/arcs/jvm/host",
-        "//third_party/java/junit:junit-android",
-        "//third_party/java/truth:truth-android",
-        "//third_party/kotlin/kotlin:kotlin_test",
-        "//third_party/kotlin/kotlinx_coroutines",
-        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
-    ],
-)
-
 arcs_kt_gen(
     name = "codegen",
-    srcs = [
-        "type_slicing.arcs",
-    ],
+    srcs = ["type_slicing.arcs"],
+    # TODO(b/182330900): remove once type slicing has been fully launched.
+    force_enable_type_slicing = True,
 )
