@@ -102,3 +102,28 @@ recipe TtlEgresses
   // And the recipe egresses Thing {b, c}
   EgressBC
     egress: handle2
+
+/// Scenario: A policy-complaint recipe writes ingress-restricted volatile data
+/// that is egressed and is deleted at end of Arc
+
+@egressType('GeneralEgress')
+policy SimpleVolatilePolicy {
+  from Thing access {
+    a,
+    b
+  }
+}
+
+// Given a recipe is compliant with a policy
+@policy('SimpleVolatilePolicy')
+recipe VolatileEgresses
+  // And the recipe's store is volatile
+  handle1: create 'volatile'
+
+  // And the recipe ingresses a schema Thing {a, b, c, d}
+  IngressThing
+    ingress: handle1
+
+  // And the recipe egresses Thing {a, b}
+  EgressAB
+    egress: handle1

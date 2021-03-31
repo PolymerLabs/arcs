@@ -13,6 +13,7 @@ package arcs.android.integration.policy
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.integration.IntegrationEnvironment
 import arcs.core.host.toRegistration
+import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.testutil.LogRule
@@ -177,6 +178,50 @@ class PolicyTest {
       env.triggerCleanupWork()
       assertThat(env.getDatabaseEntities(keyAB, AbstractIngressThing.Thing.SCHEMA)).isEmpty()
     }
+
+  /**
+   * Scenario: A policy-complaint recipe writes ingress-restricted volatile data
+   * that is egressed and is deleted at end of Arc.
+   */
+  @Test
+  fun volatileHandlesWithEgress_writesIngressRestrictedValues_deletedAtArcEnd() = runBlocking {
+    env.addNewHostWith(
+      ::IngressThing.toRegistration(),
+      ::EgressAB.toRegistration()
+    )
+
+    // When the Arc is run...
+    val arc = env.startArc(VolatileEgressesPlan)
+    env.waitForIdle(arc)
+
+    val ingest = env.getParticle<IngressThing>(arc)
+    val egressAB = env.getParticle<EgressAB>(arc)
+
+    withTimeout(30000) {
+      ingest.storeFinished.join()
+      egressAB.handleRegistered.join()
+    }
+
+    // Then data with fields Thing {a, b} will be egressed
+    assertThat(egressAB.fetchThings()).hasSize(6)
+
+    val startingKey = (egressAB.handles.egress.getProxy().storageKey as ReferenceModeStorageKey)
+      .storageKey
+
+    // And only Thing {a, b} is written to volatile memory
+    assertThat(DefaultDriverFactory.get().getEntitiesCount(inMemory = true)).isEqualTo(7)
+
+    env.stopArc(arc)
+    env.triggerCleanupWork()
+
+    // And Thing {a, b} data is deleted after the arc is finished.
+    assertThat(DefaultDriverFactory.get().getEntitiesCount(inMemory = true)).isEqualTo(0)
+
+    env.stopRuntime()
+
+    // And Thing {a, b} data stays deleted after the Arcs runtime ends.
+    assertThat(DefaultDriverFactory.get().getEntitiesCount(inMemory = true)).isEqualTo(0)
+  }
 
   /** Assert that all entities only contains values for the specified fields. */
   private suspend fun assertStorageContains(
