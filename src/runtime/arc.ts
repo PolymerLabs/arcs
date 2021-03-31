@@ -403,19 +403,6 @@ export class Arc implements ArcInterface {
     return this.arcInfo.findStoreById(id);
   }
 
-  getVersionByStore({includeArc=true, includeContext=false}) {
-    const versionById = {};
-    if (includeArc) {
-      for (const id of Object.keys(this.storeInfoById)) {
-        versionById[id] = this.storeInfoById[id].versionToken;
-      }
-    }
-    if (includeContext) {
-      this.context.allStores.forEach(handle => versionById[handle.id] = handle.versionToken);
-    }
-    return versionById;
-  }
-
   toContextString(): string {
     const results: string[] = [];
     const storeInfos = Object.values(this.storeInfoById).sort(compareComparables);

@@ -29,7 +29,7 @@ async function createPlanConsumer(arc: Arc, runtime: Runtime) {
 }
 
 async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
-  assert.isTrue(consumer.result.merge({suggestions}, consumer.arc));
+  assert.isTrue(consumer.result.merge({suggestions}, consumer.arc.arcInfo));
   await consumer.result.flush();
   await new Promise(resolve => setTimeout(resolve, 100));
 }

@@ -168,7 +168,7 @@ export class PlanProducer {
       if (this.result.merge({
           suggestions,
           generations: serializedGenerations,
-          contextual: this.replanOptions.contextual}, this.arc)) {
+          contextual: this.replanOptions.contextual}, this.arc.arcInfo)) {
         // Store suggestions to store.
         await this.result.flush();
 

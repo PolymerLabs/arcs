@@ -339,6 +339,19 @@ export class ArcInfo {
     return this.storeDescriptions.get(storeInfo) || storeInfo.description;
   }
 
+  getVersionByStore({includeArc=true, includeContext=false}) {
+    const versionById = {};
+    if (includeArc) {
+      for (const id of Object.keys(this.storeInfoById)) {
+        versionById[id] = this.storeInfoById[id].versionToken;
+      }
+    }
+    if (includeContext) {
+      this.context.allStores.forEach(handle => versionById[handle.id] = handle.versionToken);
+    }
+    return versionById;
+  }
+
   findInnerArcs(particle: Particle): ArcInfo[] {
     return this.innerArcsByParticle.get(particle) || [];
   }

@@ -10,6 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
+import {ArcInfo} from '../../runtime/arc-info.js';
 import {DescriptionFormatter} from '../../runtime/description-formatter.js';
 import {Description} from '../../runtime/description.js';
 import {Dictionary} from '../../utils/lib-utils.js';
@@ -22,7 +23,6 @@ import {Relevance} from '../../runtime/relevance.js';
 import {SuggestFilter} from './suggest-filter.js';
 import {isRoot} from '../../runtime/arcs-types/particle-spec.js';
 import {StorageService} from '../../runtime/storage/storage-service.js';
-
 
 export type DescriptionProperties = {
   text?: string;
@@ -214,26 +214,8 @@ export class Suggestion {
     return suggestion;
   }
 
-  async instantiate(arc: Arc): Promise<void> {
-    // For now shell is responsible for creating and setting the new arc.
-    assert(arc, `Cannot instantiate suggestion without and arc`);
-
-    const plan = await this.getResolvedPlan(arc);
-    assert(plan && plan.isResolved(), `can't resolve plan: ${this.plan.toString({showUnresolved: true})}`);
-    return arc.instantiate(plan);
-  }
-
-  async getResolvedPlan(arc: Arc): Promise<Recipe> {
-    if (this.plan.isResolved()) {
-      return this.plan;
-    }
-    // TODO(mmandlis): Is this still needed? Find out why and fix.
-    const recipeResolver = new RecipeResolver(arc);
-    return recipeResolver.resolve(this.plan);
-  }
-
-  isUpToDate(arc: Arc, plan: Recipe): boolean {
-    const arcVersionByStoreId = arc.getVersionByStore({includeArc: true, includeContext: true});
+  isUpToDate(arcInfo: ArcInfo, plan: Recipe): boolean {
+    const arcVersionByStoreId = arcInfo.getVersionByStore({includeArc: true, includeContext: true});
     return plan.handles.every(handle => arcVersionByStoreId[handle.id] === this.versionByStore[handle.id]);
   }
 
