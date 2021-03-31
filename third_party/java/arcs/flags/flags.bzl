@@ -103,8 +103,8 @@ ARCS_BUILD_FLAGS = [
     arcs_build_flag(
         name = "reference_mode_store_fixes",
         desc = "Resolve several reference mode store bugs",
-        bug_id = "b/176930336",
-        status = "NOT_READY",
+        bug_id = "b/184008372",
+        status = "READY",
         stopwords = [
             "reference.?mode.?store.?fixes",
         ],
