@@ -19,7 +19,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.testutil.runTest
 import arcs.jvm.host.ExplicitHostRegistry
 import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.Truth.assertWithMessage
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.test.TestCoroutineScope
@@ -137,53 +137,41 @@ class TypeSlicingTest {
   }
 
   fun checkCasts(x: Any, isTop: Boolean, isLeft: Boolean, isRight: Boolean, isBottom: Boolean) {
-    try {
+    if (isTop) {
       (x as Reader_T_Slice).let {
         assertThat(it.a).isEqualTo("abc")
       }
-      assertWithMessage("Cast of $x to Reader_T_Slice succeeded but should have failed")
-        .that(isTop).isTrue()
-    } catch (e: ClassCastException) {
-      assertWithMessage("Cast of $x to Reader_T_Slice failed but should have succeeded")
-        .that(isTop).isFalse()
+    } else {
+      assertFailsWith<ClassCastException> { x as Reader_T_Slice }
     }
 
-    try {
+    if (isLeft) {
       (x as Reader_L_Slice).let {
         assertThat(it.a).isEqualTo("abc")
         assertThat(it.b).isEqualTo(5.7)
       }
-      assertWithMessage("Cast of $x to Reader_L_Slice succeeded but should have failed")
-        .that(isLeft).isTrue()
-    } catch (e: ClassCastException) {
-      assertWithMessage("Cast of $x to Reader_L_Slice failed but should have succeeded")
-        .that(isLeft).isFalse()
+    } else {
+      assertFailsWith<ClassCastException> { x as Reader_L_Slice }
     }
 
-    try {
+    if (isRight) {
       (x as Reader_R_Slice).let {
         assertThat(it.a).isEqualTo("abc")
         assertThat(it.c).isEqualTo(setOf(4, 6))
       }
-      assertWithMessage("Cast of $x to Reader_R_Slice succeeded but should have failed")
-        .that(isRight).isTrue()
-    } catch (e: ClassCastException) {
-      assertWithMessage("Cast of $x to Reader_R_Slice failed but should have succeeded")
-        .that(isRight).isFalse()
+    } else {
+      assertFailsWith<ClassCastException> { x as Reader_R_Slice }
     }
 
-    try {
+    if (isBottom) {
       (x as Reader_B_Slice).let {
         assertThat(it.a).isEqualTo("abc")
         assertThat(it.b).isEqualTo(5.7)
         assertThat(it.c).isEqualTo(setOf(4, 6))
         assertThat(it.d).isEqualTo(true)
       }
-      assertWithMessage("Cast of $x to Reader_B_Slice succeeded but should have failed")
-        .that(isBottom).isTrue()
-    } catch (e: ClassCastException) {
-      assertWithMessage("Cast of $x to Reader_B_Slice failed but should have succeeded")
-        .that(isBottom).isFalse()
+    } else {
+      assertFailsWith<ClassCastException> { x as Reader_B_Slice }
     }
   }
 }

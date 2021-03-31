@@ -118,6 +118,13 @@ ARCS_BUILD_FLAGS = [
             "storage.?key.?reduction",
         ],
     ),
+    # This is an unusual flag:
+    #  - It is not affected by any flag overrides; the value defined here will always
+    #    control the behaviour of affected code.
+    #  - Becuase it is build-time only, the onyl valid status values are NOT_READY and
+    #    LAUNCHED. Once it's turned on, the generated interfaces are available to all
+    #    clients; once any clients start relying on the slicing behaviour, turning the
+    #    flag off will break them.
     arcs_build_flag(
         name = "particle_type_slicing",
         desc = "Output of entity type slicing interfaces in generated particle classes",
