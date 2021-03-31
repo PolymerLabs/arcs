@@ -24,3 +24,6 @@ particle IngressThing in '.IngressThing'
 particle EgressAB in '.EgressAB'
   egress: reads [Thing {a, b}]
 
+@egress('GeneralEgress')
+particle EgressBC in '.EgressBC'
+  egress: reads [Thing {b, c}]
