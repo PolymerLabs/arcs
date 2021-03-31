@@ -281,7 +281,7 @@ export class Planner implements InspectablePlanner {
 
   private async retrieveOrCreateSuggestion(hash: string, plan: Recipe, arc: Arc) : Promise<Suggestion|undefined> {
     const cachedSuggestion = this.getCache().get(hash);
-    if (cachedSuggestion && cachedSuggestion.isUpToDate(arc, plan)) {
+    if (cachedSuggestion && cachedSuggestion.isUpToDate(arc.arcInfo, plan)) {
       return cachedSuggestion;
     }
     const shouldSpeculate = this._shouldSpeculate(plan);

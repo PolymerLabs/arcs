@@ -175,10 +175,10 @@ export class PlanningResult {
     this.onChanged();
   }
 
-  merge({suggestions, lastUpdated = new Date(), generations = [], contextual = true}: PlanningResultOptions, arc: Arc): boolean {
+  merge({suggestions, lastUpdated = new Date(), generations = [], contextual = true}: PlanningResultOptions, arcInfo: ArcInfo): boolean {
     const newSuggestions: Suggestion[] = [];
     const removeIndexes: number[] = [];
-    const arcVersionByStore = arc.getVersionByStore({includeArc: true, includeContext: true});
+    const arcVersionByStore = arcInfo.getVersionByStore({includeArc: true, includeContext: true});
     for (const newSuggestion of suggestions) {
       const index = this.suggestions.findIndex(
           suggestion => suggestion.isEquivalent(newSuggestion));
@@ -208,7 +208,7 @@ export class PlanningResult {
     const jointSuggestions = this.suggestions.filter((suggestion, index) => {
       return !removeIndexes.some(removeIndex => removeIndex === index) &&
               this._isUpToDate(suggestion, arcVersionByStore) &&
-              !matchesRecipe(arc.activeRecipe, suggestion.plan);
+              !matchesRecipe(arcInfo.activeRecipe, suggestion.plan);
     });
     if (jointSuggestions.length === this.suggestions.length && newSuggestions.length === 0) {
       return false;

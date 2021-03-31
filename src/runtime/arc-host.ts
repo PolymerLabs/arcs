@@ -99,7 +99,7 @@ export class ArcHostImpl implements ArcHost {
   }
 
   findArcByParticleId(particleId: string): Arc {
-    return [...this.arcById.values()].find(arc => !!arc.activeRecipe.findParticle(particleId));
+    return [...this.arcById.values()].find(arc => arc.loadedParticleInfo.has(particleId));
   }
 
   async handleForStoreInfo<T extends Type>(storeInfo: StoreInfo<T>, arcInfo: ArcInfo, options?: HandleOptions): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
