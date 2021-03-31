@@ -27,3 +27,10 @@ particle EgressAB in '.EgressAB'
 @egress('GeneralEgress')
 particle EgressBC in '.EgressBC'
   egress: reads [Thing {b, c}]
+
+@isolated
+particle RedactAB in '.RedactAB'
+  input: reads [~a with {a: Text, b: Text}]
+  output: writes [~a]
+  claim output.a is redacted
+  claim output.b is redacted

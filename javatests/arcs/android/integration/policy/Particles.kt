@@ -53,3 +53,18 @@ class EgressBC : AbstractEgressBC() {
 
   fun fetchThings(): Set<Thing> = handles.egress.fetchAll()
 }
+
+class RedactAB : AbstractRedactAB() {
+  lateinit var redactionComplete: Job
+  override fun onReady() {
+    val inputs = handles.input.fetchAll()
+    redactionComplete = handles.output.storeAll(
+      inputs.map {
+        it.copy(
+          a = it.a.hashCode().toString(),
+          b = it.b.hashCode().toString()
+        )
+      }
+    )
+  }
+}
