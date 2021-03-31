@@ -44,6 +44,8 @@ class VolatileMemoryImpl : VolatileMemory {
     return@withLock currentEntry
   }
 
+  override fun count() = entries.size.toLong()
+
   @Suppress("UNCHECKED_CAST")
   override suspend fun <Data : Any> update(
     key: StorageKey,
