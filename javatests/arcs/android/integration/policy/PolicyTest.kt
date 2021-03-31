@@ -205,9 +205,6 @@ class PolicyTest {
     // Then data with fields Thing {a, b} will be egressed
     assertThat(egressAB.fetchThings()).hasSize(6)
 
-    val startingKey = (egressAB.handles.egress.getProxy().storageKey as ReferenceModeStorageKey)
-      .storageKey
-
     // And only Thing {a, b} is written to volatile memory
     assertThat(DefaultDriverFactory.get().getEntitiesCount(inMemory = true)).isEqualTo(7)
 
@@ -221,6 +218,52 @@ class PolicyTest {
 
     // And Thing {a, b} data stays deleted after the Arcs runtime ends.
     assertThat(DefaultDriverFactory.get().getEntitiesCount(inMemory = true)).isEqualTo(0)
+  }
+
+  /**
+   * Scenario: A policy-compliant recipe with @persistent handles egresses data after labeling and
+   * stores ingress-restricted values to disk that is never deleted.
+   */
+  @Test
+  fun persistentHandlesWithEgress_labelsData_IngressRestrictedValues_neverDeleted() = runBlocking {
+    env.addNewHostWith(
+      ::IngressThing.toRegistration(),
+      ::RedactAB.toRegistration(),
+      ::EgressAB.toRegistration()
+    )
+
+    // When the Arc is run...
+    val arc = env.startArc(PersistsLabeledEgressesPlan)
+    env.waitForIdle(arc)
+
+    val ingest = env.getParticle<IngressThing>(arc)
+    val redactAB = env.getParticle<RedactAB>(arc)
+    val egressAB = env.getParticle<EgressAB>(arc)
+
+    withTimeout(30000) {
+      ingest.storeFinished.join()
+      redactAB.redactionComplete.join()
+      egressAB.handleRegistered.join()
+    }
+
+    // Then data with fields Thing {a, b} will be egressed
+    assertThat(egressAB.fetchThings()).hasSize(6)
+
+    val startingKey = (egressAB.handles.egress.getProxy().storageKey as ReferenceModeStorageKey)
+      .storageKey
+
+    // And only Thing {a, b} is written to storage
+    assertStorageContains(startingKey, singletons = setOf("a", "b"))
+
+    env.stopArc(arc)
+
+    // And Thing {a, b} data persists after the arc is run
+    assertStorageContains(startingKey, singletons = setOf("a", "b"))
+
+    env.stopRuntime()
+
+    // And Thing {a, b} data persists after runtime ends
+    assertStorageContains(startingKey, singletons = setOf("a", "b"))
   }
 
   /** Assert that all entities only contains values for the specified fields. */
