@@ -211,7 +211,7 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   async onConstructInnerArc(callback: number, particle: Particle) {
-    const arcInfo = await this.arc.peh.allocator.startArc({arcId: this.arc.generateID('inner'), outerArcId: this.arc.arcInfo.id});
+    const arcInfo = await this.arc.peh.allocator.startArc({arcName: 'inner', outerArcId: this.arc.arcInfo.id});
     this.arc.arcInfo.addInnerArc(particle, arcInfo);
     this.ConstructArcCallback(callback, arcInfo);
   }

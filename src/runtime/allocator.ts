@@ -58,7 +58,9 @@ export class AllocatorImpl implements Allocator {
       arcId = options.arcId;
     } else {
       idGenerator = IdGenerator.newSession();
-      arcId = idGenerator.newArcId(options.arcName);
+      arcId = options.outerArcId
+          ? this.arcInfoById.get(options.outerArcId).generateID(options.arcName)
+          : idGenerator.newArcId(options.arcName);
     }
     assert(arcId);
     idGenerator = idGenerator || IdGenerator.newSession();
@@ -110,7 +112,7 @@ export class AllocatorImpl implements Allocator {
 
     plan = await this.assignStorageKeys(arcInfo.id, plan);
     // Start all partitions.
-    return Promise.all([...partitionByFactory.keys()].map(async factory => {
+    const res = Promise.all([...partitionByFactory.keys()].map(async factory => {
       const host = factory.createHost();
       this.hostById[host.hostId] = host;
 
@@ -137,6 +139,8 @@ export class AllocatorImpl implements Allocator {
 
       return host.start(partition);
     }));
+
+    return res;
   }
 
   async assignStorageKeys(arcId: ArcId, plan: Recipe, idGenerator?: IdGenerator): Promise<Recipe> {
