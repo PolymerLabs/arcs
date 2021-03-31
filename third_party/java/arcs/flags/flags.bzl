@@ -109,6 +109,15 @@ ARCS_BUILD_FLAGS = [
             "reference.?mode.?store.?fixes",
         ],
     ),
+    arcs_build_flag(
+        name = "storagekey_reduction",
+        desc = "Reduce storage size of storage keys",
+        bug_id = "b/179216388",
+        status = "NOT_READY",
+        stopwords = [
+            "storage.?key.?reduction",
+        ],
+    ),
 ]
 
 validate_flag_list(ARCS_BUILD_FLAGS)
