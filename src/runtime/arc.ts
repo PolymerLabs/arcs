@@ -59,7 +59,7 @@ export type ArcOptions = Readonly<{
 @SystemTrace
 export class Arc implements ArcInterface {
   private readonly pecFactories: PecFactory[];
-  public get isSpeculative(): boolean { return this.arcInfo.isSpeculative; };
+  public get isSpeculative(): boolean { return this.arcInfo.isSpeculative; }
   public get isInnerArc(): boolean { return this.arcInfo.isInnerArc; }
   public readonly isStub: boolean;
   public _modality: Modality;
@@ -217,8 +217,6 @@ export class Arc implements ArcInterface {
   }
 
   get activeRecipe() { return this.arcInfo.activeRecipe; }
-  get allRecipes() { return [this.activeRecipe].concat(this.context.allRecipes); }
-  get recipes() { return [this.activeRecipe]; }
   get recipeDeltas() { return this.arcInfo.recipeDeltas; }
 
   loadedParticleSpecs() {
@@ -282,56 +280,27 @@ export class Arc implements ArcInterface {
   // Makes a copy of the arc used for speculative execution.
   async cloneForSpeculativeExecution(): Promise<Arc> {
     const arcInfo = await this.peh.allocator.startArc({arcId: this.generateID(), outerArcId: this.arcInfo.outerArcId, isSpeculative: true});
-    const arc = new Arc({
-      arcInfo,
-      pecFactories: this.pecFactories,
-      loader: this._loader,
-      inspectorFactory: this.inspectorFactory,
-      storageService: this.storageService,
-      driverFactory: this.driverFactory,
-      storageKeyParser: this.storageKeyParser,
-      allocator: this.peh.allocator,
-      host: this.peh.host
-    });
     const storeMap: Map<StoreInfo<Type>, StoreInfo<Type>> = new Map();
-    for (const storeInfo of this.stores) {
+    for (const storeInfo of this.arcInfo.stores) {
       // TODO(alicej): Should we be able to clone a StoreMux as well?
-      const cloneInfo = new StoreInfo({
+      const cloneInfo = await arcInfo.createStoreInfo(storeInfo.type, {
         storageKey: new VolatileStorageKey(this.id, storeInfo.id),
         exists: Exists.MayExist,
-        type: storeInfo.type,
-        id: storeInfo.id});
-      await (await arc.getActiveStore(cloneInfo)).cloneFrom(await this.getActiveStore(storeInfo));
-
+        id: storeInfo.id
+      });
       storeMap.set(storeInfo, cloneInfo);
       if (this.storeDescriptions.has(storeInfo)) {
-        arc.storeDescriptions.set(cloneInfo, this.storeDescriptions.get(storeInfo));
+        arcInfo.storeDescriptions.set(cloneInfo, this.storeDescriptions.get(storeInfo));
       }
     }
 
-    this.loadedParticleInfo.forEach((info, id) => {
-      const stores: Map<string, StoreInfo<Type>> = new Map();
-      info.stores.forEach((store, name) => stores.set(name, storeMap.get(store)));
-      arc.loadedParticleInfo.set(id, {spec: info.spec, stores});
-    });
-
-    const {cloneMap} = this.activeRecipe.mergeInto(arc.activeRecipe);
-
-    this.recipeDeltas.forEach(recipe => arc.recipeDeltas.push({
-      particles: recipe.particles.map(p => cloneMap.get(p)),
-      handles: recipe.handles.map(h => cloneMap.get(h)),
-      slots: recipe.slots.map(s => cloneMap.get(s)),
-      patterns: recipe.patterns
-    }));
+    await this.peh.allocator.runPlanInArc(arcInfo, this.activeRecipe.clone());
+    const arc = this.peh.host.getArcById(arcInfo.id);
 
     for (const innerArc of this.innerArcs) {
       arc.addInnerArc(await innerArc.cloneForSpeculativeExecution());
     }
 
-    for (const v of storeMap.values()) {
-      // FIXME: Tags
-      await arc.arcInfo.registerStore(v, []);
-    }
     return arc;
   }
 
@@ -434,14 +403,6 @@ export class Arc implements ArcInterface {
     return this.arcInfo.findStoreById(id);
   }
 
-  findStoreTags(storeInfo: StoreInfo<Type>): Set<string> {
-    return this.storeTagsById[storeInfo.id] || this.context.findStoreTags(storeInfo);
-  }
-
-  getStoreDescription(storeInfo: StoreInfo<Type>): string {
-    return this.arcInfo.getStoreDescription(storeInfo);
-  }
-
   getVersionByStore({includeArc=true, includeContext=false}) {
     const versionById = {};
     if (includeArc) {
@@ -453,10 +414,6 @@ export class Arc implements ArcInterface {
       this.context.allStores.forEach(handle => versionById[handle.id] = handle.versionToken);
     }
     return versionById;
-  }
-
-  keyForId(id: string): StorageKey {
-    return this.storeInfoById[id].storageKey;
   }
 
   toContextString(): string {
