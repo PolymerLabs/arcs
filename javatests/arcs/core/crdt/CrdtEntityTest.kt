@@ -20,6 +20,7 @@ import arcs.core.crdt.CrdtEntity.Operation.SetSingleton
 import arcs.core.crdt.CrdtEntity.Reference.Companion.defaultReferenceBuilder
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
+import arcs.core.data.testutil.RawEntitySubject.Companion.assertThat
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable

@@ -18,6 +18,7 @@ import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
+import arcs.core.data.testutil.RawEntitySubject.Companion.assertThat
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,7 +49,8 @@ class CrdtSetProtoTest {
   @Test
   fun data_parcelableRoundTrip_works() {
     val data = CrdtSet.DataImpl(
-      versionMap, mutableMapOf(
+      versionMap,
+      mutableMapOf(
         entity1.id to CrdtSet.DataValue(VersionMap("alice" to 1), entity1),
         entity2.id to CrdtSet.DataValue(VersionMap("alice" to 1), entity2)
       )

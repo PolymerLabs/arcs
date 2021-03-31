@@ -6,6 +6,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaRegistry
+import arcs.core.data.testutil.RawEntitySubject.Companion.assertThat
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.RawEntityDereferencer

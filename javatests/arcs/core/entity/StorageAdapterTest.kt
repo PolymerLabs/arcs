@@ -9,6 +9,7 @@ import arcs.core.data.SchemaRegistry
 import arcs.core.data.expression.asExpr
 import arcs.core.data.expression.neq
 import arcs.core.data.expression.text
+import arcs.core.data.testutil.RawEntitySubject.Companion.assertThat
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.InlineDummyEntity

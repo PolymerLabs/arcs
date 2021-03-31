@@ -23,6 +23,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/crdt/testing",
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
+        "//java/arcs/core/data/testutil",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
