@@ -14,12 +14,12 @@ package arcs.core.data.expression
 import arcs.core.data.expression.Expression.FieldExpression
 import arcs.core.data.expression.Expression.QualifiedExpression
 import arcs.core.data.expression.Expression.Scope
-import arcs.core.util.AnyOfParser
 import arcs.core.util.BigInt
 import arcs.core.util.Grammar
 import arcs.core.util.ParseResult
 import arcs.core.util.Parser
 import arcs.core.util.ParserException
+import arcs.core.util.any
 import arcs.core.util.div
 import arcs.core.util.eof
 import arcs.core.util.many
@@ -290,7 +290,7 @@ object PaxelParser : Grammar<Expression<Any>>() {
   override val topLevel by paxelExpression + ows + eof
 
   @Suppress("UNCHECKED_CAST")
-  private fun binaryOp(vararg tokens: String) = ows + AnyOfParser(
+  private fun binaryOp(vararg tokens: String) = ows + any(
     tokens.map { token(it) }.toList()
   ).map { token ->
     Expression.BinaryOp.fromToken(token.trim()) as Expression.BinaryOp<Any?, Any?, Any?>

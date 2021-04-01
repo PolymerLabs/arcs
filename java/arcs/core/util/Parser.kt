@@ -584,6 +584,9 @@ fun <T> optional(parser: Parser<T>) = Optional(parser)
 /** Helper for [ManyOfParser]. */
 fun <T> many(parser: Parser<T>) = ManyOfParser(parser)
 
+/** Helper for [AnyOfParser]. */
+fun <T> any(parsers: List<Parser<T>>) = AnyOfParser(parsers)
+
 /** Helper for [TransformParser]. */
 fun <T, R> Parser<T>.map(f: (T) -> R) = TransformParser(this, f)
 
