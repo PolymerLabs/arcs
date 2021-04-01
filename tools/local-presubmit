@@ -24,7 +24,7 @@ set -x
 ./tools/sigh lint || FAILED=1
 ./tools/sigh webpack
 ./tools/bazelisk ${BAZELRC_OPTS} test --jvmopt="-DArcsStrictMode.strictHandles=true"  //java/... //javatests/... //src/... //particles/...
-./tools/sigh testShells
+# ./tools/sigh testShells
 ./tools/sigh test --all
 
 exit $FAILED
