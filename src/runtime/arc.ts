@@ -51,7 +51,6 @@ export type ArcOptions = Readonly<{
   stub?: boolean;
   inspectorFactory?: ArcInspectorFactory;
   ports?: MessagePort[];
-  modality?: Modality;
   driverFactory: DriverFactory;
   storageKeyParser: StorageKeyParser;
 }>;
@@ -62,7 +61,6 @@ export class Arc implements ArcInterface {
   public get isSpeculative(): boolean { return this.arcInfo.isSpeculative; }
   public get isInnerArc(): boolean { return this.arcInfo.isInnerArc; }
   public readonly isStub: boolean;
-  public _modality: Modality;
   // Public for debug access
   public readonly _loader: Loader;
   private readonly dataChangeCallbacks = new Map<object, Runnable>();
@@ -94,8 +92,7 @@ export class Arc implements ArcInterface {
   readonly volatileMemory = new VolatileMemory();
   private readonly volatileStorageDriverProvider: VolatileStorageDriverProvider;
 
-  constructor({arcInfo, storageService, pecFactories, allocator, host, slotComposer, loader, storageKey, stub, inspectorFactory, modality, driverFactory, storageKeyParser} : ArcOptions) {
-    this.modality = modality;
+  constructor({arcInfo, storageService, pecFactories, allocator, host, slotComposer, loader, storageKey, stub, inspectorFactory, driverFactory, storageKeyParser} : ArcOptions) {
     this.driverFactory = driverFactory;
     this.storageKeyParser = storageKeyParser;
     // TODO: pecFactories should not be optional. update all callers and fix here.
@@ -123,24 +120,8 @@ export class Arc implements ArcInterface {
     return this._loader;
   }
 
-  set modality(modality: Modality) {
-    this._modality = modality;
-  }
-
   get modality(): Modality {
-    let modalities = [];
-    if (this._modality) {
-      modalities.push(this._modality);
-    }
-    // TODO(sjmiles): Modality rules are unclear. Seems to me the Arc should declare it's own modality
-    // but many tests fail without these conditionals. Note that a Modality can represent a set of modalities.
-    if (!this.activeRecipe.isEmpty()) {
-      modalities.push(this.activeRecipe.modality);
-    }
-    if (!modalities.length) {
-      modalities = this.context.allRecipes.map(recipe => recipe.modality);
-    }
-    return Modality.union(modalities);
+    return this.arcInfo.modality;
   }
 
   dispose(): void {

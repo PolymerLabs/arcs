@@ -135,7 +135,9 @@ export class AllocatorImpl implements Allocator {
         arcOptions,
         particles,
         handles,
-        reinstantiate};
+        reinstantiate,
+        modality: arcOptions?.modality
+      };
       arcInfo.partitions.push(partition);
       arcInfo.addSlotContainers(host.slotContainers);
 
@@ -223,19 +225,23 @@ export class SingletonAllocator extends AllocatorImpl {
               public readonly host: ArcHost) {
     super(runtime);
     this.registerArcHost(new SingletonArcHostFactory(host));
+    this.hostById[host.hostId] = host;
   }
 
   protected newArcInfo(options: NewArcInfoOptions & RunArcOptions): ArcInfo {
     const arcInfo = super.newArcInfo(options);
 
     arcInfo.addSlotContainers(this.host.slotContainers);
-    this.host.start({
+    const partition = {
       arcInfo,
       arcOptions: {...options},
       arcHostId: this.host.hostId,
       particles: [],
-      handles: []
-    });
+      handles: [],
+      modality: options.modality
+    };
+    arcInfo.partitions.push(partition);
+    this.host.start(partition);
     return arcInfo;
   }
 

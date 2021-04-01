@@ -61,6 +61,7 @@ export type PlanPartition = Readonly<{
   arcInfo: ArcInfo;
   arcOptions: RunArcOptions;
   arcHostId: string;
+  modality?: Modality;
 }>;
 
 export type DeserializeArcOptions = Readonly<{
@@ -382,5 +383,18 @@ export class ArcInfo {
         this.slotContainers.push(container);
       }
     }
+  }
+
+  get modality(): Modality {
+    const modalities = this.partitions.map(p => p.modality).filter(m => !!m);
+    // TODO(sjmiles): Modality rules are unclear. Seems to me the Arc should declare it's own modality
+    // but many tests fail without these conditionals. Note that a Modality can represent a set of modalities.
+    if (!this.activeRecipe.isEmpty()) {
+      modalities.push(this.activeRecipe.modality);
+    }
+    if (modalities.length === 0) {
+      modalities.push(...this.context.allRecipes.map(recipe => recipe.modality));
+    }
+    return Modality.union(modalities);
   }
 }
