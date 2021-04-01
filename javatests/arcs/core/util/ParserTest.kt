@@ -178,6 +178,22 @@ class ParserTest {
   }
 
   @Test
+  fun testIgnoring_chainedWithPlus() {
+    val ignoreA: IgnoringParser<String> = -token("a")
+    val ignoreB: IgnoringParser<String> = -token("b")
+    val takeC: Parser<String> = token("c")
+    val parser = ignoreA + ignoreB + takeC + ignoreB + ignoreA
+    parser("abcba").map { text, start, end, _ ->
+      assertThat(start).isEqualTo(SourcePosition(0, 0, 0))
+      assertThat(end).isEqualTo(SourcePosition(5, 0, 5))
+      assertThat(text).isEqualTo("c")
+      Success(text, start, end)
+    }.orElse<Nothing> {
+      fail()
+    }
+  }
+
+  @Test
   fun testEof() {
     val hello = token("hello") + eof
     hello("hello").map { match, start, end, _ ->

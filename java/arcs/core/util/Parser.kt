@@ -302,19 +302,21 @@ class Optional<T>(val parser: Parser<T>) : Parser<T?>() {
  */
 class PairOfParser<T, S>(val left: Parser<T>, val right: Parser<S>) : Parser<Pair<T, S>>() {
   override fun invoke(string: String, pos: SourcePosition): ParseResult<Pair<T, S>> =
-    when (val outerResult = left(string, pos).map { v1, s1, e1, c1 ->
-      val result = right(string, e1).map { v2, _, e2, c2 ->
-        Success(Pair(v1, v2), s1, e2, c1 + c2)
+    when (
+      val outerResult = left(string, pos).map { v1, s1, e1, c1 ->
+        val result = right(string, e1).map { v2, _, e2, c2 ->
+          Success(Pair(v1, v2), s1, e2, c1 + c2)
+        }
+        when (result) {
+          is Success<*> -> result as Success<Pair<T, S>>
+          is Failure -> result.consumed(
+            result.consumed + c1,
+            this@PairOfParser.name,
+            result
+          )
+        }
       }
-      when (result) {
-        is Success<*> -> result as Success<Pair<T, S>>
-        is Failure -> result.consumed(
-          result.consumed + c1,
-          this@PairOfParser.name,
-          result
-        )
-      }
-    }) {
+    ) {
       is Success<*> -> outerResult as Success<Pair<T, S>>
       is Failure -> outerResult.causedBy(name)
     }
@@ -555,6 +557,10 @@ operator fun <T, S> IgnoringParser<T>.plus(other: Parser<S>) =
 /** Combines an [Parser] with an [IgnoringParser] ignoring the output of the second. */
 operator fun <T, S> Parser<T>.plus(other: IgnoringParser<S>) =
   PairOfParser(this, other).map { (x, _) -> x }
+
+/** Combines an [IgnoringParser] with a [IgnoringParser] ignoring the output of the first. */
+operator fun <T, S> IgnoringParser<T>.plus(other: IgnoringParser<S>) =
+  IgnoringParser(PairOfParser(this, other))
 
 /** Unary minus as shorthand for ignoring a parser's output. */
 operator fun <T> Parser<T>.unaryMinus() = IgnoringParser(this)
