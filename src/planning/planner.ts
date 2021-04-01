@@ -103,7 +103,7 @@ export class Planner implements InspectablePlanner {
 
   initStrategizer(arc, strategies, ruleset, strategyArgs) {
     strategyArgs = Object.freeze({...strategyArgs});
-    const strategyImpls = strategies.map(strategy => new strategy(arc, strategyArgs));
+    const strategyImpls = strategies.map(strategy => new strategy(arc.arcInfo, strategyArgs));
     return new Strategizer(strategyImpls, [], ruleset);
   }
 

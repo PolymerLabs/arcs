@@ -13,7 +13,7 @@ import {StrategizerWalker, Strategy} from '../strategizer.js';
 export class MatchParticleByVerb extends Strategy {
 
   async generate(inputParams) {
-    const arc = this.arc;
+    const arcInfo = this.arcInfo;
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
       onParticle(recipe, particle) {
         if (particle.name) {
@@ -21,8 +21,8 @@ export class MatchParticleByVerb extends Strategy {
           return undefined;
         }
 
-        const modality = arc.modality.intersection(recipe.modality);
-        const particleSpecs = arc.context.findParticlesByVerb(particle.primaryVerb)
+        const modality = arcInfo.modality.intersection(recipe.modality);
+        const particleSpecs = arcInfo.context.findParticlesByVerb(particle.primaryVerb)
               .filter(spec => spec.isCompatible(modality));
 
         return particleSpecs.map(spec => {

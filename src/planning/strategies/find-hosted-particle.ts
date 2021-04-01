@@ -9,19 +9,19 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Arc} from '../../runtime/arc.js';
 import {HandleConnectionSpec, ParticleSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {Recipe, Particle, constructImmediateValueHandle} from '../../runtime/recipe/lib-recipe.js';
 import {InterfaceType, Type} from '../../types/lib-types.js';
 import {StrategizerWalker, Strategy, StrategyParams} from '../strategizer.js';
+import {ArcInfo} from '../../runtime/arc-info.js';
 
 export class FindHostedParticle extends Strategy {
   async generate(inputParams: StrategyParams) {
-    const arc = this.arc;
+    const arcInfo = this.arcInfo;
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
       onPotentialHandleConnection(recipe: Recipe, particle: Particle, connectionSpec: HandleConnectionSpec) {
         const matchingParticleSpecs = this._findMatchingParticleSpecs(
-            arc, connectionSpec, connectionSpec.type);
+            arcInfo, connectionSpec, connectionSpec.type);
         if (!matchingParticleSpecs) {
           return undefined;
         }
@@ -29,7 +29,7 @@ export class FindHostedParticle extends Strategy {
         for (const particleSpec of matchingParticleSpecs) {
           results.push((recipe, particle, connectionSpec) => {
             const handleConnection = particle.addConnectionName(connectionSpec.name);
-            const handle = constructImmediateValueHandle(handleConnection, particleSpec, arc.generateID());
+            const handle = constructImmediateValueHandle(handleConnection, particleSpec, arcInfo.generateID());
             assert(handle); // Type matching should have been ensure by the checks above;
             handleConnection.connectToHandle(handle);
           });
@@ -38,7 +38,7 @@ export class FindHostedParticle extends Strategy {
       }
 
       private _findMatchingParticleSpecs(
-          arc: Arc, connectionSpec: HandleConnectionSpec, connectionType: Type): ParticleSpec[] {
+          arcInfo: ArcInfo, connectionSpec: HandleConnectionSpec, connectionType: Type): ParticleSpec[] {
         if (!connectionSpec) {
           return undefined;
         }
@@ -48,7 +48,7 @@ export class FindHostedParticle extends Strategy {
         assert(connectionType instanceof InterfaceType);
         const iface = connectionType as InterfaceType;
         const particles: ParticleSpec[] = [];
-        for (const particle of arc.context.allParticles) {
+        for (const particle of arcInfo.context.allParticles) {
           // This is what interfaceInfo.particleMatches() does, but we also do
           // canResolve at the end:
           const ifaceClone = iface.interfaceInfo.cloneWithResolutions(new Map());

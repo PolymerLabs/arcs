@@ -48,7 +48,7 @@ describe('FindRequiredParticles', () => {
     const arcInfo = await runtime.allocator.startArc({arcName: 'test-arc'});
     const arc = runtime.getArcById(arcInfo.id);
     await runtime.allocator.runPlanInArc(arcInfo, recipes[1]);
-    const strategy = new FindRequiredParticle(arc, StrategyTestHelper.createTestStrategyArgs(arc));
+    const strategy = new FindRequiredParticle(arc.arcInfo, StrategyTestHelper.createTestStrategyArgs(arc));
     const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
     const results = await strategy.generateFrom(inputParams);
     const recipe = results[0].result;
@@ -86,7 +86,7 @@ describe('FindRequiredParticles', () => {
     const arcInfo = await runtime.allocator.startArc({arcName: 'test-arc'});
     const arc = runtime.getArcById(arcInfo.id);
     await runtime.allocator.runPlanInArc(arcInfo, recipes[1]);
-    const strategy = new FindRequiredParticle(arc, StrategyTestHelper.createTestStrategyArgs(arc));
+    const strategy = new FindRequiredParticle(arc.arcInfo, StrategyTestHelper.createTestStrategyArgs(arc));
     const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
     const results = await strategy.generateFrom(inputParams);
     const recipe = results[0].result;
@@ -142,7 +142,7 @@ describe('FindRequiredParticles', () => {
     const arcInfo = await runtime.allocator.startArc({arcName: 'test-arc'});
     const arc = runtime.getArcById(arcInfo.id);
     await runtime.allocator.runPlanInArc(arcInfo, recipes[1]);
-    const strategy = new FindRequiredParticle(arc, StrategyTestHelper.createTestStrategyArgs(arc));
+    const strategy = new FindRequiredParticle(arc.arcInfo, StrategyTestHelper.createTestStrategyArgs(arc));
     const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
     const results = await strategy.generateFrom(inputParams);
     const recipe = results[0].result;
@@ -197,7 +197,7 @@ describe('FindRequiredParticles', () => {
     const arcInfo = await runtime.allocator.startArc({arcName: 'test-arc'});
     const arc = runtime.getArcById(arcInfo.id);
     await runtime.allocator.runPlanInArc(arcInfo, recipes[1]);
-    const strategy = new FindRequiredParticle(arc, StrategyTestHelper.createTestStrategyArgs(arc));
+    const strategy = new FindRequiredParticle(arc.arcInfo, StrategyTestHelper.createTestStrategyArgs(arc));
     const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
     const results = await strategy.generateFrom(inputParams);
     const recipe = results[0].result;
@@ -252,7 +252,7 @@ describe('FindRequiredParticles', () => {
     const arc = runtime.getArcById(arcInfo.id);
     await runtime.allocator.runPlanInArc(arcInfo, recipes[1]);
 
-    const strategy = new FindRequiredParticle(arc, StrategyTestHelper.createTestStrategyArgs(arc));
+    const strategy = new FindRequiredParticle(arc.arcInfo, StrategyTestHelper.createTestStrategyArgs(arc));
     const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
     const results = await strategy.generateFrom(inputParams);
     const recipe = results[0].result;

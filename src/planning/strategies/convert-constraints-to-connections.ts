@@ -18,7 +18,7 @@ type Obligation = {from: EndPoint, to: EndPoint, direction: Direction, relaxed: 
 
 export class ConvertConstraintsToConnections extends Strategy {
   async generate(inputParams: StrategyParams): Promise<Descendant<Recipe>[]> {
-    const arcModality = this.arc.modality;
+    const arcModality = this.arcInfo.modality;
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
       onRecipe(recipe: Recipe) {
         if (recipe.connectionConstraints.length === 0) {

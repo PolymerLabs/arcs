@@ -165,7 +165,7 @@ describe('resolve recipe', () => {
           info: consumes #detail
     `);
 
-    const strategy = new ResolveRecipe(await createTestArc(manifest));
+    const strategy = new ResolveRecipe((await createTestArc(manifest)).arcInfo);
     const results = await strategy.generateFrom([{result: manifest.recipes[0], score: 1}]);
     assert.lengthOf(results, 1);
 
@@ -205,7 +205,7 @@ describe('resolve recipe', () => {
     recipe.normalize();
     assert.isUndefined(recipe.handles[0].storageKey);
 
-    const strategy = new ResolveRecipe(await createTestArc(context));
+    const strategy = new ResolveRecipe((await createTestArc(context)).arcInfo);
     const results = await strategy.generateFrom([{result: recipe, score: 1}]);
     assert.lengthOf(results, 1);
 
@@ -240,7 +240,7 @@ describe('resolve recipe', () => {
     recipe.normalize();
     assert.isUndefined(recipe.handles[0].storageKey);
 
-    const strategy = new ResolveRecipe(arc);
+    const strategy = new ResolveRecipe(arc.arcInfo);
     const results = await strategy.generateFrom([{result: recipe, score: 1}]);
     assert.lengthOf(results, 1);
 

@@ -87,12 +87,13 @@ export class Runtime {
     return (await Description.create(this.getArcById(arcId).arcInfo, this)).getArcDescription();
   }
 
+  // TODO(STARTHERE): parameter can be ArcInfo instead!!!
   async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {
     const errors = new Map();
     if (recipe.tryResolve({errors})) {
       return recipe;
     }
-    const resolver = new RecipeResolver(arc);
+    const resolver = new RecipeResolver(arc.arcInfo);
     const plan = await resolver.resolve(recipe);
     if (plan && plan.isResolved()) {
       return plan;

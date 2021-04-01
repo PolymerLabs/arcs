@@ -13,6 +13,7 @@ import {Arc} from '../runtime/arc.js';
 import {Recipe} from '../runtime/recipe/lib-recipe.js';
 import {RecipeWalker} from '../runtime/recipe/lib-recipe.js';
 import {Dictionary, WalkerTactic, Action, GenerateParams, Descendant} from '../utils/lib-utils.js';
+import {ArcInfo} from '../runtime/arc-info.js';
 
 export interface GenerationRecord {
   generation: number;
@@ -249,7 +250,7 @@ export type StrategyParams = GenerateParams<Recipe>;
 
 // TODO: Doc call convention, incl strategies are stateful.
 export abstract class Strategy extends Action<Recipe> {
-  constructor(protected readonly arc?: Arc, args?) {
+  constructor(protected readonly arcInfo?: ArcInfo, args?) {
     super(args);
   }
 

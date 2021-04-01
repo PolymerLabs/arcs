@@ -15,6 +15,6 @@ export class ResolveRecipe extends Strategy {
 
   async generate(inputParams: StrategyParams) {
     return StrategizerWalker.over(this.getResults(inputParams),
-      new ResolveWalker(ResolveWalker.Permuted, this.arc), this);
+      new ResolveWalker(ResolveWalker.Permuted, this.arcInfo), this);
   }
 }

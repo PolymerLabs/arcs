@@ -59,7 +59,7 @@ describe('MatchParticleByVerb', () => {
     const arc = await StrategyTestHelper.createTestArc(manifest, {modality: Modality.dom});
     // Apply MatchParticleByVerb strategy.
     const inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
-    const mpv = new MatchParticleByVerb(arc, StrategyTestHelper.createTestStrategyArgs(arc));
+    const mpv = new MatchParticleByVerb(arc.arcInfo, StrategyTestHelper.createTestStrategyArgs(arc));
 
     const results = await mpv.generate(inputParams);
     assert.lengthOf(results, 3);

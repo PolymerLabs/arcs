@@ -136,11 +136,11 @@ ${recipeManifest}
     const generated = [{result: manifest.recipes[0], score: 1}];
     const arc = await StrategyTestHelper.createTestArc(manifest);
 
-    const strategy = new MapSlots(arc);
+    const strategy = new MapSlots(arc.arcInfo);
     let results = await strategy.generateFrom(generated);
     assert.lengthOf(results, 2);
 
-    results = await new ResolveRecipe(arc).generateFrom(
+    results = await new ResolveRecipe(arc.arcInfo).generateFrom(
       results.map(r => ({
         result: r.result,
         score: 1

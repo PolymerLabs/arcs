@@ -282,8 +282,9 @@ class PECOuterPortImpl extends PECOuterPort {
         if (missingHandles.length > 0) {
           let recipeToResolve = recipe0;
           // We're resolving both against the inner and the outer arc.
-          const innerArc = this.arc.peh.host.getArcById(arcInfo.id);
-          for (const resolver of [new RecipeResolver(innerArc), new RecipeResolver(this.arc /* outer */)]) {
+          // TODO(STARTHERE): dopesn't need HOST anymore!!!
+          // const innerArc = this.arc.peh.host.getArcById(arcInfo.id);
+          for (const resolver of [new RecipeResolver(/*innerArc*/arcInfo), new RecipeResolver(this.arc.arcInfo /* outer */)]) {
             recipeToResolve = await resolver.resolve(recipeToResolve) || recipeToResolve;
           }
           if (recipeToResolve === recipe0) {

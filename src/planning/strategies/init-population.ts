@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Arc} from '../../runtime/arc.js';
 import {Recipe, Handle} from '../../runtime/recipe/lib-recipe.js';
 import {Descendant} from '../../utils/lib-utils.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {Strategy} from '../strategizer.js';
+import {ArcInfo} from '../../runtime/arc-info.js';
 
 type ScoredRecipe = {
   recipe: Recipe;
@@ -24,11 +24,11 @@ export class InitPopulation extends Strategy {
   _recipeIndex: RecipeIndex;
   _loadedParticles: Set<string>;
 
-  constructor(arc: Arc, {contextual = false, recipeIndex}) {
-    super(arc, {contextual});
+  constructor(arcInfo: ArcInfo, {contextual = false, recipeIndex}) {
+    super(arcInfo, {contextual});
     this._contextual = contextual;
     this._recipeIndex = recipeIndex;
-    this._loadedParticles = new Set(this.arc.arcInfo.activeRecipe.particles.filter(p => p.spec.implFile).map(p => p.spec.implFile));
+    this._loadedParticles = new Set(this.arcInfo.activeRecipe.particles.filter(p => p.spec.implFile).map(p => p.spec.implFile));
   }
 
   async generate({generation}: {generation: number}): Promise<Descendant<Recipe>[]> {
@@ -52,7 +52,7 @@ export class InitPopulation extends Strategy {
 
   private _contextualResults(): ScoredRecipe[] {
     const results: ScoredRecipe[] = [];
-    for (const particle of this.arc.activeRecipe.particles) {
+    for (const particle of this.arcInfo.activeRecipe.particles) {
       for (const [name, slotSpec] of particle.spec.slotConnections) {
         for (const providedSlotSpec of slotSpec.provideSlotConnections) {
           results.push(...this._recipeIndex.findConsumeSlotConnectionMatch(particle, providedSlotSpec).map(
@@ -61,13 +61,13 @@ export class InitPopulation extends Strategy {
         }
       }
     }
-    for (const handle of ([] as Handle[]).concat(...this.arc.arcInfo.allDescendingArcs.map(arc => arc.activeRecipe.handles))) {
+    for (const handle of ([] as Handle[]).concat(...this.arcInfo.allDescendingArcs.map(arcInfo => arcInfo.activeRecipe.handles))) {
       results.push(...this._recipeIndex.findHandleMatch(handle, ['use', '?', '`slot']).map(
           otherHandle => ({recipe: otherHandle.recipe})));
     }
 
-    for (const arc of this.arc.arcInfo.allDescendingArcs) {
-      for (const {particle, connSpec} of arc.activeRecipe.getFreeConnections()) {
+    for (const arcInfo of this.arcInfo.allDescendingArcs) {
+      for (const {particle, connSpec} of arcInfo.activeRecipe.getFreeConnections()) {
         results.push(...this._recipeIndex.findHandleConnectionMatch(connSpec, particle, ['use', '?', '`slot']).map(
           otherHandle => ({recipe: otherHandle.recipe})));
       }

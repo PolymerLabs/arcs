@@ -40,7 +40,7 @@ describe('MatchRecipeByVerb', () => {
     `);
     const arc = await StrategyTestHelper.createTestArc(manifest);
     const generated = [{result: manifest.recipes[0], score: 1}];
-    const mrv = new MatchRecipeByVerb(arc);
+    const mrv = new MatchRecipeByVerb(arc.arcInfo);
     const results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.isEmpty(results[0].result.particles);
@@ -65,10 +65,10 @@ describe('MatchRecipeByVerb', () => {
 
     const arc = await StrategyTestHelper.createTestArc(manifest);
     const generated = [{result: manifest.recipes[0], score: 1}];
-    const mrv = new MatchRecipeByVerb(arc);
+    const mrv = new MatchRecipeByVerb(arc.arcInfo);
     let results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 1);
-    const cctc = new ConvertConstraintsToConnections(arc);
+    const cctc = new ConvertConstraintsToConnections(arc.arcInfo);
     results = await cctc.generateFrom(results);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(),
@@ -109,7 +109,7 @@ ${basicHandlesContraintsManifest}
 ${recipesManifest}`);
     const arc = await StrategyTestHelper.createTestArc(manifest);
     const generated = [{result: manifest.recipes[manifest.recipes.length-1], score: 1}];
-    const mrv = new MatchRecipeByVerb(arc);
+    const mrv = new MatchRecipeByVerb(arc.arcInfo);
     return mrv.generateFrom(generated);
   };
 
@@ -142,7 +142,7 @@ ${slandlesSyntaxBasicHandlesContraintsManifest}
 ${recipesManifest}`);
     const arc = await StrategyTestHelper.createTestArc(manifest);
     const generated = [{result: manifest.recipes[manifest.recipes.length-1], score: 1}];
-    const mrv = new MatchRecipeByVerb(arc);
+    const mrv = new MatchRecipeByVerb(arc.arcInfo);
     return mrv.generateFrom(generated);
   };
 
@@ -234,7 +234,7 @@ ${recipesManifest}`);
 
     const arc = await StrategyTestHelper.createTestArc(manifest);
     let generated = [{result: manifest.recipes[3], score: 1}];
-    const mrv = new MatchRecipeByVerb(arc);
+    const mrv = new MatchRecipeByVerb(arc.arcInfo);
     let results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 3);
 
@@ -275,7 +275,7 @@ ${recipesManifest}`);
 
     const arc = await StrategyTestHelper.createTestArc(manifest);
     const generated = [{result: manifest.recipes[1], score: 1}];
-    const mrv = new MatchRecipeByVerb(arc);
+    const mrv = new MatchRecipeByVerb(arc.arcInfo);
     const results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
@@ -306,7 +306,7 @@ ${recipesManifest}`);
 
     const arc = await StrategyTestHelper.createTestArc(manifest);
     const generated = [{result: manifest.recipes[1], score: 1}];
-    const mrv = new MatchRecipeByVerb(arc);
+    const mrv = new MatchRecipeByVerb(arc.arcInfo);
     const results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
@@ -344,7 +344,7 @@ ${recipesManifest}`);
 
     const arc = await StrategyTestHelper.createTestArc(manifest);
     const generated = [{result: manifest.recipes[1], score: 1}];
-    const mrv = new MatchRecipeByVerb(arc);
+    const mrv = new MatchRecipeByVerb(arc.arcInfo);
     const results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
@@ -385,7 +385,7 @@ ${recipesManifest}`);
 
     const arc = await StrategyTestHelper.createTestArc(manifest);
     let generated = [{result: manifest.recipes[1], score: 1}];
-    const mrv = new MatchRecipeByVerb(arc);
+    const mrv = new MatchRecipeByVerb(arc.arcInfo);
     let results = await mrv.generateFrom(generated);
     assert.lengthOf(results, 1);
     let recipe = results[0].result;
@@ -440,7 +440,7 @@ ${recipesManifest}`);
 
   const arc = await StrategyTestHelper.createTestArc(manifest);
   let generated = [{result: manifest.recipes[1], score: 1}];
-  const mrv = new MatchRecipeByVerb(arc);
+  const mrv = new MatchRecipeByVerb(arc.arcInfo);
   let results = await mrv.generateFrom(generated);
   assert.lengthOf(results, 1);
   let recipe = results[0].result;

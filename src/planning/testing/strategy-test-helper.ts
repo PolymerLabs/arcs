@@ -19,8 +19,10 @@ import {Planner} from '../planner.js';
 import {Suggestion} from '../plan/suggestion.js';
 import {Modality} from '../../runtime/arcs-types/modality.js';
 import {Runtime} from '../../runtime/runtime.js';
+import {ArcInfo} from '../../runtime/arc-info.js';
 
 export class StrategyTestHelper {
+  // TODO(STARTHERE): can return ArcInfo instead???
   static async createTestArc(context: Manifest, options: {id?: Id, modality?: Modality, loader?: Loader} = {}): Promise<Arc> {
     const runtime = new Runtime({context, loader: options.loader || new Loader()});
     return runtime.getArcById((await runtime.allocator.startArc({arcName: 'test-arc', ...options})).id);
@@ -34,18 +36,18 @@ export class StrategyTestHelper {
     return planner.suggest();
   }
 
-  static run(arc: Arc, clazz, recipe) {
-    return new clazz(arc).generate({generated: [{result: recipe, score: 1}], terminal: []});
+  static run(arcInfo: ArcInfo, clazz, recipe) {
+    return new clazz(arcInfo).generate({generated: [{result: recipe, score: 1}], terminal: []});
   }
 
   static onlyResult(arc: Arc, clazz, recipe) {
-    return StrategyTestHelper.run(arc, clazz, recipe).then(result => { assert.lengthOf(result, 1); return result[0].result;});
+    return StrategyTestHelper.run(arc?.arcInfo, clazz, recipe).then(result => { assert.lengthOf(result, 1); return result[0].result;});
   }
   static theResults(arc: Arc, clazz, recipe) {
-    return StrategyTestHelper.run(arc, clazz, recipe).then(results => results.map(result => result.result)); // chicken chicken
+    return StrategyTestHelper.run(arc?.arcInfo, clazz, recipe).then(results => results.map(result => result.result)); // chicken chicken
   }
 
   static noResult(arc: Arc, clazz, recipe) {
-    return StrategyTestHelper.run(arc, clazz, recipe).then(result => { assert.isEmpty(result); });
+    return StrategyTestHelper.run(arc?.arcInfo, clazz, recipe).then(result => { assert.isEmpty(result); });
   }
 }

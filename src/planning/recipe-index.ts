@@ -91,6 +91,7 @@ export class RecipeIndex {
   private _recipes: Recipe[];
   private _isReady = false;
 
+  // TODO(STARTHERE): can receive ArcInfo instead???
   constructor(arc: Arc) {
     const trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
     const idGenerator = IdGenerator.newSession();
@@ -113,7 +114,7 @@ export class RecipeIndex {
     const strategizer = new Strategizer(
       [
         new RelevantContextRecipes(arc.context, arc.modality),
-        ...IndexStrategies.map(S => new S(arcStub, {recipeIndex: this}))
+        ...IndexStrategies.map(S => new S(arcStub.arcInfo, {recipeIndex: this}))
       ],
       [],
       Rulesets.Empty

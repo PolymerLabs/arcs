@@ -45,7 +45,7 @@ describe('SearchTokensToHandles', () => {
     assert(!recipe.isResolved());
     recipe.search.resolveToken('show');
 
-    const strategy = new SearchTokensToHandles(arc);
+    const strategy = new SearchTokensToHandles(arc.arcInfo);
     const results = await strategy.generate({generated: [{result: recipe, score: 1}], terminal: []});
 
     assert.lengthOf(results, 1);
@@ -83,7 +83,7 @@ recipe
     assert(recipe.normalize());
     assert(!recipe.isResolved());
     recipe.search.resolveToken('choose');
-    const strategy = new SearchTokensToHandles(arc);
+    const strategy = new SearchTokensToHandles(arc.arcInfo);
     const results = await strategy.generate({generated: [{result: recipe, score: 1}], terminal: []});
 
     assert.lengthOf(results, 1);
