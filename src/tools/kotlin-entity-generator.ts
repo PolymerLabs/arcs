@@ -64,13 +64,13 @@ export class KotlinEntityGenerator implements EntityGenerator {
     return '';
   }
 
-  generateAliases(particleName: string): string[] {
+  generateAliases(particleName: string, prefix: string): string[] {
     const res = [];
     for (const s of this.node.sources) {
-      res.push(`typealias ${s.fullName} = Abstract${particleName}.${this.className}`);
+      res.push(`typealias ${s.fullName} = ${prefix}${particleName}.${this.className}`);
       // TODO(b/182330900): hard-code to interfaceName() once type slicing has fully launched
       const sliceName = this.opts.type_slicing ? interfaceName(this.className) : this.className;
-      res.push(`typealias ${interfaceName(s.fullName)} = Abstract${particleName}.${sliceName}`);
+      res.push(`typealias ${interfaceName(s.fullName)} = ${prefix}${particleName}.${sliceName}`);
     }
     return res;
   }
