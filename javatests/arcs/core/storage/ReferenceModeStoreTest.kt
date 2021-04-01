@@ -15,6 +15,7 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
+import arcs.core.data.testutil.RawEntitySubject.Companion.assertThat
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.FakeDriver

@@ -25,6 +25,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/crdt/testutil:generators",
         "//java/arcs/core/data:rawentity",
         "//java/arcs/core/data:schema_fields",
+        "//java/arcs/core/data/testutil",
         "//java/arcs/core/data/testutil:generators",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity/testutil",

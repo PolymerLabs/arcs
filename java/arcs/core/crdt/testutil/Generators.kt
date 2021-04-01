@@ -187,7 +187,7 @@ class RawEntityFromSchema(
       referencable(FieldTypeWithReferencedSchemas(it.value, i.schemas))
     }
     val collections = i.schema.fields.collections.mapValues {
-      (1..collectionSize()).map { idx ->
+      (1..collectionSize()).map { _ ->
         referencable(FieldTypeWithReferencedSchemas(it.value, i.schemas))
       }.toSet()
     }

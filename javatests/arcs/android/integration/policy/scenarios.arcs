@@ -17,6 +17,31 @@ meta
 
 import './particles.arcs'
 
+/// Scenario: No data is written
+// // TODO(b/183554828): Ingress restricting should allow the fields mentioned
+// //  in the policy to be persisted.
+// @egressType('GeneralEgress')
+// policy NoDataWrittenPolicy {
+//   @allowedRetention(medium: 'Disk', encryption: false)
+//   from Thing access {
+//     a,
+//     b,
+//     c,
+//     d
+//   }
+// }
+
+// Given a recipe that is compliant with a policy
+// @policy('NoDataWrittenPolicy')
+recipe NoDataWritten
+  // And the recipe ingresses a schema Thing {a, b, c, d}
+  handle1: create
+
+  IngressThing
+    ingress: handle1
+
+  // And the recipe does not egress anything
+
 /// Scenario: A policy-compliant recipe with @persistent handles egresses data
 /// and stores ingress-restricted values to disk that is never deleted
 
@@ -38,11 +63,11 @@ recipe PersistsEgresses
 
   // And the recipe ingresses a schema Thing {a, b, c, d}
   IngressThing
-    input: handle1
+    ingress: handle1
 
   // And the recipe egresses Thing {a, b}
   EgressAB
-    output: handle1
+    egress: handle1
 
 /// Scenario: A policy-compliant recipe with @ttl handles egresses data and
 /// stores ingress-restricted values to RAM that are deleted when the TTL expires
@@ -66,14 +91,14 @@ recipe TtlEgresses
 
   // And the recipe ingresses a schema Thing {a, b, c, d}
   IngressThing
-    input: handle1
+    ingress: handle1
   IngressThing
-    input: handle2
+    ingress: handle2
 
   // And the recipe egresses Thing {a, b}
   EgressAB
-    output: handle1
+    egress: handle1
 
   // And the recipe egresses Thing {b, c}
   EgressBC
-    output: handle2
+    egress: handle2

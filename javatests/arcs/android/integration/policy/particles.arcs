@@ -18,12 +18,12 @@ schema Thing
 
 @ingress
 particle IngressThing in '.IngressThing'
-  input: writes [Thing {a, b, c, d}]
+  ingress: writes [Thing {a, b, c, d}]
 
 @egress('GeneralEgress')
 particle EgressAB in '.EgressAB'
-  output: reads [Thing {a, b}]
+  egress: reads [Thing {a, b}]
 
 @egress('GeneralEgress')
 particle EgressBC in '.EgressBC'
-  output: reads [Thing {b, c}]
+  egress: reads [Thing {b, c}]

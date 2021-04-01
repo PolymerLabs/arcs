@@ -111,6 +111,7 @@ class WriteOnlyStorageProxyImpl<Data : CrdtData, Op : CrdtOperation, T> private 
     override fun toString(): String = "$callbackName#${hashCode()}"
   }
 
+  @Suppress("UNUSED_PARAMETER")
   private suspend fun onMessage(message: ProxyMessage<Data, Op, T>) {
     throw UnsupportedOperationException("WriteOnlyStorageProxy received onMessage from Store")
   }

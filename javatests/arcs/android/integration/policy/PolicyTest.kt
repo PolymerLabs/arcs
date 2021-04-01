@@ -39,6 +39,23 @@ class PolicyTest {
   @get:Rule
   val env = IntegrationEnvironment()
 
+  /** Scenario: No data is written. */
+  @Test
+  fun volatileHandleNoEgress_ingestsAllData_doesNotWriteAnyData() = runBlocking {
+    env.addNewHostWith(::IngressThing.toRegistration())
+
+    // When the Arc is run...
+    val arc = env.startArc(NoDataWrittenPlan)
+    env.waitForIdle(arc)
+
+    val ingest = env.getParticle<IngressThing>(arc)
+    val startingKey = (ingest.handles.ingress.getProxy().storageKey as ReferenceModeStorageKey)
+      .storageKey
+
+    // Then no data will be written to storage
+    assertThat(env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA)).isEmpty()
+  }
+
   /**
    * Scenario: A policy-compliant recipe with @persistent handles egresses data
    * and stores ingress-restricted values to disk that is never deleted.
@@ -50,9 +67,8 @@ class PolicyTest {
       ::EgressAB.toRegistration()
     )
 
-    val arc = env.startArc(PersistsEgressesPlan)
-
     // When the Arc is run...
+    val arc = env.startArc(PersistsEgressesPlan)
     env.waitForIdle(arc)
 
     val ingest = env.getParticle<IngressThing>(arc)
@@ -66,7 +82,7 @@ class PolicyTest {
     // Then data with fields Thing {a, b} will be egressed
     assertThat(egressAB.fetchThings()).hasSize(6)
 
-    val startingKey = (egressAB.handles.output.getProxy().storageKey as ReferenceModeStorageKey)
+    val startingKey = (egressAB.handles.egress.getProxy().storageKey as ReferenceModeStorageKey)
       .storageKey
 
     // And only Thing {a, b} is written to storage
@@ -115,9 +131,9 @@ class PolicyTest {
       assertThat(egressAB.fetchThings()).hasSize(6)
       assertThat(egressBC.fetchThings()).hasSize(6)
 
-      val keyAB = (egressAB.handles.output.getProxy().storageKey as ReferenceModeStorageKey)
+      val keyAB = (egressAB.handles.egress.getProxy().storageKey as ReferenceModeStorageKey)
         .storageKey
-      val keyBC = (egressBC.handles.output.getProxy().storageKey as ReferenceModeStorageKey)
+      val keyBC = (egressBC.handles.egress.getProxy().storageKey as ReferenceModeStorageKey)
         .storageKey
 
       // And Thing {a, b, c} is written to storage (RAM)

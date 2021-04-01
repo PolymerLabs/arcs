@@ -16,6 +16,7 @@ import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.data.SchemaRegistry
+import arcs.core.data.testutil.RawEntitySubject.Companion.assertThat
 import arcs.core.storage.driver.DatabaseDriver
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -75,14 +76,16 @@ class ReferenceModeStoreDatabaseIntegrationTest(
 
     // Read data (using a new store ensures we read from the db instead of using cached values).
     val activeStore2 = collectionReferenceModeStore(scope = this)
-    val e1RefVersionMap = if (BuildFlags.REFERENCE_MODE_STORE_FIXES)
+    val e1RefVersionMap = if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
       VersionMap(activeStore.crdtKey to 1)
-    else
+    } else {
       VersionMap("me" to 1)
-    val e2RefVersionMap = if (BuildFlags.REFERENCE_MODE_STORE_FIXES)
+    }
+    val e2RefVersionMap = if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
       VersionMap(activeStore.crdtKey to 1)
-    else
+    } else {
       VersionMap("me" to 2)
+    }
 
     val e1Ref = CrdtSet.DataValue(
       VersionMap("me" to 1),

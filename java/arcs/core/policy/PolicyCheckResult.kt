@@ -11,6 +11,8 @@
 
 package arcs.core.policy
 
+import arcs.core.data.Check
+
 /**
  * The possible results of a call to check the adherence to a [Policy]: either [Pass] or [Fail].
  */
@@ -19,5 +21,15 @@ sealed class PolicyCheckResult {
   object Pass : PolicyCheckResult()
 
   /** Denotes a failed policy check. */
-  data class Fail(val message: String) : PolicyCheckResult()
+  data class Fail(val message: String) : PolicyCheckResult() {
+    constructor(violations: List<Check>) : this(violations.toString())
+  }
+}
+
+/**
+ * Pseudo-constructor to return the appropriate version of PolicyCheckResult based on whether
+ * the provided [violations] list is empty.
+ */
+fun PolicyCheckResult(violations: List<Check>): PolicyCheckResult {
+  return if (violations.isEmpty()) PolicyCheckResult.Pass else PolicyCheckResult.Fail(violations)
 }

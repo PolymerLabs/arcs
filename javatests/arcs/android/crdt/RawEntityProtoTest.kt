@@ -15,6 +15,7 @@ import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.util.writeProto
 import arcs.core.data.RawEntity
+import arcs.core.data.testutil.RawEntitySubject.Companion.assertThat
 import arcs.core.entity.testutil.FixtureEntities
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test

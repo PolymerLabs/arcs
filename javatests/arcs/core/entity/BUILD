@@ -15,6 +15,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/expression",
+        "//java/arcs/core/data/testutil",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity",
         "//java/arcs/core/entity/testutil",

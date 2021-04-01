@@ -6,6 +6,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaRegistry
+import arcs.core.data.testutil.RawEntitySubject.Companion.assertThat
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.RawEntityDereferencer
@@ -17,6 +18,7 @@ import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.testStorageEndpointManager
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
@@ -24,6 +26,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class EntityDereferencerFactoryTest {
   @Before

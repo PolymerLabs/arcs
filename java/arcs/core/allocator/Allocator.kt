@@ -156,10 +156,10 @@ class Allocator(
     partitions.forEach { partition -> lookupArcHost(partition.arcHost).stopArc(partition) }
 
   // VisibleForTesting
-  override suspend fun lookupArcHost(arcHost: String) =
+  override suspend fun lookupArcHost(hostId: String) =
     hostRegistry.availableArcHosts().firstOrNull {
-      it.hostId == arcHost
-    } ?: throw ArcHostNotFoundException(arcHost)
+      it.hostId == hostId
+    } ?: throw ArcHostNotFoundException(hostId)
 
   /**
    * Slice plan into pieces grouped by [ArcHost], each group consisting of a [Plan.Partition]

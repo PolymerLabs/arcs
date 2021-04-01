@@ -17,7 +17,7 @@ class IngressThing : AbstractIngressThing() {
   lateinit var storeFinished: Job
   override fun onFirstStart() = writeThings()
   fun writeThings() {
-    storeFinished = handles.input.storeAll(
+    storeFinished = handles.ingress.storeAll(
       listOf(
         Thing("Once", "upon", "a", "midnight"),
         Thing("dreary", "while", "I", "pondered"),
@@ -39,7 +39,7 @@ class EgressAB : AbstractEgressAB() {
     handleRegistered.complete()
   }
 
-  fun fetchThings(): Set<Thing> = handles.output.fetchAll()
+  fun fetchThings(): Set<Thing> = handles.egress.fetchAll()
 }
 
 /** Egresses Thing { b, c }. */
@@ -51,5 +51,5 @@ class EgressBC : AbstractEgressBC() {
     handleRegistered.complete()
   }
 
-  fun fetchThings(): Set<Thing> = handles.output.fetchAll()
+  fun fetchThings(): Set<Thing> = handles.egress.fetchAll()
 }
