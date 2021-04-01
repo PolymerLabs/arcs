@@ -4,6 +4,7 @@ import arcs.core.util.ParseResult.Failure
 import arcs.core.util.ParseResult.Success
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.fail
+import kotlin.text.RegexOption.IGNORE_CASE
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -191,6 +192,35 @@ class ParserTest {
     }.orElse<Nothing> {
       fail()
     }
+  }
+
+  @Test
+  fun testRegex() {
+    val parser = regex("(hello|world)")
+    parser("world").map { text, start, end, _ ->
+      assertThat(start).isEqualTo(SourcePosition(0, 0, 0))
+      assertThat(end).isEqualTo(SourcePosition(5, 0, 5))
+      assertThat(text).isEqualTo("world")
+      Success(text, start, end)
+    }.orElse<Nothing> {
+      fail()
+    }
+
+    assertThat(parser("sayonara")).isInstanceOf(Failure::class.java)
+    assertThat(parser("WORLD")).isInstanceOf(Failure::class.java)
+  }
+
+  @Test
+  fun testRegex_withOptions() {
+    val parser = regex("(hello|world)", IGNORE_CASE)
+    parser("wOrlD").map { text, start, end, _ ->
+      assertThat(text).isEqualTo("wOrlD")
+      Success(text, start, end)
+    }.orElse<Nothing> {
+      fail()
+    }
+
+    assertThat(parser("Sayonara")).isInstanceOf(Failure::class.java)
   }
 
   @Test

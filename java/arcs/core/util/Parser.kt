@@ -271,10 +271,13 @@ class StringToken(val token: String) : Parser<String>() {
  * A parser that consumes a regex prefix (anchored at ^) of a String, and returns the
  * first matchgroup.
  */
-class RegexToken(val regexToken: String) : Parser<String>() {
+class RegexToken(
+  val regexToken: String,
+  val options: Set<RegexOption> = emptySet()
+) : Parser<String>() {
 
   override fun invoke(string: String, pos: SourcePosition): ParseResult<String> =
-    Regex("^$regexToken").find(string.substring(pos.offset))?.let { it ->
+    Regex("^$regexToken", options).find(string.substring(pos.offset))?.let { it ->
       Success(it.groupValues[1], pos, pos.advance(it.groupValues[0]))
     } ?: Failure("${errorPointer(string, pos)}\nExpecting $regexToken", pos, pos)
 
@@ -570,7 +573,7 @@ operator fun <T> Parser<T>.div(other: Parser<T>) = AnyOfParser<T>(listOf(this, o
 operator fun <T> AnyOfParser<T>.div(other: Parser<T>) = AnyOfParser<T>(this.parsers + listOf(other))
 
 /** Shorthand to create [RegexToken] parser. */
-fun regex(regex: String) = RegexToken(regex)
+fun regex(regex: String, vararg options: RegexOption) = RegexToken(regex, setOf(*options))
 
 /** Shorthand to create a [StringToken] parser. */
 fun token(prefix: String) = StringToken(prefix)
