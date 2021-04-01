@@ -55,10 +55,8 @@ export type RunArcOptions = Readonly<{
 export type StartArcOptions = NewArcInfoOptions & RunArcOptions & {planName?: string};
 
 export type PlanPartition = Readonly<{
-  // TODO(b/182410550): plan should be mandatory, when Arc class is refactored
-  // into ArcState (like) structure, and there is no need to call ArcHost when
-  // an Arc with no running recipes is created.
-  plan?: {particles: Particle[], handles: Handle[]};
+  particles: Particle[];
+  handles: Handle[];
   reinstantiate?: boolean;
   arcInfo: ArcInfo;
   arcOptions: RunArcOptions;

@@ -316,7 +316,7 @@ export class Arc implements ArcInterface {
    *
    * Waits for completion of an existing Instantiate before returning.
    */
-  async instantiate({particles, handles}: {particles: Particle[], handles: Handle[]}, reinstantiate: boolean = false): Promise<void> {
+  async instantiate(particles: Particle[], handles: Handle[], reinstantiate: boolean = false): Promise<void> {
     // Create handles, as needed.
     for (const recipeHandle of handles) {
       const fate = recipeHandle.originalFate && recipeHandle.originalFate !== '?'

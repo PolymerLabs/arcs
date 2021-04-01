@@ -55,8 +55,8 @@ export class ArcHostImpl implements ArcHost {
       }
     }
     const arc = this.arcById.get(arcId);
-    if (partition.plan) {
-      await arc.instantiate(partition.plan, partition.reinstantiate);
+    if (partition.particles.length + partition.handles.length > 0) {
+      await arc.instantiate(partition.particles, partition.handles, partition.reinstantiate);
       // TODO(b/182410550): add await to instantiate and return arc.idle here!
       // TODO(b/182410550): move the call to ParticleExecutionHost's DefineHandle to here
     }
