@@ -267,6 +267,15 @@ class PolicyTest {
     assertStorageContains(startingKey, singletons = setOf("a", "b"))
   }
 
+  // TODO(alxr): write test
+  // When the Arc is run
+  // Then data with schema Thing {a, b, c} will be stored to disk
+  // And data with schemas Thing {b, c, d} and Thing {a, b, c, d} will remain in memory
+  // And data with schema Thing {a, b, c, d} will be egressed
+  // And this egressed data will be exfiltrated (filtered with no out read) after 2 hours have passed
+  // And data with schema Thing {a, b, c} will be persisted after the arc is finished
+  // And data with schemas Thing {b, c, d} and Thing {a, b, c, d} will be deleted after 2 hours have passed
+
   /** Assert that all entities only contains values for the specified fields. */
   private suspend fun assertStorageContains(
     startingKey: StorageKey,

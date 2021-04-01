@@ -28,9 +28,19 @@ particle EgressAB in '.EgressAB'
 particle EgressBC in '.EgressBC'
   egress: reads [Thing {b, c}]
 
+@egress('GenericEgress')
+particle EgressABCD in '.EgressABCD'
+  egress: reads [Thing {a, b, c, d}]
+
 @isolated
 particle RedactAB in '.RedactAB'
   input: reads [~a with {a: Text, b: Text}]
   output: writes [~a]
   claim output.a is redacted
   claim output.b is redacted
+
+@isolated
+particle CombineThings in '.CombineThings'
+  beginning: reads [Thing {a, b, c}]
+  ending: reads [Thing {b, c, d}]
+  combined: writes [Thing {a, b, c, d}]

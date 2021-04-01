@@ -163,3 +163,51 @@ recipe PersistsLabeledEgresses
   // And the recipe egresses Thing {a, b}
   EgressAB
     egress: handle2
+
+/// Scenario: Policy-compliant recipes with @persistent and @ttl handles
+/// egresses derived data and stores that data in RAM that eventually expires.
+
+@egressType('GeneralEgress')
+policy MixedMemoryPolicy {
+  @allowedRetention(medium: 'Ram', encryption: false)
+  from Thing access {
+    a,
+    b,
+    c,
+    d
+  }
+}
+
+// Given a recipe that is compliant with a policy
+@policy('MixedMemoryPolicy')
+@arcId('ingressABC')
+recipe MixedPersistentIngress
+  // And data is ingressed to a store marked @persistent
+  handle1: create 'banana' @persistent
+
+  // And a recipe that ingresses a schema Thing {a, b, c}
+  IngressThing
+    ingress: handle1
+
+// And another recipe is compliant with a policy
+@policy('MixedMemoryPolicy')
+@arcId('ingressBCD')
+recipe MixedTtlEgress
+  // And data is ingressed to a store marked @ttl('2h')
+  handle1: create @ttl('2h')
+  handle2: map 'banana'
+  handle3: create
+
+  // And the recipe also ingresses a schema Thing {b, c, d}
+  IngressThing
+    ingress: handle1
+
+  // And the recipe has derived data Thing {a, b, c, d} from both ingress sources
+  CombineThings
+    beginning: handle1
+    ending: handle2
+    combined: handle3
+
+  // And the recipe egresses the derived data Thing {a, b, c, d}
+  EgressABCD
+    egress: combined
