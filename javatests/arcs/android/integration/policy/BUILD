@@ -51,6 +51,7 @@ arcs_kt_android_test_suite(
         "//javatests/arcs/core/host:pure-particles-jvm",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/junit:junit-android",
+        "//third_party/java/robolectric:annotations",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
     ],

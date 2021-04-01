@@ -15,25 +15,41 @@ import kotlinx.coroutines.Job
 /** Ingresses Things. */
 class IngressThing : AbstractIngressThing() {
   lateinit var storeFinished: Job
-  override fun onFirstStart() {
-    storeFinished = handles.ingress.storeAll(listOf(
-      Thing("Once", "upon", "a", "midnight"),
-      Thing("dreary", "while", "I", "pondered"),
-      Thing("weak", "and", "weary", "over"),
-      Thing("many", "a", "quaint", "and"),
-      Thing("curious", "volumes", "of", "forgotten"),
-      Thing("lore", "while", "I", "nodded")
-    ))
+  override fun onFirstStart() = writeThings()
+  fun writeThings() {
+    storeFinished = handles.ingress.storeAll(
+      listOf(
+        Thing("Once", "upon", "a", "midnight"),
+        Thing("dreary", "while", "I", "pondered"),
+        Thing("weak", "and", "weary", "over"),
+        Thing("many", "a", "quaint", "and"),
+        Thing("curious", "volumes", "of", "forgotten"),
+        Thing("lore", "while", "I", "nodded")
+      )
+    )
   }
 }
 
 /** Egresses Thing { a, b }. */
 class EgressAB : AbstractEgressAB() {
   val handleRegistered = Job()
-  val outputForTest = mutableSetOf<Thing>()
 
   override fun onReady() {
-    outputForTest.addAll(handles.egress.fetchAll())
+    fetchThings()
     handleRegistered.complete()
   }
+
+  fun fetchThings(): Set<Thing> = handles.egress.fetchAll()
+}
+
+/** Egresses Thing { b, c }. */
+class EgressBC : AbstractEgressBC() {
+  val handleRegistered = Job()
+
+  override fun onReady() {
+    fetchThings()
+    handleRegistered.complete()
+  }
+
+  fun fetchThings(): Set<Thing> = handles.egress.fetchAll()
 }
