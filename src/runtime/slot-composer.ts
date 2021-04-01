@@ -20,6 +20,7 @@ const {log, warn} = logsFactory('SlotComposer', 'brown');
 export type SlotComposerOptions = {
   modalityName?: string;
   noRoot?: boolean;
+  containers?: {}[];
 };
 
 export class SlotComposer {
@@ -36,27 +37,8 @@ export class SlotComposer {
    * and may contain:
    * - containerKind: the type of container wrapping each slot-context's container  (for example, div).
    */
-  constructor(options?: SlotComposerOptions) {
-    const opts = {
-      containers: {'root': 'root-context'},
-      ...options
-    };
-
-    // See SlotUtils::findAllSlotCandidates
-    Object.keys(opts.containers).forEach(slotName => {
-      const context = this.createContextForContainer(slotName);
-      this._contexts.push(context);
-    });
-  }
-
-  createContextForContainer(name) {
-    return {
-      id: `rootslotid-${name}`,
-      name,
-      tags: [`${name}`],
-      spec: new ProvideSlotConnectionSpec({name}),
-      handles: []
-    };
+  constructor(public readonly options: SlotComposerOptions = {}) {
+    (options.containers || []).forEach(container => this._contexts.push(container));
   }
 
   getAvailableContexts() {

@@ -98,10 +98,11 @@ export class RecipeIndex {
       arcInfo: new ArcInfo({
         id: idGenerator.newArcId('index-stub'),
         context: new Manifest({id: idGenerator.newArcId('empty-context')}),
-        capabilitiesResolver: arc.capabilitiesResolver
+        capabilitiesResolver: arc.capabilitiesResolver,
+        slotContainers: arc.arcInfo.slotContainers
       }),
       loader: arc.loader,
-      slotComposer: new SlotComposer({noRoot: true}),
+      slotComposer: new SlotComposer({...arc.peh.slotComposer.options, noRoot: true}),
       stub: true,
       storageService: arc.storageService,
       driverFactory: arc.driverFactory,

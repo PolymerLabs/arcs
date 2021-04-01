@@ -136,6 +136,7 @@ export class AllocatorImpl implements Allocator {
         plan: {particles, handles},
         reinstantiate};
       arcInfo.partitions.push(partition);
+      arcInfo.addSlotContainers(host.slotContainers);
 
       return host.start(partition);
     }));
@@ -226,6 +227,7 @@ export class SingletonAllocator extends AllocatorImpl {
   protected newArcInfo(options: NewArcInfoOptions & RunArcOptions): ArcInfo {
     const arcInfo = super.newArcInfo(options);
 
+    arcInfo.addSlotContainers(this.host.slotContainers);
     this.host.start({
       arcInfo,
       arcOptions: {...options},

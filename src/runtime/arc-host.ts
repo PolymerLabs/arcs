@@ -22,6 +22,7 @@ import {StoreInfo} from './storage/store-info.js';
 import {ToHandle, TypeToCRDTTypeRecord} from './storage/storage.js';
 import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {ActiveStore} from './storage/active-store.js';
+import {ProvideSlotConnectionSpec} from './arcs-types/particle-spec.js';
 
 export interface ArcHost {
   hostId: string;
@@ -33,6 +34,7 @@ export interface ArcHost {
   getArcById(arcId: ArcId): Arc;
   isHostForParticle(particle: Particle): boolean;
   findArcByParticleId(particleId: string): Arc;
+  slotContainers: {}[];
 
   handleForStoreInfo<T extends Type>(storeInfo: StoreInfo<T>, arcInfo: ArcInfo, options?: HandleOptions): Promise<ToHandle<TypeToCRDTTypeRecord<T>>>;
 }
@@ -82,7 +84,9 @@ export class ArcHostImpl implements ArcHost {
   buildArcParams(partition: PlanPartition): ArcOptions {
     const factories = Object.values(this.runtime.storageKeyFactories);
     const {arcInfo, arcOptions} = partition;
-    const slotComposer = arcInfo.isInnerArc ? this.getArcById(arcInfo.outerArcId).peh.slotComposer: new SlotComposer();
+    const slotComposer = arcInfo.isInnerArc
+        ? this.getArcById(arcInfo.outerArcId).peh.slotComposer
+        : new SlotComposer({containers: this.slotContainers});
     return {
       arcInfo,
       loader: this.runtime.loader,
@@ -95,6 +99,20 @@ export class ArcHostImpl implements ArcHost {
       storageKey: arcOptions.storageKeyPrefix ? arcOptions.storageKeyPrefix(arcInfo.id) : new VolatileStorageKey(arcInfo.id, ''),
       storageKeyParser: this.runtime.storageKeyParser,
       ...arcOptions
+    };
+  }
+
+  get slotContainers(): {}[] {
+    return [this.createContextForContainer('root')];
+  }
+
+  createContextForContainer(name) {
+    return {
+      id: `rootslotid-${name}`,
+      name,
+      tags: [`${name}`],
+      spec: new ProvideSlotConnectionSpec({name}),
+      handles: []
     };
   }
 

@@ -80,6 +80,7 @@ export type ArcInfoOptions = Readonly<{
   idGenerator?: IdGenerator;
   outerArcId?: ArcId;
   isSpeculative?: boolean;
+  slotContainers?: {}[];  // This should be avoided, if/when all ArcInfo are created via Allocator.
 }>;
 
 export class ArcInfo {
@@ -100,6 +101,7 @@ export class ArcInfo {
   private readonly instantiateMutex = new Mutex();
 
   readonly innerArcsByParticle: Map<Particle, ArcInfo[]> = new Map();
+  readonly slotContainers: {}[]; // TODO(mmandlis): declare SlotContainerInfo type.
 
   constructor(opts: ArcInfoOptions) {
     this.id = opts.id;
@@ -108,6 +110,7 @@ export class ArcInfo {
     this.idGenerator = opts.idGenerator || IdGenerator.newSession();
     this.outerArcId = opts.outerArcId || null;
     this.isSpeculative = opts.isSpeculative || false;
+    this.slotContainers = opts.slotContainers || [];
   }
 
   generateID(component: string = ''): Id {
@@ -371,5 +374,15 @@ export class ArcInfo {
       this.innerArcsByParticle.set(particle, []);
     }
     this.innerArcsByParticle.get(particle).push(innerArcInfo);
+  }
+
+  addSlotContainers(containers: {}[]) {
+    for (const container of containers) {
+      // Note: consider asserting, if trying to add duplicate slot container,
+      // once SingletonAllocator is deprecated.
+      if (!this.slotContainers.find(c => c['name'] === container['name'])) {
+        this.slotContainers.push(container);
+      }
+    }
   }
 }
