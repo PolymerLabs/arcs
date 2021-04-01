@@ -38,7 +38,7 @@ interface VolatileMemory {
   ): Pair<Boolean, VolatileEntry<Data>>
 
   /** Get the number of elements in volatile memory storage. */
-  fun count(): Long
+  fun countEntries(): Long
 
   /** Clears everything from storage. */
   suspend fun clear()
