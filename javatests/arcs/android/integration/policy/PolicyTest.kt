@@ -117,6 +117,7 @@ class PolicyTest {
       // When the Arc is run...
       val arc = env.startArc(TtlEgressesPlan)
       env.waitForIdle(arc)
+    env.waitForIdle(arc)
 
       val ingest = env.getParticle<IngressThing>(arc)
       val egressAB = env.getParticle<EgressAB>(arc)
