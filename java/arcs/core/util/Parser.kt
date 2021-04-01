@@ -322,7 +322,7 @@ class PairOfParser<T, S>(val left: Parser<T>, val right: Parser<S>) : Parser<Pai
   override fun leftTokens(): List<String> = left.leftTokens()
 }
 
-/** A parser that combines two parsers by returning the value of the first one that succeeds. */
+/** A parser combining a list of parsers by returning the value of the first one that succeeds. */
 class AnyOfParser<T>(val parsers: List<Parser<T>>) : Parser<T>() {
 
   override fun leftTokens(): List<String> = parsers.flatMap { it.leftTokens() }
@@ -366,6 +366,7 @@ class ManyOfParser<T>(val parser: Parser<T>) : Parser<List<T>>() {
 
   override fun invoke(string: String, pos: SourcePosition): ParseResult<List<T>> {
     val result = mutableListOf<T>()
+    var end = pos
     var consumed = 0
     // Result could be immutable by mapping and chaining parsers to concatenate a result
     // but it's overkill.
@@ -376,12 +377,15 @@ class ManyOfParser<T>(val parser: Parser<T>) : Parser<List<T>>() {
 
     // Stops with first Failure(msg, start, end)
     // But (start) is actually equal to the last Success's end
-    fun parseUntilFail(pos: SourcePosition): ParseResult<T> =
-      resultParser(string, pos).map { _, _, end, c -> consumed += c; parseUntilFail(end) }
-
-    return parseUntilFail(pos).orElse { failure ->
-      Success(result, pos, failure.start, consumed)
+    fun parseUntilFail(pos: SourcePosition): ParseResult<T> {
+      return resultParser(string, pos).map { _, _, e, c ->
+        end = e
+        consumed += c
+        parseUntilFail(end)
+      }
     }
+
+    return parseUntilFail(pos).orElse { Success(result, pos, end, consumed) }
   }
 }
 

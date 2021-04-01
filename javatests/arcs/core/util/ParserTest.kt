@@ -119,6 +119,25 @@ class ParserTest {
   }
 
   @Test
+  fun parserMany_complexSubExpression() {
+    // A regression test for a bug where the parser composed by ManyOfParser fails mid-way and
+    // ManyOfParser incorrectly reports its parsed range as including the partially parsed sequence.
+    //
+    // In this examples we are parsing repeated "_" + "x", but fail to find the third occurrence,
+    // as we find "_" + "o". The partial match of "_" in the third attempt used to influence the
+    // reported "end" position of parsing. ManyOfParser reported successfully parsing the "_x_x_"
+    // string, instead of "_x_x".
+    val composed = many(-token("_") + token("x")) + many(-token("_") + token("o"))
+
+    composed("_x_x_o_o").map { r, s, e, _ ->
+      assertThat(r).isEqualTo(Pair(listOf("x", "x"), listOf("o", "o")))
+      Success(r, s, e)
+    }.orElse<Nothing> {
+      fail()
+    }
+  }
+
+  @Test
   fun parseOptional() {
     val trailing = token("hello") + optional(token(", "))
     trailing("hello.").map { (hello, _), start, end, _ ->

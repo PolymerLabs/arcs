@@ -271,7 +271,7 @@ object PaxelParser : Grammar<Expression<Any>>() {
   (fromExpression / whereExpression / letExpression / orderByExpression)
 
   private val expressionWithQualifier by
-    (fromExpression + many(ows + qualifiedExpression) + selectExpression)
+    (fromExpression + many(ows + qualifiedExpression) + (ows + selectExpression))
       .map { (first, rest, select) ->
         val all: List<QualifiedExpression> = listOf(first) + rest + listOf(select)
         val nullQualifier: QualifiedExpression? = null
