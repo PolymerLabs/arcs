@@ -69,7 +69,7 @@ export class PlanProducer {
     this.arc = arc;
     this.runtime = runtime;
     this.result = result;
-    this.recipeIndex = RecipeIndex.create(this.arc);
+    this.recipeIndex = RecipeIndex.create(this.arc.arcInfo);
     this.searchStore = searchStore;
     this.searchHandle = searchHandle;
     if (this.searchStore) {

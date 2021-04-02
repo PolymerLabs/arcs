@@ -11,7 +11,6 @@
 import {Generation} from './planner.js';
 import {Strategizer, Strategy, StrategyParams} from '../planning/strategizer.js';
 import {assert} from '../platform/assert-web.js';
-import {Arc} from '../runtime/arc.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Modality} from '../runtime/arcs-types/modality.js';
 import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec, HandleConnectionSpec} from '../runtime/arcs-types/particle-spec.js';
@@ -91,30 +90,19 @@ export class RecipeIndex {
   private _recipes: Recipe[];
   private _isReady = false;
 
-  // TODO(STARTHERE): can receive ArcInfo instead???
-  constructor(arc: Arc) {
+  constructor(arcInfo: ArcInfo) {
     const trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
     const idGenerator = IdGenerator.newSession();
-    const arcStub = new Arc({
-      arcInfo: new ArcInfo({
-        id: idGenerator.newArcId('index-stub'),
-        context: new Manifest({id: idGenerator.newArcId('empty-context')}),
-        capabilitiesResolver: arc.capabilitiesResolver,
-        slotContainers: arc.arcInfo.slotContainers
-      }),
-      loader: arc.loader,
-      slotComposer: new SlotComposer({...arc.peh.slotComposer.options, noRoot: true}),
-      stub: true,
-      storageService: arc.storageService,
-      driverFactory: arc.driverFactory,
-      storageKeyParser: arc.storageKeyParser,
-      allocator: arc.peh.allocator,
-      host: arc.peh.host
+    const arcStub = new ArcInfo({
+      id: idGenerator.newArcId('index-stub'),
+      context: new Manifest({id: idGenerator.newArcId('empty-context')}),
+      capabilitiesResolver: arcInfo.capabilitiesResolver,
+      slotContainers: arcInfo.slotContainers
     });
     const strategizer = new Strategizer(
       [
-        new RelevantContextRecipes(arc.context, arc.modality),
-        ...IndexStrategies.map(S => new S(arcStub.arcInfo, {recipeIndex: this}))
+        new RelevantContextRecipes(arcInfo.context, arcInfo.modality),
+        ...IndexStrategies.map(S => new S(arcStub, {recipeIndex: this}))
       ],
       [],
       Rulesets.Empty
@@ -139,8 +127,8 @@ export class RecipeIndex {
     })());
   }
 
-  static create(arc: Arc): RecipeIndex {
-    return new RecipeIndex(arc);
+  static create(arcInfo: ArcInfo): RecipeIndex {
+    return new RecipeIndex(arcInfo);
   }
 
   get recipes(): Recipe[] {

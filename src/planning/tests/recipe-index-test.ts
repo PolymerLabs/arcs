@@ -27,8 +27,8 @@ describe('RecipeIndex', () => {
     }
     const loader = new Loader();
     const runtime = new Runtime({loader, context: manifest});
-    const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'test-plan-arc'})).id);
-    const recipeIndex = RecipeIndex.create(arc);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test-plan-arc'});
+    const recipeIndex = RecipeIndex.create(arcInfo);
     await recipeIndex.ready;
     return recipeIndex;
   }

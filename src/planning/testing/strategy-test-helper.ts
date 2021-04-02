@@ -28,7 +28,7 @@ export class StrategyTestHelper {
     return runtime.getArcById((await runtime.allocator.startArc({arcName: 'test-arc', ...options})).id);
   }
   static createTestStrategyArgs(arc: Arc, args?) {
-    return {recipeIndex: RecipeIndex.create(arc), ...args};
+    return {recipeIndex: RecipeIndex.create(arc.arcInfo), ...args};
   }
   static async planForArc(runtime: Runtime, arc: Arc): Promise<Suggestion[]> {
     const planner = new Planner();
