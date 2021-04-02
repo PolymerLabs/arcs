@@ -226,7 +226,8 @@ sealed class ParseResult<out T>() {
 private tailrec fun rootCause(cause: Failure): Failure =
   if (cause.cause == null) cause else rootCause(cause.cause)
 
-private fun traceBack(cause: Failure?): String = when {
+/** VisibleForTesting */
+fun traceBack(cause: Failure?): String = when {
   cause == null -> ""
   cause.parser.isBlank() -> traceBack(cause.cause)
   else -> "\n  at ${cause.parser}" + traceBack(cause.cause)
@@ -391,6 +392,24 @@ class ManyOfParser<T>(val parser: Parser<T>) : Parser<List<T>>() {
     }
 
     return parseUntilFail(pos).orElse { Success(result, pos, end, consumed) }
+  }
+}
+
+/**
+ * A parser providing a name for debugging purposes (traceback) but delegates parsing.
+ */
+class NamedParser<T>(name: String, val parser: Parser<T>) : Parser<T>() {
+
+  init {
+    this.name = name
+  }
+
+  override fun leftTokens(): List<String> = parser.leftTokens()
+  override fun invoke(string: String, pos: SourcePosition): ParseResult<T> {
+    return when (val result = parser.invoke(string, pos)) {
+      is Success<T> -> result
+      is Failure -> result.causedBy(name)
+    }
   }
 }
 
@@ -586,6 +605,9 @@ fun <T> many(parser: Parser<T>) = ManyOfParser(parser)
 
 /** Helper for [AnyOfParser]. */
 fun <T> any(parsers: List<Parser<T>>) = AnyOfParser(parsers)
+
+/** Helper for [NamedParser] */
+fun <T> Parser<T>.named(name: String) = NamedParser(name, this)
 
 /** Helper for [TransformParser]. */
 fun <T, R> Parser<T>.map(f: (T) -> R) = TransformParser(this, f)

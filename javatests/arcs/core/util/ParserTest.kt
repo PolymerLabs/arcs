@@ -195,6 +195,25 @@ class ParserTest {
   }
 
   @Test
+  fun testNamingAParser() {
+    val parser = (token("hello") + -regex("(\\s+)") + token("world")).named("helloParser")
+    assertThat(parser.name).isEqualTo("helloParser")
+
+    parser("hello   world").map { (hello, world), start, end, _ ->
+      assertThat(hello).isEqualTo("hello")
+      assertThat(world).isEqualTo("world")
+      Success(hello to world, start, end)
+    }.orElse<Nothing> {
+      fail()
+    }
+
+    val result = parser("sayonara")
+    assertThat(result).isInstanceOf(Failure::class.java)
+    val failure = result as Failure
+    assertThat(traceBack(failure)).contains("helloParser")
+  }
+
+  @Test
   fun testRegex() {
     val parser = regex("(hello|world)")
     parser("world").map { text, start, end, _ ->
