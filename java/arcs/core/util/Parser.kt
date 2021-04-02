@@ -394,6 +394,19 @@ class ManyOfParser<T>(val parser: Parser<T>) : Parser<List<T>>() {
   }
 }
 
+/**
+ * A parser providing a name for debugging purposes (traceback) but delegates parsing.
+ */
+class NamedParser<T>(name: String, val parser: Parser<T>) : Parser<T>() {
+
+  init {
+    this.name = name
+  }
+
+  override fun invoke(string: String, pos: SourcePosition) = parser.invoke(string, pos)
+  override fun leftTokens() = parser.leftTokens()
+}
+
 class ParserException(msg: String, cause: Exception) : Exception(msg, cause)
 
 /** A parser which converts the return value of a parser into another value. */
@@ -586,6 +599,9 @@ fun <T> many(parser: Parser<T>) = ManyOfParser(parser)
 
 /** Helper for [AnyOfParser]. */
 fun <T> any(parsers: List<Parser<T>>) = AnyOfParser(parsers)
+
+/** Helper for [NamedParser] */
+fun <T> Parser<T>.named(name: String) = NamedParser(name, this)
 
 /** Helper for [TransformParser]. */
 fun <T, R> Parser<T>.map(f: (T) -> R) = TransformParser(this, f)
