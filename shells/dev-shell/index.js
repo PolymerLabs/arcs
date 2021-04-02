@@ -132,7 +132,7 @@ async function createRecipeArc(recipe, runtime, index) {
   arcPanel.attachArc(arc);
   arc.arcPanel = arcPanel;
   try {
-    const plan = await runtime.resolveRecipe(arc, recipe);
+    const plan = await runtime.resolveRecipe(arcInfo, recipe);
     await runtime.allocator.runPlanInArc(arcInfo, plan);
   } catch (x) {
     arcPanel.showError('recipe error', x);

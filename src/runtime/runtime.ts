@@ -12,6 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
 import {ArcOptions, Arc} from './arc.js';
+import {ArcInfo} from './arc-info.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId, Id} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
@@ -87,13 +88,12 @@ export class Runtime {
     return (await Description.create(this.getArcById(arcId).arcInfo, this)).getArcDescription();
   }
 
-  // TODO(STARTHERE): parameter can be ArcInfo instead!!!
-  async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {
+  async resolveRecipe(arcInfo: ArcInfo, recipe: Recipe): Promise<Recipe | null> {
     const errors = new Map();
     if (recipe.tryResolve({errors})) {
       return recipe;
     }
-    const resolver = new RecipeResolver(arc.arcInfo);
+    const resolver = new RecipeResolver(arcInfo);
     const plan = await resolver.resolve(recipe);
     if (plan && plan.isResolved()) {
       return plan;

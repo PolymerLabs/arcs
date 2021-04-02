@@ -43,12 +43,11 @@ export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
       dispose: () => null
     }
   });
-  const arc = runtime.getArcById(arcInfo.id);
   // optionally instantiate recipe
   if (action) {
-    const plan = await runtime.resolveRecipe(arc, action);
+    const plan = await runtime.resolveRecipe(arcInfo, action);
     await runtime.allocator.runPlanInArc(arcInfo, plan);
     log(`successfully instantiated ${plan} in ${arcInfo.id}`);
   }
-  return arc;
+  return runtime.getArcById(arcInfo.id);;
 };
