@@ -37,19 +37,15 @@ describe('FindRequiredParticles', () => {
         C
           c: consumes s0
 
-      recipe
+      recipe A
         slot0: slot 'rootslotid-root'
         A
           root: consumes slot0
     `));
-    const recipes = manifest.recipes;
-    assert.isTrue(recipes.every(recipe => recipe.normalize()));
     const runtime = new Runtime({context: manifest, loader});
-    const arcInfo = await runtime.allocator.startArc({arcName: 'test-arc'});
-    const arc = runtime.getArcById(arcInfo.id);
-    await runtime.allocator.runPlanInArc(arcInfo, recipes[1]);
-    const strategy = new FindRequiredParticle(arc.arcInfo, StrategyTestHelper.createTestStrategyArgs(arc));
-    const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test-arc', planName: 'A'});
+    const strategy = new FindRequiredParticle(arcInfo, StrategyTestHelper.createTestStrategyArgs(arcInfo));
+    const inputParams = manifest.recipes.map(recipe => ({result: recipe, score: 1}));
     const results = await strategy.generateFrom(inputParams);
     const recipe = results[0].result;
     assert.isTrue(recipe.slots[0].id === arcInfo.activeRecipe.slots[1].id, 'results recipe does not have the correct slot');
@@ -75,19 +71,15 @@ describe('FindRequiredParticles', () => {
         C
           b: consumes s0
 
-      recipe
+      recipe A
         slot0: slot 'rootslotid-root'
         A
           b: consumes slot0
     `));
-    const recipes = manifest.recipes;
-    assert.isTrue(recipes.every(recipe => recipe.normalize()));
     const runtime = new Runtime({context: manifest, loader});
-    const arcInfo = await runtime.allocator.startArc({arcName: 'test-arc'});
-    const arc = runtime.getArcById(arcInfo.id);
-    await runtime.allocator.runPlanInArc(arcInfo, recipes[1]);
-    const strategy = new FindRequiredParticle(arc.arcInfo, StrategyTestHelper.createTestStrategyArgs(arc));
-    const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test-arc', planName: 'A'});
+    const strategy = new FindRequiredParticle(arcInfo, StrategyTestHelper.createTestStrategyArgs(arcInfo));
+    const inputParams = manifest.recipes.map(recipe => ({result: recipe, score: 1}));
     const results = await strategy.generateFrom(inputParams);
     const recipe = results[0].result;
     assert.isTrue(recipe.slots[0].id === arcInfo.activeRecipe.slots[0].id, 'results recipe does not have the correct slot');
@@ -125,7 +117,7 @@ describe('FindRequiredParticles', () => {
         D
           b: consumes s1
 
-      recipe
+      recipe AB
         slot0: slot 'rootslotid-root'
         slot1: slot 'slot0'
         slot2: slot 'slotIDs:A'
@@ -136,14 +128,10 @@ describe('FindRequiredParticles', () => {
           b: consumes slot1
             c: provides slot2
     `));
-    const recipes = manifest.recipes;
-    assert.isTrue(recipes.every(recipe => recipe.normalize()));
     const runtime = new Runtime({context: manifest, loader});
-    const arcInfo = await runtime.allocator.startArc({arcName: 'test-arc'});
-    const arc = runtime.getArcById(arcInfo.id);
-    await runtime.allocator.runPlanInArc(arcInfo, recipes[1]);
-    const strategy = new FindRequiredParticle(arc.arcInfo, StrategyTestHelper.createTestStrategyArgs(arc));
-    const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test-arc', planName: 'AB'});
+    const strategy = new FindRequiredParticle(arcInfo, StrategyTestHelper.createTestStrategyArgs(arcInfo));
+    const inputParams = manifest.recipes.map(recipe => ({result: recipe, score: 1}));
     const results = await strategy.generateFrom(inputParams);
     const recipe = results[0].result;
     assert.isTrue(recipe.slots[0].id === arcInfo.activeRecipe.slots[0].id, 'first slot in results recipe is not the correct slot');
@@ -181,7 +169,7 @@ describe('FindRequiredParticles', () => {
       D
         b: consumes s1
 
-    recipe
+    recipe AB
       slot0: slot 'rootslotid-root'
       slot1: slot 'slot0'
       slot2: slot 'slotIDs:A'
@@ -194,10 +182,8 @@ describe('FindRequiredParticles', () => {
     `));
     const recipes = manifest.recipes;
     const runtime = new Runtime({context: manifest, loader});
-    const arcInfo = await runtime.allocator.startArc({arcName: 'test-arc'});
-    const arc = runtime.getArcById(arcInfo.id);
-    await runtime.allocator.runPlanInArc(arcInfo, recipes[1]);
-    const strategy = new FindRequiredParticle(arc.arcInfo, StrategyTestHelper.createTestStrategyArgs(arc));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test-arc', planName: 'AB'});
+    const strategy = new FindRequiredParticle(arcInfo, StrategyTestHelper.createTestStrategyArgs(arcInfo));
     const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
     const results = await strategy.generateFrom(inputParams);
     const recipe = results[0].result;
@@ -234,7 +220,7 @@ describe('FindRequiredParticles', () => {
       D
         c: consumes s2
 
-    recipe
+    recipe AB
       slot0: slot 'rootslotid-root'
       slot1: slot 'slot0'
       slot2: slot 'slotIDs:A'
@@ -245,15 +231,12 @@ describe('FindRequiredParticles', () => {
         root: consumes slot1
           c: provides slot2
     `));
-    const recipes = manifest.recipes;
 
     const runtime = new Runtime({context: manifest, loader});
-    const arcInfo = await runtime.allocator.startArc({arcName: 'test-arc'});
-    const arc = runtime.getArcById(arcInfo.id);
-    await runtime.allocator.runPlanInArc(arcInfo, recipes[1]);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test-arc', planName: 'AB'});
 
-    const strategy = new FindRequiredParticle(arc.arcInfo, StrategyTestHelper.createTestStrategyArgs(arc));
-    const inputParams = recipes.map(recipe => ({result: recipe, score: 1}));
+    const strategy = new FindRequiredParticle(arcInfo, StrategyTestHelper.createTestStrategyArgs(arcInfo));
+    const inputParams = manifest.recipes.map(recipe => ({result: recipe, score: 1}));
     const results = await strategy.generateFrom(inputParams);
     const recipe = results[0].result;
     assert.isFalse(recipe.isResolved(), 'recipe is resolved when it shouldn\'t be');

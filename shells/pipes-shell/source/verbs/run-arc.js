@@ -49,5 +49,5 @@ export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
     await runtime.allocator.runPlanInArc(arcInfo, plan);
     log(`successfully instantiated ${plan} in ${arcInfo.id}`);
   }
-  return runtime.getArcById(arcInfo.id);;
+  return runtime.getArcById(arcInfo.id);
 };

@@ -36,7 +36,7 @@ ${particlesSpec}
 
 ${recipeManifest}
     `));
-    const arc = await StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArcInfo(manifest);
     const recipe = await runMapSlotsAndResolveRecipe(arc, manifest.recipes[0]);
 
     if (expectedSlots >= 0) {
@@ -109,8 +109,8 @@ ${recipeManifest}
         A
     `));
 
-    const arc = await StrategyTestHelper.createTestArc(manifest);
-    await StrategyTestHelper.onlyResult(arc, ResolveRecipe, manifest.recipes[0]);
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(manifest);
+    await StrategyTestHelper.onlyResult(arcInfo, ResolveRecipe, manifest.recipes[0]);
   });
 
   it('allows to bind by name to any available slot', async () => {
@@ -134,13 +134,13 @@ ${recipeManifest}
         C
     `));
     const generated = [{result: manifest.recipes[0], score: 1}];
-    const arc = await StrategyTestHelper.createTestArc(manifest);
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(manifest);
 
-    const strategy = new MapSlots(arc.arcInfo);
+    const strategy = new MapSlots(arcInfo);
     let results = await strategy.generateFrom(generated);
     assert.lengthOf(results, 2);
 
-    results = await new ResolveRecipe(arc.arcInfo).generateFrom(
+    results = await new ResolveRecipe(arcInfo).generateFrom(
       results.map(r => ({
         result: r.result,
         score: 1

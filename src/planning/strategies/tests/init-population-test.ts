@@ -40,11 +40,10 @@ describe('InitPopulation', () => {
     assert(recipe.normalize());
     const runtime = new Runtime({loader, context: manifest});
     const arcInfo = await runtime.allocator.startArc({arcName: 'test-plan-arc'});
-    const arc = runtime.getArcById(arcInfo.id);
 
     async function scoreOfInitPopulationOutput() {
-      const results = await new InitPopulation(arc.arcInfo, StrategyTestHelper.createTestStrategyArgs(
-          arc, {contextual: false})).generate({generation: 0});
+      const results = await new InitPopulation(arcInfo, StrategyTestHelper.createTestStrategyArgs(
+          arcInfo, {contextual: false})).generate({generation: 0});
       assert.lengthOf(results, 1);
       return results[0].score;
     }
@@ -126,30 +125,30 @@ describe('InitPopulation', () => {
           burger: writes burger
     `);
 
-    const arc = await StrategyTestHelper.createTestArc(manifest);
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(manifest);
 
     async function openRestaurantWith(foodType: string) {
       const restaurant = manifest.recipes.find(recipe => recipe.name === `${foodType}Restaurant`);
       restaurant.normalize();
-      restaurant.mergeInto(arc.activeRecipe);
+      restaurant.mergeInto(arcInfo.activeRecipe);
     }
 
-    let results = await new InitPopulation(arc.arcInfo, StrategyTestHelper.createTestStrategyArgs(
-        arc, {contextual: true})).generate({generation: 0});
+    let results = await new InitPopulation(arcInfo, StrategyTestHelper.createTestStrategyArgs(
+      arcInfo, {contextual: true})).generate({generation: 0});
     assert.lengthOf(results, 0, 'Initially nothing is available to eat');
 
     await openRestaurantWith('Burrito');
 
-    results = await new InitPopulation(arc.arcInfo, StrategyTestHelper.createTestStrategyArgs(
-        arc, {contextual: true})).generate({generation: 0});
+    results = await new InitPopulation(arcInfo, StrategyTestHelper.createTestStrategyArgs(
+        arcInfo, {contextual: true})).generate({generation: 0});
     assert.sameMembers(results.map(r => r.result.name), [
       'FillsTortilla',
       'EatBurrito'
     ], 'After a Burrito restaurant opened, tortilla wrapped goodness can be consumed');
 
     await openRestaurantWith('Burger');
-    results = await new InitPopulation(arc.arcInfo, StrategyTestHelper.createTestStrategyArgs(
-        arc, {contextual: true})).generate({generation: 0});
+    results = await new InitPopulation(arcInfo, StrategyTestHelper.createTestStrategyArgs(
+        arcInfo, {contextual: true})).generate({generation: 0});
     assert.lengthOf(results, 4, );
     assert.sameMembers(results.map(r => r.result.name), [
       'FillsTortilla',
@@ -158,8 +157,8 @@ describe('InitPopulation', () => {
       'EatBurger'
     ], 'Eventually both a burrito and a burger can be enjoyed');
 
-    results = await new InitPopulation(arc.arcInfo, StrategyTestHelper.createTestStrategyArgs(
-        arc, {contextual: true})).generate({generation: 1});
+    results = await new InitPopulation(arcInfo, StrategyTestHelper.createTestStrategyArgs(
+        arcInfo, {contextual: true})).generate({generation: 1});
     assert.lengthOf(results, 0, 'Food is only served once');
   });
 });

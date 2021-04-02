@@ -22,17 +22,20 @@ import {Runtime} from '../../runtime/runtime.js';
 import {ArcInfo} from '../../runtime/arc-info.js';
 
 export class StrategyTestHelper {
-  // TODO(STARTHERE): can return ArcInfo instead???
+  static async createTestArcInfo(context: Manifest, options: {id?: Id, modality?: Modality, loader?: Loader} = {}): Promise<ArcInfo> {
+    const runtime = new Runtime({context, loader: options.loader || new Loader()});
+    return runtime.allocator.startArc({arcName: 'test-arc', ...options});
+  }
   static async createTestArc(context: Manifest, options: {id?: Id, modality?: Modality, loader?: Loader} = {}): Promise<Arc> {
     const runtime = new Runtime({context, loader: options.loader || new Loader()});
     return runtime.getArcById((await runtime.allocator.startArc({arcName: 'test-arc', ...options})).id);
   }
-  static createTestStrategyArgs(arc: Arc, args?) {
-    return {recipeIndex: RecipeIndex.create(arc.arcInfo), ...args};
+  static createTestStrategyArgs(arcInfo: ArcInfo, args?) {
+    return {recipeIndex: RecipeIndex.create(arcInfo), ...args};
   }
   static async planForArc(runtime: Runtime, arc: Arc): Promise<Suggestion[]> {
     const planner = new Planner();
-    planner.init(arc, {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc), noSpecEx: true});
+    planner.init(arc, {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc.arcInfo), noSpecEx: true});
     return planner.suggest();
   }
 
@@ -40,14 +43,14 @@ export class StrategyTestHelper {
     return new clazz(arcInfo).generate({generated: [{result: recipe, score: 1}], terminal: []});
   }
 
-  static onlyResult(arc: Arc, clazz, recipe) {
-    return StrategyTestHelper.run(arc?.arcInfo, clazz, recipe).then(result => { assert.lengthOf(result, 1); return result[0].result;});
+  static onlyResult(arcInfo: ArcInfo, clazz, recipe) {
+    return StrategyTestHelper.run(arcInfo, clazz, recipe).then(result => { assert.lengthOf(result, 1); return result[0].result;});
   }
-  static theResults(arc: Arc, clazz, recipe) {
-    return StrategyTestHelper.run(arc?.arcInfo, clazz, recipe).then(results => results.map(result => result.result)); // chicken chicken
+  static theResults(arcInfo: ArcInfo, clazz, recipe) {
+    return StrategyTestHelper.run(arcInfo, clazz, recipe).then(results => results.map(result => result.result)); // chicken chicken
   }
 
-  static noResult(arc: Arc, clazz, recipe) {
-    return StrategyTestHelper.run(arc?.arcInfo, clazz, recipe).then(result => { assert.isEmpty(result); });
+  static noResult(arcInfo: ArcInfo, clazz, recipe) {
+    return StrategyTestHelper.run(arcInfo, clazz, recipe).then(result => { assert.isEmpty(result); });
   }
 }

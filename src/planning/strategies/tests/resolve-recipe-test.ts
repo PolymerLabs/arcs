@@ -15,7 +15,7 @@ import {Entity} from '../../../runtime/entity.js';
 import {SingletonType} from '../../../types/lib-types.js';
 import {Runtime} from '../../../runtime/runtime.js';
 
-const {createTestArc, onlyResult, theResults, noResult} = StrategyTestHelper;
+const {createTestArcInfo, onlyResult, theResults, noResult} = StrategyTestHelper;
 
 describe('resolve recipe', () => {
   it('does not resolve a mapping of a handle with an invalid type', async () => {
@@ -43,7 +43,7 @@ describe('resolve recipe', () => {
     const [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
 
-    await noResult(await createTestArc(manifest), ResolveRecipe, recipe);
+    await noResult(await createTestArcInfo(manifest), ResolveRecipe, recipe);
   });
 
   it('resolves a mapping of a handle with a less specific entity type', async () => {
@@ -71,7 +71,7 @@ describe('resolve recipe', () => {
     let [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
 
-    recipe = await onlyResult(await createTestArc(manifest), ResolveRecipe, recipe);
+    recipe = await onlyResult(await createTestArcInfo(manifest), ResolveRecipe, recipe);
     assert.isTrue(recipe.isResolved());
   });
 
@@ -100,7 +100,7 @@ describe('resolve recipe', () => {
     let [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
 
-    recipe = await onlyResult(await createTestArc(manifest), ResolveRecipe, recipe);
+    recipe = await onlyResult(await createTestArcInfo(manifest), ResolveRecipe, recipe);
     assert.isTrue(recipe.isResolved());
   });
 
@@ -129,7 +129,7 @@ describe('resolve recipe', () => {
     let [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
 
-    recipe = await onlyResult(await createTestArc(manifest), ResolveRecipe, recipe);
+    recipe = await onlyResult(await createTestArcInfo(manifest), ResolveRecipe, recipe);
     assert.isTrue(recipe.isResolved());
   });
 
@@ -146,7 +146,7 @@ describe('resolve recipe', () => {
     let [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
 
-    recipe = await onlyResult(await createTestArc(manifest), ResolveRecipe, recipe);
+    recipe = await onlyResult(await createTestArcInfo(manifest), ResolveRecipe, recipe);
     assert.isTrue(recipe.isResolved());
   });
 
@@ -165,7 +165,7 @@ describe('resolve recipe', () => {
           info: consumes #detail
     `);
 
-    const strategy = new ResolveRecipe((await createTestArc(manifest)).arcInfo);
+    const strategy = new ResolveRecipe(await createTestArcInfo(manifest));
     const results = await strategy.generateFrom([{result: manifest.recipes[0], score: 1}]);
     assert.lengthOf(results, 1);
 
@@ -205,7 +205,7 @@ describe('resolve recipe', () => {
     recipe.normalize();
     assert.isUndefined(recipe.handles[0].storageKey);
 
-    const strategy = new ResolveRecipe((await createTestArc(context)).arcInfo);
+    const strategy = new ResolveRecipe(await createTestArcInfo(context));
     const results = await strategy.generateFrom([{result: recipe, score: 1}]);
     assert.lengthOf(results, 1);
 
@@ -230,17 +230,17 @@ describe('resolve recipe', () => {
           param: reads h0
     `);
 
-    const arc = await createTestArc(manifest);
+    const arcInfo = await createTestArcInfo(manifest);
 
     const car = Entity.createEntityClass(manifest.findSchemaByName('Car'), null);
-    await arc.arcInfo.createStoreInfo(new SingletonType(car.type), {id: 'batmobile'});
+    await arcInfo.createStoreInfo(new SingletonType(car.type), {id: 'batmobile'});
 
     const recipe = manifest.recipes[0];
 
     recipe.normalize();
     assert.isUndefined(recipe.handles[0].storageKey);
 
-    const strategy = new ResolveRecipe(arc.arcInfo);
+    const strategy = new ResolveRecipe(arcInfo);
     const results = await strategy.generateFrom([{result: recipe, score: 1}]);
     assert.lengthOf(results, 1);
 

@@ -94,13 +94,13 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
   manifestLoadedCallback(loadedManifest);
 
   const runtime = new Runtime({context: loadedManifest, loader});
-  const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'test-plan-arc'})).id);
+  const arcInfo = await runtime.allocator.startArc({arcName: 'test-plan-arc'});
   const planner = new Planner();
-  const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc), speculator: new Speculator(runtime)};
-  planner.init(arc, options);
+  const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arcInfo), speculator: new Speculator(runtime)};
+  planner.init(runtime.getArcById(arcInfo.id), options);
 
   const plans = await planner.suggest(Infinity);
-  return {plans, arc};
+  return {plans, arcInfo};
 };
 
 describe('Planner', () => {
@@ -406,7 +406,7 @@ ${recipeManifest}
     const arc = await StrategyTestHelper.createTestArc(manifest);
 
     const planner = new Planner();
-    const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
+    const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc.arcInfo)};
     planner.init(arc, options);
     const plans = await planner.plan(1000);
 
@@ -569,7 +569,7 @@ describe('Type variable resolution', () => {
     const manifest = await runtime.parse(manifestStr);
     const arc = await StrategyTestHelper.createTestArc(manifest);
     const planner = new Planner();
-    const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
+    const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc.arcInfo)};
     planner.init(arc, options);
     return planner.plan(Infinity);
   };
@@ -779,14 +779,14 @@ describe('Description', () => {
         thing: writes handle1
         root: consumes slot0
     `;
-    const {plans, arc} = await loadTestArcAndRunSpeculation(manifest,
+    const {plans, arcInfo} = await loadTestArcAndRunSpeculation(manifest,
       manifest => {
         assertRecipeResolved(manifest.recipes[0]);
       }
     );
     assert.lengthOf(plans, 1);
     assert.strictEqual('Make MYTHING.', await plans[0].descriptionText);
-    assert.lengthOf(arc.stores, 0);
+    assert.lengthOf(arcInfo.stores, 0);
   });
 });
 
