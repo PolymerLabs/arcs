@@ -194,13 +194,13 @@ recipe MixedPersistentIngress
 @arcId('ingressBCD')
 recipe MixedTtlEgress
   // And data is ingressed to a store marked @ttl('2h')
-  handle1: create @ttl('2h')
-  handle2: map 'banana'
+  handle1: map 'banana'
+  handle2: create @ttl('2h')
   handle3: create
 
   // And the recipe also ingresses a schema Thing {b, c, d}
   IngressThing
-    ingress: handle1
+    ingress: handle2
 
   // And the recipe has derived data Thing {a, b, c, d} from both ingress sources
   CombineThings
@@ -210,4 +210,4 @@ recipe MixedTtlEgress
 
   // And the recipe egresses the derived data Thing {a, b, c, d}
   EgressABCD
-    egress: combined
+    egress: handle3

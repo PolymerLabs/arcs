@@ -117,7 +117,7 @@ class PolicyTest {
       // When the Arc is run...
       val arc = env.startArc(TtlEgressesPlan)
       env.waitForIdle(arc)
-    env.waitForIdle(arc)
+      env.waitForIdle(arc)
 
       val ingest = env.getParticle<IngressThing>(arc)
       val egressAB = env.getParticle<EgressAB>(arc)
@@ -267,14 +267,69 @@ class PolicyTest {
     assertStorageContains(startingKey, singletons = setOf("a", "b"))
   }
 
-  // TODO(alxr): write test
-  // When the Arc is run
-  // Then data with schema Thing {a, b, c} will be stored to disk
-  // And data with schemas Thing {b, c, d} and Thing {a, b, c, d} will remain in memory
-  // And data with schema Thing {a, b, c, d} will be egressed
-  // And this egressed data will be exfiltrated (filtered with no out read) after 2 hours have passed
-  // And data with schema Thing {a, b, c} will be persisted after the arc is finished
-  // And data with schemas Thing {b, c, d} and Thing {a, b, c, d} will be deleted after 2 hours have passed
+  /**
+   * Scenario: A policy-compliant recipe with @persistent handles egresses data after labeling and
+   * stores ingress-restricted values to disk that is never deleted.
+   */
+  @Test
+  fun persistentTtlHandles_egressesDerivedData_dataEventuallyExpires() = runBlocking {
+    env.addNewHostWith(
+      ::IngressThing.toRegistration(),
+      ::CombineThings.toRegistration(),
+      ::EgressABCD.toRegistration()
+    )
+
+    // When the Arcs are run...
+    val arc1 = env.startArc(MixedPersistentIngressPlan)
+    val arc2 = env.startArc(MixedTtlEgressPlan)
+    env.waitForIdle(arc1)
+    env.waitForIdle(arc2)
+
+    val ingestABC = env.getParticle<IngressThing>(arc1)
+    val ingestBCD = env.getParticle<IngressThing>(arc2)
+    val egressABCD = env.getParticle<EgressABCD>(arc2)
+
+    withTimeout(30000) {
+      ingestABC.storeFinished.join()
+      ingestBCD.storeFinished.join()
+      egressABCD.handleRegistered.join()
+    }
+
+    // Then data with fields Thing {a, b, c, d} will be egressed
+    assertThat(egressABCD.fetchThings()).hasSize(6)
+
+    val keyABC = (ingestABC.handles.ingress.getProxy().storageKey as ReferenceModeStorageKey)
+      .storageKey
+    val keyBCD = (ingestBCD.handles.ingress.getProxy().storageKey as ReferenceModeStorageKey)
+      .storageKey
+    val keyABCD = (egressABCD.handles.egress.getProxy().storageKey as ReferenceModeStorageKey)
+      .storageKey
+
+    // And only Thing {a, b, c} is written to storage (disk)
+    assertStorageContains(keyABC, singletons = setOf("a", "b", "c"))
+    // And data with schemas Thing {b, c, d} and Thing {a, b, c, d} will remain in memory (RAMDisk)
+    assertThat(DefaultDriverFactory.get().getEntitiesCount(inMemory = true)).isEqualTo(13)
+
+//    // And this egressed data will be exfiltrated (filtered with no out read) after 2 hours have
+//    // passed
+    env.advanceClock(3.hours)
+    env.triggerCleanupWork()
+//    assertThat(egressABCD.fetchThings()).isEmpty()
+
+    // And data with schemas Thing {b, c, d} and Thing {a, b, c, d} will be deleted after 2 hours
+    // have passed
+    assertThat(DefaultDriverFactory.get().getEntitiesCount(inMemory = true)).isEqualTo(0)
+
+    env.stopArc(arc2)
+
+    // And Thing {a, b} data persists after the arc is run
+    assertStorageContains(keyABC, singletons = setOf("a", "b", "c"))
+
+    env.stopRuntime()
+
+    // And Thing {a, b} data persists after runtime ends
+    assertStorageContains(keyABC, singletons = setOf("a", "b", "c"))
+  }
 
   /** Assert that all entities only contains values for the specified fields. */
   private suspend fun assertStorageContains(
@@ -283,16 +338,15 @@ class PolicyTest {
     collections: Set<String> = emptySet()
   ) {
     var callbackExecuted = false
-    env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA)
-      .forEach { entity ->
-        val singletonSetEntries = entity.rawEntity.singletons.entries.filter { it.value != null }
-        val collectionSetEntries = entity.rawEntity.collections.entries.filter {
-          it.value.isNotEmpty()
-        }
-        assertThat(singletonSetEntries.map { it.key }.toSet()).isEqualTo(singletons)
-        assertThat(collectionSetEntries.map { it.key }.toSet()).isEqualTo(collections)
-        callbackExecuted = true
+    env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA).forEach { entity ->
+      val singletonSetEntries = entity.rawEntity.singletons.entries.filter { it.value != null }
+      val collectionSetEntries = entity.rawEntity.collections.entries.filter {
+        it.value.isNotEmpty()
       }
+      assertThat(singletonSetEntries.map { it.key }.toSet()).isEqualTo(singletons)
+      assertThat(collectionSetEntries.map { it.key }.toSet()).isEqualTo(collections)
+      callbackExecuted = true
+    }
     assertThat(callbackExecuted).isTrue()
   }
 }
