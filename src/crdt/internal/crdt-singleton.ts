@@ -55,10 +55,10 @@ export class CRDTSingleton<T extends Referenceable> implements SingletonModel<T>
     };
     let newOtherChange: SingletonChange<T> = newModelChange;
     if (isEmptyChange(modelChange)) {
-      newModelChange = createEmptyChange();
+      newModelChange = createEmptyChange() as AnyDuringTs42Migration;
     }
     if (isEmptyChange(otherChange)) {
-      newOtherChange = createEmptyChange();
+      newOtherChange = createEmptyChange() as AnyDuringTs42Migration;
     }
 
     return {modelChange: newModelChange, otherChange: newOtherChange};
