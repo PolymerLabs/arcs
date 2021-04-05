@@ -156,7 +156,7 @@ class PECOuterPortImpl extends PECOuterPort {
 
     const clientClass = getClientClass();
     if (clientClass) {
-      this.systemTraceClient = new clientClass();
+      this.systemTraceClient = new (clientClass as AnyDuringTs42Migration)();
     }
   }
 
