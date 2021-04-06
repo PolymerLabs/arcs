@@ -3046,6 +3046,66 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
   }
 
   @Test
+  fun removeEntitiesReferencing_inlineField() = runBlockingTest {
+    /*
+     * Regression test for b/184594207: this test carefully reproduce a setup where a field_value
+     * entry is pointing to a inline entity, and has the same value as another field_value entry
+     * pointing to a foreign reference. When modifying this test, please be careful to maintain this
+     * property.
+     */
+    newSchema("child")
+    newSchema("inlineHash")
+    val schema = newSchema(
+      "hash",
+      SchemaFields(
+        singletons = mapOf(
+          "ref" to FieldType.EntityRef("child"),
+          "inline" to FieldType.InlineEntity("inlineHash")
+        ),
+        collections = mapOf()
+      )
+    )
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val entity1Key = DummyStorageKey("backing/entity1")
+    val entity2Key = DummyStorageKey("backing/entity2")
+    val foreignKey = DummyStorageKey("foreign")
+
+    // The ref field of this entity points to row #2 in entity_refs.
+    val entity1 = RawEntity(
+      "entity1",
+      mapOf(
+        "ref" to RawReference("refId", foreignKey, null, isHardReference = true),
+        "inline" to RawEntity("ie1")
+      )
+    ).toDatabaseData(schema)
+    // The inline field of this entity points to row #2 in storage_keys..
+    val entity2 = RawEntity(
+      "entity2",
+      mapOf(
+        "ref" to RawReference("refId2", foreignKey, null, isHardReference = true),
+        "inline" to RawEntity("ie2")
+      )
+    ).toDatabaseData(schema)
+    val collection = dbCollection(backingKey, schema, entity1, entity2)
+
+    database.insertOrUpdate(entity2Key, entity2)
+    database.insertOrUpdate(entity1Key, entity1)
+    database.insertOrUpdate(collectionKey, collection)
+
+    assertThat(database.removeEntitiesHardReferencing(foreignKey, "refId")).isEqualTo(1)
+    assertThat(database.getAllHardReferenceIds(foreignKey)).doesNotContain("refId")
+
+    // Entities 1 should be cleared.
+    assertThat(database.getEntity(entity1Key, schema)).isEqualTo(entity1.nulled())
+    assertThat(database.getEntity(entity2Key, schema)).isEqualTo(entity2)
+
+    // Only entity 2 is left in the collection.
+    assertThat(database.getCollection(collectionKey, schema))
+      .isEqualTo(dbCollection(backingKey, schema, entity2).copy(databaseVersion = 2))
+  }
+
+  @Test
   fun removeEntitiesReferencingInline() = runBlockingTest {
     newSchema("child")
     newSchema(
