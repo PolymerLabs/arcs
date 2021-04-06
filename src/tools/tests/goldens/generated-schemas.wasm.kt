@@ -25,6 +25,8 @@ abstract class AbstractGold : WasmParticleImpl() {
     val handles: Handles = Handles(this)
 
 
+
+
     @Suppress("UNCHECKED_CAST")
     class Gold_Data(
         num: Double = 0.0,
@@ -140,6 +142,8 @@ abstract class AbstractGold : WasmParticleImpl() {
             }
         }
     }
+
+
 
     @Suppress("UNCHECKED_CAST")
     class Gold_AllPeople(
@@ -315,6 +319,8 @@ abstract class AbstractGold : WasmParticleImpl() {
         }
     }
 
+
+
     @Suppress("UNCHECKED_CAST")
     class Gold_Alias(val_: String = "") : WasmEntity {
 
@@ -385,6 +391,8 @@ abstract class AbstractGold : WasmParticleImpl() {
         }
     }
 
+
+
     @Suppress("UNCHECKED_CAST")
     class Foo(num: Double = 0.0) : WasmEntity {
 
@@ -454,6 +462,8 @@ abstract class AbstractGold : WasmParticleImpl() {
             }
         }
     }
+
+
 
     @Suppress("UNCHECKED_CAST")
     class Gold_QCollection(
