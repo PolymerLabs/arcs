@@ -50,14 +50,24 @@ def arcs_tool_manifest2proto(name, srcs, outs, deps):
     )
 
 # buildifier: disable=function-docstring
-def arcs_tool_schema2wasm(name, srcs, outs, deps, language_name, language_flag, wasm, test_harness):
-    # TODO: generated header guard should contain whole workspace-relative
-    # path to file.
+def arcs_tool_schema2wasm(
+        name,
+        srcs,
+        outs,
+        deps,
+        language_name,
+        language_flag,
+        wasm,
+        test_harness,
+        type_slicing):
+    # TODO: generated header guard should contain whole workspace-relative path to file.
     sigh_cmd = "schema2wasm " + language_flag
     if wasm:
         sigh_cmd += " --wasm"
     if test_harness:
         sigh_cmd += " --test_harness"
+    if type_slicing:
+        sigh_cmd += " --type_slicing"
     sigh_cmd += " --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}"
 
     sigh_command(

@@ -1,0 +1,37 @@
+meta
+  namespace: arcs.core.entity
+
+particle Writer in '.Writer'
+  l: writes {a: Text, b: Number}
+  r: writes {a: Text, c: [Int]}
+  b: writes {a: Text, b: Number, c: [Int], d: Boolean}
+
+particle Slicer in '.Slicer'
+  t: writes {a: Text}
+  l: reads writes {a: Text, b: Number}
+  r: reads writes {a: Text, c: [Int]}
+  b: reads {a: Text, b: Number, c: [Int], d: Boolean}
+
+particle Reader in '.Reader'
+  t: reads {a: Text}
+  l: reads {a: Text, b: Number}
+  r: reads {a: Text, c: [Int]}
+  b: reads {a: Text, b: Number, c: [Int], d: Boolean}
+  x: reads {a: Number}  // for casting test
+
+recipe TypeSlicingTest
+  Writer
+    l: writes h2
+    r: writes h3
+    b: writes h4
+  Slicer
+    t: writes h1
+    l: reads writes h2
+    r: reads writes h3
+    b: reads h4
+  Reader
+    t: reads h1
+    l: reads h2
+    r: reads h3
+    b: reads h4
+    x: reads unused
