@@ -12,6 +12,8 @@
 package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
+import arcs.core.crdt.CrdtEntity
+import arcs.core.data.RawEntity
 import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.volatiles.VolatileEntry
 import arcs.core.storage.driver.volatiles.VolatileMemory
@@ -103,14 +105,21 @@ class VolatileMemoryImplTest {
 
   @Test
   fun count_whenNoEntries_returnsZero() {
-    assertThat(memory.countEntries()).isEqualTo(0)
+    assertThat(memory.countEntities()).isEqualTo(0)
   }
 
   @Test
   fun count_whenEntriesAdded_returnsNumberOfElements() = runBlockingTest {
+    memory.set(bar, VolatileEntry(CrdtEntity.Data()))
+    memory.set(baz, VolatileEntry(CrdtEntity.newWithEmptyEntity(RawEntity())))
+    assertThat(memory.countEntities()).isEqualTo(2)
+  }
+
+  @Test
+  fun count_whenNonEntriesAdded_returnsZero() = runBlockingTest {
     memory.set(bar, VolatileEntry(data = 41))
     memory.set(baz, VolatileEntry(data = 42))
-    assertThat(memory.countEntries()).isEqualTo(2)
+    assertThat(memory.countEntities()).isEqualTo(0)
   }
 
   @Test

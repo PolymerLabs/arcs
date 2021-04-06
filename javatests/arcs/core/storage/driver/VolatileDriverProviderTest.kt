@@ -12,6 +12,8 @@
 package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
+import arcs.core.crdt.CrdtEntity
+import arcs.core.data.RawEntity
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.util.testutil.LogRule
@@ -124,13 +126,25 @@ class VolatileDriverProviderTest {
   }
 
   @Test
-  fun getEntitiesCount_inMemory_returnsTotal() = runBlocking {
+  fun getEntitiesCount_inMemory_nonEntities_returnsZero() = runBlocking {
     val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class)
     val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_2, Int::class)
     // Initialize some data in the memory via first driver
     driver1.send(DUMMY_DATA, 1)
     // Initialize some data in the memory via second driver
     driver2.send(DUMMY_DATA, 1)
+
+    assertThat(providerFactory.getEntitiesCount(inMemory = true)).isEqualTo(0L)
+  }
+
+  @Test
+  fun getEntitiesCount_inMemory_onlyEntities_returnsTotal() = runBlocking {
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, CrdtEntity.Data::class)
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_2, CrdtEntity::class)
+    // Initialize some data in the memory via first driver
+    driver1.send(DUMMY_ENTITY_DATA, 1)
+    // Initialize some data in the memory via second driver
+    driver2.send(DUMMY_ENTITY, 1)
 
     assertThat(providerFactory.getEntitiesCount(inMemory = true)).isEqualTo(2L)
   }
@@ -157,6 +171,9 @@ class VolatileDriverProviderTest {
 
     private val DUMMY_ARCID_1 = ArcId.newForTest("foo")
     private val DUMMY_ARCID_2 = ArcId.newForTest("bar")
+
+    private val DUMMY_ENTITY_DATA = CrdtEntity.Data()
+    private val DUMMY_ENTITY = CrdtEntity.newWithEmptyEntity(RawEntity())
 
     private val DUMMY_STORAGE_KEY_1 = VolatileStorageKey(DUMMY_ARCID_1, "myfoo")
     private val DUMMY_STORAGE_KEY_2 = VolatileStorageKey(DUMMY_ARCID_2, "mybar")

@@ -85,7 +85,7 @@ class VolatileDriverProvider : DriverProvider {
       return 0L
     }
     arcMemoryMutex.withLock {
-      return arcMemories.values.map { it.memory.countEntries() }.sum()
+      return arcMemories.values.map { it.memory.countEntities() }.sum()
     }
   }
 

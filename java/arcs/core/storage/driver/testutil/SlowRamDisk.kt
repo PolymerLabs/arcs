@@ -77,7 +77,7 @@ class SlowVolatileMemory(
     return delegate.update(key, updater)
   }
 
-  override fun countEntries(): Long = delegate.countEntries()
+  override fun countEntities(): Long = delegate.countEntities()
 
   override suspend fun clear() {
     waitOp(MemoryOp.Clear, null)

@@ -1,5 +1,6 @@
 package arcs.core.storage.driver.volatiles
 
+import arcs.core.crdt.CrdtEntity
 import arcs.core.storage.StorageKey
 import arcs.core.util.Random
 import kotlinx.atomicfu.atomic
@@ -18,7 +19,9 @@ class VolatileMemoryImpl : VolatileMemory {
 
   override var token: String
     get() = _token.value
-    private set(value) { _token.getAndSet(value) }
+    private set(value) {
+      _token.getAndSet(value)
+    }
 
   override suspend fun contains(key: StorageKey): Boolean =
     lock.withLock { key in entries }
@@ -44,7 +47,13 @@ class VolatileMemoryImpl : VolatileMemory {
     return@withLock currentEntry
   }
 
-  override fun countEntries() = entries.size.toLong()
+  override fun countEntities(): Long {
+    return entries.values
+      .map { v -> v.data }
+      .filter { it is CrdtEntity || it is CrdtEntity.Data }
+      .count()
+      .toLong()
+  }
 
   @Suppress("UNCHECKED_CAST")
   override suspend fun <Data : Any> update(
