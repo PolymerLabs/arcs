@@ -1245,7 +1245,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
     val expectedCollection = DatabaseData.Collection(
       values = setOf(),
       schema = schema,
-      databaseVersion = 2,
+      databaseVersion = 3,
       versionMap = VersionMap(DATABASE_CRDT_ACTOR to 2)
     )
     assertThat(database.getCollection(collectionKey, schema)).isEqualTo(expectedCollection)
@@ -1424,7 +1424,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
         ReferenceWithVersion(reference2, VersionMap(DATABASE_CRDT_ACTOR to 2))
       ),
       schema = schema,
-      databaseVersion = 2,
+      databaseVersion = 3,
       versionMap = VersionMap(DATABASE_CRDT_ACTOR to 2)
     )
     assertThat(database.getCollection(collectionKey, schema)).isEqualTo(expectedCollection)
@@ -1908,7 +1908,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
         )
       )
     assertThat(database.getCollection(collectionKey, schema))
-      .isEqualTo(collection.copy(values = setOf()))
+      .isEqualTo(collection.copy(values = setOf(), databaseVersion = 2))
   }
 
   @Test
@@ -2019,7 +2019,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
       )
     )
     assertThat(database.getCollection(collectionKey, schema))
-      .isEqualTo(collection.copy(values = newValues))
+      .isEqualTo(collection.copy(values = newValues, databaseVersion = 2))
   }
 
   @Test
@@ -2610,7 +2610,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
       )
     )
     assertThat(database.getCollection(collectionKey, schema))
-      .isEqualTo(collection.copy(values = newValues))
+      .isEqualTo(collection.copy(values = newValues, databaseVersion = 2))
 
     // Check the expired entity ref is gone (there will be IDs for referenced/inner entities too).
     val entityIds = readEntityRefsEntityId()
@@ -2709,7 +2709,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
 
     // Check the singleton now contains null.
     assertThat(database.getSingleton(singletonKey, schema))
-      .isEqualTo(singleton.copy(value = null))
+      .isEqualTo(singleton.copy(value = null, databaseVersion = 2))
 
     // Check the corrent clients were notified.
     singletonClient.eventMutex.withLock {
@@ -2728,7 +2728,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
         RawReference("entity", backingKey, VersionMap("ref" to 1)),
         VersionMap("actor" to 2)
       ),
-      databaseVersion = FIRST_VERSION_NUMBER + 1
+      databaseVersion = FIRST_VERSION_NUMBER + 2
     )
     database.insertOrUpdate(singletonKey, singleton2)
 
@@ -2837,7 +2837,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
 
     // Check the collection is empty.
     assertThat(database.getCollection(collectionKey, schema))
-      .isEqualTo(collection.copy(values = setOf()))
+      .isEqualTo(collection.copy(values = setOf(), databaseVersion = 2))
 
     // Check unused values have been deleted from the global table as well.
     assertTableIsEmpty("field_values")
@@ -2889,7 +2889,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
     database.removeAllEntities()
 
     assertThat(database.getCollection(collectionKey, schema))
-      .isEqualTo(collection.copy(values = emptySet()))
+      .isEqualTo(collection.copy(values = emptySet(), databaseVersion = 2))
   }
 
   @Test
@@ -2959,7 +2959,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
 
     // Check the collection only contain the non-expired reference.
     assertThat(database.getCollection(collectionKey, schema))
-      .isEqualTo(collection.copy(values = setOf(okRef)))
+      .isEqualTo(collection.copy(values = setOf(okRef), databaseVersion = 2))
 
     // Check the expired entity ref is gone.
     assertThat(readEntityRefsEntityId()).containsExactly("entity2")
@@ -3039,7 +3039,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
 
     // Only entity 2 and 4 are left in the collection.
     assertThat(database.getCollection(collectionKey, schema))
-      .isEqualTo(dbCollection(backingKey, schema, entity2, entity4))
+      .isEqualTo(dbCollection(backingKey, schema, entity2, entity4).copy(databaseVersion = 2))
 
     // Check that rerunning the method returns zero (entities are not double counted).
     assertThat(database.removeEntitiesHardReferencing(foreignKey, "refId")).isEqualTo(0)
@@ -3165,7 +3165,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
     assertThat(database.getAllHardReferenceIds(foreignKey)).doesNotContain("refId")
 
     assertThat(database.getCollection(collectionKey, schema))
-      .isEqualTo(collection.copy(values = setOf()))
+      .isEqualTo(collection.copy(values = setOf(), databaseVersion = 3))
   }
 
   @Test

@@ -1574,8 +1574,10 @@ class DatabaseImpl(
         // Find all collections with missing entries (collections that were updated).
         val updatedContainersStorageKeys = rawQuery(
           """
-                        SELECT storage_keys.storage_key
+                        SELECT storage_keys.storage_key, collection_id, version_number
                         FROM storage_keys
+                        LEFT JOIN collections
+                            ON storage_keys.value_id = collections.id
                         LEFT JOIN collection_entries
                             ON storage_keys.value_id = collection_entries.collection_id
                         WHERE storage_keys.data_type IN (?, ?)
@@ -1585,7 +1587,14 @@ class DatabaseImpl(
             DataType.Singleton.ordinal.toString(),
             DataType.Collection.ordinal.toString()
           )
-        ).map { it.getString(0) }.toSet()
+        ).map {
+          // Update the version number of all top level collections are going to change due to
+          // removal of references that have been deleted.
+          val values = ContentValues()
+          values.put("version_number", it.getInt(2) + 1)
+          update(TABLE_COLLECTIONS, values, "id = ?", arrayOf(it.getInt(1).toString()))
+          it.getString(0)
+        }.toSet()
 
         // Remove from collection_entries (for top level collections) all references to the
         // expired entities.
