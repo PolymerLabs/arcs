@@ -1348,7 +1348,10 @@ class DatabaseImpl(
                     ON fields.is_collection IN $COLLECTION_FIELDS
                     AND collection_entries.collection_id = field_values.value_id
                 LEFT JOIN entity_refs
+                    -- exclude primitive fields
                     ON fields.type_id > $LARGEST_PRIMITIVE_TYPE_ID
+                    -- exclude inline-entity fields, leaving references fields only.
+                    AND fields.is_collection NOT IN $INLINE_ENTITIES_FIELDS
                     AND entity_refs.id = field_value_id
                 WHERE entity_refs.backing_storage_key = ?
                 AND entity_refs.entity_id = ?
@@ -2725,6 +2728,19 @@ class DatabaseImpl(
 
     private val INLINE_ENTITY_COLLECTIONS =
       FIELD_CLASSES_FOR_ENTITY_COLLECTIONS.joinToString(prefix = "(", postfix = ")")
+
+    /**
+     * The field classes for which the value of the field points to one or more inline entities.
+     */
+    private val FIELD_CLASSES_FOR_INLINE_ENTITIES = listOf(
+      FieldClass.InlineEntity.ordinal,
+      FieldClass.InlineEntityCollection.ordinal,
+      FieldClass.InlineEntityList.ordinal,
+    )
+
+    /** A version of FIELD_CLASSES_FOR_INLINE_ENTITIES to use in SQL IN statements */
+    private val INLINE_ENTITIES_FIELDS =
+      FIELD_CLASSES_FOR_INLINE_ENTITIES.joinToString(prefix = "(", postfix = ")")
 
     /**
      * The id and name of a sentinel type, to ensure references are namespaced separately to
