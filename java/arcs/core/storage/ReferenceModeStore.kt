@@ -47,8 +47,8 @@ import arcs.core.util.Result
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
 import arcs.core.util.computeNotNull
-import arcs.core.util.nextVersionMapSafeString
 import arcs.core.util.nextSafeRandomLong
+import arcs.core.util.nextVersionMapSafeString
 import arcs.flags.BuildFlags
 import kotlin.properties.Delegates
 import kotlinx.coroutines.CoroutineScope
@@ -543,7 +543,8 @@ class ReferenceModeStore private constructor(
             when (op) {
               is CrdtSet.Operation.Remove<*> -> versions.remove(op.removed)
               is CrdtSet.Operation.Clear<*> -> versions.clear()
-              is CrdtSet.Operation.FastForward<*> -> versions.keys.removeAll(op.removed)
+              is CrdtSet.Operation.FastForward<*> ->
+                versions.keys.removeAll(op.removed.map { it.id })
             }
           }
         is ProxyMessage.ModelUpdate -> {
