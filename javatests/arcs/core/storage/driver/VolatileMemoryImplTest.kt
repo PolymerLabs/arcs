@@ -104,19 +104,19 @@ class VolatileMemoryImplTest {
   }
 
   @Test
-  fun count_whenNoEntries_returnsZero() {
+  fun count_whenNoEntities_returnsZero() {
     assertThat(memory.countEntities()).isEqualTo(0)
   }
 
   @Test
-  fun count_whenEntriesAdded_returnsNumberOfElements() = runBlockingTest {
+  fun count_whenEntitiesAdded_returnsNumberOfElements() = runBlockingTest {
     memory.set(bar, VolatileEntry(CrdtEntity.Data()))
     memory.set(baz, VolatileEntry(CrdtEntity.newWithEmptyEntity(RawEntity())))
     assertThat(memory.countEntities()).isEqualTo(2)
   }
 
   @Test
-  fun count_whenNonEntriesAdded_returnsZero() = runBlockingTest {
+  fun count_whenNonEntitiesAdded_returnsZero() = runBlockingTest {
     memory.set(bar, VolatileEntry(data = 41))
     memory.set(baz, VolatileEntry(data = 42))
     assertThat(memory.countEntities()).isEqualTo(0)

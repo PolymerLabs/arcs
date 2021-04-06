@@ -19,9 +19,7 @@ class VolatileMemoryImpl : VolatileMemory {
 
   override var token: String
     get() = _token.value
-    private set(value) {
-      _token.getAndSet(value)
-    }
+    private set(value) { _token.getAndSet(value) }
 
   override suspend fun contains(key: StorageKey): Boolean =
     lock.withLock { key in entries }
