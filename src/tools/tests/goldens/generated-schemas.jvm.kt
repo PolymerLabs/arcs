@@ -37,6 +37,8 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
     override val handles: Handles = Handles()
 
 
+
+
     @Suppress("UNCHECKED_CAST")
     class GoldInternal1(
         val_: String = "",
@@ -102,6 +104,8 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
             }
         }
     }
+
+
 
     @Suppress("UNCHECKED_CAST")
     class Gold_AllPeople(
@@ -237,6 +241,8 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
         }
     }
 
+
+
     @Suppress("UNCHECKED_CAST")
     class Foo(
         num: Double = 0.0,
@@ -295,6 +301,8 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
             }
         }
     }
+
+
 
     @Suppress("UNCHECKED_CAST")
     class Gold_Data(
@@ -396,6 +404,8 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
             }
         }
     }
+
+
 
     @Suppress("UNCHECKED_CAST")
     class Gold_QCollection(
