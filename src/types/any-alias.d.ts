@@ -7,4 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
+/**
+ * This alias is needed for compatibility with the internal typescript compiler.
+ *
+ * TODO(b/181591179) remove after migration is finished.
+ */
 type AnyDuringTs42Migration = any;
