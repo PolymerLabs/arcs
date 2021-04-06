@@ -60,7 +60,7 @@ class ActorTest {
     }
     assertThat(e)
       .hasMessageThat()
-      .isEqualTo("Actor annotation b| contains illegal character in set [;, |].")
+      .isEqualTo("Actor annotation b| contains illegal character in set [{, }, ;, |].")
   }
 
   @Test
@@ -70,6 +70,6 @@ class ActorTest {
     }
     assertThat(e)
       .hasMessageThat()
-      .isEqualTo("Actor annotation c; contains illegal character in set [;, |].")
+      .isEqualTo("Actor annotation c; contains illegal character in set [{, }, ;, |].")
   }
 }

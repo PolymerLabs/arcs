@@ -18,6 +18,8 @@ import arcs.core.util.TaggedLog
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
@@ -38,6 +40,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 private const val CLOSE_TIMEOUT = 15000L
 
 /** Base class for [StorageProxy] implementations that provides standard message queue operations. */
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 abstract class StorageProxyImplBase<Data : CrdtData, Op : CrdtOperation, T>(
   private val scheduler: Scheduler
 ) {

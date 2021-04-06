@@ -7,10 +7,40 @@
 // grant found at
 // http://polymer.github.io/PATENTS.txt
 
+/// !!!
+/// TODO(b/183554828): Update these tests to make use of compile-time policy
+///   checking when ready!
+/// !!!
+
 meta
   namespace: arcs.android.integration.policy
 
 import './particles.arcs'
+
+/// Scenario: No data is written
+// // TODO(b/183554828): Ingress restricting should allow the fields mentioned
+// //  in the policy to be persisted.
+// @egressType('GeneralEgress')
+// policy NoDataWrittenPolicy {
+//   @allowedRetention(medium: 'Disk', encryption: false)
+//   from Thing access {
+//     a,
+//     b,
+//     c,
+//     d
+//   }
+// }
+
+// Given a recipe that is compliant with a policy
+// @policy('NoDataWrittenPolicy')
+recipe NoDataWritten
+  // And the recipe ingresses a schema Thing {a, b, c, d}
+  handle1: create
+
+  IngressThing
+    ingress: handle1
+
+  // And the recipe does not egress anything
 
 /// Scenario: A policy-compliant recipe with @persistent handles egresses data
 /// and stores ingress-restricted values to disk that is never deleted
@@ -33,8 +63,42 @@ recipe PersistsEgresses
 
   // And the recipe ingresses a schema Thing {a, b, c, d}
   IngressThing
-    input: handle1
+    ingress: handle1
 
   // And the recipe egresses Thing {a, b}
   EgressAB
-    output: handle1
+    egress: handle1
+
+/// Scenario: A policy-compliant recipe with @ttl handles egresses data and
+/// stores ingress-restricted values to RAM that are deleted when the TTL expires
+/// and at the runtime’s end.
+
+@egressType('GeneralEgress')
+policy SimpleTtlPolicy {
+  @allowedRetention(medium: 'Ram', encryption: false)
+  from Thing access {
+    a,
+    b
+  }
+}
+
+// Given a recipe is compliant with a policy
+@policy('SimplePersistencePolicy')
+recipe TtlEgresses
+  // And the recipe's stores are marked @ttl('2h') and @ttl('5d')
+  handle1: create @ttl('2h')
+  handle2: create @ttl('5d')
+
+  // And the recipe ingresses a schema Thing {a, b, c, d}
+  IngressThing
+    ingress: handle1
+  IngressThing
+    ingress: handle2
+
+  // And the recipe egresses Thing {a, b}
+  EgressAB
+    egress: handle1
+
+  // And the recipe egresses Thing {b, c}
+  EgressBC
+    egress: handle2

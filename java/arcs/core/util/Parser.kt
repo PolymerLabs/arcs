@@ -226,7 +226,8 @@ sealed class ParseResult<out T>() {
 private tailrec fun rootCause(cause: Failure): Failure =
   if (cause.cause == null) cause else rootCause(cause.cause)
 
-private fun traceBack(cause: Failure?): String = when {
+/** VisibleForTesting */
+fun traceBack(cause: Failure?): String = when {
   cause == null -> ""
   cause.parser.isBlank() -> traceBack(cause.cause)
   else -> "\n  at ${cause.parser}" + traceBack(cause.cause)
@@ -271,10 +272,13 @@ class StringToken(val token: String) : Parser<String>() {
  * A parser that consumes a regex prefix (anchored at ^) of a String, and returns the
  * first matchgroup.
  */
-class RegexToken(val regexToken: String) : Parser<String>() {
+class RegexToken(
+  val regexToken: String,
+  val options: Set<RegexOption> = emptySet()
+) : Parser<String>() {
 
   override fun invoke(string: String, pos: SourcePosition): ParseResult<String> =
-    Regex("^$regexToken").find(string.substring(pos.offset))?.let { it ->
+    Regex("^$regexToken", options).find(string.substring(pos.offset))?.let { it ->
       Success(it.groupValues[1], pos, pos.advance(it.groupValues[0]))
     } ?: Failure("${errorPointer(string, pos)}\nExpecting $regexToken", pos, pos)
 
@@ -302,19 +306,21 @@ class Optional<T>(val parser: Parser<T>) : Parser<T?>() {
  */
 class PairOfParser<T, S>(val left: Parser<T>, val right: Parser<S>) : Parser<Pair<T, S>>() {
   override fun invoke(string: String, pos: SourcePosition): ParseResult<Pair<T, S>> =
-    when (val outerResult = left(string, pos).map { v1, s1, e1, c1 ->
-      val result = right(string, e1).map { v2, _, e2, c2 ->
-        Success(Pair(v1, v2), s1, e2, c1 + c2)
+    when (
+      val outerResult = left(string, pos).map { v1, s1, e1, c1 ->
+        val result = right(string, e1).map { v2, _, e2, c2 ->
+          Success(Pair(v1, v2), s1, e2, c1 + c2)
+        }
+        when (result) {
+          is Success<*> -> result as Success<Pair<T, S>>
+          is Failure -> result.consumed(
+            result.consumed + c1,
+            this@PairOfParser.name,
+            result
+          )
+        }
       }
-      when (result) {
-        is Success<*> -> result as Success<Pair<T, S>>
-        is Failure -> result.consumed(
-          result.consumed + c1,
-          this@PairOfParser.name,
-          result
-        )
-      }
-    }) {
+    ) {
       is Success<*> -> outerResult as Success<Pair<T, S>>
       is Failure -> outerResult.causedBy(name)
     }
@@ -322,7 +328,7 @@ class PairOfParser<T, S>(val left: Parser<T>, val right: Parser<S>) : Parser<Pai
   override fun leftTokens(): List<String> = left.leftTokens()
 }
 
-/** A parser that combines two parsers by returning the value of the first one that succeeds. */
+/** A parser combining a list of parsers by returning the value of the first one that succeeds. */
 class AnyOfParser<T>(val parsers: List<Parser<T>>) : Parser<T>() {
 
   override fun leftTokens(): List<String> = parsers.flatMap { it.leftTokens() }
@@ -366,6 +372,7 @@ class ManyOfParser<T>(val parser: Parser<T>) : Parser<List<T>>() {
 
   override fun invoke(string: String, pos: SourcePosition): ParseResult<List<T>> {
     val result = mutableListOf<T>()
+    var end = pos
     var consumed = 0
     // Result could be immutable by mapping and chaining parsers to concatenate a result
     // but it's overkill.
@@ -376,11 +383,32 @@ class ManyOfParser<T>(val parser: Parser<T>) : Parser<List<T>>() {
 
     // Stops with first Failure(msg, start, end)
     // But (start) is actually equal to the last Success's end
-    fun parseUntilFail(pos: SourcePosition): ParseResult<T> =
-      resultParser(string, pos).map { _, _, end, c -> consumed += c; parseUntilFail(end) }
+    fun parseUntilFail(pos: SourcePosition): ParseResult<T> {
+      return resultParser(string, pos).map { _, _, e, c ->
+        end = e
+        consumed += c
+        parseUntilFail(end)
+      }
+    }
 
-    return parseUntilFail(pos).orElse { failure ->
-      Success(result, pos, failure.start, consumed)
+    return parseUntilFail(pos).orElse { Success(result, pos, end, consumed) }
+  }
+}
+
+/**
+ * A parser providing a name for debugging purposes (traceback) but delegates parsing.
+ */
+class NamedParser<T>(name: String, val parser: Parser<T>) : Parser<T>() {
+
+  init {
+    this.name = name
+  }
+
+  override fun leftTokens(): List<String> = parser.leftTokens()
+  override fun invoke(string: String, pos: SourcePosition): ParseResult<T> {
+    return when (val result = parser.invoke(string, pos)) {
+      is Success<T> -> result
+      is Failure -> result.causedBy(name)
     }
   }
 }
@@ -552,6 +580,10 @@ operator fun <T, S> IgnoringParser<T>.plus(other: Parser<S>) =
 operator fun <T, S> Parser<T>.plus(other: IgnoringParser<S>) =
   PairOfParser(this, other).map { (x, _) -> x }
 
+/** Combines an [IgnoringParser] with a [IgnoringParser] ignoring the output of the first. */
+operator fun <T, S> IgnoringParser<T>.plus(other: IgnoringParser<S>) =
+  IgnoringParser(PairOfParser(this, other))
+
 /** Unary minus as shorthand for ignoring a parser's output. */
 operator fun <T> Parser<T>.unaryMinus() = IgnoringParser(this)
 
@@ -560,7 +592,7 @@ operator fun <T> Parser<T>.div(other: Parser<T>) = AnyOfParser<T>(listOf(this, o
 operator fun <T> AnyOfParser<T>.div(other: Parser<T>) = AnyOfParser<T>(this.parsers + listOf(other))
 
 /** Shorthand to create [RegexToken] parser. */
-fun regex(regex: String) = RegexToken(regex)
+fun regex(regex: String, vararg options: RegexOption) = RegexToken(regex, setOf(*options))
 
 /** Shorthand to create a [StringToken] parser. */
 fun token(prefix: String) = StringToken(prefix)
@@ -570,6 +602,12 @@ fun <T> optional(parser: Parser<T>) = Optional(parser)
 
 /** Helper for [ManyOfParser]. */
 fun <T> many(parser: Parser<T>) = ManyOfParser(parser)
+
+/** Helper for [AnyOfParser]. */
+fun <T> any(parsers: List<Parser<T>>) = AnyOfParser(parsers)
+
+/** Helper for [NamedParser] */
+fun <T> Parser<T>.named(name: String) = NamedParser(name, this)
 
 /** Helper for [TransformParser]. */
 fun <T, R> Parser<T>.map(f: (T) -> R) = TransformParser(this, f)

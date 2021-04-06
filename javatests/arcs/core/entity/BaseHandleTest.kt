@@ -68,7 +68,7 @@ class BaseHandleTest {
       if (invocation.arguments[1] is RawReference) {
         (invocation.arguments[1] as RawReference).dereferencer =
           object : Dereferencer<RawEntity> {
-            override suspend fun dereference(reference: RawReference) = entity
+            override suspend fun dereference(rawReference: RawReference) = entity
           }
       }
     }

@@ -100,6 +100,23 @@ data class RawEntity(
     return hashCode
   }
 
+  // Override default toString method to output fields in deterministic (alphabetical) order.
+  override fun toString(): String {
+    val singletons = singletons.asSequence()
+      .sortedBy { it.key }
+      .joinToString(prefix = "{", postfix = "}") { (key, value) ->
+        "$key=$value"
+      }
+    val collections = collections.asSequence()
+      .sortedBy { it.key }
+      .joinToString(prefix = "{", postfix = "}") { (key, values) ->
+        val sortedElements = values.sortedBy { it.toString() }
+        "$key=$sortedElements"
+      }
+    return "RawEntity(id=$id, creationTimestamp=$creationTimestamp, " +
+      "expirationTimestamp=$expirationTimestamp, singletons=$singletons, collections=$collections)"
+  }
+
   companion object {
     const val NO_REFERENCE_ID = "NO REFERENCE ID"
     const val UNINITIALIZED_TIMESTAMP: Long = -1

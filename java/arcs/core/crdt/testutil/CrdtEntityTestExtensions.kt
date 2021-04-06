@@ -16,11 +16,13 @@ import arcs.core.data.RawEntity
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 
-fun <T> CrdtEntity.Data.primitiveSingletonValue(field: String): T {
+@Suppress("UNCHECKED_CAST")
+fun <T : Any> CrdtEntity.Data.primitiveSingletonValue(field: String): T {
   return (singletons[field]!!.consumerView!!.unwrap() as ReferencablePrimitive<T>).value
 }
 
-fun <T> CrdtEntity.Data.primitiveSingletonListValue(field: String): List<T> {
+@Suppress("UNCHECKED_CAST")
+fun <T : Any> CrdtEntity.Data.primitiveSingletonListValue(field: String): List<T> {
   return (singletons[field]!!.consumerView!!.unwrap() as ReferencableList<ReferencablePrimitive<T>>)
     .value.map { it.value }
 }

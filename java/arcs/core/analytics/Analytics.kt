@@ -46,6 +46,14 @@ interface Analytics {
   ) {
   }
 
+  /**
+   *  Log pending reference timeout occurrence.
+   *
+   *  A timeout may occur when an entity cannot be obtained from the reference mode store within
+   *  30 seconds.
+   */
+  fun logPendingReferenceTimeout() {}
+
   /** Types of Storage to log. */
   enum class StorageType {
     VOLATILE,
@@ -129,6 +137,10 @@ interface Analytics {
           "Analytics: logStorageLatency: " +
             "$event, $handleType, $storageType: $latencyMillis (ms)."
         }
+      }
+
+      override fun logPendingReferenceTimeout() {
+        log.debug { "Analytics: logPendingReferenceTimeout." }
       }
     }
   }

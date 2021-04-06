@@ -39,6 +39,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
     override val handles: Handles = Handles()
 
 
+
+
     @Suppress("UNCHECKED_CAST")
     class KotlinPrimitivesGolden_Data_Ref(
         val_: String = "",
@@ -105,6 +107,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         }
     }
 
+
+
     @Suppress("UNCHECKED_CAST")
     class Thing(
         name: String = "",
@@ -163,6 +167,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
             }
         }
     }
+
+
 
     @Suppress("UNCHECKED_CAST")
     class Nested(
@@ -231,6 +237,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
             }
         }
     }
+
+
 
     @Suppress("UNCHECKED_CAST")
     class Color(
@@ -307,6 +315,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         }
     }
 
+
+
     @Suppress("UNCHECKED_CAST")
     class Product(
         name: String = "",
@@ -382,6 +392,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         }
     }
 
+
+
     @Suppress("UNCHECKED_CAST")
     class Detail(
         nested: Nested = Nested(),
@@ -456,6 +468,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
             }
         }
     }
+
+
 
     @Suppress("UNCHECKED_CAST")
     class KotlinPrimitivesGolden_Data(

@@ -7,12 +7,26 @@ licenses(["notice"])
 
 package(default_visibility = ["//java/arcs:allowed-packages"])
 
+GENERATOR_SRCS = ["Generators.kt"]
+
+arcs_kt_library(
+    name = "testutil",
+    testonly = True,
+    srcs = glob(
+        ["*.kt"],
+        exclude = GENERATOR_SRCS,
+    ),
+    deps = [
+        "//java/arcs/core/data:rawentity",
+        "//java/arcs/core/data/util:data-util",
+        "//third_party/java/truth:truth-android",
+    ],
+)
+
 arcs_kt_library(
     name = "generators",
-    testonly = 1,
-    srcs = [
-        "Generators.kt",
-    ],
+    testonly = True,
+    srcs = GENERATOR_SRCS,
     deps = [
         "//java/arcs/core/common",
         "//java/arcs/core/data",

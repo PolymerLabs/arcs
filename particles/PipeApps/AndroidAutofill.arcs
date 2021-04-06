@@ -5,7 +5,7 @@ schema AutofillRequest
   hint: Text
 
 // An Android particle which powers the Android AutofillService.
-external particle AutofillParticle
+particle AutofillParticle
   // TODO: Use a Singleton instead, when that is supported in Java.
   request: writes [AutofillRequest]
   root: consumes Slot
@@ -31,7 +31,7 @@ recipe AndroidAutofill
     request: reads request
     fillSlot: consumes fillSlot
 
-external particle CapturePerson
+particle CapturePerson
   people: reads writes [Person]
 
 recipe IngestPeople

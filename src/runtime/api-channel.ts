@@ -279,7 +279,7 @@ export class APIPort {
     const count = this.messageCount++;
     if (this.inspector) {
       this.inspector.pecMessage('on' + e.data.messageType, e.data.messageBody, count,
-          this.supportsExternalParticle() ? /* android */ 'a' : /* web */ 'w',
+          /* pecType= */ '',
           this._port['pecId'],
           e.data.stack);
     }
@@ -296,17 +296,11 @@ export class APIPort {
     const count = this.messageCount++;
     if (this.inspector) {
       this.inspector.pecMessage(name, args, count,
-          this.supportsExternalParticle() ? /* android */ 'a' : /* web */ 'w',
+          /* pecType= */ '',
           this._port['pecId'] || '',
           new Error().stack || '');
     }
     await this._port.postMessage(call);
-  }
-
-  @NoTraceWithReason('Chatty')
-  supportsExternalParticle(): boolean {
-    // TODO: improve heuristics.
-    return Object.getPrototypeOf(this._port.constructor).name === 'MessagePort';
   }
 }
 

@@ -236,7 +236,11 @@ class DatabaseImpl(
     clients.remove(identifier)
     if (clients.isEmpty()) {
       onDatabaseClose()
-      // TODO: track bulk deletes, and if none is in progress we can close the connection.
+      /**
+       * TODO: track bulk deletes, and if none is in progress we can close the connection and
+       * remove this instance from the AndroidSqliteDatabaseManager dbCache (we cannot remove from
+       * the cache if the connection is still open - see b/183670485).
+       */
     }
     Unit
   }
@@ -700,6 +704,7 @@ class DatabaseImpl(
     }
     stats.insertUpdate.timeSuspending { counters ->
       // Use an assignment to make the when-expression required to be exhaustive.
+      @Suppress("UNUSED_VARIABLE")
       val unused = when (op) {
         is DatabaseOp.AddToCollection -> addToCollection(storageKey, op, counters)
         is DatabaseOp.RemoveFromCollection ->
@@ -1569,8 +1574,10 @@ class DatabaseImpl(
         // Find all collections with missing entries (collections that were updated).
         val updatedContainersStorageKeys = rawQuery(
           """
-                        SELECT storage_keys.storage_key
+                        SELECT storage_keys.storage_key, collection_id, version_number
                         FROM storage_keys
+                        LEFT JOIN collections
+                            ON storage_keys.value_id = collections.id
                         LEFT JOIN collection_entries
                             ON storage_keys.value_id = collection_entries.collection_id
                         WHERE storage_keys.data_type IN (?, ?)
@@ -1580,7 +1587,14 @@ class DatabaseImpl(
             DataType.Singleton.ordinal.toString(),
             DataType.Collection.ordinal.toString()
           )
-        ).map { it.getString(0) }.toSet()
+        ).map {
+          // Update the version number of all top level collections are going to change due to
+          // removal of references that have been deleted.
+          val values = ContentValues()
+          values.put("version_number", it.getInt(2) + 1)
+          update(TABLE_COLLECTIONS, values, "id = ?", arrayOf(it.getInt(1).toString()))
+          it.getString(0)
+        }.toSet()
 
         // Remove from collection_entries (for top level collections) all references to the
         // expired entities.
@@ -2270,10 +2284,10 @@ class DatabaseImpl(
 
   companion object {
     @VisibleForTesting
-    val DB_VERSION = if (BuildFlags.STORAGE_STRING_REDUCTION) {
-      7
-    } else {
-      6
+    val DB_VERSION get() = when {
+      BuildFlags.STORAGE_STRING_REDUCTION && BuildFlags.REFERENCE_MODE_STORE_FIXES -> 8
+      BuildFlags.STORAGE_STRING_REDUCTION -> 7
+      else -> 6
     }
 
     // Crdt actor used for edits applied by this class.
@@ -2587,6 +2601,7 @@ class DatabaseImpl(
     private val CREATE_VERSION_4 = CREATE_VERSION_3
     private val CREATE_VERSION_5 = CREATE_VERSION_3
     private val CREATE_VERSION_7 = CREATE_VERSION_6
+    private val CREATE_VERSION_8 = CREATE_VERSION_6
 
     private val DROP_VERSION_2 =
       """
@@ -2626,6 +2641,9 @@ class DatabaseImpl(
     private val VERSION_7_MIGRATION =
       listOf(DROP_VERSION_3, CREATE_VERSION_7).flatten().toTypedArray()
 
+    private val VERSION_8_MIGRATION =
+      listOf(DROP_VERSION_3, CREATE_VERSION_8).flatten().toTypedArray()
+
     @VisibleForTesting
     val MIGRATION_STEPS = mapOf(
       2 to VERSION_2_MIGRATION,
@@ -2633,7 +2651,8 @@ class DatabaseImpl(
       4 to VERSION_4_MIGRATION,
       5 to VERSION_5_MIGRATION,
       6 to VERSION_6_MIGRATION,
-      7 to VERSION_7_MIGRATION
+      7 to VERSION_7_MIGRATION,
+      8 to VERSION_8_MIGRATION
     )
 
     @VisibleForTesting
@@ -2642,7 +2661,8 @@ class DatabaseImpl(
       4 to CREATE_VERSION_4,
       5 to CREATE_VERSION_5,
       6 to CREATE_VERSION_6,
-      7 to CREATE_VERSION_7
+      7 to CREATE_VERSION_7,
+      8 to CREATE_VERSION_8
     )
 
     private val CREATE = checkNotNull(CREATES_BY_VERSION[DB_VERSION])

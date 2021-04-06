@@ -3,10 +3,10 @@ meta
 
 import './Schemas.arcs'
 
-external particle Writer
+particle Writer
   data: writes Thing {name}
 
-external particle Reader
+particle Reader
   data: reads Thing {name}
 
 recipe PassThrough

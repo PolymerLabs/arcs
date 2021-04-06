@@ -12,6 +12,8 @@ particle T
   h1: reads Thing {num: Number}
 -----[results]-----
 
+    
+
     @Suppress("UNCHECKED_CAST")
     class Thing(
         num: Double = 0.0,
@@ -80,6 +82,8 @@ generates entity for WASM
 particle T
   h1: reads Thing {num: Number}
 -----[results]-----
+
+    
 
     @Suppress("UNCHECKED_CAST")
     class Thing(num: Double = 0.0) : WasmEntity {
@@ -158,6 +162,8 @@ generates variable entity with private constructor
 particle T
   h1: reads ~a with {num: Number}
 -----[results]-----
+
+    
 
     @Suppress("UNCHECKED_CAST")
     class T_H1 private constructor(

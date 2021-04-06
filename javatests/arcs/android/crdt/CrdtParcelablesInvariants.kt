@@ -34,7 +34,9 @@ fun invariant_CrdtOperations_preservedDuring_parcelRoundTrip(ops: List<CrdtOpera
   assertThat(unmarshalled).isEqualTo(ops)
 }
 
-private fun <T> Parcel.writeReferencablePrimitiveAsProto(primitive: ReferencablePrimitive<T>) {
+private fun <T : Any> Parcel.writeReferencablePrimitiveAsProto(
+  primitive: ReferencablePrimitive<T>
+) {
   writeProto(primitive.toProto())
 }
 
@@ -42,7 +44,7 @@ private fun <T> Parcel.writeReferencablePrimitiveAsProto(primitive: Referencable
  * When we write a [ReferencablePrimitive] into a Parcelable using [writeProto], we can always
  * reconstruct the identical primitive by reading using [readReferencablePrimitive]
  */
-fun <T> invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip(
+fun <T : Any> invariant_ReferencablePrimitives_preservedDuring_parcelRoundTrip(
   primitive: ReferencablePrimitive<T>
 ) {
   val unmarshalled = roundTripThroughParcel(

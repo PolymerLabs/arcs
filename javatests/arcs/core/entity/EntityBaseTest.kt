@@ -19,7 +19,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaRegistry
-import arcs.core.data.util.ReferencablePrimitive
+import arcs.core.data.testutil.RawEntitySubject.Companion.assertThat
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.testutil.DummyEntity
 import arcs.core.entity.testutil.DummyVariableEntity
@@ -649,24 +649,6 @@ class EntityBaseTest {
     }.also {
       assertThat(it).hasMessageThat().isEqualTo(
         "Expected ReferencablePrimitive but was List([Primitive(5.0)])."
-      )
-    }
-  }
-
-  @Test
-  fun deserialize_referencablePrimitive_isNotNull() {
-    val rawEntity = RawEntity(
-      singletons = mapOf(
-        "num" to ReferencablePrimitive<Double?>(Double::class, null)
-      ),
-      collections = mapOf()
-    )
-
-    assertFailsWith<IllegalArgumentException> {
-      DummyEntity().deserialize(rawEntity, nestedEntitySpecs = emptyMap())
-    }.also {
-      assertThat(it).hasMessageThat().isEqualTo(
-        "ReferencablePrimitive encoded an unexpected null value."
       )
     }
   }

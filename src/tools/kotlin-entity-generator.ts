@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.js';
-import {EntityGenerator} from './schema2base';
-import {SchemaNode} from './schema2graph';
+import {EntityGenerator} from './schema2base.js';
+import {SchemaNode} from './schema2graph.js';
 import minimist from 'minimist';
 import {generateSchema} from './kotlin-schema-generator.js';
 import {assert} from '../platform/assert-web.js';
@@ -45,6 +45,8 @@ export class KotlinEntityGenerator implements EntityGenerator {
   async generateClasses(): Promise<string> {
     return `\
 
+    ${this.generateInterfaceDefinition()}
+
     ${this.generateClassDefinition()} {
         ${this.generateFieldsDefinitions()}
         ${this.generateCopyMethods()}
@@ -66,10 +68,32 @@ export class KotlinEntityGenerator implements EntityGenerator {
     const res = [];
     for (const s of this.node.sources) {
       res.push(`typealias ${s.fullName} = Abstract${particleName}.${this.className}`);
-      // TODO(b/182330900): temporary state; will be changed to alias the actual slice interface
-      res.push(`typealias ${interfaceName(s.fullName)} = Abstract${particleName}.${this.className}`);
+      // TODO(b/182330900): hard-code to interfaceName() once type slicing has fully launched
+      const sliceName = this.opts.type_slicing ? interfaceName(this.className) : this.className;
+      res.push(`typealias ${interfaceName(s.fullName)} = Abstract${particleName}.${sliceName}`);
     }
     return res;
+  }
+
+  generateInterfaceDefinition(): string {
+    // TODO(b/182330900): remove once type slicing has fully launched
+    if (!this.opts.type_slicing) return '';
+
+    let bases: string;
+    if (this.node.parents.length > 0) {
+      bases = this.node.parents.map(p => interfaceName(p.entityClassName)).join(', ');
+    } else {
+      bases = this.opts.wasm ? 'WasmEntity' : 'arcs.sdk.Entity';
+    }
+
+    const fields: string[] = [];
+    for (const added of this.node.addedFields) {
+      const field = this.fields.filter(f => f.name === added)[0];
+      fields.push(`val ${field.escaped}: ${field.type.kotlinType}`);
+    }
+    return `interface ${interfaceName(this.className)} : ${bases} {
+        ${ktUtils.indentFollowing(fields, 2)}
+    }`;
   }
 
   generateClassDefinition(): string {
@@ -98,8 +122,9 @@ export class KotlinEntityGenerator implements EntityGenerator {
         'expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP',
       ]);
     }
-
-    const classInterface = `) : ${baseClass}`;
+    // TODO(b/182330900): hard-code to include the extra base once type slicing has fully launched
+    const sliceBase = this.opts.type_slicing ? (', ' + interfaceName(this.className)) : '';
+    const classInterface = `) : ${baseClass}${sliceBase}`;
 
     const constructorArguments = ktUtils.joinWithIndents(constructorFields, {
       startIndent: classDecl.length + classInterface.length,
@@ -159,13 +184,16 @@ export class KotlinEntityGenerator implements EntityGenerator {
     const fieldCount = Object.keys(this.node.schema.fields).length;
     const blocks: string[] = [];
 
+    // TODO(b/182330900): hard-code to override once type slicing has fully launched
+    const override = this.opts.type_slicing ? 'override ' : '';
+
     const fieldVals: string[] = [];
     for (const {name, type, escaped, nullableType} of this.fields) {
       if (this.opts.wasm) {
         // TODO: Add support for collections in wasm.
         assert(!type.isCollection, 'Collection fields not supported in Kotlin wasm yet.');
         fieldVals.push(`\
-var ${escaped} = ${escaped}
+${override}var ${escaped} = ${escaped}
     get() = field
     private set(_value) {
         field = _value
@@ -173,14 +201,14 @@ var ${escaped} = ${escaped}
         );
       } else if (type.isCollection) {
         fieldVals.push(`\
-var ${escaped}: ${type.kotlinType}
+${override}var ${escaped}: ${type.kotlinType}
     get() = super.getCollectionValue("${name}") as ${type.kotlinType}
     private set(_value) = super.setCollectionValue("${name}", _value)`
         );
       } else {
         const defaultFallback = type.defaultVal === 'null' ? '' : ` ?: ${type.defaultVal}`;
         fieldVals.push(`\
-var ${escaped}: ${type.kotlinType}
+${override}var ${escaped}: ${type.kotlinType}
     get() = super.getSingletonValue("${name}") as ${nullableType}${defaultFallback}
     private set(_value) = super.setSingletonValue("${name}", _value)`
         );

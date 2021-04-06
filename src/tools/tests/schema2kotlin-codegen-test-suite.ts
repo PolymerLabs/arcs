@@ -59,7 +59,8 @@ export const schema2KotlinTestSuite: CodegenUnitTest[] = [
       );
     }
     async computeFromManifest({particles}, opts: object) {
-      const schema2kotlin = new Schema2Kotlin({_: [], wasm: opts['wasm'] || false});
+      // TODO(b/182330900): set type_slicing to true when flag is flipped to 'READY'
+      const schema2kotlin = new Schema2Kotlin({_: [], wasm: opts['wasm'] || false, type_slicing: false});
       const generators = (await schema2kotlin.calculateNodeAndGenerators(particles[0]));
       return Promise.all(generators.map(gn => (gn.generator as KotlinEntityGenerator).generateClasses()));
     }
@@ -72,7 +73,7 @@ export const schema2KotlinTestSuite: CodegenUnitTest[] = [
       );
     }
     async computeFromManifest({particles}, opts: object) {
-      const schema2kotlin = new Schema2Kotlin({_: [], wasm: opts['wasm'] || false});
+      const schema2kotlin = new Schema2Kotlin({_: [], wasm: opts['wasm'] || false, type_slicing: false});
       let generators = (await schema2kotlin.calculateNodeAndGenerators(particles[0]));
       if (opts['assertedSchema']) {
         generators = generators.filter(gn => gn.node.schema.name === opts['assertedSchema']);
@@ -113,7 +114,7 @@ export const schema2KotlinTestSuite: CodegenUnitTest[] = [
     }
     async computeFromManifest({particles}) {
       const graph = new SchemaGraph(particles[0]);
-      const generatorBase = new GeneratorBase(false, '');
+      const generatorBase = new GeneratorBase({_: [], type_slicing: false}, '');
       return particles[0].connections.map(c => generatorBase.handleInterfaceType(c, graph.nodes, true));
     }
   }(),
@@ -125,7 +126,7 @@ export const schema2KotlinTestSuite: CodegenUnitTest[] = [
       );
     }
     async computeFromManifest({particles}) {
-      const schema2kotlin = new Schema2Kotlin({_: []});
+      const schema2kotlin = new Schema2Kotlin({_: [], type_slicing: false});
       const nodeGenerators = await schema2kotlin.calculateNodeAndGenerators(particles[0]);
       const particleGenerator = new KotlinParticleGenerator(schema2kotlin, particles[0], nodeGenerators);
       const components = await particleGenerator.generateParticleClassComponents();
@@ -140,7 +141,7 @@ export const schema2KotlinTestSuite: CodegenUnitTest[] = [
       );
     }
     async computeFromManifest({particles}) {
-      const schema2kotlin = new Schema2Kotlin({_: []});
+      const schema2kotlin = new Schema2Kotlin({_: [], type_slicing: false});
       const nodeGenerators = await schema2kotlin.calculateNodeAndGenerators(particles[0]);
       const particleGenerator = new KotlinParticleGenerator(schema2kotlin, particles[0], nodeGenerators);
       const components = await particleGenerator.generateParticleClassComponents();
@@ -155,7 +156,7 @@ export const schema2KotlinTestSuite: CodegenUnitTest[] = [
       );
     }
     async computeFromManifest({particles}) {
-      const schema2kotlin = new Schema2Kotlin({_: []});
+      const schema2kotlin = new Schema2Kotlin({_: [], type_slicing: false});
       const generators = await schema2kotlin.calculateNodeAndGenerators(particles[0]);
       return schema2kotlin.generateTestHarness(particles[0], generators.map(g => g.node));
     }

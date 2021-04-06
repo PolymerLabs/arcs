@@ -359,7 +359,7 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
     }
     assertThat(e)
       .hasMessageThat()
-      .isEqualTo("Handle name b|b contains illegal char in set [;, |].")
+      .isEqualTo("Handle name b|b contains illegal char in set [{, }, ;, |].")
   }
 
   @Test
@@ -380,7 +380,7 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
     }
     assertThat(e)
       .hasMessageThat()
-      .isEqualTo("Handle name b;b; contains illegal char in set [;, |].")
+      .isEqualTo("Handle name b;b; contains illegal char in set [{, }, ;, |].")
   }
 
   private suspend fun createHandle(
