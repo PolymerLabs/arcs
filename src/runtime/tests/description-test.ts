@@ -301,7 +301,7 @@ recipe
     assert.strictEqual(description.getHandleDescription(aFooHandle), 'X1-foo');
 
     // Rank X2 higher than X2
-    const relevance = Relevance.create(runtime.getArcById(arcInfo.id), recipe);
+    const relevance = Relevance.create(arcInfo, recipe);
 
     relevance.relevanceMap.set(recipe.particles.find(p => p.name === 'A'), [7]);
     relevance.relevanceMap.set(recipe.particles.find(p => p.name === 'X1'), [5]);
@@ -411,7 +411,7 @@ recipe
 
     // Rank B bound to fooHandle2 higher than B that is bound to fooHandle1.
     const recipe = arcInfo.activeRecipe;
-    const relevance = Relevance.create(runtime.getArcById(arcInfo.id), recipe);
+    const relevance = Relevance.create(arcInfo, recipe);
     relevance.relevanceMap.set(recipe.particles.find(p => p.name === 'A'), [7]);
     relevance.relevanceMap.set(recipe.particles.filter(p => p.name === 'B')[0], [1]);
     relevance.relevanceMap.set(recipe.particles.filter(p => p.name === 'B')[1], [10]);

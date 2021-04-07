@@ -160,8 +160,7 @@ describe('FindHostedParticle', () => {
 
     const runtime = new Runtime({loader, context: manifest});
     const arcInfo = await runtime.allocator.startArc({arcName: 'test'});
-    const arc = runtime.getArcById(arcInfo.id);
-    const strategy = new FindHostedParticle(arc.arcInfo);
+    const strategy = new FindHostedParticle(arcInfo);
 
     const inRecipe = manifest.recipes[0];
     inRecipe.normalize();
@@ -183,7 +182,7 @@ describe('FindHostedParticle', () => {
     // for storing.
     assert.isNotNull(particleSpec['id'], 'particleSpec stored in handle should have an id');
     delete particleSpec['id'];
-    await arc.idle;
+    await runtime.getArcById(arcInfo.id).idle;
     const particleSpecLiteral = particleSpec.toLiteral();
     const manifestParticleLiteral = manifest.findParticleByName('TestParticle').toLiteral();
     deleteFieldRecursively(manifestParticleLiteral, 'location');

@@ -73,8 +73,7 @@ describe('Multiplexer', () => {
     // version could be set here, but doesn't matter for tests.
     const slotObserver = new SlotTestObserver();
     const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver});
-    const arc = runtime.getArcById(arcInfo.id);
-    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
     assert.lengthOf(suggestions, 1);
 
     // Render 3 posts
@@ -85,7 +84,7 @@ describe('Multiplexer', () => {
       .expectRenderSlot('ShowTwo', 'item');
 
     await runtime.allocator.runPlanInArc(arcInfo, suggestions[0].plan);
-    await arc.idle;
+    await runtime.getArcById(arcInfo.id).idle;
 
     // Add and render one more post
 
@@ -107,7 +106,7 @@ describe('Multiplexer', () => {
     });
     const entity = Entity.identify(entityClass, '4', null);
     await postsHandle2.add(entity);
-    await arc.idle;
+    await runtime.getArcById(arcInfo.id).idle;
   });
 
   // TODO(sjmiles): probably should be in particles/tests/* because of Multiplexer.js

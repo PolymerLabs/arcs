@@ -37,7 +37,7 @@ async function init(recipeStr) {
 
   const planner = new Planner();
   const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arcInfo)};
-  planner.init(runtime.getArcById(arcInfo.id), options);
+  planner.init(arcInfo, options);
 
   await planner.strategizer.generate();
   assert.lengthOf(planner.strategizer.population, 1);
@@ -105,8 +105,8 @@ recipe
     runtime.context = await runtime.parseFile(manifest);
 
     const slotObserver = new SlotTestObserver();
-    const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver})).id);
-    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver});
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
 
     const suggestion = suggestions.find(s => s.plan.name === 'FilterAndDisplayBooks');
     assert.deepEqual(
@@ -119,7 +119,7 @@ recipe
         .expectRenderSlot('List', 'root')
         .expectRenderSlot('List', 'root')
         .expectRenderSlot('ShowProduct', 'item');
-    await runtime.allocator.runPlanInArc(arc.arcInfo, suggestion.plan);
+    await runtime.allocator.runPlanInArc(arcInfo, suggestion.plan);
     await slotObserver.expectationsCompleted();
   });
 

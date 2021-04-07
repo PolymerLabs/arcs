@@ -258,33 +258,6 @@ export class Arc implements ArcInterface {
     return this.storageService.getActiveStore(storeInfo);
   }
 
-  // Makes a copy of the arc used for speculative execution.
-  async cloneForSpeculativeExecution(): Promise<Arc> {
-    const arcInfo = await this.peh.allocator.startArc({arcId: this.generateID(), outerArcId: this.arcInfo.outerArcId, isSpeculative: true});
-    const storeMap: Map<StoreInfo<Type>, StoreInfo<Type>> = new Map();
-    for (const storeInfo of this.arcInfo.stores) {
-      // TODO(alicej): Should we be able to clone a StoreMux as well?
-      const cloneInfo = await arcInfo.createStoreInfo(storeInfo.type, {
-        storageKey: new VolatileStorageKey(this.id, storeInfo.id),
-        exists: Exists.MayExist,
-        id: storeInfo.id
-      });
-      storeMap.set(storeInfo, cloneInfo);
-      if (this.storeDescriptions.has(storeInfo)) {
-        arcInfo.storeDescriptions.set(cloneInfo, this.storeDescriptions.get(storeInfo));
-      }
-    }
-
-    await this.peh.allocator.runPlanInArc(arcInfo, this.activeRecipe.clone());
-    const arc = this.peh.host.getArcById(arcInfo.id);
-
-    for (const innerArc of this.innerArcs) {
-      arc.addInnerArc(await innerArc.cloneForSpeculativeExecution());
-    }
-
-    return arc;
-  }
-
   /**
    * Instantiates the given recipe in the Arc.
    *
@@ -298,7 +271,6 @@ export class Arc implements ArcInterface {
    * Waits for completion of an existing Instantiate before returning.
    */
   async instantiate(particles: Particle[], handles: Handle[], reinstantiate: boolean = false): Promise<void> {
-    // Create handles, as needed.
     for (const recipeHandle of handles) {
       const fate = recipeHandle.originalFate && recipeHandle.originalFate !== '?'
           ? recipeHandle.originalFate : recipeHandle.fate;
@@ -320,13 +292,9 @@ export class Arc implements ArcInterface {
         continue;
       }
 
-      if (!['copy', 'map', 'create'].includes(fate)) {
-        continue;
-      }
-
       if (fate === 'map') {
         await this.createActiveStore(newStore);
-      } else {
+      } else if (['copy', 'create'].includes(fate)) {
         await this.createStoreInternal(newStore);
         if (fate === 'copy') {
           const copiedStoreRef = this.context.findStoreById(recipeHandle.originalId);

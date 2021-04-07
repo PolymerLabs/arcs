@@ -22,7 +22,6 @@ describe('transformation slots', () => {
 
     const slotObserver = new SlotTestObserver();
     const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver});
-    const arc = runtime.getArcById(arcInfo.id);
 
     slotObserver
       .newExpectations()
@@ -33,9 +32,9 @@ describe('transformation slots', () => {
         .expectRenderSlot('ShowFooAnnotation', 'annotation')
         .expectRenderSlot('ShowFooAnnotation', 'annotation', {times: 2});
 
-    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
     assert.lengthOf(suggestions, 1);
     await runtime.allocator.runPlanInArc(arcInfo, suggestions[0].plan);
-    await arc.idle;
+    await runtime.getArcById(arcInfo.id).idle;
   });
 });

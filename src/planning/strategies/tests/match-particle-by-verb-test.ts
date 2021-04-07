@@ -74,11 +74,11 @@ describe('MatchParticleByVerb', () => {
     recipe.handles[0].mapToStorage(new StoreInfo({id: 'test1', type: Entity.createEntityClass(manifest.findSchemaByName('Height'), null).type}));
     recipe.handles[1].mapToStorage(new StoreInfo({id: 'test2', type: Entity.createEntityClass(manifest.findSchemaByName('Energy'), null).type}));
 
-    const arc = await StrategyTestHelper.createTestArc(manifest, {modality: Modality.dom});
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(manifest, {modality: Modality.dom});
 
     // Apply all strategies to resolve recipe where particles are referenced by verbs.
     const planner = new Planner();
-    planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc.arcInfo)});
+    planner.init(arcInfo, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arcInfo)});
     const plans = await planner.plan(1000);
 
     assert.lengthOf(plans, 2);

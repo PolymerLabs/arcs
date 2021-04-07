@@ -102,9 +102,9 @@ describe('Rulesets', () => {
   });
 
   const planAndComputeStats = async options => {
-    const arc = await StrategyTestHelper.createTestArc(options.context);
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(options.context);
     const planner = new Planner();
-    planner.init(arc, options);
+    planner.init(arcInfo, options);
     const generations: Generation[] = [];
     await planner.plan(Infinity, generations);
     const recipes = ([] as AnnotatedDescendant[]).concat(...generations.map(instance => instance.generated));

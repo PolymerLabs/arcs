@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Arc} from '../../runtime/arc.js';
+import {ArcInfo} from '../../runtime/arc-info.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {SlotComposer} from '../../runtime/slot-composer.js';
@@ -19,23 +19,19 @@ import {Planner} from '../planner.js';
 import {Suggestion} from '../plan/suggestion.js';
 import {Modality} from '../../runtime/arcs-types/modality.js';
 import {Runtime} from '../../runtime/runtime.js';
-import {ArcInfo} from '../../runtime/arc-info.js';
 
 export class StrategyTestHelper {
   static async createTestArcInfo(context: Manifest, options: {id?: Id, modality?: Modality, loader?: Loader} = {}): Promise<ArcInfo> {
     const runtime = new Runtime({context, loader: options.loader || new Loader()});
     return runtime.allocator.startArc({arcName: 'test-arc', ...options});
   }
-  static async createTestArc(context: Manifest, options: {id?: Id, modality?: Modality, loader?: Loader} = {}): Promise<Arc> {
-    const runtime = new Runtime({context, loader: options.loader || new Loader()});
-    return runtime.getArcById((await runtime.allocator.startArc({arcName: 'test-arc', ...options})).id);
-  }
   static createTestStrategyArgs(arcInfo: ArcInfo, args?) {
     return {recipeIndex: RecipeIndex.create(arcInfo), ...args};
   }
-  static async planForArc(runtime: Runtime, arc: Arc): Promise<Suggestion[]> {
+  static async planForArc(runtime: Runtime, arcInfo: ArcInfo): Promise<Suggestion[]> {
     const planner = new Planner();
-    planner.init(arc, {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc.arcInfo), noSpecEx: true});
+    // TODO(STARTHERE): use arcInfo INSTEAD!!!
+    planner.init(arcInfo, {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arcInfo), noSpecEx: true});
     return planner.suggest();
   }
 

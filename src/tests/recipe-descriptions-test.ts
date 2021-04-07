@@ -117,10 +117,9 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
     );
     const storageKeyPrefix = (id: ArcId) => new VolatileStorageKey(id, '');
     const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix});
-    const arc = runtime.getArcById(arcInfo.id);
-    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
     assert.lengthOf(suggestions, 1);
-    const result = suggestions[0].getDescription(arc.modality.names[0]);
+    const result = suggestions[0].getDescription(arcInfo.modality.names[0]);
     return result;
   }
   async function testRecipeDescription(options, expectedDescription) {
@@ -184,9 +183,9 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
             foo: writes fooHandle
           description \`cannot show duplicate \${ShowFoo.foo}\`
       `, {fileName: ''});
-    const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()})).id);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
 
-    await StrategyTestHelper.planForArc(runtime, arc).then(() => assert('expected exception for duplicate particles'))
+    await StrategyTestHelper.planForArc(runtime, arcInfo).then(() => assert('expected exception for duplicate particles'))
       .catch((err) => assert.strictEqual(
           err.message, 'Cannot reference duplicate particle \'ShowFoo\' in recipe description.'));
   });
@@ -234,18 +233,18 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         description \`show \${ShowFoo.foo} with dummy\`
     `, {fileName: ''});
     const storageKeyPrefix = (id: ArcId) => new VolatileStorageKey(id, '');
-    const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix})).id);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix});
     // Plan for arc
-    const suggestions0 = await StrategyTestHelper.planForArc(runtime, arc);
+    const suggestions0 = await StrategyTestHelper.planForArc(runtime, arcInfo);
     assert.lengthOf(suggestions0, 2);
     assert.strictEqual('Show foo.', suggestions0[0].descriptionText);
 
     // Instantiate suggestion
-    await runtime.allocator.runPlanInArc(arc.arcInfo, suggestions0[0].plan);
-    await arc.idle;
+    await runtime.allocator.runPlanInArc(arcInfo, suggestions0[0].plan);
+    await runtime.getArcById(arcInfo.id).idle;
 
     // Plan again.
-    const suggestions1 = await StrategyTestHelper.planForArc(runtime, arc);
+    const suggestions1 = await StrategyTestHelper.planForArc(runtime, arcInfo);
     assert.lengthOf(suggestions1, 1);
     assert.strictEqual('Show foo with dummy.', suggestions1[0].descriptionText);
   });
@@ -268,9 +267,9 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         description \`do C\`
     `, {fileName: ''});
     const storageKeyPrefix = (id: ArcId) => new VolatileStorageKey(id, '');
-    const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix})).id);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix});
 
-    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
 
     assert.lengthOf(suggestions, 3);
     const recipe1 = newRecipe();

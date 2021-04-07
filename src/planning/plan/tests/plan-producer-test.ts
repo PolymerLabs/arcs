@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
-import {Arc} from '../../../runtime/arc.js';
 import {ArcId} from '../../../runtime/id.js';
+import {ArcInfo} from '../../../runtime/arc-info.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {storageKeyPrefixForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
 import {PlanProducer} from '../../plan/plan-producer.js';
@@ -28,8 +28,8 @@ class TestPlanProducer extends PlanProducer {
   plannerNextResults: Suggestion[][] = [];
   plannerPromise = null;
 
-  constructor(arc, runtime, store) {
-    super(arc, runtime, new PlanningResult({context: arc.context, loader: arc.loader, storageService: runtime.storageService}, store));
+  constructor(arcInfo, runtime, store) {
+    super(arcInfo, runtime, new PlanningResult({context: runtime.context, loader: runtime.loader, storageService: runtime.storageService}, store));
   }
 
   async produceSuggestions(options = {}) {
@@ -82,11 +82,11 @@ describe('plan producer', () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile('./src/runtime/tests/artifacts/Products/Products.recipes');
     const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
     const arc = runtime.getArcById(arcInfo.id);
-    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
-    const store = await Planificator['_initSuggestStore'](arc, storageKeyForTest(arcInfo.id));
+    const store = await Planificator.initSuggestStore(storageKeyForTest(arcInfo.id), arc.storageService);
     assert.isNotNull(store);
-    const producer = new TestPlanProducer(arc, runtime, store);
+    const producer = new TestPlanProducer(arcInfo, runtime, store);
     return {suggestions, producer};
   }
 
@@ -143,8 +143,8 @@ describe('plan producer - search', () => {
     options;
     produceSuggestionsCalled = 0;
 
-    constructor(arc: Arc, runtime: Runtime, searchStore: ActiveSingletonEntityStore, searchHandle: SingletonEntityHandle) {
-      super(arc, runtime, new PlanningResult({context: arc.context, loader: arc.loader, storageService: runtime.storageService}, searchStore), searchStore, searchHandle);
+    constructor(arcInfo: ArcInfo, runtime: Runtime, searchStore: ActiveSingletonEntityStore, searchHandle: SingletonEntityHandle) {
+      super(arcInfo, runtime, new PlanningResult({context: runtime.context, loader: runtime.loader, storageService: runtime.storageService}, searchStore), searchStore, searchHandle);
     }
 
     async produceSuggestions(options = {}) {
@@ -153,8 +153,8 @@ describe('plan producer - search', () => {
     }
 
     async setNextSearch(search: string) {
-      const handle = await this.runtime.host.handleForStoreInfo(this.searchStore.storeInfo, this.arc.arcInfo);
-      await handle.setFromData({current: JSON.stringify([{arc: this.arc.id.idTreeAsString(), search}])});
+      const handle = await this.runtime.host.handleForStoreInfo(this.searchStore.storeInfo, this.arcInfo);
+      await handle.setFromData({current: JSON.stringify([{arc: this.arcInfo.id.idTreeAsString(), search}])});
       return this.onSearchChanged();
     }
   }
@@ -165,12 +165,11 @@ describe('plan producer - search', () => {
       schema Bar
         value: Text
     `);
-    const arcInfo = await runtime.allocator.startArc({arcName: 'test', storageKeyPrefix: storageKeyForTest, arcId: ArcId.newForTest('test')});
-    const arc = runtime.getArcById(arcInfo.id);
-    const searchStore = await Planificator['_initSearchStore'](arc);
-    const searchHandle = await runtime.host.handleForStoreInfo(searchStore.storeInfo, arc.arcInfo);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test', arcId: ArcId.newForTest('test')});
+    const searchStore = await Planificator.initSearchStore(storageKeyForTest(arcInfo.id), runtime.storageService);
+    const searchHandle = await runtime.host.handleForStoreInfo(searchStore.storeInfo, arcInfo);
 
-    const producer = new TestSearchPlanProducer(arc, runtime, searchStore, searchHandle);
+    const producer = new TestSearchPlanProducer(arcInfo, runtime, searchStore, searchHandle);
     assert.isUndefined(producer.search);
     assert.strictEqual(producer.produceSuggestionsCalled, 0);
     return producer;

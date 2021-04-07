@@ -31,7 +31,7 @@ class ResultInspector {
    * @param field the field within store's contained Entity type that this inspector should observe.
    */
   constructor(private readonly runtime,
-              private readonly arc: Arc,
+              private readonly arcInfo: ArcInfo,
               private readonly store: StoreInfo<CollectionEntityType>,
               private readonly field: string) {
     assert(store.type instanceof CollectionType, `ResultInspector given non-Collection store: ${store}`);
@@ -43,8 +43,8 @@ class ResultInspector {
    * checks in the same test. The order of expectations is not significant.
    */
   async verify(...expectations) {
-    await this.arc.idle;
-    const handle = await this.runtime.host.handleForStoreInfo(this.store, this.arc.arcInfo);
+    await this.runtime.getArcById(this.arcInfo.id).idle;
+    const handle = await this.runtime.host.handleForStoreInfo(this.store, this.arcInfo);
     const received = await handle.toList();
     const misses = [];
 
@@ -136,8 +136,7 @@ describe('particle-api', () => {
     const fooStore = await arcInfo.createStoreInfo(new SingletonType(data.type), {name: 'foo', id: 'test:0'});
     const fooHandle = await runtime.host.handleForStoreInfo(fooStore, arcInfo);
     const resStore = await arcInfo.createStoreInfo(data.type.collectionOf(), {name: 'res', id: 'test:1'});
-    const arc = runtime.getArcById(arcInfo.id);
-    const inspector = new ResultInspector(runtime, arc, resStore, 'value');
+    const inspector = new ResultInspector(runtime, arcInfo, resStore, 'value');
     const recipe = arcInfo.context.recipes[0];
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(resStore);
@@ -147,7 +146,7 @@ describe('particle-api', () => {
 
     // Drop event 2; desync is triggered by v3.
     await fooHandle.set(new fooHandle.entityClass({value: 'v1'}));
-    const activeStore = await arc.getActiveStore(fooStore);
+    const activeStore = await runtime.storageService.getActiveStore(fooStore);
     const fireFn = activeStore['deliverCallbacks'];
     activeStore['deliverCallbacks'] = () => {};
     await fooHandle.set(new fooHandle.entityClass({value: 'v2'}));
@@ -734,13 +733,12 @@ describe('particle-api', () => {
     await inputsHandle.add(new inputsHandle.entityClass({value: 'world'}));
     const resultsStore = await arcInfo.createStoreInfo(result.type.collectionOf(), {id: 'test:2'});
     const resultsHandle = await runtime.host.handleForStoreInfo(resultsStore, arcInfo);
-    const arc = runtime.getArcById(arcInfo.id);
-    const inspector = new ResultInspector(runtime, arc, resultsStore, 'value');
+    const inspector = new ResultInspector(runtime, arcInfo, resultsStore, 'value');
     const recipe = arcInfo.context.recipes[0];
     recipe.handles[0].mapToStorage(inputsStore);
     recipe.handles[1].mapToStorage(resultsStore);
     await runtime.allocator.runPlanInArc(arcInfo, recipe);
-    await arc.idle;
+    await runtime.getArcById(arcInfo.id).idle;
     assert.sameMembers((await resultsHandle.toList()).map(item => item.value), ['done', 'done', 'HELLO', 'WORLD']);
     await inspector.verify('done', 'done', 'HELLO', 'WORLD');
 
@@ -968,7 +966,7 @@ describe('particle-api', () => {
     recipe.handles[1].mapToStorage(outStore);
     recipe.normalize();
 
-    const {speculativeArc, relevance} = await (new Speculator(runtime)).speculate(runtime.getArcById(arcInfo.id), recipe, 'recipe-hash');
+    const {speculativeArc, relevance} = await (new Speculator(runtime)).speculate(arcInfo, recipe, 'recipe-hash');
     const description = await Description.create(speculativeArc.arcInfo, runtime, relevance);
     assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });
@@ -1021,12 +1019,12 @@ describe('particle-api', () => {
 
     const id = IdGenerator.createWithSessionIdForTesting('session').newArcId('test');
     const runtime = new Runtime({context: new Manifest({id}), loader});
-    const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'test'})).id);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test'});
     const manifest = await Manifest.load('./manifest', loader);
     const recipe = manifest.recipes[0];
     assert.isTrue(recipe.normalize());
 
-    const {speculativeArc, relevance} = await (new Speculator(runtime)).speculate(arc, recipe, 'recipe-hash');
+    const {speculativeArc, relevance} = await (new Speculator(runtime)).speculate(arcInfo, recipe, 'recipe-hash');
     const description = await Description.create(speculativeArc.arcInfo, runtime, relevance);
     assert.strictEqual(description.getRecipeSuggestion(), 'Out is hi!');
   });

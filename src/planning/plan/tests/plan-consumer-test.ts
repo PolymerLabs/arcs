@@ -22,14 +22,14 @@ import {Manifest} from '../../../runtime/manifest.js';
 import {ActiveSingletonEntityStore} from '../../../runtime/storage/storage.js';
 
 async function createPlanConsumer(arc: Arc, runtime: Runtime) {
-  const store: ActiveSingletonEntityStore = await Planificator['_initSuggestStore'](arc);
+  const store: ActiveSingletonEntityStore = await Planificator.initSuggestStore(arc.storageKey, arc.storageService);
   assert.isNotNull(store);
-  const result = new PlanningResult({context: runtime.context, loader: arc.loader, storageService: runtime.storageService}, store);
-  return new PlanConsumer(arc, result);
+  const result = new PlanningResult({context: runtime.context, loader: runtime.loader, storageService: runtime.storageService}, store);
+  return new PlanConsumer(arc.arcInfo, result);
 }
 
 async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
-  assert.isTrue(consumer.result.merge({suggestions}, consumer.arc.arcInfo));
+  assert.isTrue(consumer.result.merge({suggestions}, consumer.arcInfo));
   await consumer.result.flush();
   await new Promise(resolve => setTimeout(resolve, 100));
 }
@@ -73,7 +73,7 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
       assert.isNotNull(consumer);
 
       await storeResults(consumer, context.allRecipes.map((plan, index) => {
-        const suggestion = Suggestion.create(plan, /* hash */`${index}`, Relevance.create(arc, plan));
+        const suggestion = Suggestion.create(plan, /* hash */`${index}`, Relevance.create(arcInfo, plan));
         suggestion.descriptionByModality['text'] = `${plan.name}`;
         return suggestion;
       }));

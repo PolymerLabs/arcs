@@ -20,6 +20,9 @@ import {VolatileStorageKey} from './storage/drivers/volatile.js';
 import {Capabilities} from './capabilities.js';
 import {ArcInfo, StartArcOptions, DeserializeArcOptions, ArcInfoOptions, NewArcInfoOptions, RunArcOptions} from './arc-info.js';
 import {ArcHost, ArcHostFactory, SingletonArcHostFactory} from './arc-host.js';
+import {Exists} from './storage/drivers/driver.js';
+import {StoreInfo} from './storage/store-info.js';
+import {Type} from '../types/lib-types.js';
 
 export interface Allocator {
   registerArcHost(factory: ArcHostFactory);
@@ -37,6 +40,8 @@ export interface Allocator {
   // It should become private, once Planning is incorporated into Allocator APIs.
   // Once private, consider not returning a value.
   assignStorageKeys(arcId: ArcId, plan: Recipe, idGenerator?: IdGenerator): Promise<Recipe>;
+
+  cloneArc(arcId: ArcId, options: StartArcOptions): Promise<ArcInfo>;
 }
 
 export class AllocatorImpl implements Allocator {
@@ -214,6 +219,33 @@ export class AllocatorImpl implements Allocator {
     // Temporarily this can only be implemented in SingletonAllocator subclass,
     // because it requires access to `host` and Arc's store creation API.
     return Promise.all([]);
+  }
+
+  async cloneArc(arcId: ArcId, options: StartArcOptions): Promise<ArcInfo> {
+    const arcInfo = this.arcInfoById.get(arcId);
+    assert(arcInfo);
+    const clonedArcInfo = await this.startArc({arcId: arcInfo.generateID(), outerArcId: arcInfo.outerArcId, ...options});  // , isSpeculative: true
+    const storeMap: Map<StoreInfo<Type>, StoreInfo<Type>> = new Map();
+    for (const storeInfo of arcInfo.stores) {
+      // TODO(alicej): Should we be able to clone a StoreMux as well?
+      const cloneInfo = await clonedArcInfo.createStoreInfo(storeInfo.type, {
+        storageKey: new VolatileStorageKey(clonedArcInfo.id, storeInfo.id),
+        exists: Exists.MayExist,
+        id: storeInfo.id
+      });
+      storeMap.set(storeInfo, cloneInfo);
+      if (arcInfo.storeDescriptions.has(storeInfo)) {
+        clonedArcInfo.storeDescriptions.set(cloneInfo, arcInfo.storeDescriptions.get(storeInfo));
+      }
+    }
+
+    await this.runPlanInArc(clonedArcInfo, arcInfo.activeRecipe.clone());
+
+    for (const innerArcInfo of arcInfo.innerArcs) {
+      await this.cloneArc(innerArcInfo.id, options);
+    }
+
+    return clonedArcInfo;
   }
 }
 

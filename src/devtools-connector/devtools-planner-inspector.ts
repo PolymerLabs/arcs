@@ -27,7 +27,7 @@ class DevtoolsPlannerInspector implements PlannerInspector {
 
   constructor(planner: InspectablePlanner) {
     void DevtoolsConnection.onceConnected.then(devtoolsChannel => {
-      this.arcDevtoolsChannel = devtoolsChannel.forArc(planner.arc);
+      this.arcDevtoolsChannel = devtoolsChannel.forArc(planner.arcInfo);
       if (planner.forceReplan) {
         this.arcDevtoolsChannel.listen('force-replan', () => void planner.forceReplan());
       }

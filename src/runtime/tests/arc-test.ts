@@ -330,7 +330,7 @@ describe('Arc', () => {
     const arcInfo = await runtime.allocator.startArc({arcName: 'test2'});
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     await arcInfo.createStoreInfo(new SingletonType(thingClass.type), {name: 'name', id: 'storeInArc'});
-    const resolver = new RecipeResolver(arcInfo); //runtime.getArcById(arcInfo.id));
+    const resolver = new RecipeResolver(arcInfo);
 
     // Fails resolving a recipe with 'copy' handle for store in the arc (not in context).
     assert.isNull(await resolver.resolve(manifest.recipes[2]));

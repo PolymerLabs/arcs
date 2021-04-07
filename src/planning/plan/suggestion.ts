@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Arc} from '../../runtime/arc.js';
 import {ArcInfo} from '../../runtime/arc-info.js';
 import {DescriptionFormatter} from '../../runtime/description-formatter.js';
 import {Description} from '../../runtime/description.js';
@@ -219,7 +218,7 @@ export class Suggestion {
     return plan.handles.every(handle => arcVersionByStoreId[handle.id] === this.versionByStore[handle.id]);
   }
 
-  isVisible(arc: Arc, filter: SuggestFilter, options?: SuggestionVisibilityOptions): boolean {
+  isVisible(arcInfo: ArcInfo, filter: SuggestFilter, options?: SuggestionVisibilityOptions): boolean {
     const logReason = (label: string) => {
       if (options && options.reasons) {
         options.reasons.push(label);
@@ -236,8 +235,8 @@ export class Suggestion {
       logReason(`No description`);
       return false;
     }
-    if (!arc.modality.isCompatible(this.plan.modality.names)) {
-      logReason(`Incompatible modalities ${this.plan.modality.names.join(', ')} with Arc modalities: ${arc.modality.names.join(', ')}`);
+    if (!arcInfo.modality.isCompatible(this.plan.modality.names)) {
+      logReason(`Incompatible modalities ${this.plan.modality.names.join(', ')} with Arc modalities: ${arcInfo.modality.names.join(', ')}`);
       return false;
     }
     if (filter.showAll) {
@@ -262,7 +261,7 @@ export class Suggestion {
       // TODO(mmandlis): find a generic way to exclude system handles (eg Theme),
       // either by tagging or by exploring connection directions etc.
       return !!handle.id &&
-             !!arc.activeRecipe.handles.find(activeHandle => activeHandle.id === handle.id);
+             !!arcInfo.activeRecipe.handles.find(activeHandle => activeHandle.id === handle.id);
     });
     if (!usesHandlesFromActiveRecipe) {
       logReason(`No active recipe handles`);

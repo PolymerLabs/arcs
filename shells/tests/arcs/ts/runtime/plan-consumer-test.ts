@@ -20,14 +20,14 @@ import {ActiveSingletonEntityStore} from '../../../../../build/runtime/storage/s
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
 async function createPlanConsumer(arc: Arc, runtime: Runtime) {
-  const store: ActiveSingletonEntityStore = await Planificator['_initSuggestStore'](arc);
+  const store: ActiveSingletonEntityStore = await Planificator.initSuggestStore(arc.storageKey, arc.storageService);
   assert.isNotNull(store);
-  const result = new PlanningResult({context: arc.context, loader: arc.loader, storageService: runtime.storageService}, store);
-  return new PlanConsumer(arc, result);
+  const result = new PlanningResult({context: runtime.context, loader: runtime.loader, storageService: runtime.storageService}, store);
+  return new PlanConsumer(arc.arcInfo, result);
 }
 
 async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
-  assert.isTrue(consumer.result.merge({suggestions}, consumer.arc.arcInfo));
+  assert.isTrue(consumer.result.merge({suggestions}, consumer.arcInfo));
   await consumer.result.flush();
   await new Promise(resolve => setTimeout(resolve, 100));
 }
@@ -59,10 +59,9 @@ describe('plan consumer', () => {
     runtime.context = await runtime.parse(manifestText);
 
     const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
-    const arc = runtime.getArcById(arcInfo.id);
-    let suggestions = await StrategyTestHelper.planForArc(runtime, arc);
+    let suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
 
-    const consumer = await createPlanConsumer(arc, runtime);
+    const consumer = await createPlanConsumer(runtime.getArcById(arcInfo.id), runtime);
     let suggestionsChangeCount = 0;
     const suggestionsCallback = () => ++suggestionsChangeCount;
     let visibleSuggestionsChangeCount = 0;
@@ -100,8 +99,8 @@ describe('plan consumer', () => {
     assert.strictEqual(suggestionsChangeCount, 1);
     assert.strictEqual(visibleSuggestionsChangeCount, 3);
 
-    await runtime.allocator.runPlanInArc(arc.arcInfo, suggestions[0].plan);
-    suggestions = await StrategyTestHelper.planForArc(runtime, arc);
+    await runtime.allocator.runPlanInArc(arcInfo, suggestions[0].plan);
+    suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
     await storeResults(consumer, suggestions);
     assert.lengthOf(consumer.result.suggestions, 3);
 

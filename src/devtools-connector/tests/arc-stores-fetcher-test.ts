@@ -133,7 +133,7 @@ describe('ArcStoresFetcher', () => {
 
     const sessionId = arcInfo.idGenerator.currentSessionIdForTesting;
     const storeInfo = arcInfo.findStoreById(arcInfo.activeRecipe.handles[0].id);
-    const store = await arc.getActiveStore(storeInfo) as ActiveSingletonEntityStore;
+    const store = await runtime.storageService.getActiveStore(storeInfo) as ActiveSingletonEntityStore;
     // TODO(mmandlis): there should be a better way!
     const creationTimestamp = Object.values((await store.serializeContents()).values)[0]['value']['creationTimestamp'];
     assert.deepEqual(results[0].messageBody, {

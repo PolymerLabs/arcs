@@ -27,9 +27,8 @@ describe('planning result', () => {
     runtime.context = await runtime.parseFile('./src/runtime/tests/artifacts/Products/Products.recipes');
 
     const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
-    const arc = runtime.getArcById(arcInfo.id);
 
-    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
     assert.isNotEmpty(suggestions);
 
     const {loader, context, storageService} = runtime;
@@ -52,8 +51,7 @@ describe('planning result', () => {
     runtime.context = await runtime.parseFile('./src/runtime/tests/artifacts/Products/Products.recipes');
 
     const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
-    const arc = runtime.getArcById(arcInfo.id);
-    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
 
     const {loader, context, storageService} = runtime;
 
@@ -120,10 +118,9 @@ recipe R3
   async function prepareMerge(manifestStr1, manifestStr2) {
     const runtime = new Runtime();
     const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
-    const arc = runtime.getArcById(arcInfo.id);
 
     const planToSuggestion = async (plan: Recipe): Promise<Suggestion> => {
-      const suggestion = Suggestion.create(plan, await plan.digest(), Relevance.create(arc, plan));
+      const suggestion = Suggestion.create(plan, await plan.digest(), Relevance.create(arcInfo, plan));
       suggestion.descriptionByModality['text'] = plan.name;
       for (const handle of plan.handles) {
         if (handle.id) {
@@ -132,9 +129,10 @@ recipe R3
       }
       return suggestion;
     };
+    // const arc = runtime.getArcById(arcInfo.id);
     const manifestToResult = async (manifestStr) =>  {
       const manifest = await runtime.parse(manifestStr);
-      const result = new PlanningResult({context: arc.context, loader: runtime.loader, storageService: runtime.storageService});
+      const result = new PlanningResult({context: runtime.context, loader: runtime.loader, storageService: runtime.storageService});
 
       const suggestions: Suggestion[] = await Promise.all(
         manifest.recipes.map(async plan => planToSuggestion(plan)) as Promise<Suggestion>[]

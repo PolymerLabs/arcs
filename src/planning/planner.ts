@@ -12,7 +12,7 @@ import {Consumer} from '../utils/lib-utils.js';
 import {assert} from '../platform/assert-web.js';
 import {now} from '../platform/date-web.js';
 import {DeviceInfo} from '../platform/deviceinfo-web.js';
-import {Arc} from '../runtime/arc.js';
+import {ArcInfo} from '../runtime/arc-info.js';
 import {Tracing} from '../tracelib/trace.js';
 import {PlanningResult} from './plan/planning-result.js';
 import {Suggestion} from './plan/suggestion.js';
@@ -74,7 +74,7 @@ export interface PlannerInitOptions {
 }
 
 export class Planner implements InspectablePlanner {
-  public arc: Arc;
+  public arcInfo: ArcInfo;
   runtime: Runtime;
   // public for debug tools
   strategizer: Strategizer;
@@ -84,10 +84,10 @@ export class Planner implements InspectablePlanner {
 
   // TODO: Use context.arc instead of arc
   // TODO: promote runtime out of options, it's not optional
-  init(arc: Arc, {runtime, strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, speculator, inspectorFactory, noSpecEx = false}: PlannerInitOptions) {
-    this.arc = arc;
+  init(arcInfo: ArcInfo, {runtime, strategies = Planner.AllStrategies, ruleset = Rulesets.Empty, strategyArgs = {}, speculator, inspectorFactory, noSpecEx = false}: PlannerInitOptions) {
+    this.arcInfo = arcInfo;
     this.runtime = runtime;
-    this.strategizer = this.initStrategizer(arc, strategies, ruleset, strategyArgs);
+    this.strategizer = this.initStrategizer(this.arcInfo, strategies, ruleset, strategyArgs);
     this.speculator = speculator || new Speculator(runtime);
     this.inspector = inspectorFactory ? inspectorFactory.create(this) : null;
     this.noSpecEx = noSpecEx;
@@ -101,9 +101,9 @@ export class Planner implements InspectablePlanner {
     this.speculator.dispose();
   }
 
-  initStrategizer(arc, strategies, ruleset, strategyArgs) {
+  initStrategizer(arcInfo, strategies, ruleset, strategyArgs) {
     strategyArgs = Object.freeze({...strategyArgs});
-    const strategyImpls = strategies.map(strategy => new strategy(arc.arcInfo, strategyArgs));
+    const strategyImpls = strategies.map(strategy => new strategy(arcInfo, strategyArgs));
     return new Strategizer(strategyImpls, [], ruleset);
   }
 
@@ -213,7 +213,7 @@ export class Planner implements InspectablePlanner {
       for (const plan of group) {
         const hash = ((hash) => hash.substring(hash.length - 4))(await plan.digest());
 
-        if (matchesRecipe(this.arc.activeRecipe, plan)) {
+        if (matchesRecipe(this.arcInfo.activeRecipe, plan)) {
           this._updateGeneration(generations, hash, (g) => g.active = true);
           continue;
         }
@@ -225,7 +225,7 @@ export class Planner implements InspectablePlanner {
           args: {groupIndex}
         });
 
-        const suggestion = await this.retrieveOrCreateSuggestion(hash, plan, this.arc);
+        const suggestion = await this.retrieveOrCreateSuggestion(hash, plan);
         if (!suggestion) {
           this._updateGeneration(generations, hash, (g) => g.irrelevant = true);
           planTrace.end({name: '[Irrelevant suggestion]', args: {hash, groupIndex}});
@@ -279,13 +279,13 @@ export class Planner implements InspectablePlanner {
     console.log(JSON.stringify(dump, null, '  '));
   }
 
-  private async retrieveOrCreateSuggestion(hash: string, plan: Recipe, arc: Arc) : Promise<Suggestion|undefined> {
+  private async retrieveOrCreateSuggestion(hash: string, plan: Recipe) : Promise<Suggestion|undefined> {
     const cachedSuggestion = this.getCache().get(hash);
-    if (cachedSuggestion && cachedSuggestion.isUpToDate(arc.arcInfo, plan)) {
+    if (cachedSuggestion && cachedSuggestion.isUpToDate(this.arcInfo, plan)) {
       return cachedSuggestion;
     }
     const shouldSpeculate = this._shouldSpeculate(plan);
-    const result = await this.speculator.speculate(this.arc, plan, hash, shouldSpeculate);
+    const result = await this.speculator.speculate(this.arcInfo, plan, hash, shouldSpeculate);
     if (shouldSpeculate && !result) {
       return undefined;
     }
@@ -293,10 +293,8 @@ export class Planner implements InspectablePlanner {
     const description = await Description.create(speculativeArc.arcInfo, this.runtime, result.relevance);
 
     const suggestion = Suggestion.create(plan, hash, result.relevance);
-    suggestion.setDescription(description, this.arc.modality);
+    suggestion.setDescription(description, this.arcInfo.modality);
     this.getCache().set(hash, suggestion);
-
-    this.runtime.allocator.stopArc(speculativeArc.id);
 
     return suggestion;
   }

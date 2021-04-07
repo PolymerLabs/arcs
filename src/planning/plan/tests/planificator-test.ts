@@ -19,27 +19,16 @@ import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {floatingPromiseToAudit} from '../../../utils/lib-utils.js';
 import {storageKeyPrefixForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
-import {MockFirebaseStorageKey} from '../../../runtime/storage/testing/mock-firebase.js';
 
 describe('planificator', () => {
-  it('constructs suggestion and search storage keys for fb arc', async () => {
+  it('constructs suggestion and search storage keys for an arc', async () => {
     const runtime = new Runtime();
-    const storageKeyPrefix = () => new MockFirebaseStorageKey('location');
-    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix});
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo'});
     const arc = runtime.getArcById(arcInfo.id);
+    const planificator = await Planificator.create(arc, {runtime, onlyConsumer: true, debug: false});
 
-    const verifySuggestion = (storageKeyBase) => {
-      const key = Planificator.constructSuggestionKey(arc, storageKeyBase);
-      assert(key && key.protocol,
-            `Cannot construct key for '${storageKeyBase}' planificator storage key base`);
-      assert(key.protocol.length > 0,
-            `Invalid protocol in key for '${storageKeyBase}' planificator storage key base`);
-    };
-
-    verifySuggestion(storageKeyForTest(arcInfo.id));
-    verifySuggestion(new MockFirebaseStorageKey('planificator location'));
-
-    assert.isTrue(Planificator.constructSearchKey(arc).toString().length > 0);
+    assert.equal(arc.storageKey.protocol, planificator.result.store.storageKey.protocol);
+    assert.equal(arc.storageKey.protocol, planificator.searchStore.storageKey.protocol);
   });
 });
 

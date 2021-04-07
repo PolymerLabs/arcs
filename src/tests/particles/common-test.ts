@@ -76,9 +76,8 @@ describe('common particles test', () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile('./src/tests/particles/artifacts/copy-collection-test.recipes');
     const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
-    const arc = runtime.getArcById(arcInfo.id);
 
-    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
     assert.lengthOf(suggestions, 1);
     const suggestion = suggestions[0];
     assert.equal(suggestion.descriptionText, 'Copy all things!');
@@ -86,9 +85,9 @@ describe('common particles test', () => {
     assert.isEmpty(arcInfo.stores);
 
     await runtime.allocator.runPlanInArc(arcInfo, suggestion.plan);
-    await arc.idle;
+    await runtime.getArcById(arcInfo.id).idle;
 
-    const storeInfo = arc.findStoreById(arc.stores[2].id) as StoreInfo<CollectionEntityType>;
+    const storeInfo = arcInfo.findStoreById(arcInfo.stores[2].id) as StoreInfo<CollectionEntityType>;
     const handle = await runtime.host.handleForStoreInfo(storeInfo, arcInfo);
     assert.strictEqual((await handle.toList()).length, 5);
   });
