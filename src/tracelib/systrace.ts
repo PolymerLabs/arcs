@@ -104,6 +104,7 @@ export function SystemTrace<T extends Constructor<{}>>(ctor: T) {
       // b) re-entrance is detected.
       if (clientClass &&
           !this.constructor.hasOwnProperty(SYSTEM_TRACED_PROPERTY)) {
+        // tslint:disable-next-line: no-any
         harnessSystemTracing(this, new (clientClass as any)());
       }
     }

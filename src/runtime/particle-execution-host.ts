@@ -156,6 +156,7 @@ class PECOuterPortImpl extends PECOuterPort {
 
     const clientClass = getClientClass();
     if (clientClass) {
+      // tslint:disable-next-line: no-any
       this.systemTraceClient = new (clientClass as any)();
     }
   }

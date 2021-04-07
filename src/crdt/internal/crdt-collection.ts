@@ -60,6 +60,7 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
           }
         }
         if (entriesMatch) {
+          // tslint:disable-next-line: no-any
           return {modelChange: createEmptyChange(), otherChange: createEmptyChange() as any};
         }
       }
