@@ -60,7 +60,7 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
           }
         }
         if (entriesMatch) {
-          return {modelChange: createEmptyChange(), otherChange: createEmptyChange()};
+          return {modelChange: createEmptyChange(), otherChange: createEmptyChange() as any};
         }
       }
     }
