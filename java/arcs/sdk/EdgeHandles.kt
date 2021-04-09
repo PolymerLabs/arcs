@@ -6,8 +6,6 @@ import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.Storable
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 
@@ -20,15 +18,16 @@ import kotlinx.coroutines.withContext
  *    any access to lifecycle events.
  *  - Handles will be exposed via the Edge*Handle interfaces given below. All edge handle methods
  *    are asynchronous and may be invoked at any time after the particle has been created.
- *  - All read operations will return a CompletableDeferred around the requested value.
- *  - All write operations will be applied immediately, but the APIs still need to be asynchronous
- *    so they can operate on the handle's dispatcher.
+ *  - All read operations will suspend as required to await handle synchronization.
+ *  - All write operations will be applied immediately to the local handle data model. They will
+ *    return a Job that will be completed once the operation has been sent to the backing store
+ *    for this handle; it is not required that join() is called on these jobs.
  *
  * Query handles are not supported at this time.
  */
 
 interface EdgeReadSingletonHandle<E> {
-  suspend fun fetch(): CompletableDeferred<E?>
+  suspend fun fetch(): E?
 }
 
 interface EdgeWriteSingletonHandle<I> {
@@ -40,10 +39,10 @@ interface EdgeReadWriteSingletonHandle<E, I> :
   EdgeReadSingletonHandle<E>, EdgeWriteSingletonHandle<I>
 
 interface EdgeReadCollectionHandle<E> {
-  suspend fun size(): CompletableDeferred<Int>
-  suspend fun isEmpty(): CompletableDeferred<Boolean>
-  suspend fun fetchAll(): CompletableDeferred<Set<E>>
-  suspend fun fetchById(entityId: String): CompletableDeferred<E?>
+  suspend fun size(): Int
+  suspend fun isEmpty(): Boolean
+  suspend fun fetchAll(): Set<E>
+  suspend fun fetchById(entityId: String): E?
 }
 
 interface EdgeWriteCollectionHandle<I> {
@@ -57,42 +56,23 @@ interface EdgeWriteCollectionHandle<I> {
 interface EdgeReadWriteCollectionHandle<E, I> :
   EdgeReadCollectionHandle<E>, EdgeWriteCollectionHandle<I>
 
-/**
- * Base class for the edge handle implementations. This provides the latching and lifecycle logic
- * that queues read operations for later completion once the backing handle has been synchronized.
- */
+/** Base class for the edge handle implementations. */
 abstract class EdgeHandle {
-
-  /** Holds a read operation that was invoked prior to the onReady lifecycle event. */
-  class PendingOp<T>(val op: () -> T, val deferred: CompletableDeferred<T>) {
-    fun complete() = deferred.complete(op())
-  }
 
   // The "real" arc handle; assigned by setHandles() in the generated particle implementation.
   lateinit var handle: Handle
-  private var ready = false
-  private val pending = mutableListOf<PendingOp<*>>()
+  private var ready = Job()
 
-  protected val dispatcher: CoroutineDispatcher
-    get() = handle.dispatcher
-
-  // For read operations: if the particle has reached onReady, execute the operation and complete
-  // the returned deferred object immediately. Otherwise, queue the op for later invocation.
-  suspend fun <T> executeOrDefer(op: () -> T) = withContext(dispatcher) {
-    CompletableDeferred<T>().also {
-      if (ready) {
-        it.complete(op())
-      } else {
-        pending.add(PendingOp(op, it))
-      }
-    }
+  suspend fun <T> readOp(op: () -> T): T = withContext(handle.dispatcher) {
+    ready.join()
+    op()
   }
+
+  suspend fun <T> writeOp(op: () -> T): T = withContext(handle.dispatcher) { op() }
 
   // Invoked by onReady in the generated particle implementation.
   fun moveToReady() {
-    ready = true
-    pending.forEach { it.complete() }
-    pending.clear()
+    ready.complete()
   }
 }
 
@@ -100,15 +80,15 @@ abstract class EdgeHandle {
 class EdgeSingletonHandle<E : Storable, I : Storable> :
   EdgeHandle(), EdgeReadWriteSingletonHandle<E, I> {
 
-  override suspend fun fetch() = executeOrDefer {
+  override suspend fun fetch() = readOp {
     (handle as ReadSingletonHandle<E>).fetch()
   }
 
-  override suspend fun store(element: I) = withContext(dispatcher) {
+  override suspend fun store(element: I) = writeOp {
     (handle as WriteSingletonHandle<I>).store(element)
   }
 
-  override suspend fun clear() = withContext(dispatcher) {
+  override suspend fun clear() = writeOp {
     (handle as WriteSingletonHandle<I>).clear()
   }
 }
@@ -123,39 +103,39 @@ class EdgeCollectionHandle<E : Storable, I : Storable> :
   private val writeHandle: WriteCollectionHandle<I>
     get() = handle as WriteCollectionHandle<I>
 
-  override suspend fun size() = executeOrDefer {
+  override suspend fun size() = readOp {
     readHandle.size()
   }
 
-  override suspend fun isEmpty() = executeOrDefer {
+  override suspend fun isEmpty() = readOp {
     readHandle.isEmpty()
   }
 
-  override suspend fun fetchAll() = executeOrDefer {
+  override suspend fun fetchAll() = readOp {
     readHandle.fetchAll()
   }
 
-  override suspend fun fetchById(entityId: String) = executeOrDefer {
+  override suspend fun fetchById(entityId: String) = readOp {
     readHandle.fetchById(entityId)
   }
 
-  override suspend fun store(element: I) = withContext(dispatcher) {
+  override suspend fun store(element: I) = writeOp {
     writeHandle.store(element)
   }
 
-  override suspend fun storeAll(elements: Collection<I>) = withContext(dispatcher) {
+  override suspend fun storeAll(elements: Collection<I>) = writeOp {
     writeHandle.storeAll(elements)
   }
 
-  override suspend fun clear() = withContext(dispatcher) {
+  override suspend fun clear() = writeOp {
     writeHandle.clear()
   }
 
-  override suspend fun remove(element: I) = withContext(dispatcher) {
+  override suspend fun remove(element: I) = writeOp {
     writeHandle.remove(element)
   }
 
-  override suspend fun removeById(id: String) = withContext(dispatcher) {
+  override suspend fun removeById(id: String) = writeOp {
     writeHandle.removeById(id)
   }
 }

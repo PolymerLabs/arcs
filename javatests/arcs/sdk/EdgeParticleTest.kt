@@ -1,19 +1,20 @@
 package arcs.sdk
 
-import arcs.core.testutil.runTest
-import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.CompletableDeferred
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
 import arcs.core.data.HandleMode
 import arcs.core.entity.CollectionDelta
-import arcs.core.entity.SingletonDelta
 import arcs.core.entity.ReadableHandle
+import arcs.core.entity.SingletonDelta
 import arcs.core.storage.StorageProxy.StorageEvent
+import arcs.core.testutil.runTest
+import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.async
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.junit.Before
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
+import org.junit.Test
 
 abstract class FakeHandle<V, U> : ReadableHandle<V, U> {
   override val name = "fakeHandle"
@@ -112,18 +113,18 @@ class EdgeParticleTest {
     particle.onReady()
 
     // Check fetch on sr and store/clear on sw.
-    handles.sw.store(EdgeParticleInternal1("abc")).join()
-    assertThat(handles.sr.fetch().await()).isEqualTo(EdgeParticleInternal1("abc"))
+    handles.sw.store(EdgeParticleInternal1("abc"))
+    assertThat(handles.sr.fetch()).isEqualTo(EdgeParticleInternal1("abc"))
 
-    handles.sw.clear().join()
-    assertThat(handles.sr.fetch().await()).isNull()
+    handles.sw.clear()
+    assertThat(handles.sr.fetch()).isNull()
 
     // Check all three on sb.
-    handles.sb.store(EdgeParticleInternal1("abc")).join()
-    assertThat(handles.sb.fetch().await()).isEqualTo(EdgeParticleInternal1("abc"))
+    handles.sb.store(EdgeParticleInternal1("abc"))
+    assertThat(handles.sb.fetch()).isEqualTo(EdgeParticleInternal1("abc"))
 
-    handles.sb.clear().join()
-    assertThat(handles.sb.fetch().await()).isNull()
+    handles.sb.clear()
+    assertThat(handles.sb.fetch()).isNull()
   }
 
   @Test
@@ -131,25 +132,19 @@ class EdgeParticleTest {
     // Seed the handle data.
     backingSingleton.store(EdgeParticleInternal1("def"))
 
-    // Reads before onReady should be queued to complete after onReady.
-    val queuedFetches = listOf(
-      handles.sr.fetch().also { assertThat(it.isCompleted).isFalse() },
-      handles.sr.fetch().also { assertThat(it.isCompleted).isFalse() },
-      handles.sb.fetch().also { assertThat(it.isCompleted).isFalse() }
-    )
+    // Read ops should suspend until onReady.
+    val srFetch = async { handles.sr.fetch() }.also { assertThat(it.isCompleted).isFalse() }
+    val sbFetch = async { handles.sb.fetch() }.also { assertThat(it.isCompleted).isFalse() }
 
     particle.onReady()
 
-    queuedFetches.forEach {
-      assertThat(it.isCompleted).isTrue()
-      assertThat(it.await()).isEqualTo(EdgeParticleInternal1("def"))
-    }
+    val expected = EdgeParticleInternal1("def")
+    assertThat(srFetch.await()).isEqualTo(expected)
+    assertThat(sbFetch.await()).isEqualTo(expected)
 
-    // Reads after onReady should be completed immediately.
-    listOf(handles.sr.fetch(), handles.sb.fetch()).forEach {
-      assertThat(it.isCompleted).isTrue()
-      assertThat(it.await()).isEqualTo(EdgeParticleInternal1("def"))
-    }
+    // Read ops after onReady should be completed immediately.
+    assertThat(handles.sr.fetch()).isEqualTo(expected)
+    assertThat(handles.sb.fetch()).isEqualTo(expected)
   }
 
   @Test
@@ -168,26 +163,6 @@ class EdgeParticleTest {
   }
 
   @Test
-  fun singleton_deferredReadsReturnValueAsSetAtOnReady() = runTest {
-    backingSingleton.store(EdgeParticleInternal1("ignored1"))
-
-    val queuedFetch = handles.sb.fetch()
-    assertThat(queuedFetch.isCompleted).isFalse()
-
-    backingSingleton.store(EdgeParticleInternal1("mno"))
-
-    // Queued operations should be fulfilled with the state of the handle as of now.
-    particle.onReady()
-
-    backingSingleton.store(EdgeParticleInternal1("ignored2"))
-
-    queuedFetch.let {
-      assertThat(it.isCompleted).isTrue()
-      assertThat(it.await()).isEqualTo(EdgeParticleInternal1("mno"))
-    }
-  }
-
-  @Test
   fun collection_verifyHandleInterfaces_readOnlyAndWriteOnly() = runTest {
     val e1 = EdgeParticleInternal1("e1", entityId = "id1")
     val e2 = EdgeParticleInternal1("e2", entityId = "id2")
@@ -197,21 +172,21 @@ class EdgeParticleTest {
     handles.cw.store(e1)
     handles.cw.storeAll(listOf(e2, e3))
 
-    assertThat(handles.cr.size().await()).isEqualTo(3)
-    assertThat(handles.cr.isEmpty().await()).isFalse()
-    assertThat(handles.cr.fetchAll().await()).containsExactly(e1, e2, e3)
-    assertThat(handles.cr.fetchById("id2").await()).isEqualTo(e2)
+    assertThat(handles.cr.size()).isEqualTo(3)
+    assertThat(handles.cr.isEmpty()).isFalse()
+    assertThat(handles.cr.fetchAll()).containsExactly(e1, e2, e3)
+    assertThat(handles.cr.fetchById("id2")).isEqualTo(e2)
 
     handles.cw.remove(e1)
-    assertThat(handles.cr.fetchAll().await()).containsExactly(e2, e3)
+    assertThat(handles.cr.fetchAll()).containsExactly(e2, e3)
 
     handles.cw.removeById("id3")
-    assertThat(handles.cr.fetchAll().await()).containsExactly(e2)
+    assertThat(handles.cr.fetchAll()).containsExactly(e2)
 
     handles.cw.clear()
-    assertThat(handles.cr.size().await()).isEqualTo(0)
-    assertThat(handles.cr.isEmpty().await()).isTrue()
-    assertThat(handles.cr.fetchAll().await()).isEmpty()
+    assertThat(handles.cr.size()).isEqualTo(0)
+    assertThat(handles.cr.isEmpty()).isTrue()
+    assertThat(handles.cr.fetchAll()).isEmpty()
   }
 
   @Test
@@ -224,21 +199,21 @@ class EdgeParticleTest {
     handles.cb.store(e1)
     handles.cb.storeAll(listOf(e2, e3))
 
-    assertThat(handles.cb.size().await()).isEqualTo(3)
-    assertThat(handles.cb.isEmpty().await()).isFalse()
-    assertThat(handles.cb.fetchAll().await()).containsExactly(e1, e2, e3)
-    assertThat(handles.cb.fetchById("id2").await()).isEqualTo(e2)
+    assertThat(handles.cb.size()).isEqualTo(3)
+    assertThat(handles.cb.isEmpty()).isFalse()
+    assertThat(handles.cb.fetchAll()).containsExactly(e1, e2, e3)
+    assertThat(handles.cb.fetchById("id2")).isEqualTo(e2)
 
     handles.cb.remove(e1)
-    assertThat(handles.cb.fetchAll().await()).containsExactly(e2, e3)
+    assertThat(handles.cb.fetchAll()).containsExactly(e2, e3)
 
     handles.cb.removeById("id3")
-    assertThat(handles.cb.fetchAll().await()).containsExactly(e2)
+    assertThat(handles.cb.fetchAll()).containsExactly(e2)
 
     handles.cb.clear()
-    assertThat(handles.cb.size().await()).isEqualTo(0)
-    assertThat(handles.cb.isEmpty().await()).isTrue()
-    assertThat(handles.cb.fetchAll().await()).isEmpty()
+    assertThat(handles.cb.size()).isEqualTo(0)
+    assertThat(handles.cb.isEmpty()).isTrue()
+    assertThat(handles.cb.fetchAll()).isEmpty()
   }
 
   @Test
@@ -248,41 +223,36 @@ class EdgeParticleTest {
     // Seed the handle data.
     backingCollection.store(e1)
 
-    // Reads before onReady should be queued to complete after onReady.
-    val queuedSize = listOf(handles.cr.size(), handles.cb.size())
-    val queuedIsEmpty = listOf(handles.cr.isEmpty(), handles.cb.isEmpty())
-    val queuedFetchAll = listOf(handles.cr.fetchAll(), handles.cb.fetchAll())
-    val queuedFetchById = listOf(handles.cr.fetchById("id1"), handles.cb.fetchById("id1"))
-
-    val allQueued = listOf(queuedSize, queuedIsEmpty, queuedFetchAll, queuedFetchById).flatten()
-    allQueued.forEach { assertThat(it.isCompleted).isFalse() }
+    // Read ops should suspend until onReady.
+    val crSize = async { handles.cr.size() }.also { assertThat(it.isCompleted).isFalse() }
+    val cbSize = async { handles.cb.size() }.also { assertThat(it.isCompleted).isFalse() }
+    val crIsEmpty = async { handles.cr.isEmpty() }.also { assertThat(it.isCompleted).isFalse() }
+    val cbIsEmpty = async { handles.cb.isEmpty() }.also { assertThat(it.isCompleted).isFalse() }
+    val crFetchAll = async { handles.cr.fetchAll() }.also { assertThat(it.isCompleted).isFalse() }
+    val cbFetchAll = async { handles.cb.fetchAll() }.also { assertThat(it.isCompleted).isFalse() }
+    val crFetchById = async { handles.cr.fetchById("id1") }.also {
+      assertThat(it.isCompleted).isFalse()
+    }
+    val cbFetchById = async { handles.cb.fetchById("id1") }.also {
+      assertThat(it.isCompleted).isFalse()
+    }
 
     particle.onReady()
 
-    allQueued.forEach { assertThat(it.isCompleted).isTrue() }
-
-    queuedSize.forEach { assertThat(it.await()).isEqualTo(1) }
-    queuedIsEmpty.forEach { assertThat(it.await()).isFalse() }
-    queuedFetchAll.forEach { assertThat(it.await()).containsExactly(e1) }
-    queuedFetchById.forEach { assertThat(it.await()).isEqualTo(e1) }
+    assertThat(crSize.await()).isEqualTo(1)
+    assertThat(cbSize.await()).isEqualTo(1)
+    assertThat(crIsEmpty.await()).isFalse()
+    assertThat(cbIsEmpty.await()).isFalse()
+    assertThat(crFetchAll.await()).containsExactly(e1)
+    assertThat(cbFetchAll.await()).containsExactly(e1)
+    assertThat(crFetchById.await()).isEqualTo(e1)
+    assertThat(cbFetchById.await()).isEqualTo(e1)
 
     // Reads after onReady should be completed immediately.
-    handles.cr.size().let {
-      assertThat(it.isCompleted).isTrue()
-      assertThat(it.await()).isEqualTo(1)
-    }
-    handles.cb.isEmpty().let {
-      assertThat(it.isCompleted).isTrue()
-      assertThat(it.await()).isFalse()
-    }
-    handles.cr.fetchAll().let {
-      assertThat(it.isCompleted).isTrue()
-      assertThat(it.await()).containsExactly(e1)
-    }
-    handles.cb.fetchById("id1").let {
-      assertThat(it.isCompleted).isTrue()
-      assertThat(it.await()).isEqualTo(e1)
-    }
+    assertThat(handles.cr.size()).isEqualTo(1)
+    assertThat(handles.cb.isEmpty()).isFalse()
+    assertThat(handles.cr.fetchAll()).containsExactly(e1)
+    assertThat(handles.cb.fetchById("id1")).isEqualTo(e1)
   }
 
   @Test
@@ -313,34 +283,5 @@ class EdgeParticleTest {
     handles.cb.removeById("id2")
     particle.onReady()
     assertThat(backingCollection.fetchAll()).containsExactly(e3)
-  }
-
-  @Test
-  fun collection_deferredReadsReturnValueAsSetAtOnReady() = runTest {
-    val e1 = EdgeParticleInternal1("e1", entityId = "id1")
-    val e2 = EdgeParticleInternal1("e2", entityId = "id2")
-
-    backingCollection.store(e1)
-
-    val queuedSize = handles.cb.size()
-    val queuedIsEmpty = handles.cr.isEmpty()
-    val queuedFetchAll = handles.cb.fetchAll()
-    val queuedFetchById = handles.cr.fetchById("id2") // Note e2 is not stored yet!
-
-    val allQueued = listOf(queuedSize, queuedIsEmpty, queuedFetchAll, queuedFetchById)
-    allQueued.forEach { assertThat(it.isCompleted).isFalse() }
-
-    backingCollection.store(e2)
-
-    // Queued operations should be fulfilled with the state of the handle as of now.
-    particle.onReady()
-
-    backingCollection.clear()
-
-    allQueued.forEach { assertThat(it.isCompleted).isTrue() }
-    assertThat(queuedSize.await()).isEqualTo(2)
-    assertThat(queuedIsEmpty.await()).isFalse()
-    assertThat(queuedFetchAll.await()).containsExactly(e1, e2)
-    assertThat(queuedFetchById.await()).isEqualTo(e2)
   }
 }
