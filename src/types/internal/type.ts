@@ -1083,7 +1083,7 @@ export class ReferenceType<T extends Type> extends Type {
 
   constructor(reference: T) {
     super('Reference');
-    if (reference == null) {
+    if (!reference) {
       throw new Error('invalid type! Reference types must include a referenced type declaration');
     }
     this.referredType = reference;
@@ -1179,7 +1179,7 @@ export class MuxType<T extends Type> extends Type {
 
   constructor(type: T) {
     super('Mux');
-    if (type == null) {
+    if (!type) {
       throw new Error('invalid type! Mux types must include an inner type declaration');
     }
     this.innerType = type;
@@ -1348,11 +1348,11 @@ export class TypeVariableInfo {
   // Helper to generalize canReadSubset and canWriteSuperset merging
   private _maybeMerge(target: Type, constraint: Type,
                       merger: (left: Schema, right: Schema) => Schema): { success: boolean; result: Type } {
-    if (constraint == null) {
+    if (!constraint) {
       return {success: true, result: target};
     }
 
-    if (target == null) {
+    if (!target) {
       return {success: true, result: constraint};
     }
 
@@ -1499,7 +1499,7 @@ export class TypeVariableInfo {
   }
 
   toLiteral() {
-    assert(this.resolution == null);
+    assert(!this.resolution);
     return this.toLiteralIgnoringResolutions();
   }
 
@@ -1654,7 +1654,9 @@ export abstract class InterfaceInfo {
   }
 
   static mustMatch(reference: TypeVariable | Type | string | boolean): boolean {
-    return !(reference == undefined || InterfaceInfo.isTypeVar(reference));
+    return !(
+        reference === null || reference === undefined ||
+        InterfaceInfo.isTypeVar(reference));
   }
 
   static handleConnectionsMatch : HandleConnectionMatcher = null;
@@ -2367,7 +2369,7 @@ export class Schema {
     }
     let best = AtLeastAsSpecific.YES;
     for (const [name, type] of Object.entries(otherSchema.fields)) {
-      if (fields[name] == undefined) {
+      if (!fields[name]) {
         return AtLeastAsSpecific.NO;
       }
       if (!fields[name].isAtLeastAsSpecificAs(type)) {
@@ -2435,7 +2437,7 @@ export class Schema {
           break;
         }
         case 'schema-collection': {
-          if (schema == undefined) {
+          if (!schema) {
             throw new Error(`there is no schema for the entity field ${fieldName}`);
           }
           if (['Text', 'URL', 'Boolean', 'Number'].includes(schema.getType())) {
