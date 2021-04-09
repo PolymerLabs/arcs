@@ -716,6 +716,13 @@ describe('schema', () => {
   it('tests schema union, with nullable text', async () => {
     await verifyUnionOfTypes(`Text?`, `Text?`);
   });
+  it('tests schema union, with nullable referenced entities', async () => {
+    await verifyUnionOfTypes(`&Foo {a: Text, b: Text}?`, `&Foo {a: Text}?`);
+  });
+  it('tests schema union, with nullable and non-nullable referenced entities',
+     async () => {
+       await verifyUnionOfTypes(`&Foo {a: Text, b: Text}`, `&Foo {a: Text}?`);
+     });
   it('tests schema union, with nullable inline entities', async () => {
     await verifyUnionOfTypes(`inline Foo {a: Text, b: Text}?`, `inline Foo {a: Text}?`);
   });

@@ -1723,6 +1723,18 @@ export abstract class FieldType {
   // TODO(shans): output AtLeastAsSpecific here. This is necessary to support
   // refinements on nested structures and references.
   isAtLeastAsSpecificAs(other: FieldType): boolean {
+    // Entry point (handles shared logic)
+    if (other instanceof NullableField && !(this instanceof NullableField)) {
+      // T :> U -> T :> U?
+      // In other words if T satifies the requirements of U
+      // it also satisifies the requirements of U?.
+      // TODO(XXXXXXX): return this._isAtLeastAsSpecificAs(other.schema);
+    }
+    return this._isAtLeastAsSpecificAs(other);
+  }
+
+  _isAtLeastAsSpecificAs(other: FieldType): boolean {
+    // Default implementation
     assert(this.kind === other.kind);
     return this.equals(other);
   }
