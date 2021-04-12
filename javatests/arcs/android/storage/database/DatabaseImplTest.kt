@@ -36,6 +36,7 @@ import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.database.DatabaseClient
+import arcs.core.storage.database.DatabaseConfig
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseOp
 import arcs.core.storage.database.ReferenceWithVersion
@@ -91,7 +92,8 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
     database = DatabaseImpl(
       ApplicationProvider.getApplicationContext(),
       DummyStorageKeyManager(),
-      "test.sqlite3"
+      "test.sqlite3",
+      databaseConfigGetter = { DatabaseConfig() }
     )
     db = database.writableDatabase
     StorageKeyManager.GLOBAL_INSTANCE.addParser(DummyStorageKey)
@@ -3974,7 +3976,8 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
       ApplicationProvider.getApplicationContext(),
       DummyStorageKeyManager(),
       "test.sqlite3",
-      persistent = false
+      persistent = false,
+      { DatabaseConfig() }
     )
 
     assertThat(inMemoryDatabase.getSize()).isGreaterThan(0)
@@ -4134,6 +4137,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
       ApplicationProvider.getApplicationContext(),
       DummyStorageKeyManager(),
       "test.sqlite3",
+      databaseConfigGetter = { DatabaseConfig() },
       onDatabaseClose = {
         onCloseCalled = true
       }

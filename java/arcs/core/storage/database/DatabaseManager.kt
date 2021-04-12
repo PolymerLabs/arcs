@@ -13,6 +13,7 @@ package arcs.core.storage.database
 
 import arcs.core.common.collectExceptions
 import arcs.core.storage.StorageKey
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.supervisorScope
 
@@ -25,6 +26,12 @@ import kotlinx.coroutines.supervisorScope
 interface DatabaseManager {
   /** Manifest of [Database]s managed by this [DatabaseManager]. */
   val registry: DatabaseRegistry
+
+  /**
+   * Database Configuration. The config can change at any time, subclasses should get fresh reads of
+   * it every time it's needed.
+   */
+  val databaseConfig: AtomicReference<DatabaseConfig>
 
   /**
    * Gets a [Database] for the given [name].  If [persistent] is `false`, the [Database] should
@@ -87,6 +94,11 @@ interface DatabaseManager {
    * Extracts all IDs of any hard reference that points to the given [backingStorageKey].
    */
   suspend fun getAllHardReferenceIds(backingStorageKey: StorageKey): Set<String>
+
+  /**
+   * Updates the database configuration.
+   */
+  fun updateDatabaseConfig(databaseConfig: DatabaseConfig) = this.databaseConfig.set(databaseConfig)
 }
 
 /**
@@ -136,3 +148,9 @@ val DatabaseIdentifier.name: String
 /** Whether or not the [Database] should be persisted to disk. */
 val DatabaseIdentifier.persistent: Boolean
   get() = second
+
+/** Database configurations of the runtime flags relevant to the database and their values. */
+data class DatabaseConfig(
+  /** Determines whether to use the diffbased approach when inserting entities into a collection. */
+  val diffbasedEntityInsertion: Boolean = false
+)
