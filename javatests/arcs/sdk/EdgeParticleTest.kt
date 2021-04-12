@@ -41,6 +41,7 @@ abstract class FakeHandle<V, U> : ReadableHandle<V, U> {
   protected fun wrap(block: () -> Unit) = CompletableDeferred(Unit).also { block() }
 }
 
+@Suppress("UnsafeCoroutineCrossing")
 class FakeSingletonHandle : FakeHandle<EntityBase?, SingletonDelta<EntityBase>>(),
   ReadWriteSingletonHandle<EntityBase, Entity> {
 
@@ -53,6 +54,7 @@ class FakeSingletonHandle : FakeHandle<EntityBase?, SingletonDelta<EntityBase>>(
   override fun clear() = wrap { stored = null }
 }
 
+@Suppress("UnsafeCoroutineCrossing")
 class FakeCollectionHandle : FakeHandle<Set<EntityBase>, CollectionDelta<EntityBase>>(),
   ReadWriteCollectionHandle<EntityBase, Entity> {
 
