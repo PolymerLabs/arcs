@@ -42,7 +42,8 @@ abstract class FakeHandle<V, U> : ReadableHandle<V, U> {
 }
 
 @Suppress("UnsafeCoroutineCrossing")
-class FakeSingletonHandle : FakeHandle<EntityBase?, SingletonDelta<EntityBase>>(),
+class FakeSingletonHandle :
+  FakeHandle<EntityBase?, SingletonDelta<EntityBase>>(),
   ReadWriteSingletonHandle<EntityBase, Entity> {
 
   var stored: EntityBase? = null
@@ -55,7 +56,8 @@ class FakeSingletonHandle : FakeHandle<EntityBase?, SingletonDelta<EntityBase>>(
 }
 
 @Suppress("UnsafeCoroutineCrossing")
-class FakeCollectionHandle : FakeHandle<Set<EntityBase>, CollectionDelta<EntityBase>>(),
+class FakeCollectionHandle :
+  FakeHandle<Set<EntityBase>, CollectionDelta<EntityBase>>(),
   ReadWriteCollectionHandle<EntityBase, Entity> {
 
   val stored = mutableMapOf<String, EntityBase>()
@@ -87,6 +89,7 @@ typealias EdgeParticleInternal1 = EdgeParticle.EdgeParticleInternal1
 
 /** Tests for code-generated edge particles. */
 @OptIn(ExperimentalCoroutinesApi::class)
+@Suppress("UnsafeCoroutineCrossing")
 @RunWith(JUnit4::class)
 class EdgeParticleTest {
   lateinit var particle: EdgeParticle
