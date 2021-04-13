@@ -134,6 +134,15 @@ ARCS_BUILD_FLAGS = [
             "particle.?type.?slicing",
         ],
     ),
+    arcs_build_flag(
+        name = "transaction_free_reads",
+        desc = "Remove transaction from getEntity in DatabaseImpl",
+        bug_id = "b/175140645",
+        status = "NOT_READY",
+        stopwords = [
+            "transaction.?free.?reads",
+        ],
+    ),
 ]
 
 validate_flag_list(ARCS_BUILD_FLAGS)
