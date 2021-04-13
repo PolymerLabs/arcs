@@ -139,6 +139,20 @@ class ParserTest {
   }
 
   @Test
+  fun parseMany_limited() {
+    val cappedMany = many(token("a"), limit = 3)
+
+    cappedMany("aaaaaaa").map { r, s, e, _ ->
+      // Note that containsExactly accepts multiplicity, but adding hasSize to increase readability.
+      assertThat(r).containsExactly("a", "a", "a")
+      assertThat(r).hasSize(3)
+      Success(r, s, e)
+    }.orElse<Nothing> {
+      fail()
+    }
+  }
+
+  @Test
   fun parseOptional() {
     val trailing = token("hello") + optional(token(", "))
     trailing("hello.").map { (hello, _), start, end, _ ->
