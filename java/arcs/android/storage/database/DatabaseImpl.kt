@@ -80,6 +80,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.updateAndGet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
@@ -105,6 +106,15 @@ typealias CollectionId = Long
 
 /** The ID of an entity reference. */
 typealias ReferenceId = Long
+
+/**
+ * A [RuntimeException] that is generated when the database is in a transient inconsistent
+ * state due to data deletion (GC or TTL expiry).
+ *
+ * [InconsistentStateException] should only be used when the error is transient & recoverable via a
+ * retry.
+ */
+class InconsistentStateException(message: String) : RuntimeException(message)
 
 /** Implementation of [Database] for Android using SQLite. */
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
@@ -267,12 +277,44 @@ class DatabaseImpl(
     }
   }
 
-  @Suppress("UNCHECKED_CAST")
-  private fun getEntity(
+  /*
+   * Retry getEntity exactly once if terminated due to an InconsistentStateException; this gives
+   * any running GC or TTL process an opportunity to finish, which renders getEntity safe to retry.
+   */
+  private suspend fun getEntity(
     storageKey: StorageKey,
     schema: Schema,
     counters: Counters? = null
-  ): DatabaseData.Entity? = readableDatabase.transaction {
+  ): DatabaseData.Entity? {
+    if (!BuildFlags.TRANSACTION_FREE_READS) {
+      return readableDatabase.transaction { getEntityImpl(storageKey, schema, counters) }
+    }
+    var retryPosition = 0
+    while (retryPosition <= GET_ENTITY_RETRY_DURATIONS.size) {
+      try {
+        return getEntityImpl(storageKey, schema, counters).also {
+          if (retryPosition > 0) {
+            log.debug { "getEntity succeeded for $storageKey after $retryPosition retries" }
+          }
+        }
+      } catch (e: InconsistentStateException) {
+        if (retryPosition == GET_ENTITY_RETRY_DURATIONS.size) {
+          log.debug { "getEntity failed after $retryPosition retries with $e" }
+          throw e
+        }
+      }
+      delay(GET_ENTITY_RETRY_DURATIONS[retryPosition++])
+    }
+    // This should not be reached
+    throw RuntimeException("Reached state that should be unreachable")
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun getEntityImpl(
+    storageKey: StorageKey,
+    schema: Schema,
+    counters: Counters? = null
+  ): DatabaseData.Entity? = with(readableDatabase) {
     val db = this
     // Fetch the entity's type by storage key.
     counters?.increment(DatabaseCounters.GET_ENTITY_TYPE_BY_STORAGEKEY)
@@ -429,12 +471,19 @@ class DatabaseImpl(
               dbCollections.forEach { (fieldName, value) ->
                 rawCollections[fieldName] = value
               }
+              if (entityId == null) {
+                // Null entityIds are (most likely) a transient state caused by GC or TTL
+                // removing the entity in a manner that is interleaved with retrieving the
+                // entity. Throwing an InconsistentStateException here gives the getEntity
+                // function the opportunity of retrying retrieval, which should succeed once
+                // GC/TTL is finished with this entity.
+                throw InconsistentStateException(
+                  "entity data exists against storage_key_id $inlineStorageKeyId without " +
+                    "matching ID from entities table"
+                )
+              }
               RawEntity(
-                id = requireNotNull(entityId) {
-                  "DB in an inconsistent state: entity data exists against " +
-                    "storage_key_id $inlineStorageKeyId without matching ID from " +
-                    "entities table"
-                },
+                id = entityId!!,
                 singletons = rawSingletons,
                 collections = rawCollections
               )
@@ -2749,6 +2798,17 @@ class DatabaseImpl(
     @VisibleForTesting
     const val REFERENCE_TYPE_SENTINEL = 1000000
     private const val REFERENCE_TYPE_SENTINEL_NAME = "SENTINEL TYPE FOR REFERENCES"
+
+    /**
+     * A list of timeouts (in milliseconds) that defines the number of retries of [getEntity]
+     * before failure, and the delay duration between each retry. For example, a list of
+     * [0, 100, 1000] defines 3 retries:
+     *   - immediately
+     *   - after a further 100ms
+     *   - after a further 1000ms
+     * If all 3 retries fail then the call to [getEntity] will fail overall.
+     */
+    private val GET_ENTITY_RETRY_DURATIONS = listOf(0L, 100L, 1000L)
 
     /**
      * A StorageKey used internally by the DB for recording inline entities.
