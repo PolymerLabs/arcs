@@ -76,8 +76,7 @@ fun referencableFieldValueFromFieldTypeDbCompatible(
   val oneOrMore = IntInRange(s, 1, 5)
   return transformerWithRecursion {
     ReferencableFromFieldType(
-      // Turn off unicode for text field, due to b/182713034.
-      ReferencablePrimitiveFromPrimitiveType(s, unicode = false),
+      ReferencablePrimitiveFromPrimitiveType(s, unicode = true),
       oneOrMore,
       RawEntityFromSchema(
         midSizedAlphaNumericString(s),

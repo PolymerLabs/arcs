@@ -58,6 +58,7 @@ arcs_kt_android_library(
         "//java/arcs/core/crdt",
         "//java/arcs/core/crdt/testing",
         "//java/arcs/core/data",
+        "//java/arcs/core/data/testutil",
         "//java/arcs/core/storage",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
