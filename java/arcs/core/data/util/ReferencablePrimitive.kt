@@ -18,6 +18,7 @@ import arcs.core.util.ArcsInstant
 import arcs.core.util.Base64
 import arcs.core.util.BigInt
 import arcs.core.util.toBase64Bytes
+import kotlin.math.abs
 import kotlin.reflect.KClass
 
 /**
@@ -50,8 +51,21 @@ data class ReferencablePrimitive<T : Any> private constructor(
   override fun hashCode(): Int = id.hashCode()
 
   override fun equals(other: Any?): Boolean {
-    val otherRef = other as? Referencable ?: return false
-    return otherRef.id == id
+    val otherRef = other as? ReferencablePrimitive<*> ?: return false
+    if (otherRef.id == id) return true
+    if (otherRef.klass != klass) return false
+
+    // Special comparison logic for floating point numbers.
+    when (klass) {
+      "Primitive<$primitiveKotlinFloat>" -> {
+        return abs(value as Float - otherRef.value as Float) < FLOAT_TOLERANCE
+      }
+      "Primitive<$primitiveKotlinDouble>" -> {
+        return abs(value as Double - otherRef.value as Double) < DOUBLE_TOLERANCE
+      }
+    }
+
+    return false
   }
 
   companion object {
@@ -84,6 +98,12 @@ data class ReferencablePrimitive<T : Any> private constructor(
       ArcsDuration::class to "Primitive<$primitiveArcsDuration>",
       ArcsInstant::class to "Primitive<$primitiveArcsInstant>"
     )
+
+    /** The tolerance to use when comparing floats. */
+    const val FLOAT_TOLERANCE: Float = 1e-7f
+
+    /** The tolerance to use when comparing doubles. */
+    const val DOUBLE_TOLERANCE: Double = 1e-10
 
     // the DOT_MATCHES_ALL flag is required so that .* matches newlines and other characters
     private val pattern = Regex("Primitive<([^>]+)>\\((.*)\\)", RegexOption.DOT_MATCHES_ALL)
