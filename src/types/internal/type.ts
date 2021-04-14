@@ -1619,7 +1619,7 @@ export abstract class InterfaceInfo {
 
   abstract readonly  canWriteSuperset : InterfaceInfo;
 
-  abstract isAtLeastAsSpecificAs(other: InterfaceInfo) : boolean;
+  abstract isAtLeastAsSpecificAs(other: InterfaceInfo): boolean;
 
   abstract _applyExistenceTypeTest(test: Predicate<TypeVarReference>) : boolean;
 
@@ -1722,9 +1722,25 @@ export abstract class FieldType {
 
   // TODO(shans): output AtLeastAsSpecific here. This is necessary to support
   // refinements on nested structures and references.
+  _isAtLeastAsSpecificAs(other: FieldType): boolean {
+    // Default implementation for all field types.
+    // Override this where custom behaviour is needed.
+    return this.kind === other.kind && this.equals(other);
+  }
+
+  // TODO(shans): output AtLeastAsSpecific here. This is necessary to support
+  // refinements on nested structures and references.
   isAtLeastAsSpecificAs(other: FieldType): boolean {
-    assert(this.kind === other.kind);
-    return this.equals(other);
+    // Generic implementation for all field types.
+    // Do not override this.
+    if (other instanceof NullableField && !(this instanceof NullableField)) {
+      // Non nullable types are `atLeastAsSpecificAs` nullable types of a
+      // type that they are `atLeastAsSpecificAs`.
+      // i.e. T :> U? iff T :> U.
+      // additionally T? :> U iff U == V?
+      return this._isAtLeastAsSpecificAs(other.schema);
+    }
+    return this._isAtLeastAsSpecificAs(other);
   }
 
   static fromLiteral(field: SchemaFieldLiteralShape|string): FieldType {
@@ -1842,7 +1858,7 @@ export class CollectionField extends FieldType {
     return `[${this.schema.normalizeForHash()}]`;
   }
 
-  isAtLeastAsSpecificAs(other: FieldType): boolean {
+  _isAtLeastAsSpecificAs(other: FieldType): boolean {
     assert(this.kind === other.kind);
     return this.getFieldType().isAtLeastAsSpecificAs(other.getFieldType());
   }
@@ -1866,8 +1882,10 @@ export class ReferenceField extends FieldType {
 
   normalizeForHash(): string { return `&(${this.schema.getEntityType().entitySchema.normalizeForHash()})`; }
 
-  isAtLeastAsSpecificAs(other: FieldType): boolean {
-    assert(this.kind === other.kind);
+  _isAtLeastAsSpecificAs(other: FieldType): boolean {
+    assert(
+        this.kind === other.kind,
+        `ReferenceField: Non-matching kinds ${this.kind} vs ${other.kind}.`);
     return this.getFieldType().getEntityType().isAtLeastAsSpecificAs(other.getFieldType().getEntityType());
   }
 
@@ -1900,9 +1918,9 @@ export class NullableField extends FieldType {
     return `${this.schema.normalizeForHash()}?`;
   }
 
-  isAtLeastAsSpecificAs(other: FieldType): boolean {
-    assert(this.kind === other.kind);
-    return this.getFieldType().isAtLeastAsSpecificAs(other.getFieldType());
+  _isAtLeastAsSpecificAs(other: FieldType): boolean {
+    return this.kind === other.kind &&
+        this.getFieldType().isAtLeastAsSpecificAs(other.getFieldType());
   }
 
   // tslint:disable-next-line: no-any
@@ -1931,8 +1949,10 @@ export class OrderedListField extends FieldType {
     return `List<${this.schema.normalizeForHash()}>`;
   }
 
-  isAtLeastAsSpecificAs(other: FieldType): boolean {
-    assert(this.kind === other.kind);
+  _isAtLeastAsSpecificAs(other: FieldType): boolean {
+    assert(
+        this.kind === other.kind,
+        `OrderedListField: Non-matching kinds ${this.kind} vs ${other.kind}.`);
     return this.getFieldType().isAtLeastAsSpecificAs(other.getFieldType());
   }
 
@@ -1990,8 +2010,10 @@ export class NestedField extends FieldType {
 
   normalizeForHash(): string { return `inline ${this.getEntityType().entitySchema.normalizeForHash()}`; }
 
-  isAtLeastAsSpecificAs(other: FieldType): boolean {
-    assert(this.kind === other.kind);
+  _isAtLeastAsSpecificAs(other: FieldType): boolean {
+    assert(
+        this.kind === other.kind,
+        `NestedField: Non-matching kinds ${this.kind} vs ${other.kind}.`);
     return this.getEntityType().isAtLeastAsSpecificAs(other.getEntityType());
   }
 
