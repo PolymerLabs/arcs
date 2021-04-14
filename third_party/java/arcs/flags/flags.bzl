@@ -38,7 +38,7 @@ ARCS_BUILD_FLAGS = [
         name = "remove_by_query_handle",
         desc = "Enable the removeByQuery methods on Handles.",
         bug_id = "b/169727261",
-        status = "NOT_READY",
+        status = "READY",
         stopwords = [
             "remove.?by.?query",
             "remove.?query.?collection.?handle",

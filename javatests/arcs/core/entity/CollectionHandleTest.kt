@@ -379,6 +379,7 @@ class CollectionHandleTest {
 
   @Test
   fun removeByQuery_disabledByFlag_throwsException() {
+    BuildFlags.REMOVE_BY_QUERY_HANDLE = false
     val handle = createHandle<RawEntity>()
     handle.close()
 
