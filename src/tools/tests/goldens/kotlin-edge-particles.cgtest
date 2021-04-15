@@ -17,17 +17,17 @@ particle P
   cb: reads writes [{nun: Int}]
 -----[results]-----
 typealias P_Sr = AbstractP.PInternal1
-typealias P_Sr_Slice = AbstractP.PInternal1
+typealias P_Sr_Slice = AbstractP.PInternal1Slice
 typealias P_Sw = AbstractP.PInternal1
-typealias P_Sw_Slice = AbstractP.PInternal1
+typealias P_Sw_Slice = AbstractP.PInternal1Slice
 typealias P_Sb = AbstractP.PInternal1
-typealias P_Sb_Slice = AbstractP.PInternal1
+typealias P_Sb_Slice = AbstractP.PInternal1Slice
 typealias P_Cr = AbstractP.PInternal2
-typealias P_Cr_Slice = AbstractP.PInternal2
+typealias P_Cr_Slice = AbstractP.PInternal2Slice
 typealias P_Cw = AbstractP.PInternal2
-typealias P_Cw_Slice = AbstractP.PInternal2
+typealias P_Cw_Slice = AbstractP.PInternal2Slice
 typealias P_Cb = AbstractP.PInternal2
-typealias P_Cb_Slice = AbstractP.PInternal2
+typealias P_Cb_Slice = AbstractP.PInternal2Slice
 -----[next]-----
 abstract class AbstractP : arcs.sdk.BaseParticle() {
     override val handles: Handles = Handles()
@@ -44,11 +44,11 @@ class Handles : arcs.sdk.HandleHolderBase(
         )
     ) {
         val sr: arcs.sdk.ReadSingletonHandle<P_Sr> by handles
-        val sw: arcs.sdk.WriteSingletonHandle<P_Sw> by handles
-        val sb: arcs.sdk.ReadWriteSingletonHandle<P_Sb, P_Sb> by handles
+        val sw: arcs.sdk.WriteSingletonHandle<P_Sw_Slice> by handles
+        val sb: arcs.sdk.ReadWriteSingletonHandle<P_Sb, P_Sb_Slice> by handles
         val cr: arcs.sdk.ReadCollectionHandle<P_Cr> by handles
-        val cw: arcs.sdk.WriteCollectionHandle<P_Cw> by handles
-        val cb: arcs.sdk.ReadWriteCollectionHandle<P_Cb, P_Cb> by handles
+        val cw: arcs.sdk.WriteCollectionHandle<P_Cw_Slice> by handles
+        val cb: arcs.sdk.ReadWriteCollectionHandle<P_Cb, P_Cb_Slice> by handles
     }
 -----[end]-----
 
@@ -65,17 +65,17 @@ particle P
   cb: reads writes [{nun: Int}]
 -----[results]-----
 typealias P_Sr = P.PInternal1
-typealias P_Sr_Slice = P.PInternal1
+typealias P_Sr_Slice = P.PInternal1Slice
 typealias P_Sw = P.PInternal1
-typealias P_Sw_Slice = P.PInternal1
+typealias P_Sw_Slice = P.PInternal1Slice
 typealias P_Sb = P.PInternal1
-typealias P_Sb_Slice = P.PInternal1
+typealias P_Sb_Slice = P.PInternal1Slice
 typealias P_Cr = P.PInternal2
-typealias P_Cr_Slice = P.PInternal2
+typealias P_Cr_Slice = P.PInternal2Slice
 typealias P_Cw = P.PInternal2
-typealias P_Cw_Slice = P.PInternal2
+typealias P_Cw_Slice = P.PInternal2Slice
 typealias P_Cb = P.PInternal2
-typealias P_Cb_Slice = P.PInternal2
+typealias P_Cb_Slice = P.PInternal2Slice
 -----[next]-----
 class P : arcs.sdk.BaseParticle() {
     private val edgeHandles = mutableMapOf<String, arcs.sdk.EdgeHandle>()
@@ -98,48 +98,48 @@ class Handles(val edgeHandles: MutableMap<String, arcs.sdk.EdgeHandle>) : arcs.s
     ) {
         val sr: arcs.sdk.EdgeReadSingletonHandle<P_Sr>
         init {
-            arcs.sdk.EdgeSingletonHandle<P_Sr, P_Sr>().let {
+            arcs.sdk.EdgeSingletonHandle<P_Sr, P_Sr_Slice>().let {
                 sr = object : arcs.sdk.EdgeReadSingletonHandle<P_Sr> by it {}
                 edgeHandles.set("sr", it)
             }
         }
         
-        val sw: arcs.sdk.EdgeWriteSingletonHandle<P_Sw>
+        val sw: arcs.sdk.EdgeWriteSingletonHandle<P_Sw_Slice>
         init {
-            arcs.sdk.EdgeSingletonHandle<P_Sw, P_Sw>().let {
-                sw = object : arcs.sdk.EdgeWriteSingletonHandle<P_Sw> by it {}
+            arcs.sdk.EdgeSingletonHandle<P_Sw, P_Sw_Slice>().let {
+                sw = object : arcs.sdk.EdgeWriteSingletonHandle<P_Sw_Slice> by it {}
                 edgeHandles.set("sw", it)
             }
         }
         
-        val sb: arcs.sdk.EdgeReadWriteSingletonHandle<P_Sb, P_Sb>
+        val sb: arcs.sdk.EdgeReadWriteSingletonHandle<P_Sb, P_Sb_Slice>
         init {
-            arcs.sdk.EdgeSingletonHandle<P_Sb, P_Sb>().let {
-                sb = object : arcs.sdk.EdgeReadWriteSingletonHandle<P_Sb, P_Sb> by it {}
+            arcs.sdk.EdgeSingletonHandle<P_Sb, P_Sb_Slice>().let {
+                sb = object : arcs.sdk.EdgeReadWriteSingletonHandle<P_Sb, P_Sb_Slice> by it {}
                 edgeHandles.set("sb", it)
             }
         }
         
         val cr: arcs.sdk.EdgeReadCollectionHandle<P_Cr>
         init {
-            arcs.sdk.EdgeCollectionHandle<P_Cr, P_Cr>().let {
+            arcs.sdk.EdgeCollectionHandle<P_Cr, P_Cr_Slice>().let {
                 cr = object : arcs.sdk.EdgeReadCollectionHandle<P_Cr> by it {}
                 edgeHandles.set("cr", it)
             }
         }
         
-        val cw: arcs.sdk.EdgeWriteCollectionHandle<P_Cw>
+        val cw: arcs.sdk.EdgeWriteCollectionHandle<P_Cw_Slice>
         init {
-            arcs.sdk.EdgeCollectionHandle<P_Cw, P_Cw>().let {
-                cw = object : arcs.sdk.EdgeWriteCollectionHandle<P_Cw> by it {}
+            arcs.sdk.EdgeCollectionHandle<P_Cw, P_Cw_Slice>().let {
+                cw = object : arcs.sdk.EdgeWriteCollectionHandle<P_Cw_Slice> by it {}
                 edgeHandles.set("cw", it)
             }
         }
         
-        val cb: arcs.sdk.EdgeReadWriteCollectionHandle<P_Cb, P_Cb>
+        val cb: arcs.sdk.EdgeReadWriteCollectionHandle<P_Cb, P_Cb_Slice>
         init {
-            arcs.sdk.EdgeCollectionHandle<P_Cb, P_Cb>().let {
-                cb = object : arcs.sdk.EdgeReadWriteCollectionHandle<P_Cb, P_Cb> by it {}
+            arcs.sdk.EdgeCollectionHandle<P_Cb, P_Cb_Slice>().let {
+                cb = object : arcs.sdk.EdgeReadWriteCollectionHandle<P_Cb, P_Cb_Slice> by it {}
                 edgeHandles.set("cb", it)
             }
         }
