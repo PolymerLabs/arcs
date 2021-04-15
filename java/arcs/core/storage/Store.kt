@@ -10,6 +10,7 @@
  */
 package arcs.core.storage
 
+import arcs.core.analytics.Analytics
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -30,7 +31,8 @@ suspend fun <Data : CrdtData, Op : CrdtOperation, T> ActiveStore(
   driverFactory: DriverFactory,
   writeBackProvider: WriteBackProvider,
   devTools: DevToolsForStorage?,
-  time: Time
+  time: Time,
+  analytics: Analytics = Analytics.defaultAnalytics
 ): ActiveStore<Data, Op, T> {
   if (BuildFlags.WRITE_ONLY_STORAGE_STACK && options.writeOnly) {
     return WriteOnlyDirectStore.create(
@@ -49,7 +51,8 @@ suspend fun <Data : CrdtData, Op : CrdtOperation, T> ActiveStore(
         driverFactory,
         writeBackProvider,
         devTools,
-        time
+        time,
+        analytics
       ) as ActiveStore<Data, Op, T>
     else -> {
       DirectStore.create(

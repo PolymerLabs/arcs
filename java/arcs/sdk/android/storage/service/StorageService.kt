@@ -36,6 +36,7 @@ import arcs.android.storage.service.StorageServiceNgImpl
 import arcs.android.storage.toParcelable
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
+import arcs.core.analytics.Analytics
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
@@ -91,6 +92,8 @@ open class StorageService : ResurrectorService() {
 
   protected open val time = JvmTime
 
+  protected open val analytics: Analytics = Analytics.defaultAnalytics
+
   private val driverFactory: DriverFactory
     get() = DefaultDriverFactory.get()
 
@@ -105,13 +108,16 @@ open class StorageService : ResurrectorService() {
     StoreWriteBack(protocol, Channel.UNLIMITED, false, writeBackScope)
   }
 
-  private val stores = ReferencedStores(
-    { getScope() },
-    { getFactory() },
-    writeBackProvider,
-    devToolsProxy,
-    time
-  )
+  private val stores by lazy {
+    ReferencedStores(
+      { getScope() },
+      { getFactory() },
+      writeBackProvider,
+      devToolsProxy,
+      time,
+      analytics
+    )
+  }
 
   /** Return the number of [ActiveStore] instances maintained by the service right now. */
   suspend fun storeCount() = stores.size()
