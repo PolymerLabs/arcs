@@ -13,7 +13,7 @@ import {Schema2Kotlin} from './schema2kotlin.js';
 import {Schema2Dot} from './schema2dot.js';
 
 const opts = minimist(process.argv.slice(2), {
-  boolean: ['cpp', 'kotlin', 'graph', 'update', 'wasm', 'test_harness', 'type_slicing', 'help'],
+  boolean: ['cpp', 'kotlin', 'graph', 'update', 'wasm', 'test_harness', 'help'],
   string: ['outdir', 'outfile'],
   alias: {c: 'cpp', k: 'kotlin', g: 'graph', u: 'update', d: 'outdir', f: 'outfile'},
   default: {outdir: '.'}
@@ -38,7 +38,6 @@ Options
 Kotlin-specific options
   --wasm          whether to output wasm-specific code
   --test_harness  whether to output particle test harnesses only
-  --type_slicing  whether to enable type slicing interfaces
 `);
   process.exit(0);
 }

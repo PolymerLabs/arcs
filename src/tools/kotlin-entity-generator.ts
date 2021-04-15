@@ -68,17 +68,12 @@ export class KotlinEntityGenerator implements EntityGenerator {
     const res = [];
     for (const s of this.node.sources) {
       res.push(`typealias ${s.fullName} = ${prefix}${particleName}.${this.className}`);
-      // TODO(b/182330900): hard-code to interfaceName() once type slicing has fully launched
-      const sliceName = this.opts.type_slicing ? interfaceName(this.className) : this.className;
-      res.push(`typealias ${interfaceName(s.fullName)} = ${prefix}${particleName}.${sliceName}`);
+      res.push(`typealias ${interfaceName(s.fullName)} = ${prefix}${particleName}.${interfaceName(this.className)}`);
     }
     return res;
   }
 
   generateInterfaceDefinition(): string {
-    // TODO(b/182330900): remove once type slicing has fully launched
-    if (!this.opts.type_slicing) return '';
-
     let bases: string;
     if (this.node.parents.length > 0) {
       bases = this.node.parents.map(p => interfaceName(p.entityClassName)).join(', ');
@@ -122,9 +117,7 @@ export class KotlinEntityGenerator implements EntityGenerator {
         'expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP',
       ]);
     }
-    // TODO(b/182330900): hard-code to include the extra base once type slicing has fully launched
-    const sliceBase = this.opts.type_slicing ? (', ' + interfaceName(this.className)) : '';
-    const classInterface = `) : ${baseClass}${sliceBase}`;
+    const classInterface = `) : ${baseClass}, ${interfaceName(this.className)}`;
 
     const constructorArguments = ktUtils.joinWithIndents(constructorFields, {
       startIndent: classDecl.length + classInterface.length,
@@ -183,17 +176,13 @@ export class KotlinEntityGenerator implements EntityGenerator {
   generateFieldsDefinitions(): string {
     const fieldCount = Object.keys(this.node.schema.fields).length;
     const blocks: string[] = [];
-
-    // TODO(b/182330900): hard-code to override once type slicing has fully launched
-    const override = this.opts.type_slicing ? 'override ' : '';
-
     const fieldVals: string[] = [];
     for (const {name, type, escaped, nullableType} of this.fields) {
       if (this.opts.wasm) {
         // TODO: Add support for collections in wasm.
         assert(!type.isCollection, 'Collection fields not supported in Kotlin wasm yet.');
         fieldVals.push(`\
-${override}var ${escaped} = ${escaped}
+override var ${escaped} = ${escaped}
     get() = field
     private set(_value) {
         field = _value
@@ -201,14 +190,14 @@ ${override}var ${escaped} = ${escaped}
         );
       } else if (type.isCollection) {
         fieldVals.push(`\
-${override}var ${escaped}: ${type.kotlinType}
+override var ${escaped}: ${type.kotlinType}
     get() = super.getCollectionValue("${name}") as ${type.kotlinType}
     private set(_value) = super.setCollectionValue("${name}", _value)`
         );
       } else {
         const defaultFallback = type.defaultVal === 'null' ? '' : ` ?: ${type.defaultVal}`;
         fieldVals.push(`\
-${override}var ${escaped}: ${type.kotlinType}
+override var ${escaped}: ${type.kotlinType}
     get() = super.getSingletonValue("${name}") as ${nullableType}${defaultFallback}
     private set(_value) = super.setSingletonValue("${name}", _value)`
         );

@@ -205,8 +205,7 @@ export class GeneratorBase {
       res.push(generateInnerType(type, false));
     }
     if (connection.direction.includes('writes')) {
-      // TODO(b/182330900): hard-code to 'true' once type slicing has fully launched
-      res.push(generateInnerType(type, this.opts.type_slicing));
+      res.push(generateInnerType(type, true));
     }
     return res;
   }

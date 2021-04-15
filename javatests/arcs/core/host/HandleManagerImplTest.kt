@@ -27,8 +27,7 @@ import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.host.AbstractReadPerson.Person
-// TODO(b/182330900): temporary alias; to be replaced with actual slice interface
-import arcs.core.host.ReadPerson_Person_Slice as PersonSlice
+import arcs.core.host.AbstractReadPerson.PersonSlice
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk

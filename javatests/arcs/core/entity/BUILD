@@ -55,6 +55,4 @@ arcs_kt_jvm_test_suite(
 arcs_kt_gen(
     name = "codegen",
     srcs = ["type_slicing.arcs"],
-    # TODO(b/182330900): remove once type slicing has been fully launched.
-    force_enable_type_slicing = True,
 )
