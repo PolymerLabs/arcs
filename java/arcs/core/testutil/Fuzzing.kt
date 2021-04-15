@@ -281,6 +281,17 @@ class Value<T>(val value: T) : Generator<T> {
 }
 
 /**
+ * A [Generator] that produces a boolean.
+ */
+class RandomBoolean(
+  val s: FuzzingRandom
+) : Generator<Boolean> {
+  override fun invoke(): Boolean {
+    return s.nextBoolean()
+  }
+}
+
+/**
  * A [Generator] that produces an integer between a min and max.
  */
 class IntInRange(
