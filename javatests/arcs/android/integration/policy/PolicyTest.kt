@@ -20,6 +20,7 @@ import com.google.common.truth.Truth.assertThat
 import kotlin.time.days
 import kotlin.time.hours
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.Rule
@@ -84,6 +85,10 @@ class PolicyTest {
 
     val startingKey = (egressAB.handles.egress.getProxy().storageKey as ReferenceModeStorageKey)
       .storageKey
+
+    while (env.getDatabaseEntities(startingKey, AbstractIngressThing.Thing.SCHEMA).size == 0) {
+      delay(100)
+    }
 
     // And only Thing {a, b} is written to storage
     assertStorageContains(startingKey, singletons = setOf("a", "b"))
