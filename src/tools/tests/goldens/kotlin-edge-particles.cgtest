@@ -1,0 +1,152 @@
+-----[header]-----
+Kotlin Edge Particles
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+-----[end_header]-----
+
+-----[name]-----
+standard particle
+-----[input]-----
+particle P
+  sr: reads {name: Text}
+  sw: writes {name: Text}
+  sb: reads writes {name: Text}
+  cr: reads [{nun: Int}]
+  cw: writes [{nun: Int}]
+  cb: reads writes [{nun: Int}]
+-----[results]-----
+typealias P_Sr = AbstractP.PInternal1
+typealias P_Sr_Slice = AbstractP.PInternal1
+typealias P_Sw = AbstractP.PInternal1
+typealias P_Sw_Slice = AbstractP.PInternal1
+typealias P_Sb = AbstractP.PInternal1
+typealias P_Sb_Slice = AbstractP.PInternal1
+typealias P_Cr = AbstractP.PInternal2
+typealias P_Cr_Slice = AbstractP.PInternal2
+typealias P_Cw = AbstractP.PInternal2
+typealias P_Cw_Slice = AbstractP.PInternal2
+typealias P_Cb = AbstractP.PInternal2
+typealias P_Cb_Slice = AbstractP.PInternal2
+-----[next]-----
+abstract class AbstractP : arcs.sdk.BaseParticle() {
+    override val handles: Handles = Handles()
+-----[next]-----
+class Handles : arcs.sdk.HandleHolderBase(
+        "P",
+        mapOf(
+            "sr" to setOf(P_Sr),
+            "sw" to setOf(P_Sw),
+            "sb" to setOf(P_Sb),
+            "cr" to setOf(P_Cr),
+            "cw" to setOf(P_Cw),
+            "cb" to setOf(P_Cb)
+        )
+    ) {
+        val sr: arcs.sdk.ReadSingletonHandle<P_Sr> by handles
+        val sw: arcs.sdk.WriteSingletonHandle<P_Sw> by handles
+        val sb: arcs.sdk.ReadWriteSingletonHandle<P_Sb, P_Sb> by handles
+        val cr: arcs.sdk.ReadCollectionHandle<P_Cr> by handles
+        val cw: arcs.sdk.WriteCollectionHandle<P_Cw> by handles
+        val cb: arcs.sdk.ReadWriteCollectionHandle<P_Cb, P_Cb> by handles
+    }
+-----[end]-----
+
+-----[name]-----
+edge particle
+-----[input]-----
+@edge
+particle P
+  sr: reads {name: Text}
+  sw: writes {name: Text}
+  sb: reads writes {name: Text}
+  cr: reads [{nun: Int}]
+  cw: writes [{nun: Int}]
+  cb: reads writes [{nun: Int}]
+-----[results]-----
+typealias P_Sr = P.PInternal1
+typealias P_Sr_Slice = P.PInternal1
+typealias P_Sw = P.PInternal1
+typealias P_Sw_Slice = P.PInternal1
+typealias P_Sb = P.PInternal1
+typealias P_Sb_Slice = P.PInternal1
+typealias P_Cr = P.PInternal2
+typealias P_Cr_Slice = P.PInternal2
+typealias P_Cw = P.PInternal2
+typealias P_Cw_Slice = P.PInternal2
+typealias P_Cb = P.PInternal2
+typealias P_Cb_Slice = P.PInternal2
+-----[next]-----
+class P : arcs.sdk.BaseParticle() {
+    private val edgeHandles = mutableMapOf<String, arcs.sdk.EdgeHandle>()
+    override val handles: Handles = Handles(edgeHandles)
+
+    override fun onReady() {
+      edgeHandles.values.forEach { it.moveToReady() }
+    }
+-----[next]-----
+class Handles(val edgeHandles: MutableMap<String, arcs.sdk.EdgeHandle>) : arcs.sdk.HandleHolderBase(
+        "P",
+        mapOf(
+            "sr" to setOf(P_Sr),
+            "sw" to setOf(P_Sw),
+            "sb" to setOf(P_Sb),
+            "cr" to setOf(P_Cr),
+            "cw" to setOf(P_Cw),
+            "cb" to setOf(P_Cb)
+        )
+    ) {
+        val sr: arcs.sdk.EdgeReadSingletonHandle<P_Sr>
+        init {
+            arcs.sdk.EdgeSingletonHandle<P_Sr, P_Sr>().let {
+                sr = object : arcs.sdk.EdgeReadSingletonHandle<P_Sr> by it {}
+                edgeHandles.set("sr", it)
+            }
+        }
+        
+        val sw: arcs.sdk.EdgeWriteSingletonHandle<P_Sw>
+        init {
+            arcs.sdk.EdgeSingletonHandle<P_Sw, P_Sw>().let {
+                sw = object : arcs.sdk.EdgeWriteSingletonHandle<P_Sw> by it {}
+                edgeHandles.set("sw", it)
+            }
+        }
+        
+        val sb: arcs.sdk.EdgeReadWriteSingletonHandle<P_Sb, P_Sb>
+        init {
+            arcs.sdk.EdgeSingletonHandle<P_Sb, P_Sb>().let {
+                sb = object : arcs.sdk.EdgeReadWriteSingletonHandle<P_Sb, P_Sb> by it {}
+                edgeHandles.set("sb", it)
+            }
+        }
+        
+        val cr: arcs.sdk.EdgeReadCollectionHandle<P_Cr>
+        init {
+            arcs.sdk.EdgeCollectionHandle<P_Cr, P_Cr>().let {
+                cr = object : arcs.sdk.EdgeReadCollectionHandle<P_Cr> by it {}
+                edgeHandles.set("cr", it)
+            }
+        }
+        
+        val cw: arcs.sdk.EdgeWriteCollectionHandle<P_Cw>
+        init {
+            arcs.sdk.EdgeCollectionHandle<P_Cw, P_Cw>().let {
+                cw = object : arcs.sdk.EdgeWriteCollectionHandle<P_Cw> by it {}
+                edgeHandles.set("cw", it)
+            }
+        }
+        
+        val cb: arcs.sdk.EdgeReadWriteCollectionHandle<P_Cb, P_Cb>
+        init {
+            arcs.sdk.EdgeCollectionHandle<P_Cb, P_Cb>().let {
+                cb = object : arcs.sdk.EdgeReadWriteCollectionHandle<P_Cb, P_Cb> by it {}
+                edgeHandles.set("cb", it)
+            }
+        }
+        
+        override fun setHandle(handleName: String, handle: arcs.sdk.Handle) {
+          super.setHandle(handleName, handle)
+          edgeHandles.get(handleName)!!.handle = handle
+        }
+    }
+-----[end]-----

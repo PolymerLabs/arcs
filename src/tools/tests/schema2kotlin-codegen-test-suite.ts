@@ -121,6 +121,22 @@ export const schema2KotlinTestSuite: CodegenUnitTest[] = [
   new class extends ManifestCodegenUnitTest {
     constructor() {
       super(
+        'Kotlin Edge Particles',
+        'kotlin-edge-particles.cgtest'
+      );
+    }
+    async computeFromManifest({particles}) {
+      const schema2kotlin = new Schema2Kotlin({_: []});
+      const nodeGenerators = await schema2kotlin.calculateNodeAndGenerators(particles[0]);
+      const particleGenerator = new KotlinParticleGenerator(schema2kotlin, particles[0], nodeGenerators);
+      const classHeader = particleGenerator.generateParticleClassHeader();
+      const {typeAliases, handleClassDecl} = await particleGenerator.generateParticleClassComponents();
+      return [typeAliases.join('\n'), classHeader, handleClassDecl];
+    }
+  }(),
+  new class extends ManifestCodegenUnitTest {
+    constructor() {
+      super(
         'Kotlin Handles Class Declarations',
         'kotlin-handles-class-declarations.cgtest'
       );
