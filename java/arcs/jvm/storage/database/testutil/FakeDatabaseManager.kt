@@ -15,6 +15,7 @@ import arcs.core.data.Schema
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
+import arcs.core.storage.database.DatabaseConfig
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseIdentifier
 import arcs.core.storage.database.DatabaseManager
@@ -39,6 +40,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.atomic.AtomicReference
 
 /** [DatabaseManager] which generates fake [Database] objects. */
 open class FakeDatabaseManager(val onGarbageCollection: () -> Unit = {}) : DatabaseManager {
@@ -49,6 +51,7 @@ open class FakeDatabaseManager(val onGarbageCollection: () -> Unit = {}) : Datab
   private val _manifest = FakeDatabaseRegistry()
   private val clients = arrayListOf<DatabaseClient>()
   override val registry: FakeDatabaseRegistry = _manifest
+  override val databaseConfig: AtomicReference<DatabaseConfig> = AtomicReference(DatabaseConfig())
 
   fun addClients(vararg clients: DatabaseClient) = this.clients.addAll(clients)
 

@@ -57,6 +57,7 @@ import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
+import arcs.core.storage.database.DatabaseConfig
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseOp
 import arcs.core.storage.database.DatabasePerformanceStatistics
@@ -126,6 +127,7 @@ class DatabaseImpl(
   private val storageKeyManager: StorageKeyManager,
   databaseName: String,
   persistent: Boolean = true,
+  @VisibleForTesting val databaseConfigGetter: () -> DatabaseConfig,
   val onDatabaseClose: suspend () -> Unit = {}
 ) : Database, SQLiteOpenHelper(
   context,
