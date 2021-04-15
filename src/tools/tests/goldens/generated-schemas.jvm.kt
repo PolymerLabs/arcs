@@ -20,24 +20,26 @@ import arcs.sdk.toBigInt
 import javax.annotation.Generated
 
 typealias Gold_Data_Ref = AbstractGold.GoldInternal1
-typealias Gold_Data_Ref_Slice = AbstractGold.GoldInternal1
+typealias Gold_Data_Ref_Slice = AbstractGold.GoldInternal1Slice
 typealias Gold_Alias = AbstractGold.GoldInternal1
-typealias Gold_Alias_Slice = AbstractGold.GoldInternal1
+typealias Gold_Alias_Slice = AbstractGold.GoldInternal1Slice
 typealias Gold_AllPeople = AbstractGold.Gold_AllPeople
-typealias Gold_AllPeople_Slice = AbstractGold.Gold_AllPeople
+typealias Gold_AllPeople_Slice = AbstractGold.Gold_AllPeople_Slice
 typealias Gold_Collection = AbstractGold.Foo
-typealias Gold_Collection_Slice = AbstractGold.Foo
+typealias Gold_Collection_Slice = AbstractGold.FooSlice
 typealias Gold_Data = AbstractGold.Gold_Data
-typealias Gold_Data_Slice = AbstractGold.Gold_Data
+typealias Gold_Data_Slice = AbstractGold.Gold_Data_Slice
 typealias Gold_QCollection = AbstractGold.Gold_QCollection
-typealias Gold_QCollection_Slice = AbstractGold.Gold_QCollection
+typealias Gold_QCollection_Slice = AbstractGold.Gold_QCollection_Slice
 
 @Generated("src/tools/schema2kotlin.ts")
 abstract class AbstractGold : arcs.sdk.BaseParticle() {
     override val handles: Handles = Handles()
 
 
-
+    interface GoldInternal1Slice : arcs.sdk.Entity {
+        val val_: String
+    }
 
     @Suppress("UNCHECKED_CAST")
     class GoldInternal1(
@@ -52,9 +54,9 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
         creationTimestamp,
         expirationTimestamp,
         false
-    ) {
+    ), GoldInternal1Slice {
 
-        var val_: String
+        override var val_: String
             get() = super.getSingletonValue("val") as String? ?: ""
             private set(_value) = super.setSingletonValue("val", _value)
 
@@ -105,7 +107,15 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
         }
     }
 
-
+    interface Gold_AllPeople_Slice : arcs.sdk.Entity {
+        val name: String
+        val age: Double
+        val lastCall: Double
+        val address: String
+        val favoriteColor: String
+        val birthDayMonth: Double
+        val birthDayDOM: Double
+    }
 
     @Suppress("UNCHECKED_CAST")
     class Gold_AllPeople(
@@ -126,27 +136,27 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
         creationTimestamp,
         expirationTimestamp,
         false
-    ) {
+    ), Gold_AllPeople_Slice {
 
-        var name: String
+        override var name: String
             get() = super.getSingletonValue("name") as String? ?: ""
             private set(_value) = super.setSingletonValue("name", _value)
-        var age: Double
+        override var age: Double
             get() = super.getSingletonValue("age") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("age", _value)
-        var lastCall: Double
+        override var lastCall: Double
             get() = super.getSingletonValue("lastCall") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("lastCall", _value)
-        var address: String
+        override var address: String
             get() = super.getSingletonValue("address") as String? ?: ""
             private set(_value) = super.setSingletonValue("address", _value)
-        var favoriteColor: String
+        override var favoriteColor: String
             get() = super.getSingletonValue("favoriteColor") as String? ?: ""
             private set(_value) = super.setSingletonValue("favoriteColor", _value)
-        var birthDayMonth: Double
+        override var birthDayMonth: Double
             get() = super.getSingletonValue("birthDayMonth") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("birthDayMonth", _value)
-        var birthDayDOM: Double
+        override var birthDayDOM: Double
             get() = super.getSingletonValue("birthDayDOM") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("birthDayDOM", _value)
 
@@ -241,7 +251,9 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
         }
     }
 
-
+    interface FooSlice : arcs.sdk.Entity {
+        val num: Double
+    }
 
     @Suppress("UNCHECKED_CAST")
     class Foo(
@@ -249,9 +261,9 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
         entityId: String? = null,
         creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : arcs.sdk.EntityBase("Foo", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+    ) : arcs.sdk.EntityBase("Foo", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false), FooSlice {
 
-        var num: Double
+        override var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("num", _value)
 
@@ -302,7 +314,13 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
         }
     }
 
-
+    interface Gold_Data_Slice : arcs.sdk.Entity {
+        val num: Double
+        val txt: String
+        val lnk: String
+        val flg: Boolean
+        val ref: arcs.sdk.Reference<GoldInternal1>?
+    }
 
     @Suppress("UNCHECKED_CAST")
     class Gold_Data(
@@ -314,21 +332,21 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
         entityId: String? = null,
         creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : arcs.sdk.EntityBase("Gold_Data", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+    ) : arcs.sdk.EntityBase("Gold_Data", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false), Gold_Data_Slice {
 
-        var num: Double
+        override var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("num", _value)
-        var txt: String
+        override var txt: String
             get() = super.getSingletonValue("txt") as String? ?: ""
             private set(_value) = super.setSingletonValue("txt", _value)
-        var lnk: String
+        override var lnk: String
             get() = super.getSingletonValue("lnk") as String? ?: ""
             private set(_value) = super.setSingletonValue("lnk", _value)
-        var flg: Boolean
+        override var flg: Boolean
             get() = super.getSingletonValue("flg") as Boolean? ?: false
             private set(_value) = super.setSingletonValue("flg", _value)
-        var ref: arcs.sdk.Reference<GoldInternal1>?
+        override var ref: arcs.sdk.Reference<GoldInternal1>?
             get() = super.getSingletonValue("ref") as arcs.sdk.Reference<GoldInternal1>?
             private set(_value) = super.setSingletonValue("ref", _value)
 
@@ -405,7 +423,9 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
         }
     }
 
+    interface Gold_QCollection_Slice : Gold_AllPeople_Slice {
 
+    }
 
     @Suppress("UNCHECKED_CAST")
     class Gold_QCollection(
@@ -426,27 +446,27 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
         creationTimestamp,
         expirationTimestamp,
         false
-    ) {
+    ), Gold_QCollection_Slice {
 
-        var name: String
+        override var name: String
             get() = super.getSingletonValue("name") as String? ?: ""
             private set(_value) = super.setSingletonValue("name", _value)
-        var age: Double
+        override var age: Double
             get() = super.getSingletonValue("age") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("age", _value)
-        var lastCall: Double
+        override var lastCall: Double
             get() = super.getSingletonValue("lastCall") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("lastCall", _value)
-        var address: String
+        override var address: String
             get() = super.getSingletonValue("address") as String? ?: ""
             private set(_value) = super.setSingletonValue("address", _value)
-        var favoriteColor: String
+        override var favoriteColor: String
             get() = super.getSingletonValue("favoriteColor") as String? ?: ""
             private set(_value) = super.setSingletonValue("favoriteColor", _value)
-        var birthDayMonth: Double
+        override var birthDayMonth: Double
             get() = super.getSingletonValue("birthDayMonth") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("birthDayMonth", _value)
-        var birthDayDOM: Double
+        override var birthDayDOM: Double
             get() = super.getSingletonValue("birthDayDOM") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("birthDayDOM", _value)
 
@@ -554,7 +574,7 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
         val data: arcs.sdk.ReadSingletonHandle<Gold_Data> by handles
         val allPeople: arcs.sdk.ReadCollectionHandle<Gold_AllPeople> by handles
         val qCollection: arcs.sdk.ReadQueryCollectionHandle<Gold_QCollection, String> by handles
-        val alias: arcs.sdk.WriteSingletonHandle<Gold_Alias> by handles
+        val alias: arcs.sdk.WriteSingletonHandle<Gold_Alias_Slice> by handles
         val collection: arcs.sdk.ReadCollectionHandle<Foo> by handles
     }
 }
