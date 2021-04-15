@@ -18,6 +18,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.map
 import arcs.android.common.transaction
+import arcs.core.storage.database.DatabaseConfig
 import arcs.core.storage.testutil.DummyStorageKeyManager
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
@@ -47,7 +48,8 @@ class DatabaseDowngradeTest {
       ApplicationProvider.getApplicationContext(),
       DummyStorageKeyManager(),
       "arcs",
-      true
+      true,
+      { DatabaseConfig() }
     )
 
     // Open up the databaseImpl, so it performs a downgrade.

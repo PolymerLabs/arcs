@@ -16,6 +16,7 @@ import androidx.lifecycle.LifecycleObserver
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.database.Database
+import arcs.core.storage.database.DatabaseConfig
 import arcs.core.storage.database.DatabaseIdentifier
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.database.DatabasePerformanceStatistics.Snapshot
@@ -25,6 +26,7 @@ import arcs.core.util.guardedBy
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * [DatabaseManager] implementation which constructs [DatabaseImpl] instances for use on Android
@@ -34,13 +36,15 @@ import kotlinx.coroutines.sync.withLock
 class AndroidSqliteDatabaseManager(
   context: Context,
   // Maximum size of the database file, if it surpasses this size, the database gets reset.
-  maxDbSizeBytes: Int? = null
+  maxDbSizeBytes: Int? = null,
+  databaseConfig: DatabaseConfig = DatabaseConfig()
 ) : DatabaseManager, LifecycleObserver {
   private val context = context.applicationContext
   private val mutex = Mutex()
   private val dbCache by guardedBy(mutex, mutableMapOf<DatabaseIdentifier, DatabaseImpl>())
   private val maxDbSize = maxDbSizeBytes ?: MAX_DB_SIZE_BYTES
   override val registry = AndroidSqliteDatabaseRegistry(context)
+  override val databaseConfig: AtomicReference<DatabaseConfig> = AtomicReference(databaseConfig)
 
   // TODO(b/174432505): Don't use the GLOBAL_INSTANCE, accept as a constructor param instead.
   private val storageKeyManager = StorageKeyManager.GLOBAL_INSTANCE
@@ -58,7 +62,7 @@ class AndroidSqliteDatabaseManager(
     val entry = registry.register(name, persistent)
     return mutex.withLock {
       dbCache[entry.name to entry.isPersistent]
-        ?: DatabaseImpl(context, storageKeyManager, name, persistent)
+        ?: DatabaseImpl(context, storageKeyManager, name, persistent, databaseConfig::get)
           .also {
             dbCache[entry.name to entry.isPersistent] = it
           }
