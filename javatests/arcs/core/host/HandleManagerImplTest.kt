@@ -12,6 +12,8 @@
 package arcs.core.host
 
 import arcs.core.common.toId
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperation
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.ReferenceType
@@ -28,7 +30,13 @@ import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.host.AbstractReadPerson.Person
 import arcs.core.host.AbstractReadPerson.PersonSlice
+import arcs.core.storage.ProxyCallback
+import arcs.core.storage.StorageEndpoint
+import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StoreEndpointFake
+import arcs.core.storage.StoreOptions
+import arcs.core.storage.WriteOnlyStorageProxyImpl
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -135,6 +143,53 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
   }
 
   @Test
+  fun singletonHandle_withWriteOnlyStack_throwsIfRead() = runTest {
+    assume().that(BuildFlags.WRITE_ONLY_STORAGE_STACK).isTrue()
+    assertFailsWith<IllegalArgumentException> {
+      managerImpl.createHandle(
+        HandleSpec(
+          WRITE_ONLY_HANDLE,
+          HandleMode.ReadWrite,
+          SINGLETON_TYPE,
+          Person
+        ),
+        STORAGE_KEY,
+        writeOnly = true
+      )
+    }
+
+    assertFailsWith<IllegalArgumentException> {
+      managerImpl.createHandle(
+        HandleSpec(
+          WRITE_ONLY_HANDLE,
+          HandleMode.Write,
+          SINGLETON_TYPE,
+          Person
+        ),
+        STORAGE_KEY,
+        writeOnly = true
+      )
+    }
+  }
+
+  @Test
+  fun collectionHandle_withWriteOnlyStack_throwsIfRead() = runTest {
+    assume().that(BuildFlags.WRITE_ONLY_STORAGE_STACK).isTrue()
+    assertFailsWith<IllegalArgumentException> {
+      managerImpl.createHandle(
+        HandleSpec(
+          WRITE_ONLY_HANDLE,
+          HandleMode.ReadWrite,
+          COLLECTION_TYPE,
+          Person
+        ),
+        STORAGE_KEY,
+        writeOnly = true
+      )
+    }
+  }
+
+  @Test
   fun singletonHandle_doesNotSupportQuery() = runTest {
     assertIllegalArgumentException("Singleton Handles do not support mode Query") {
       createHandle(mode = HandleMode.Query, type = SINGLETON_TYPE)
@@ -210,6 +265,43 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
     assertThat(writeOnlyHandle).isInstanceOf(WriteCollectionHandle::class.java)
     assertThat(writeOnlyHandle).isNotInstanceOf(ReadCollectionHandle::class.java)
     assertThat(writeOnlyHandle).isNotInstanceOf(ReadWriteCollectionHandle::class.java)
+  }
+
+  @Test
+  fun collectionHandle_canCreateWriteOnlyStorageProxy() = runTest {
+    assume().that(BuildFlags.WRITE_ONLY_STORAGE_STACK).isTrue()
+
+    val fakeEndpointManager = object : StorageEndpointManager {
+      override suspend fun <Data : CrdtData, Op : CrdtOperation, T> get(
+        storeOptions: StoreOptions,
+        callback: ProxyCallback<Data, Op, T>
+      ): StorageEndpoint<Data, Op, T> {
+        assertThat(storeOptions.writeOnly).isTrue()
+        return StoreEndpointFake<Data, Op, T>()
+      }
+    }
+
+    val manager = HandleManagerImpl(
+      "testArc",
+      "",
+      FakeTime(),
+      scheduler = scheduler,
+      storageEndpointManager = fakeEndpointManager,
+      foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
+    )
+
+    val writeOnlyHandle = manager.createHandle(
+      HandleSpec(
+        WRITE_ONLY_HANDLE,
+        HandleMode.Write,
+        COLLECTION_TYPE,
+        Person
+      ),
+      STORAGE_KEY,
+      writeOnly = true
+    )
+
+    assertThat(writeOnlyHandle.getProxy()).isInstanceOf(WriteOnlyStorageProxyImpl::class.java)
   }
 
   @Test
@@ -387,7 +479,8 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
     mode: HandleMode = HandleMode.Read,
     type: Type = SINGLETON_TYPE,
     spec: EntitySpec<*> = Person,
-    storageKey: StorageKey = STORAGE_KEY
+    storageKey: StorageKey = STORAGE_KEY,
+    writeOnly: Boolean = false
   ): Handle {
     return managerImpl.createHandle(
       HandleSpec(
@@ -396,7 +489,8 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
         type,
         spec
       ),
-      storageKey
+      storageKey,
+      writeOnly = writeOnly
     )
   }
 
@@ -408,7 +502,10 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
   private companion object {
     @get:JvmStatic
     @get:Parameterized.Parameters(name = "{0}")
-    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_STRING_REDUCTION")
+    val PARAMETERS = ParameterizedBuildFlags.of(
+      "STORAGE_STRING_REDUCTION",
+      "WRITE_ONLY_STORAGE_STACK"
+    )
 
     private const val READ_ONLY_HANDLE = "readOnlyHandle"
     private const val WRITE_ONLY_HANDLE = "writeOnlyHandle"
