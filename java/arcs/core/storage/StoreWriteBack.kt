@@ -11,7 +11,6 @@
 
 package arcs.core.storage
 
-import arcs.core.storage.keys.Protocols
 import arcs.core.util.TaggedLog
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
@@ -35,14 +34,14 @@ import kotlinx.coroutines.sync.withLock
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 open class StoreWriteBack /* internal */ constructor(
-  protocol: String,
+  protocol: StorageKeyProtocol,
   queueSize: Int,
   forceEnable: Boolean,
   scope: CoroutineScope?
 ) : WriteBack {
   // Only apply write-back to physical storage media(s) unless forceEnable is specified.
   private val passThrough = atomic(
-    !forceEnable && (scope == null || protocol != Protocols.DATABASE_DRIVER)
+    !forceEnable && (scope == null || protocol != StorageKeyProtocol.Database)
   )
 
   // The number of active flush jobs.

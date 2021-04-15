@@ -24,14 +24,14 @@ import arcs.core.type.Type
  */
 class CapabilitiesResolver(
   private val options: Options,
-  private val factories: Map<String, StorageKeyFactory>,
+  private val factories: Map<StorageKeyProtocol, StorageKeyFactory>,
   private val selector: FactorySelector = SimpleCapabilitiesSelector()
 ) {
   constructor(
     options: Options,
     factoriesList: List<StorageKeyFactory> = listOf(),
     selector: FactorySelector = SimpleCapabilitiesSelector()
-  ) : this(options, CapabilitiesResolver.getFactoryMap(factoriesList), selector)
+  ) : this(options, getFactoryMap(factoriesList), selector)
 
   /** Options used to construct [CapabilitiesResolver]. */
   data class Options(val arcId: ArcId)
@@ -81,8 +81,10 @@ class CapabilitiesResolver(
    * [Capabilities] set.
    */
   class SimpleCapabilitiesSelector(
-    val sortedProtocols: Array<String> = arrayOf("volatile", "ramdisk", "memdb", "db")
+    sortedProtocols: List<StorageKeyProtocol> = DEFAULT_SORTED_PROTOCOLS
   ) : FactorySelector {
+    private val sortedProtocols = sortedProtocols.map { it.protocolStr }.toTypedArray()
+
     override fun select(factories: Collection<StorageKeyFactory>): StorageKeyFactory {
       require(factories.isNotEmpty()) { "Cannot select from empty factories list" }
       val compareProtocol = compareBy { protocol: String ->
@@ -93,7 +95,12 @@ class CapabilitiesResolver(
       }
 
       return factories.reduce { acc, factory ->
-        if (minOf(acc.protocol, factory.protocol, compareProtocol) == factory.protocol) {
+        if (minOf(
+            acc.protocol.protocolStr,
+            factory.protocol.protocolStr,
+            compareProtocol
+          ) == factory.protocol.protocolStr
+        ) {
           factory
         } else acc
       }
@@ -101,7 +108,14 @@ class CapabilitiesResolver(
   }
 
   companion object {
-    private val defaultStorageKeyFactories = mutableMapOf<String, StorageKeyFactory>()
+    private val DEFAULT_SORTED_PROTOCOLS = listOf(
+      StorageKeyProtocol.Volatile,
+      StorageKeyProtocol.RamDisk,
+      StorageKeyProtocol.InMemoryDatabase,
+      StorageKeyProtocol.Database
+    )
+
+    private val defaultStorageKeyFactories = mutableMapOf<StorageKeyProtocol, StorageKeyFactory>()
 
     fun registerStorageKeyFactory(factory: StorageKeyFactory) {
       require(defaultStorageKeyFactories[factory.protocol] == null) {
@@ -114,12 +128,15 @@ class CapabilitiesResolver(
       defaultStorageKeyFactories.clear()
     }
 
-    fun getFactoryMap(factoriesList: List<StorageKeyFactory>): Map<String, StorageKeyFactory> {
+    fun getFactoryMap(
+      factoriesList: List<StorageKeyFactory>
+    ): Map<StorageKeyProtocol, StorageKeyFactory> {
       require(factoriesList.distinctBy { it.protocol }.size == factoriesList.size) {
-        "Storage keys protocol must be unique, but was: ${factoriesList.map {it.protocol}}."
+        "Storage keys protocol must be unique, but was: " +
+          "${factoriesList.map { it.protocol.protocolStr }}."
       }
       val factories = factoriesList.associateBy { it.protocol }.toMutableMap()
-      CapabilitiesResolver.defaultStorageKeyFactories.forEach { (protocol, factory) ->
+      defaultStorageKeyFactories.forEach { (protocol, factory) ->
         factories.getOrPut(protocol) { factory }
       }
       return factories

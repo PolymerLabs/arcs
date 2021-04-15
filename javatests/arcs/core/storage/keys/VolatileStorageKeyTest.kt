@@ -32,7 +32,7 @@ class VolatileStorageKeyTest {
   fun toString_rendersCorrectly() {
     val arcId = ArcId.newForTest("arc")
     val key = VolatileStorageKey(arcId, "foo")
-    assertThat(key.toString()).isEqualTo("${VolatileStorageKey.protocol}://$arcId/foo")
+    assertThat(key.toString()).isEqualTo("volatile://$arcId/foo")
   }
 
   @Test
@@ -40,8 +40,7 @@ class VolatileStorageKeyTest {
     val arcId = ArcId.newForTest("arc")
     val parent = VolatileStorageKey(arcId, "parent")
     val child = parent.childKeyWithComponent("child")
-    assertThat(child.toString())
-      .isEqualTo("${VolatileStorageKey.protocol}://$arcId/parent/child")
+    assertThat(child.toString()).isEqualTo("volatile://$arcId/parent/child")
   }
 
   @Test

@@ -52,7 +52,7 @@ class ReferenceModeStorageKeyTest {
     val key = ReferenceModeStorageKey(backing, direct)
 
     assertThat(key.toString())
-      .isEqualTo("${ReferenceModeStorageKey.protocol}://{$backing}{$direct}")
+      .isEqualTo("reference-mode://{$backing}{$direct}")
   }
 
   @Test
@@ -67,7 +67,7 @@ class ReferenceModeStorageKeyTest {
     val embeddedDirect = directReference.embed()
 
     assertThat(parent.toString())
-      .isEqualTo("${ReferenceModeStorageKey.protocol}://{$embeddedBacking}{$embeddedDirect}")
+      .isEqualTo("reference-mode://{$embeddedBacking}{$embeddedDirect}")
   }
 
   @Test

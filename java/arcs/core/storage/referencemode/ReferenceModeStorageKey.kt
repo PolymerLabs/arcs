@@ -12,6 +12,7 @@
 package arcs.core.storage.referencemode
 
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.StorageKeySpec
 import arcs.core.storage.StorageKeyUtils
 import arcs.core.storage.embed
@@ -43,7 +44,7 @@ data class ReferenceModeStorageKey(
   override fun toString(): String = super.toString()
 
   companion object : StorageKeySpec<ReferenceModeStorageKey> {
-    override val protocol = "reference-mode"
+    override val protocol = StorageKeyProtocol.ReferenceMode
     override fun parse(rawKeyString: String): ReferenceModeStorageKey {
       val invalidFormatMessage: () -> String =
         { "Invalid format for ReferenceModeStorageKey" }

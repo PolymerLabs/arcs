@@ -32,14 +32,14 @@ class DatabaseStorageKeyTest {
   fun toString_persistent_rendersCorrectly() {
     val key = DatabaseStorageKey.Persistent("foo", "1234a", dbName = "myDb")
     assertThat(key.toString())
-      .isEqualTo("${DatabaseStorageKey.Persistent.protocol}://1234a@myDb/foo")
+      .isEqualTo("db://1234a@myDb/foo")
   }
 
   @Test
   fun toString_memory_rendersCorrectly() {
     val key = DatabaseStorageKey.Memory("foo", "1234a", dbName = "myDb")
     assertThat(key.toString())
-      .isEqualTo("${DatabaseStorageKey.Memory.protocol}://1234a@myDb/foo")
+      .isEqualTo("memdb://1234a@myDb/foo")
   }
 
   @Test
@@ -172,7 +172,7 @@ class DatabaseStorageKeyTest {
 
   @Test
   fun persistentParse_viaRegistration_parsesCorrectly() {
-    val keyString = "${DatabaseStorageKey.Persistent.protocol}://1234a@myDb/foo"
+    val keyString = "db://1234a@myDb/foo"
     val key = StorageKeyManager.GLOBAL_INSTANCE.parse(keyString) as? DatabaseStorageKey.Persistent
       ?: fail("Expected a DatabaseStorageKey")
     assertThat(key.dbName).isEqualTo("myDb")
@@ -182,7 +182,7 @@ class DatabaseStorageKeyTest {
 
   @Test
   fun memoryParse_viaRegistration_parsesCorrectly() {
-    val keyString = "${DatabaseStorageKey.Memory.protocol}://1234a@myDb/foo"
+    val keyString = "memdb://1234a@myDb/foo"
     val key = StorageKeyManager.GLOBAL_INSTANCE.parse(keyString) as? DatabaseStorageKey.Memory
       ?: fail("Expected a DatabaseStorageKey")
     assertThat(key.dbName).isEqualTo("myDb")
@@ -195,7 +195,7 @@ class DatabaseStorageKeyTest {
     val parent = DatabaseStorageKey.Persistent("parent", "1234a")
     val child = parent.childKeyWithComponent("child") as DatabaseStorageKey.Persistent
     assertThat(child.toString())
-      .isEqualTo("${DatabaseStorageKey.Persistent.protocol}://${parent.toKeyString()}/child")
+      .isEqualTo("db://${parent.toKeyString()}/child")
   }
 
   @Test
@@ -203,6 +203,6 @@ class DatabaseStorageKeyTest {
     val parent = DatabaseStorageKey.Memory("parent", "1234a")
     val child = parent.childKeyWithComponent("child") as DatabaseStorageKey.Memory
     assertThat(child.toString())
-      .isEqualTo("${DatabaseStorageKey.Memory.protocol}://${parent.toKeyString()}/child")
+      .isEqualTo("memdb://${parent.toKeyString()}/child")
   }
 }

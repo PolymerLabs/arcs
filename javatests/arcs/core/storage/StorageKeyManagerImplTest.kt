@@ -40,11 +40,19 @@ class StorageKeyManagerImplTest {
   }
 
   @Test
-  fun parse_unregisteredProtocol_throws() {
+  fun parse_unknownProtocol_throws() {
     val storageKeyManager = StorageKeyManagerImpl()
 
     val e = assertFailsWith<IllegalArgumentException> { storageKeyManager.parse("unknown://abc") }
-    assertThat(e).hasMessageThat().isEqualTo("No registered parsers for protocol \"unknown\"")
+    assertThat(e).hasMessageThat().isEqualTo("Unknown storage key protocol: unknown")
+  }
+
+  @Test
+  fun parse_unregisteredProtocol_throws() {
+    val storageKeyManager = StorageKeyManagerImpl()
+
+    val e = assertFailsWith<IllegalArgumentException> { storageKeyManager.parse("dummy://abc") }
+    assertThat(e).hasMessageThat().isEqualTo("No registered parsers for protocol \"dummy\"")
   }
 
   @Test

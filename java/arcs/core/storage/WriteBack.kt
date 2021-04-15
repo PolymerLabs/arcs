@@ -13,8 +13,7 @@ package arcs.core.storage
 
 import kotlinx.coroutines.flow.Flow
 
-typealias Protocol = String
-typealias WriteBackProvider = (Protocol) -> WriteBack
+typealias WriteBackProvider = (StorageKeyProtocol) -> WriteBack
 
 /**
  * A layer to decouple local data updates and underlying storage layers flushes.

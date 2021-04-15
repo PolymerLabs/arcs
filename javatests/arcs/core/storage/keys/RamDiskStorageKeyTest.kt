@@ -29,14 +29,14 @@ class RamDiskStorageKeyTest {
   @Test
   fun toString_rendersCorrectly() {
     val key = RamDiskStorageKey("foo")
-    assertThat(key.toString()).isEqualTo("${RamDiskStorageKey.protocol}://foo")
+    assertThat(key.toString()).isEqualTo("ramdisk://foo")
   }
 
   @Test
   fun childKey_hasCorrectFormat() {
     val parent = RamDiskStorageKey("parent")
     val child = parent.childKeyWithComponent("child")
-    assertThat(child.toString()).isEqualTo("${RamDiskStorageKey.protocol}://parent/child")
+    assertThat(child.toString()).isEqualTo("ramdisk://parent/child")
   }
 
   @Test

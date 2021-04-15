@@ -4,7 +4,7 @@ package arcs.core.storage
 open class StorageKeyManagerImpl(
   vararg initialSet: StorageKeyParser<*>
 ) : StorageKeyManager {
-  private var parsers: MutableMap<String, StorageKeyParser<*>> =
+  private var parsers: MutableMap<StorageKeyProtocol, StorageKeyParser<*>> =
     initialSet.associateBy { it.protocol }.toMutableMap()
 
   override fun parse(rawKeyString: String): StorageKey {
@@ -13,7 +13,7 @@ open class StorageKeyManagerImpl(
         "Invalid key pattern"
       }
 
-    val protocol = match.groupValues[1]
+    val protocol = StorageKeyProtocol.parseProtocol(match.groupValues[1])
     val contents = match.groupValues[2]
     val parser = synchronized(this) {
       requireNotNull(parsers[protocol]) {

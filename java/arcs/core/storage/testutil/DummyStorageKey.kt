@@ -14,6 +14,7 @@ package arcs.core.storage.testutil
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyProtocol
 
 /** Fake [StorageKey] implementation for use in unit tests. */
 class DummyStorageKey(val key: String) : StorageKey(protocol) {
@@ -27,7 +28,7 @@ class DummyStorageKey(val key: String) : StorageKey(protocol) {
     DummyStorageKey("$key/$component")
 
   companion object : StorageKeyParser<DummyStorageKey> {
-    override val protocol = "dummy"
+    override val protocol = StorageKeyProtocol.Dummy
     override fun parse(rawKeyString: String) = DummyStorageKey(rawKeyString)
   }
 }

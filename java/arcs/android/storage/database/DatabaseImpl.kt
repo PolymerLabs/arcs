@@ -54,6 +54,7 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
@@ -2817,7 +2818,7 @@ class DatabaseImpl(
     class InlineStorageKey(
       private val parentKey: StorageKey,
       private val fieldName: String
-    ) : StorageKey("inline") {
+    ) : StorageKey(StorageKeyProtocol.Inline) {
       /**
        * A unique component to the key. This is required because there may be multiple inline
        * entities stored against a single fieldName (for collections and lists).
