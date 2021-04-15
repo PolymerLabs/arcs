@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Arc} from '../arc.js';
 import {Description} from '../description.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';

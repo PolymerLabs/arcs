@@ -10,7 +10,6 @@
 
 
 import {assert} from '../../../platform/chai-web.js';
-import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
@@ -158,7 +157,7 @@ ${recipeManifest}
   it.skip('prefers local slots if available', async () => {
     // Arc has both a 'root' and an 'action' slot.
     const runtime = new Runtime({loader: new Loader(), context: new Manifest({id: ArcId.newForTest('test')})});
-    const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'test-plan-arc'})).id);
+    const arc = await runtime.allocator.startArc({arcName: 'test-plan-arc'});
 
     const particles = `
       particle A in 'A.js'

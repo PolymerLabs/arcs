@@ -10,7 +10,6 @@
 
 
 import {assert} from '../../../platform/chai-web.js';
-import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {InterfaceType} from '../../../types/lib-types.js';

@@ -15,15 +15,16 @@ import {Planificator} from '../../../../../build/planning/plan/planificator.js';
 import {PlanningResult} from '../../../../../build/planning/plan/planning-result.js';
 import {Suggestion} from '../../../../../build/planning/plan/suggestion.js';
 import {StrategyTestHelper} from '../../../../../build/planning/testing/strategy-test-helper.js';
-import {Arc} from '../../../../../build/runtime/arc.js';
+import {ArcInfo} from '../../../../../build/runtime/arc-info.js';
 import {ActiveSingletonEntityStore} from '../../../../../build/runtime/storage/storage.js';
+import {StorageKey} from '../../../../../build/runtime/storage/storage-key.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
-async function createPlanConsumer(arc: Arc, runtime: Runtime) {
-  const store: ActiveSingletonEntityStore = await Planificator.initSuggestStore(arc.storageKey, arc.storageService);
+async function createPlanConsumer(arcInfo: ArcInfo, storageKey: StorageKey, runtime: Runtime) {
+  const store: ActiveSingletonEntityStore = await Planificator.initSuggestStore(storageKey, runtime.storageService);
   assert.isNotNull(store);
   const result = new PlanningResult({context: runtime.context, loader: runtime.loader, storageService: runtime.storageService}, store);
-  return new PlanConsumer(arc.arcInfo, result);
+  return new PlanConsumer(arcInfo, result);
 }
 
 async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
@@ -58,10 +59,10 @@ describe('plan consumer', () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parse(manifestText);
 
-    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo'});
     let suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
 
-    const consumer = await createPlanConsumer(runtime.getArcById(arcInfo.id), runtime);
+    const consumer = await createPlanConsumer(arcInfo, storageKeyPrefixForTest()(arcInfo.id), runtime);
     let suggestionsChangeCount = 0;
     const suggestionsCallback = () => ++suggestionsChangeCount;
     let visibleSuggestionsChangeCount = 0;

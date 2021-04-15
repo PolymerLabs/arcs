@@ -17,15 +17,16 @@ import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {SuggestFilter} from '../../plan/suggest-filter.js';
-import {Arc} from '../../../runtime/arc.js';
+import {ArcInfo} from '../../../runtime/arc-info.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {ActiveSingletonEntityStore} from '../../../runtime/storage/storage.js';
+import {StorageKey} from '../../../runtime/storage/storage-key.js';
 
-async function createPlanConsumer(arc: Arc, runtime: Runtime) {
-  const store: ActiveSingletonEntityStore = await Planificator.initSuggestStore(arc.storageKey, arc.storageService);
+async function createPlanConsumer(arcInfo: ArcInfo, storageKey: StorageKey, runtime: Runtime) {
+  const store: ActiveSingletonEntityStore = await Planificator.initSuggestStore(storageKey, runtime.storageService);
   assert.isNotNull(store);
   const result = new PlanningResult({context: runtime.context, loader: runtime.loader, storageService: runtime.storageService}, store);
-  return new PlanConsumer(arc.arcInfo, result);
+  return new PlanConsumer(arcInfo, result);
 }
 
 async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
@@ -65,11 +66,10 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
       `);
       runtime.context = context;
 
-      const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), modality});
-      const arc = runtime.getArcById(arcInfo.id);
+      const arcInfo = await runtime.allocator.startArc({arcName: 'demo', modality});
       assert.lengthOf(context.allRecipes, 4);
 
-      const consumer = await createPlanConsumer(arc, runtime);
+      const consumer = await createPlanConsumer(arcInfo, storageKeyPrefixForTest()(arcInfo.id), runtime);
       assert.isNotNull(consumer);
 
       await storeResults(consumer, context.allRecipes.map((plan, index) => {

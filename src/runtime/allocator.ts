@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Arc} from './arc.js';
 import {ArcId, IdGenerator, Id} from './id.js';
 import {Manifest} from './manifest.js';
 import {Recipe, Particle} from './recipe/lib-recipe.js';

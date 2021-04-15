@@ -10,7 +10,6 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {logsFactory} from '../../platform/logs-factory.js';
-import {Arc} from '../../runtime/arc.js';
 import {Runnable} from '../../utils/lib-utils.js';
 import {EnvOptions, Suggestion} from './suggestion.js';
 import {EntityType} from '../../types/lib-types.js';

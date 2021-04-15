@@ -19,7 +19,6 @@ import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-me
 import {VolatileStorageKey} from '../../runtime/storage/drivers/volatile.js';
 import {Exists} from '../../runtime/storage/drivers/driver.js';
 import {Reference} from '../../runtime/reference.js';
-import {Arc} from '../../runtime/arc.js';
 import {CollectionEntityType, SingletonEntityType, SingletonReferenceType, CollectionReferenceType} from '../../runtime/storage/storage.js';
 import {ReferenceModeStorageKey} from '../../runtime/storage/reference-mode-storage-key.js';
 import {StoreInfo} from '../../runtime/storage/store-info.js';

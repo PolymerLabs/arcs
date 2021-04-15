@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
-import {Arc} from '../../../runtime/arc.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
