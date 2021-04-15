@@ -108,19 +108,17 @@ class BaseTestHarnessTest {
       harness.config.dispatchStore(arcs.core.host.MultiHandleParticle_Config(true))
       assertVariableOrdering(
         harness.particle.events,
+        sequence("onFirstStart", "onStart"),
+        // Handle onReady events are not guaranteed to be in any specific order.
+        group("data.onReady:null", "list.onReady:[]", "config.onReady:null"),
         sequence(
-          sequence("onFirstStart", "onStart"),
-          // Handle onReady events are not guaranteed to be in any specific order.
-          group("data.onReady:null", "list.onReady:[]", "config.onReady:null"),
-          sequence(
-            "onReady:null:[]:null",
-            "data.onUpdate:3.2",
-            "onUpdate:3.2:[]:null",
-            "list.onUpdate:[hi]",
-            "onUpdate:3.2:[hi]:null",
-            "config.onUpdate:true",
-            "onUpdate:3.2:[hi]:true"
-          )
+          "onReady:null:[]:null",
+          "data.onUpdate:3.2",
+          "onUpdate:3.2:[]:null",
+          "list.onUpdate:[hi]",
+          "onUpdate:3.2:[hi]:null",
+          "config.onUpdate:true",
+          "onUpdate:3.2:[hi]:true"
         )
       )
     }
