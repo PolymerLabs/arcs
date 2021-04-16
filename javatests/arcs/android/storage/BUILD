@@ -12,6 +12,7 @@ arcs_kt_android_test_suite(
     name = "storage",
     size = "medium",
     srcs = glob(["*Test.kt"]),
+    flaky = True,
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.android.storage",
     deps = [

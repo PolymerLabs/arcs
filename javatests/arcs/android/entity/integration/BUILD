@@ -9,6 +9,7 @@ arcs_kt_android_test_suite(
     name = "integration",
     size = "medium",
     srcs = glob(["*.kt"]),
+    flaky = True,
     manifest = "AndroidManifest.xml",
     package = "arcs.android.entity.integration",
     deps = [
