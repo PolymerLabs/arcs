@@ -17,19 +17,20 @@ import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {SuggestFilter} from '../../plan/suggest-filter.js';
-import {Arc} from '../../../runtime/arc.js';
+import {ArcInfo} from '../../../runtime/arc-info.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {ActiveSingletonEntityStore} from '../../../runtime/storage/storage.js';
+import {StorageKey} from '../../../runtime/storage/storage-key.js';
 
-async function createPlanConsumer(arc: Arc, context: Manifest) {
-  const store: ActiveSingletonEntityStore = await Planificator['_initSuggestStore'](arc);
+async function createPlanConsumer(arcInfo: ArcInfo, storageKey: StorageKey, runtime: Runtime) {
+  const store: ActiveSingletonEntityStore = await Planificator.initSuggestStore(storageKey, runtime.storageService);
   assert.isNotNull(store);
-  const result = new PlanningResult({context, loader: arc.loader, storageService: arc.storageService}, store);
-  return new PlanConsumer(arc, result);
+  const result = new PlanningResult({context: runtime.context, loader: runtime.loader, storageService: runtime.storageService}, store);
+  return new PlanConsumer(arcInfo, result);
 }
 
 async function storeResults(consumer: PlanConsumer, suggestions: Suggestion[]) {
-  assert.isTrue(consumer.result.merge({suggestions}, consumer.arc));
+  assert.isTrue(consumer.result.merge({suggestions}, consumer.arcInfo));
   await consumer.result.flush();
   await new Promise(resolve => setTimeout(resolve, 100));
 }
@@ -65,14 +66,14 @@ ${addRecipe(['ParticleTouch', 'ParticleBoth'])}
       `);
       runtime.context = context;
 
-      const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), modality}));
+      const arcInfo = await runtime.allocator.startArc({arcName: 'demo', modality});
       assert.lengthOf(context.allRecipes, 4);
 
-      const consumer = await createPlanConsumer(arc, context);
+      const consumer = await createPlanConsumer(arcInfo, storageKeyPrefixForTest()(arcInfo.id), runtime);
       assert.isNotNull(consumer);
 
       await storeResults(consumer, context.allRecipes.map((plan, index) => {
-        const suggestion = Suggestion.create(plan, /* hash */`${index}`, Relevance.create(arc, plan));
+        const suggestion = Suggestion.create(plan, /* hash */`${index}`, Relevance.create(arcInfo, plan));
         suggestion.descriptionByModality['text'] = `${plan.name}`;
         return suggestion;
       }));

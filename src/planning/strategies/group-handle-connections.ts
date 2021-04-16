@@ -9,18 +9,18 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Arc} from '../../runtime/arc.js';
 import {HandleConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {Recipe, Particle} from '../../runtime/recipe/lib-recipe.js';
 import {TypeChecker} from '../../runtime/type-checker.js';
 import {Type} from '../../types/lib-types.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
+import {ArcInfo} from '../../runtime/arc-info.js';
 
 export class GroupHandleConnections extends Strategy {
   _walker: StrategizerWalker;
 
-  constructor(arc?: Arc, args?) {
-    super(arc, args);
+  constructor(arcInfo?: ArcInfo, args?) {
+    super(arcInfo, args);
 
     this._walker = new class extends StrategizerWalker {
       onRecipe(recipe: Recipe) {

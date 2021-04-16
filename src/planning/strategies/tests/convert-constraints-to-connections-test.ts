@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
-import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Modality} from '../../../runtime/arcs-types/modality.js';
@@ -20,7 +19,7 @@ import {Runtime} from '../../../runtime/runtime.js';
 describe('ConvertConstraintsToConnections', () => {
   const startArc = async (manifest: Manifest) => {
     const runtime = new Runtime({loader: new Loader(), context: manifest});
-    return runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-plan-arc'}));
+    return runtime.allocator.startArc({arcName: 'test-plan-arc'});
   };
 
   it('fills out an empty constraint', async () => {
@@ -297,7 +296,7 @@ describe('ConvertConstraintsToConnections', () => {
 
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}, {result: manifest.recipes[1], score: 1, derivation: [], hash: '0', valid: true}];
     const runtime = new Runtime({loader: new Loader(), context: manifest});
-    const cctc = new ConvertConstraintsToConnections(runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-plan-arc', modality: Modality.vr})));
+    const cctc = new ConvertConstraintsToConnections(await runtime.allocator.startArc({arcName: 'test-plan-arc', modality: Modality.vr}));
 
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);

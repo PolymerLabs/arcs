@@ -9,26 +9,31 @@
  */
 
 import {assert} from '../platform/assert-web.js';
+import {ArcInfo} from '../runtime/arc-info.js';
 import {Arc} from '../runtime/arc.js';
 import {Recipe} from '../runtime/recipe/lib-recipe.js';
 import {Relevance} from '../runtime/relevance.js';
 import {Runtime} from '../runtime/runtime.js';
 
 export class Speculator {
-  private speculativeArcs: Arc[] = [];
+  private speculativeArcs: ArcInfo[] = [];
 
   constructor(public readonly runtime: Runtime) {}
 
-  async speculate(arc: Arc, plan: Recipe, hash: string): Promise<{speculativeArc: Arc, relevance: Relevance}|null> {
+  async speculate(arcInfo: ArcInfo, plan: Recipe, hash: string, shouldSpeculate: boolean = true): Promise<{speculativeArc: Arc, relevance: Relevance}|null> {
     assert(plan.isResolved(), `Cannot speculate on an unresolved plan: ${plan.toString({showUnresolved: true})}`);
-    const speculativeArc = await arc.cloneForSpeculativeExecution();
-    this.speculativeArcs.push(speculativeArc);
-    const relevance = Relevance.create(arc, plan);
-    plan = await this.runtime.allocator.assignStorageKeys(speculativeArc.id, plan);
-    await speculativeArc.instantiate(plan);
+    const speculativeArcInfo = await this.runtime.allocator.cloneArc(arcInfo.id, {isSpeculative: true});
+    this.speculativeArcs.push(speculativeArcInfo);
+    const relevance = Relevance.create(arcInfo, plan);
+    plan = await this.runtime.allocator.assignStorageKeys(speculativeArcInfo.id, plan);
+
+    const {particles, handles} = await speculativeArcInfo.instantiate(plan);
+    const speculativeArc = this.runtime.host.getArcById(speculativeArcInfo.id);
+    await speculativeArc.instantiate(shouldSpeculate ? particles : [], handles);
+
     await this.awaitCompletion(relevance, speculativeArc);
 
-    if (!relevance.isRelevant(plan)) {
+    if (shouldSpeculate && !relevance.isRelevant(plan)) {
       return null;
     }
 
@@ -43,15 +48,15 @@ export class Speculator {
     if (speculativeArc.peh.messageCount !== messageCount + 2) {
       return this.awaitCompletion(relevance, speculativeArc);
     } else {
-      speculativeArc.dispose();
-      this.speculativeArcs.splice(this.speculativeArcs.indexOf(speculativeArc, 1));
+      this.runtime.allocator.stopArc(speculativeArc.id);
+      this.speculativeArcs.splice(this.speculativeArcs.indexOf(speculativeArc.arcInfo, 1));
       return relevance;
     }
   }
 
   dispose(): void {
     for (const arc of this.speculativeArcs) {
-      arc.dispose();
+      this.runtime.allocator.stopArc(arc.id);
     }
   }
 }

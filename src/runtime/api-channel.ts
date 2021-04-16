@@ -28,6 +28,7 @@ import {Handle} from './storage/handle.js';
 import {StorageProxyMuxer} from './storage/storage-proxy-muxer.js';
 import {CRDTMuxEntity} from './storage/storage.js';
 import {StoreInfo} from './storage/store-info.js';
+import {ArcInfo} from './arc-info.js';
 
 enum MappingType {Mapped, LocalMapped, RemoteMapped, Direct, ObjectMap, List, ByLiteral}
 
@@ -547,10 +548,10 @@ export abstract class PECOuterPort extends APIPort {
   abstract onArcMapHandle(callback: number, arc: Arc, handle: libRecipe.Handle);
   MapHandleCallback(@RemoteIgnore @Initializer newHandle: {}, @RemoteMapped callback: number, @Direct id: string) {}
 
-  abstract onArcCreateSlot(callback: number, arc: Arc, transformationParticle: libRecipe.Particle, transformationSlotName: string, handleId: string);
+  abstract onArcCreateSlot(callback: number, arcInfo: ArcInfo, transformationParticle: libRecipe.Particle, transformationSlotName: string, handleId: string);
   CreateSlotCallback(@RemoteIgnore @Initializer slot: {}, @RemoteMapped callback: number, @Direct hostedSlotId: string) {}
 
-  abstract onArcLoadRecipe(arc: Arc, recipe: string, callback: number);
+  abstract onArcLoadRecipe(arcInfo: ArcInfo, recipe: string, callback: number);
   abstract onReportExceptionInHost(exception: PropagatedException);
 
   abstract onServiceRequest(particle: libRecipe.Particle, request: {}, callback: number);

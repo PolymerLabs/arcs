@@ -33,18 +33,18 @@ async function init(recipeStr) {
   runtime.context = await runtime.parse(recipeStr);
 
   const observer = new SlotTestObserver();
-  const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-arc', slotObserver: observer}));
+  const arcInfo = await runtime.allocator.startArc({arcName: 'test-arc', slotObserver: observer});
 
   const planner = new Planner();
-  const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
-  planner.init(arc, options);
+  const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arcInfo)};
+  planner.init(arcInfo, options);
 
   await planner.strategizer.generate();
   assert.lengthOf(planner.strategizer.population, 1);
 
   const plan = planner.strategizer.population[0].result;
 
-  return {runtime, arc, observer, plan};
+  return {runtime, arcInfo, observer, plan};
 }
 
 describe('slot composer', () => {
@@ -74,7 +74,7 @@ recipe
     otherSlot: consumes slot2
         `;
 
-    let {runtime, arc, observer, plan} = await init(manifestStr);
+    let {runtime, arcInfo, observer, plan} = await init(manifestStr);
 
     // instantiate the recipe
     plan = plan.clone();
@@ -87,7 +87,7 @@ recipe
         .expectRenderSlot('BB', 'mySlot')
         .expectRenderSlot('C', 'otherSlot')
         ;
-    await runtime.allocator.runPlanInArc(arc.id, plan);
+    await runtime.allocator.runPlanInArc(arcInfo, plan);
     await observer.expectationsCompleted();
   });
 
@@ -105,8 +105,8 @@ recipe
     runtime.context = await runtime.parseFile(manifest);
 
     const slotObserver = new SlotTestObserver();
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver}));
-    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver});
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
 
     const suggestion = suggestions.find(s => s.plan.name === 'FilterAndDisplayBooks');
     assert.deepEqual(
@@ -119,7 +119,7 @@ recipe
         .expectRenderSlot('List', 'root')
         .expectRenderSlot('List', 'root')
         .expectRenderSlot('ShowProduct', 'item');
-    await runtime.allocator.runPlanInArc(arc.id, suggestion.plan);
+    await runtime.allocator.runPlanInArc(arcInfo, suggestion.plan);
     await slotObserver.expectationsCompleted();
   });
 
@@ -143,7 +143,7 @@ recipe
           item: consumes slot1
     `;
 
-    let {runtime, arc, observer, plan} = await init(manifestStr);
+    let {runtime, arcInfo, observer, plan} = await init(manifestStr);
 
     plan = plan.clone();
     plan.normalize();
@@ -154,7 +154,7 @@ recipe
         .expectRenderSlot('B', 'item')
         .expectRenderSlot('C', 'item')
         ;
-    await runtime.allocator.runPlanInArc(arc.id, plan);
+    await runtime.allocator.runPlanInArc(arcInfo, plan);
     await observer.expectationsCompleted();
   });
 

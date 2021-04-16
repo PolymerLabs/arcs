@@ -25,7 +25,7 @@ import 'https://$particles/Profile/Sharing.recipe'
   const arc = await Runtime.spawnArc({id: 'smoke-arc', composer, context});
   console.log(`arc [${arc.id}]`);
 
-  const plan = await Runtime.resolveRecipe(arc, recipe);
+  const plan = await Runtime.resolveRecipe(arc.arcInfo, recipe);
   await arc.instantiate(plan);
 
   if (arc._stores[0]) {

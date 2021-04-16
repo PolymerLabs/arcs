@@ -37,15 +37,15 @@ describe('SearchTokensToHandles', () => {
         {"root": {}, "locations": {}}
     `);
 
-    const arc = await StrategyTestHelper.createTestArc(manifest);
-    await arc.arcInfo.registerStore(arc.context.findStoreById('thing-id'), ['mything']);
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(manifest);
+    await arcInfo.registerStore(arcInfo.context.findStoreById('thing-id'), ['mything']);
 
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert(!recipe.isResolved());
     recipe.search.resolveToken('show');
 
-    const strategy = new SearchTokensToHandles(arc);
+    const strategy = new SearchTokensToHandles(arcInfo);
     const results = await strategy.generate({generated: [{result: recipe, score: 1}], terminal: []});
 
     assert.lengthOf(results, 1);
@@ -77,13 +77,13 @@ recipe
     inFoos: reads h0
     outFoo: writes h1
     `));
-    const arc = await StrategyTestHelper.createTestArc(manifest);
-    arc.context.imports.push(storeManifest);
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(manifest);
+    arcInfo.context.imports.push(storeManifest);
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert(!recipe.isResolved());
     recipe.search.resolveToken('choose');
-    const strategy = new SearchTokensToHandles(arc);
+    const strategy = new SearchTokensToHandles(arcInfo);
     const results = await strategy.generate({generated: [{result: recipe, score: 1}], terminal: []});
 
     assert.lengthOf(results, 1);

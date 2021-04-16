@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
-import {Arc} from '../../../runtime/arc.js';
+import {ArcInfo} from '../../../runtime/arc-info.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
@@ -21,8 +21,8 @@ import {Runtime} from '../../../runtime/runtime.js';
 class TestPlanProducer extends PlanProducer {
   produceSuggestionsCalled = 0;
 
-  constructor(arc: Arc, runtime: Runtime) {
-    super(arc, runtime, new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}));
+  constructor(arcInfo: ArcInfo, runtime: Runtime) {
+    super(arcInfo, runtime, new PlanningResult({context: runtime.context, loader: runtime.loader, storageService: runtime.storageService}));
   }
 
   async produceSuggestions(options = {}) {
@@ -42,8 +42,8 @@ async function init(options?) {
       value: Text
   `);
   const runtime = new Runtime({loader, context});
-  const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
-  const producer = new TestPlanProducer(arc, runtime);
+  const arcInfo = await runtime.allocator.startArc({arcName: 'test'});
+  const producer = new TestPlanProducer(arcInfo, runtime);
   const queue = new ReplanQueue(producer, options);
 
   assert.isFalse(queue.isReplanningScheduled());

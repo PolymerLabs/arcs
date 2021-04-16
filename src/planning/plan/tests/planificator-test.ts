@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
-import {Arc} from '../../../runtime/arc.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
@@ -19,26 +18,16 @@ import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {floatingPromiseToAudit} from '../../../utils/lib-utils.js';
 import {storageKeyPrefixForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
-import {MockFirebaseStorageKey} from '../../../runtime/storage/testing/mock-firebase.js';
 
 describe('planificator', () => {
-  it('constructs suggestion and search storage keys for fb arc', async () => {
+  it('constructs suggestion and search storage keys for an arc', async () => {
     const runtime = new Runtime();
-    const storageKeyPrefix = () => new MockFirebaseStorageKey('location');
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo'});
+    const arc = runtime.getArcById(arcInfo.id);
+    const planificator = await Planificator.create(arc, {runtime, onlyConsumer: true, debug: false});
 
-    const verifySuggestion = (storageKeyBase) => {
-      const key = Planificator.constructSuggestionKey(arc, storageKeyBase);
-      assert(key && key.protocol,
-            `Cannot construct key for '${storageKeyBase}' planificator storage key base`);
-      assert(key.protocol.length > 0,
-            `Invalid protocol in key for '${storageKeyBase}' planificator storage key base`);
-    };
-
-    verifySuggestion(storageKeyForTest(arc.id));
-    verifySuggestion(new MockFirebaseStorageKey('planificator location'));
-
-    assert.isTrue(Planificator.constructSearchKey(arc).toString().length > 0);
+    assert.equal(arc.storageKey.protocol, planificator.result.store.storageKey.protocol);
+    assert.equal(arc.storageKey.protocol, planificator.searchStore.storageKey.protocol);
   });
 });
 
@@ -68,12 +57,13 @@ describe.skip('remote planificator', () => {
   }
 
   function createPlanningResult(arc, store) {
-    return new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store);
+    return new PlanningResult({context: arc.context, loader: arc.loader, storageService: runtime.storageService}, store);
   }
 
   async function createProducePlanificator(manifestFilename, store, searchStore) {
     const arc = await createArc({manifestFilename}, arcStorageKey);
-    return new Planificator(arc, runtime, createPlanningResult(arc, store), searchStore);
+    const searchHandle = await runtime.host.handleForStoreInfo(searchStore.storeInfo, arc.arcInfo);
+    return new Planificator(arc, runtime, createPlanningResult(arc, store), searchStore, searchHandle);
   }
 
   async function instantiateAndReplan(consumePlanificator, producePlanificator, suggestionIndex) {
@@ -90,11 +80,13 @@ describe.skip('remote planificator', () => {
     //
     const deserializedArc = runtime.getArcById(await runtime.allocator.deserialize({slotComposer: new SlotComposer(), fileName: ''}));
     //
+    const searchHandle = await runtime.host.handleForStoreInfo(consumePlanificator.searchStore.storeInfo, deserializedArc.arcInfo);
     producePlanificator = new Planificator(
       deserializedArc,
       runtime,
       createPlanningResult(consumePlanificator.arc, consumePlanificator.result.store),
       consumePlanificator.searchStore,
+      searchHandle,
       /* onlyConsumer= */ false,
       /* debug= */ false);
     producePlanificator.requestPlanning({contextual: true});
@@ -219,7 +211,8 @@ particle ShowProduct in 'show-product.js'
         await createArc({manifestString: restaurantsManifestString}, arcStorageKey),
         runtime,
         createPlanningResult(productsPlanificator.arc, productsPlanificator.result.store),
-        productsPlanificator.searchStore);
+        productsPlanificator.searchStore,
+        productsPlanificator.searchHandle);
     assert.isTrue(restaurantsPlanificator.producer.result.contextual);
     await restaurantsPlanificator.loadSuggestions();
     assert.isFalse(restaurantsPlanificator.producer.result.contextual);

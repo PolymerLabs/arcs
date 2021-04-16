@@ -25,12 +25,12 @@ describe('SearchTokensToParticles', () => {
       recipe
         search \`jump or fly or run and rester\`
     `));
-    const arc = await StrategyTestHelper.createTestArc(manifest);
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(manifest);
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert(!recipe.isResolved());
     const inputParams = {generated: [], terminal: [{result: recipe, score: 1}]};
-    const stp = new SearchTokensToParticles(arc, StrategyTestHelper.createTestStrategyArgs(arc));
+    const stp = new SearchTokensToParticles(arcInfo, StrategyTestHelper.createTestStrategyArgs(arcInfo));
     const results = await stp.generate(inputParams);
     assert.lengthOf(results, 2);
     assert.deepEqual([['GalaxyFlyer', 'Rester', 'SimpleJumper'],
@@ -50,14 +50,14 @@ describe('SearchTokensToParticles', () => {
       recipe
         search \`galaxy flyer\`
     `));
-    const arc = await StrategyTestHelper.createTestArc(manifest);
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(manifest);
     const recipes = manifest.recipes;
     recipes.forEach(recipe => {
       assert(recipe.normalize());
       assert(!recipe.isResolved());
     });
     const inputParams = {generated: [], terminal: recipes.map(recipe => ({result: recipe, score: 1}))};
-    const stp = new SearchTokensToParticles(arc, StrategyTestHelper.createTestStrategyArgs(arc));
+    const stp = new SearchTokensToParticles(arcInfo, StrategyTestHelper.createTestStrategyArgs(arcInfo));
     const results = await stp.generate(inputParams);
     assert.lengthOf(results, 1);
     const result = results[0].result;
@@ -77,12 +77,12 @@ describe('SearchTokensToParticles', () => {
       recipe
         search \`galaxy running and more\`
     `));
-    const arc = await StrategyTestHelper.createTestArc(manifest);
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(manifest);
     const recipe = manifest.recipes[1];
     assert(recipe.normalize());
     assert(!recipe.isResolved());
     const inputParams = {generated: [], terminal: [{result: recipe, score: 1}]};
-    const stp = new SearchTokensToParticles(arc, StrategyTestHelper.createTestStrategyArgs(arc));
+    const stp = new SearchTokensToParticles(arcInfo, StrategyTestHelper.createTestStrategyArgs(arcInfo));
     const results = await stp.generate(inputParams);
     assert.lengthOf(results, 1);
     const result = results[0].result;
@@ -106,14 +106,14 @@ describe('SearchTokensToParticles', () => {
       recipe
         search \`jump and flight\`
     `));
-    const arc = await StrategyTestHelper.createTestArc(manifest);
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(manifest);
     const recipes = manifest.recipes.slice(1);
     recipes.forEach((recipe, index) => {
       assert(recipe.normalize());
       assert.isFalse(recipe.isResolved());
     });
     const inputParams = {generated: [], terminal: [{result: recipes[0], score: 1}, {result: recipes[1], score: 1}]};
-    const stp = new SearchTokensToParticles(arc, StrategyTestHelper.createTestStrategyArgs(arc));
+    const stp = new SearchTokensToParticles(arcInfo, StrategyTestHelper.createTestStrategyArgs(arcInfo));
     const results = await stp.generate(inputParams);
     assert.lengthOf(results, 2);
     let result = results[0].result;

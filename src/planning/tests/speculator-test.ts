@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Arc} from '../../runtime/arc.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Speculator} from '../speculator.js';
@@ -20,13 +19,13 @@ describe('speculator', () => {
   it('can speculatively produce a relevance', async () => {
     const loader = new Loader();
     const runtime = new Runtime({loader, context: new Manifest({id: ArcId.newForTest('test')})});
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test'});
     const manifest = await Manifest.load('./src/runtime/tests/artifacts/test.manifest', loader);
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     const hash = ((hash) => hash.substring(hash.length - 4))(await recipe.digest());
     const speculator = new Speculator(runtime);
-    const {speculativeArc, relevance} = await speculator.speculate(arc, recipe, hash);
+    const {speculativeArc, relevance} = await speculator.speculate(arcInfo, recipe, hash);
     assert.strictEqual(relevance.calcRelevanceScore(), 1);
     assert.lengthOf(speculativeArc.recipeDeltas, 1);
   });

@@ -99,10 +99,10 @@ export class AssignHandles extends Strategy {
     const stores: Map<StoreInfo<Type>, string> = new Map();
 
     if (fate === 'use' || fate === '?') {
-      this.arc.findStoresByType(type, {tags}).forEach(store => stores.set(store, 'use'));
+      this.arcInfo.findStoresByType(type, {tags}).forEach(store => stores.set(store, 'use'));
     }
     if (fate === 'map' || fate === 'copy' || fate === '?') {
-      this.arc.context.findStoresByType(type, {tags, subtype: true}).forEach(
+      this.arcInfo.context.findStoresByType(type, {tags, subtype: true}).forEach(
           store => stores.set(store, fate === '?' ? (counts.writes > 0 ? 'copy' : 'map') : fate));
     }
     return stores;

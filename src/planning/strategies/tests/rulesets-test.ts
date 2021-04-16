@@ -9,19 +9,19 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {Arc} from '../../../runtime/arc.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {AnnotatedDescendant, Generation, Planner} from '../../planner.js';
 import {Ruleset, StrategizerWalker, Strategy, StrategyParams} from '../../strategizer.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
+import {ArcInfo} from '../../../runtime/arc-info.js';
 
 class InitPopulation extends Strategy {
   private readonly _context: Manifest;
 
-  constructor(arc: Arc) {
+  constructor(arcInfo: ArcInfo) {
     super();
-    this._context = arc.context;
+    this._context = arcInfo.context;
   }
 
   async generate({generation}: StrategyParams) {
@@ -102,9 +102,9 @@ describe('Rulesets', () => {
   });
 
   const planAndComputeStats = async options => {
-    const arc = await StrategyTestHelper.createTestArc(options.context);
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(options.context);
     const planner = new Planner();
-    planner.init(arc, options);
+    planner.init(arcInfo, options);
     const generations: Generation[] = [];
     await planner.plan(Infinity, generations);
     const recipes = ([] as AnnotatedDescendant[]).concat(...generations.map(instance => instance.generated));

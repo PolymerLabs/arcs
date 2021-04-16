@@ -15,7 +15,7 @@ import {SlotTestObserver} from '../../../../../build/runtime/testing/slot-test-o
 import {Loader} from '../../../../../build/platform/loader.js';
 import {storageKeyPrefixForTest} from '../../../../../build/runtime/testing/handle-for-test.js';
 import {StrategyTestHelper} from '../../../../../build/planning/testing/strategy-test-helper.js';
-import {handleForStoreInfo, CollectionEntityType} from '../../../../../build/runtime/storage/storage.js';
+import {CollectionEntityType} from '../../../../../build/runtime/storage/storage.js';
 import {StoreInfo} from '../../../../../build/runtime/storage/store-info.js';
 import '../../../../lib/arcs-ui/dist/install-ui-classes.js';
 
@@ -48,9 +48,7 @@ describe('Multiplexer', () => {
       item: consumes s1`;
 
     const thePostsStore = context.stores.find(StoreInfo.isCollectionEntityStore);
-    const postsHandle = await handleForStoreInfo(thePostsStore, {
-      ...context, storageService: runtime.storageService
-    });
+    const postsHandle = await runtime.host.handleForStoreInfo(thePostsStore, await runtime.allocator.startArc({arcName: 'posts'}));
     await postsHandle.add(Entity.identify(
         new postsHandle.entityClass({
           message: 'x',
@@ -74,9 +72,8 @@ describe('Multiplexer', () => {
         '3', null));
     // version could be set here, but doesn't matter for tests.
     const slotObserver = new SlotTestObserver();
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver}));
-
-    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), slotObserver});
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
     assert.lengthOf(suggestions, 1);
 
     // Render 3 posts
@@ -86,8 +83,8 @@ describe('Multiplexer', () => {
       .expectRenderSlot('ShowOne', 'item', {times: 2})
       .expectRenderSlot('ShowTwo', 'item');
 
-    await runtime.allocator.runPlanInArc(arc.id, await suggestions[0].getResolvedPlan(arc));
-    await arc.idle;
+    await runtime.allocator.runPlanInArc(arcInfo, suggestions[0].plan);
+    await runtime.getArcById(arcInfo.id).idle;
 
     // Add and render one more post
 
@@ -100,8 +97,8 @@ describe('Multiplexer', () => {
       .expectRenderSlot('ShowOne', 'item', {times: 2})
       .expectRenderSlot('ShowTwo', 'item');
 
-    const postsStore = arc.findStoreById(arc.activeRecipe.handles[0].id) as StoreInfo<CollectionEntityType>;
-    const postsHandle2 = await handleForStoreInfo(postsStore, arc);
+    const postsStore = arcInfo.findStoreById(arcInfo.activeRecipe.handles[0].id) as StoreInfo<CollectionEntityType>;
+    const postsHandle2 = await runtime.host.handleForStoreInfo(postsStore, arcInfo);
     const entityClass = new postsHandle.entityClass({
       message: 'w',
       renderRecipe: recipeOne,
@@ -109,7 +106,7 @@ describe('Multiplexer', () => {
     });
     const entity = Entity.identify(entityClass, '4', null);
     await postsHandle2.add(entity);
-    await arc.idle;
+    await runtime.getArcById(arcInfo.id).idle;
   });
 
   // TODO(sjmiles): probably should be in particles/tests/* because of Multiplexer.js
@@ -158,11 +155,11 @@ describe('Multiplexer', () => {
     const runtime = new Runtime({loader});
     const context = await runtime.parseFile('./shells/tests/artifacts/polymorphic-muxing.recipes');
     //
-    const arc = runtime.getArcById(await runtime.allocator.startArc({
+    const arc = runtime.getArcById((await runtime.allocator.startArc({
       arcName: 'fooTest',
       planName: 'MultiFoo',
       storageKeyPrefix: storageKeyPrefixForTest()
-    }));
+    })).id);
     await arc.idle;
     //
     // NOTE: a direct translation of this to new storage is unlikely to work as

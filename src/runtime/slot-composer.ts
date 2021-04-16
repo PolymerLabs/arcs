@@ -9,6 +9,7 @@
  */
 
 import {Arc} from './arc.js';
+import {ArcInfo} from './arc-info.js';
 import {Modality} from './arcs-types/modality.js';
 import {Particle} from './recipe/lib-recipe.js';
 import {ProvideSlotConnectionSpec} from './arcs-types/particle-spec.js';
@@ -19,12 +20,14 @@ const {log, warn} = logsFactory('SlotComposer', 'brown');
 export type SlotComposerOptions = {
   modalityName?: string;
   noRoot?: boolean;
+  containers?: {}[];
 };
 
 export class SlotComposer {
   readonly modality: Modality;
   protected _contexts = [];
   arc?;
+  peh?;
 
   /**
    * |options| must contain:
@@ -34,34 +37,15 @@ export class SlotComposer {
    * and may contain:
    * - containerKind: the type of container wrapping each slot-context's container  (for example, div).
    */
-  constructor(options?: SlotComposerOptions) {
-    const opts = {
-      containers: {'root': 'root-context'},
-      ...options
-    };
-
-    // See SlotUtils::findAllSlotCandidates
-    Object.keys(opts.containers).forEach(slotName => {
-      const context = this.createContextForContainer(slotName);
-      this._contexts.push(context);
-    });
-  }
-
-  createContextForContainer(name) {
-    return {
-      id: `rootslotid-${name}`,
-      name,
-      tags: [`${name}`],
-      spec: new ProvideSlotConnectionSpec({name}),
-      handles: []
-    };
+  constructor(public readonly options: SlotComposerOptions = {}) {
+    (options.containers || []).forEach(container => this._contexts.push(container));
   }
 
   getAvailableContexts() {
     return this._contexts.concat(this.arc.activeRecipe.slots);
   }
 
-  createHostedSlot(innerArc: Arc, particle: Particle, slotName: string, storeId: string): string {
+  createHostedSlot(innerArc: ArcInfo, particle: Particle, slotName: string, storeId: string): string {
     // TODO(sjmiles): rationalize snatching off the zero-th entry
     const connection = particle.getSlandleConnections()[0];
     // TODO(sjmiles): this slot-id is created dynamically and was not available to the particle
@@ -92,10 +76,9 @@ export class SlotComposer {
 
   sendEvent(particleId: string, eventlet) {
     log('sendEvent:', particleId, eventlet);
-    const arc = this.arc;
-    if (arc && arc.activeRecipe) {
-      const particle = arc.activeRecipe.findParticle(particleId);
-      arc.peh.sendEvent(particle, '', eventlet);
+    if (this.peh && this.arc.activeRecipe) {
+      const particle = this.arc.activeRecipe.findParticle(particleId);
+      this.peh.sendEvent(particle, '', eventlet);
     }
   }
 

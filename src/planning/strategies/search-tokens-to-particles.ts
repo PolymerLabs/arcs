@@ -9,26 +9,26 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Arc} from '../../runtime/arc.js';
 import {Recipe} from '../../runtime/recipe/lib-recipe.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
+import {ArcInfo} from '../../runtime/arc-info.js';
 
 export class SearchTokensToParticles extends Strategy {
   private readonly _walker;
 
-  constructor(arc: Arc, options) {
-    super(arc, options);
+  constructor(arcInfo: ArcInfo, options) {
+    super(arcInfo, options);
 
     const thingByToken = {};
     const thingByPhrase = {};
 
-    arc.context.allParticles.forEach(p => {
+    arcInfo.context.allParticles.forEach(p => {
       this._addThing(p.name, {spec: p}, thingByToken, thingByPhrase);
       p.verbs.forEach(verb => this._addThing(verb, {spec: p}, thingByToken, thingByPhrase));
     });
 
-    arc.context.allRecipes.forEach(r => {
+    arcInfo.context.allRecipes.forEach(r => {
       const packaged = {innerRecipe: r};
       this._addThing(r.name, packaged, thingByToken, thingByPhrase);
       r.verbs.forEach(verb => this._addThing(verb, packaged, thingByToken, thingByPhrase));
@@ -36,7 +36,7 @@ export class SearchTokensToParticles extends Strategy {
 
     class SearchWalker extends StrategizerWalker {
       private recipeIndex: RecipeIndex;
-      constructor(tactic, arc: Arc, recipeIndex: RecipeIndex) {
+      constructor(tactic, arcInfo: ArcInfo, recipeIndex: RecipeIndex) {
         super(tactic);
         this.recipeIndex = recipeIndex;
       }
@@ -104,7 +104,7 @@ export class SearchTokensToParticles extends Strategy {
         });
       }
     }
-    this._walker = new SearchWalker(StrategizerWalker.Permuted, arc, options['recipeIndex']);
+    this._walker = new SearchWalker(StrategizerWalker.Permuted, arcInfo, options['recipeIndex']);
   }
 
   get walker() {
