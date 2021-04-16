@@ -630,4 +630,29 @@ class AssertVariableOrderingTest {
       )
     }
   }
+
+  @Test
+  fun regressionTest_nestingGroupMustClearMatchArrayCorrectly() {
+    // The first impl of runPermutations did not clear the match array correctly, so processing
+    // of the next permutation was polluted by the failed match entries from previous ones.
+    assertVariableOrdering(
+      listOf("A", "B", "C", "A", "D", "E", "X", "C", "Y"),
+      group(
+        sequence("A", "D", "E"),
+        sequence("A", "B", "C"),
+        sequence("X", "C", "Y")
+      )
+    )
+
+    // Make sure the clearing logic works with a non-zero 'from' starting index.
+    assertVariableOrdering(
+      listOf("k", "l", "f", "A", "B", "C", "A", "D", "E", "X", "C", "Y"),
+      sequence("k", "l", "f"),
+      group(
+        sequence("A", "D", "E"),
+        sequence("A", "B", "C"),
+        sequence("X", "C", "Y")
+      )
+    )
+  }
 }

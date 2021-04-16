@@ -256,7 +256,7 @@ sealed class Constraint<T> {
       // succeed, return true and halt further processing.
       if (candidates.isEmpty()) {
         // Clear any match results from the previous attempt.
-        (from..maxIndex).forEach { matches[it].reset() }
+        (from until matches.size).forEach { matches[it].reset() }
         maxIndex = -1
         permutation.forEach {
           val report = it.process(matches, from)
