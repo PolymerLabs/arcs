@@ -1780,19 +1780,7 @@ class DatabaseImpl(
       }
     }
     schema.fields.singletons.forEach { (fieldName, fieldType) ->
-      val fieldClass = when (fieldType.tag) {
-        FieldType.Tag.List -> {
-          require(fieldType is FieldType.ListOf) {
-            "FieldType with List tag is not a list!"
-          }
-          when (fieldType.primitiveType) {
-            is FieldType.InlineEntity -> FieldClass.InlineEntityList
-            else -> FieldClass.List
-          }
-        }
-        FieldType.Tag.InlineEntity -> FieldClass.InlineEntity
-        else -> FieldClass.Singleton
-      }
+      val fieldClass = FieldClass.fromFieldType(fieldType)
       insertFieldBlock(fieldName, fieldType, fieldClass)
     }
     schema.fields.collections.forEach { (fieldName, fieldType) ->
@@ -2318,6 +2306,28 @@ class DatabaseImpl(
         else -> throw IllegalStateException(
           "Invalid value $ordinal for FieldClass stored in isCollection field."
         )
+      }
+
+      fun fromFieldType(fieldType: FieldType): FieldClass = when (fieldType.tag) {
+        FieldType.Tag.List -> {
+          require(fieldType is FieldType.ListOf) {
+            "FieldType with List tag is not a list!"
+          }
+          when (fieldType.primitiveType) {
+            is FieldType.InlineEntity -> FieldClass.InlineEntityList
+            else -> FieldClass.List
+          }
+        }
+        FieldType.Tag.InlineEntity -> FieldClass.InlineEntity
+        FieldType.Tag.Nullable -> {
+          require(fieldType is FieldType.NullableOf) {
+            "FieldType with Nullable tag is not a nullable!"
+          }
+          fromFieldType(fieldType.innerType)
+        }
+        FieldType.Tag.Primitive -> FieldClass.Singleton
+        FieldType.Tag.EntityRef -> FieldClass.Singleton
+        FieldType.Tag.Tuple -> throw NotImplementedError("FieldType $fieldType is not supported.")
       }
     }
   }

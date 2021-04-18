@@ -4156,6 +4156,34 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
     assertThat(onCloseCalled).isTrue()
   }
 
+  @Test
+  fun fromFieldType_handlesInlineType() = runBlockingTest {
+    val inline = FieldType.InlineEntity("inlineHash")
+    assertThat(FieldClass.fromFieldType(inline)).isEqualTo(FieldClass.InlineEntity)
+  }
+
+  @Test
+  fun fromFieldType_handlesNullableOfInlineType() = runBlockingTest {
+    BuildFlags.NULLABLE_VALUE_SUPPORT = true
+    newSchema(
+      "inlineHash",
+      SchemaFields(
+        singletons = mapOf("text" to FieldType.Text),
+        collections = emptyMap()
+      )
+    )
+    val inline = FieldType.InlineEntity("inlineHash").nullable()
+    assertThat(FieldClass.fromFieldType(inline)).isEqualTo(FieldClass.InlineEntity)
+  }
+
+  @Test
+  fun fromFieldType_throwsOnTuple() = runBlockingTest {
+    val tuple = FieldType.Tuple(FieldType.Number, FieldType.Number)
+    val exception = assertFailsWith<NotImplementedError> {
+      FieldClass.fromFieldType(tuple)
+    }
+  }
+
   /** Returns a list of all the rows in the 'fields' table. */
   private fun readFieldsTable() =
     database.readableDatabase.rawQuery("SELECT * FROM fields", emptyArray()).map(::FieldRow)
