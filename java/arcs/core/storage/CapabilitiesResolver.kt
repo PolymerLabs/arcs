@@ -83,7 +83,7 @@ class CapabilitiesResolver(
   class SimpleCapabilitiesSelector(
     sortedProtocols: List<StorageKeyProtocol> = DEFAULT_SORTED_PROTOCOLS
   ) : FactorySelector {
-    private val sortedProtocols = sortedProtocols.map { it.protocolStr }.toTypedArray()
+    private val sortedProtocols = sortedProtocols.map { it.id }.toTypedArray()
 
     override fun select(factories: Collection<StorageKeyFactory>): StorageKeyFactory {
       require(factories.isNotEmpty()) { "Cannot select from empty factories list" }
@@ -95,14 +95,11 @@ class CapabilitiesResolver(
       }
 
       return factories.reduce { acc, factory ->
-        if (minOf(
-            acc.protocol.protocolStr,
-            factory.protocol.protocolStr,
-            compareProtocol
-          ) == factory.protocol.protocolStr
-        ) {
+        if (minOf(acc.protocol.id, factory.protocol.id, compareProtocol) == factory.protocol.id) {
           factory
-        } else acc
+        } else {
+          acc
+        }
       }
     }
   }
@@ -133,7 +130,7 @@ class CapabilitiesResolver(
     ): Map<StorageKeyProtocol, StorageKeyFactory> {
       require(factoriesList.distinctBy { it.protocol }.size == factoriesList.size) {
         "Storage keys protocol must be unique, but was: " +
-          "${factoriesList.map { it.protocol.protocolStr }}."
+          "${factoriesList.map { it.protocol }}."
       }
       val factories = factoriesList.associateBy { it.protocol }.toMutableMap()
       defaultStorageKeyFactories.forEach { (protocol, factory) ->

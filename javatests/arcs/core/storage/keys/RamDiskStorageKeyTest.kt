@@ -11,15 +11,21 @@
 package arcs.core.storage.keys
 
 import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.StorageKeyProtocol
+import arcs.flags.testing.BuildFlagsRule
+import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
-
+import org.junit.runners.Parameterized
 /** Tests for [RamDiskStorageKey]. */
-@RunWith(JUnit4::class)
-class RamDiskStorageKeyTest {
+@RunWith(Parameterized::class)
+class RamDiskStorageKeyTest(parameters: ParameterizedBuildFlags) {
+
+  @get:Rule
+  val buildFlagsRule = BuildFlagsRule.parameterized(parameters)
 
   @Before
   fun setup() {
@@ -29,14 +35,14 @@ class RamDiskStorageKeyTest {
   @Test
   fun toString_rendersCorrectly() {
     val key = RamDiskStorageKey("foo")
-    assertThat(key.toString()).isEqualTo("ramdisk://foo")
+    assertThat(key.toString()).isEqualTo("${StorageKeyProtocol.RamDisk.protocol}foo")
   }
 
   @Test
   fun childKey_hasCorrectFormat() {
     val parent = RamDiskStorageKey("parent")
     val child = parent.childKeyWithComponent("child")
-    assertThat(child.toString()).isEqualTo("ramdisk://parent/child")
+    assertThat(child.toString()).isEqualTo("${StorageKeyProtocol.RamDisk.protocol}parent/child")
   }
 
   @Test
@@ -55,5 +61,11 @@ class RamDiskStorageKeyTest {
   fun parse_validUnicodeString_correctly() {
     val key = RamDiskStorageKey.parse("Туктамышева")
     assertThat(key.toKeyString()).isEqualTo("Туктамышева")
+  }
+
+  private companion object {
+    @get:JvmStatic
+    @get:Parameterized.Parameters(name = "{0}")
+    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_KEY_REDUCTION")
   }
 }

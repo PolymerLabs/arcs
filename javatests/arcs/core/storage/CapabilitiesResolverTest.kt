@@ -261,7 +261,8 @@ class CapabilitiesResolverTest {
       CapabilitiesResolver(Options(ArcId.newForTest("test")), listOf(FAKE_FACTORY, FAKE_FACTORY))
     }
     assertThat(e).hasMessageThat().isEqualTo(
-      "Storage keys protocol must be unique, but was: [dummy, dummy]."
+      "Storage keys protocol must be unique, but was: " +
+        "[${StorageKeyProtocol.Dummy}, ${StorageKeyProtocol.Dummy}]."
     )
   }
 

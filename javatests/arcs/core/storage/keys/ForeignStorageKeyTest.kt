@@ -14,24 +14,32 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.StorageKeyProtocol
+import arcs.flags.testing.BuildFlagsRule
+import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.runners.Parameterized
 
 /** Tests for [VolatileStorageKey]. */
-@RunWith(JUnit4::class)
-class ForeignStorageKeyTest {
+@RunWith(Parameterized::class)
+class ForeignStorageKeyTest(parameters: ParameterizedBuildFlags) {
+
+  @get:Rule
+  val buildFlagsRule = BuildFlagsRule.parameterized(parameters)
+
   @Before
-  fun setup() {
+  fun setUp() {
     StorageKeyManager.GLOBAL_INSTANCE.reset(ForeignStorageKey)
   }
 
   @Test
   fun toString_rendersCorrectly() {
     val key = ForeignStorageKey("foo")
-    assertThat(key.toString()).isEqualTo("foreign://foo")
+    assertThat(key.toString()).isEqualTo("${StorageKeyProtocol.Foreign.protocol}foo")
     assertThat(StorageKeyManager.GLOBAL_INSTANCE.parse(key.toString())).isEqualTo(key)
   }
 
@@ -40,7 +48,7 @@ class ForeignStorageKeyTest {
     val parent = ForeignStorageKey("parent")
     val child = parent.childKeyWithComponent("child")
     assertThat(child.toString())
-      .isEqualTo("foreign://parent/child")
+      .isEqualTo("${StorageKeyProtocol.Foreign.protocol}parent/child")
   }
 
   @Test
@@ -51,7 +59,7 @@ class ForeignStorageKeyTest {
       "abcd"
     )
     val key = ForeignStorageKey(schema)
-    assertThat(key.toString()).isEqualTo("foreign://schemaName")
+    assertThat(key.toString()).isEqualTo("${StorageKeyProtocol.Foreign.protocol}schemaName")
   }
 
   @Test
@@ -64,5 +72,11 @@ class ForeignStorageKeyTest {
   fun parse_validUnicodeString_correctly() {
     val key = ForeignStorageKey.parse("Туктамышева")
     assertThat(key.toKeyString()).isEqualTo("Туктамышева")
+  }
+
+  private companion object {
+    @get:JvmStatic
+    @get:Parameterized.Parameters(name = "{0}")
+    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_KEY_REDUCTION")
   }
 }

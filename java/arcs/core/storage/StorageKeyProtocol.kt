@@ -4,8 +4,10 @@ import arcs.flags.BuildFlags
 
 /** All [StorageKey] protocols understood by Arcs. */
 enum class StorageKeyProtocol(
-  private val longProtocol: String,
-  private val shortProtocol: String
+  /** Full name of the protocol, e.g. "ramdisk", "reference-mode". */
+  private val longId: String,
+  /** Short, single character identifier for the protocol. */
+  private val shortId: String
 ) {
   // Sorted alphabetically by shortProtocol.
   Create("create", "c"),
@@ -19,21 +21,29 @@ enum class StorageKeyProtocol(
   Dummy("dummy", "u"),
   Volatile("volatile", "v");
 
-  val protocolStr: String
+  val id: String
     get() {
-      // TODO(b/179216769): Delete longProtocol once flag has launched.
-      return if (BuildFlags.STORAGE_KEY_REDUCTION) shortProtocol else longProtocol
+      return if (BuildFlags.STORAGE_KEY_REDUCTION) shortId else longId
     }
 
-  override fun toString(): String = protocolStr
+  val protocol: String
+    get() {
+      return if (BuildFlags.STORAGE_KEY_REDUCTION) "$shortId|" else "$longId://"
+    }
+
+  override fun toString() = protocol
 
   companion object {
-    private val SHORT_PROTOCOLS = values().associateBy { it.shortProtocol }
-    private val LONG_PROTOCOLS = values().associateBy { it.longProtocol }
+    private val SHORT_PROTOCOLS = values().associateBy { it.shortId }
+    private val LONG_PROTOCOLS = values().associateBy { it.longId }
 
     fun parseProtocol(protocol: String): StorageKeyProtocol {
-      val protocols = if (BuildFlags.STORAGE_KEY_REDUCTION) SHORT_PROTOCOLS else LONG_PROTOCOLS
-      return protocols[protocol] ?: throw IllegalArgumentException(
+      if (BuildFlags.STORAGE_KEY_REDUCTION) {
+        // Try short protocol first.
+        SHORT_PROTOCOLS[protocol]?.let { return it }
+      }
+      // Fall back to long protocol.
+      return LONG_PROTOCOLS[protocol] ?: throw IllegalArgumentException(
         "Unknown storage key protocol: $protocol"
       )
     }

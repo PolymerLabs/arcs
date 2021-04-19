@@ -13,18 +13,25 @@ package arcs.core.storage.keys
 import arcs.core.common.ArcId
 import arcs.core.common.toArcId
 import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.StorageKeyProtocol
+import arcs.flags.testing.BuildFlagsRule
+import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
-
+import org.junit.runners.Parameterized
 /** Tests for [VolatileStorageKey]. */
-@RunWith(JUnit4::class)
-class VolatileStorageKeyTest {
+@RunWith(Parameterized::class)
+class VolatileStorageKeyTest(parameters: ParameterizedBuildFlags) {
+
+  @get:Rule
+  val buildFlagsRule = BuildFlagsRule.parameterized(parameters)
+
   @Before
-  fun setup() {
+  fun setUp() {
     StorageKeyManager.GLOBAL_INSTANCE.reset(VolatileStorageKey)
   }
 
@@ -32,7 +39,7 @@ class VolatileStorageKeyTest {
   fun toString_rendersCorrectly() {
     val arcId = ArcId.newForTest("arc")
     val key = VolatileStorageKey(arcId, "foo")
-    assertThat(key.toString()).isEqualTo("volatile://$arcId/foo")
+    assertThat(key.toString()).isEqualTo("${StorageKeyProtocol.Volatile.protocol}$arcId/foo")
   }
 
   @Test
@@ -40,7 +47,9 @@ class VolatileStorageKeyTest {
     val arcId = ArcId.newForTest("arc")
     val parent = VolatileStorageKey(arcId, "parent")
     val child = parent.childKeyWithComponent("child")
-    assertThat(child.toString()).isEqualTo("volatile://$arcId/parent/child")
+    assertThat(child.toString()).isEqualTo(
+      "${StorageKeyProtocol.Volatile.protocol}$arcId/parent/child"
+    )
   }
 
   @Test
@@ -62,5 +71,11 @@ class VolatileStorageKeyTest {
     assertFailsWith<IllegalArgumentException>("need at least one /") {
       VolatileStorageKey.parse("nonsense")
     }
+  }
+
+  private companion object {
+    @get:JvmStatic
+    @get:Parameterized.Parameters(name = "{0}")
+    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_KEY_REDUCTION")
   }
 }
