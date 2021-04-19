@@ -1218,16 +1218,12 @@ class DatabaseImpl(
         """
                     SELECT id, data_type, value_id
                     FROM storage_keys
-                    WHERE storage_key = ? OR storage_key LIKE ? OR storage_key LIKE ?
+                    WHERE storage_key = ? OR storage_key LIKE ?
         """.trimIndent(),
         // We need a '}' immediately after the storageKey to ensure it really is a child key, but
         // not immediately before to pick up all the levels of nesting (for example
         // 'inline://{inline://{{db://...').
-        arrayOf(
-          storageKey.toString(),
-          "inline://{%$storageKey}%",
-          "i|{%$storageKey}%"
-        )
+        arrayOf(storageKey.toString(), "inline://{%$storageKey}%")
       ).forEach {
         val dataType = DataType.values()[it.getInt(1)]
         var collectionId: Long? = null
@@ -1315,7 +1311,6 @@ class DatabaseImpl(
                     GROUP BY storage_key_id, storage_key, orphan
                     HAVING entities.creation_timestamp < $twoDaysAgo
                     AND storage_keys.storage_key NOT LIKE 'inline%'
-                    AND storage_keys.storage_key NOT LIKE 'i|%'
                     AND (orphan OR noRef)
         """.trimIndent(),
         arrayOf()
@@ -1424,7 +1419,6 @@ class DatabaseImpl(
                 FROM storage_keys
                 WHERE id IN (${storageKeyIds.joinToString()})
                 AND storage_key NOT LIKE 'inline%'
-                AND storage_key NOT LIKE 'i|%'
                 """
       ).toLong()
 
@@ -1434,7 +1428,7 @@ class DatabaseImpl(
                 SELECT storage_key
                 FROM storage_keys
                 WHERE id IN (${storageKeyIds.joinToString()})
-                AND (storage_key LIKE 'inline%' OR storage_key LIKE 'i|%')
+                AND storage_key LIKE 'inline%'
         """.trimIndent(),
         arrayOf()
       ).map { InlineStorageKey.getTopLevelKey(it.getString(0)) }.toSet()
@@ -1469,7 +1463,6 @@ class DatabaseImpl(
             LEFT JOIN storage_keys
                 ON entities.storage_key_id = storage_keys.id
             WHERE storage_keys.storage_key NOT LIKE 'inline%'
-            AND storage_keys.storage_key NOT LIKE 'i|%'
             """
     )
   }
@@ -1484,7 +1477,6 @@ class DatabaseImpl(
             WHERE creation_timestamp >= $startTimeMillis
             AND creation_timestamp <= $endTimeMillis
             AND storage_keys.storage_key NOT LIKE 'inline%'
-            AND storage_keys.storage_key NOT LIKE 'i|%'
             """
     )
   }
@@ -1513,7 +1505,6 @@ class DatabaseImpl(
                 ON entities.storage_key_id = storage_keys.id
             WHERE expiration_timestamp > -1 AND expiration_timestamp < $nowMillis
             AND storage_keys.storage_key NOT LIKE 'inline%'
-            AND storage_keys.storage_key NOT LIKE 'i|%'
         """
     clearEntities(query)
   }
