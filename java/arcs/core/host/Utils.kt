@@ -20,6 +20,9 @@ import arcs.core.entity.HandleSpec
 import arcs.core.entity.Reference
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
+import arcs.core.storage.StorageKey
+import arcs.core.type.Tag
+import arcs.flags.BuildFlags
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineDispatcher
 
@@ -65,7 +68,8 @@ suspend fun createHandle(
   holder: HandleHolder,
   particleId: String = "",
   immediateSync: Boolean = true,
-  storeSchema: Schema? = null
+  storeSchema: Schema? = null,
+  writeOnly: Boolean = false
 ): Handle {
   val handleSpec = HandleSpec(
     handleName,
@@ -80,7 +84,8 @@ suspend fun createHandle(
     particleId,
     immediateSync,
     storeSchema,
-    connectionSpec.actor
+    connectionSpec.actor,
+    writeOnly
   ).also { holder.setHandle(handleName, it) }
 }
 
@@ -90,6 +95,7 @@ suspend fun createHandle(
  * @returns a list of the created [Handle]s added to the [HandleHolder].
  */
 suspend fun Particle.createAndSetHandles(
+  partition: Plan.Partition,
   handleManager: HandleManager,
   particleSpec: Plan.Particle,
   immediateSync: Boolean = true
@@ -102,7 +108,8 @@ suspend fun Particle.createAndSetHandles(
       this.handles,
       this.toString(),
       immediateSync = immediateSync,
-      storeSchema = (handleConnection.handle.type as? EntitySchemaProviderType)?.entitySchema
+      storeSchema = (handleConnection.handle.type as? EntitySchemaProviderType)?.entitySchema,
+      writeOnly = isWriteOnlyStorageKey(partition, handleConnection.handle.storageKey)
     )
   }
 }
@@ -141,3 +148,14 @@ object NoOpArcHostParticle : Particle {
       throw UnsupportedOperationException(UNSUPPORTED_EXCEPTION_MSG)
   }
 }
+
+/**
+ * Examines all [Plan.HandleConnection]s in a given [Plan.Partition] and returns true if and only if
+ * every connection with a matching key is both a [Tag.CollectionType] and uses a [HandleMode]
+ * that cannot read.
+ */
+fun isWriteOnlyStorageKey(partition: Plan.Partition, key: StorageKey): Boolean =
+  BuildFlags.WRITE_ONLY_STORAGE_STACK &&
+    partition.particles.flatMap { it.handles.values }.filter { it.storageKey == key }.all {
+      !it.mode.canRead && it.type.tag == Tag.Collection
+    }

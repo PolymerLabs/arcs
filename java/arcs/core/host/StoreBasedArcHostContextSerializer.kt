@@ -139,7 +139,7 @@ class StoreBasedArcHostContextSerializer(
         arcHostContextCapabilities,
         arcHostContext.arcId
       )
-      this.createAndSetHandles(handleManager, partition.particles[0])
+      this.createAndSetHandles(partition, handleManager, partition.particles[0])
     }
   }
 
