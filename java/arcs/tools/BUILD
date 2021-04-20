@@ -68,7 +68,10 @@ java_binary(
     name = "verify_policy",
     testonly = True,
     main_class = "arcs.tools.VerifyPolicyKt",
-    runtime_deps = [":verify_policy_lib"],
+    runtime_deps = [
+        ":verify_policy_lib",
+        "//java/arcs/flags:unit_test_build_flags",
+    ],
 )
 
 kt_jvm_library(
