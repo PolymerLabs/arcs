@@ -66,11 +66,13 @@ import arcs.core.storage.embed
 import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
+import arcs.core.util.Random
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.Counters
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
+import arcs.core.util.nextVersionMapSafeString
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import arcs.jvm.util.JvmTime
@@ -2843,15 +2845,27 @@ class DatabaseImpl(
     @VisibleForTesting
     class InlineStorageKey(
       private val parentKey: StorageKey,
+      // TODO(b/179216769): Delete this field, it's not needed.
       private val fieldName: String
     ) : StorageKey(StorageKeyProtocol.Inline) {
       /**
        * A unique component to the key. This is required because there may be multiple inline
        * entities stored against a single fieldName (for collections and lists).
        */
+      private val unique: String = if (BuildFlags.STORAGE_KEY_REDUCTION) {
+        Random.nextVersionMapSafeString(10)
+      } else {
+        (Math.random() * Long.MAX_VALUE).roundToLong().toString()
+      }
 
-      val unique = (Math.random() * Long.MAX_VALUE).roundToLong()
-      override fun toKeyString(): String = "{${parentKey.embed()}}!$unique/$fieldName"
+      override fun toKeyString(): String {
+        return if (BuildFlags.STORAGE_KEY_REDUCTION) {
+          "{${parentKey.embed()}}$unique"
+        } else {
+          "{${parentKey.embed()}}!$unique/$fieldName"
+        }
+      }
+
       override fun childKeyWithComponent(component: String): StorageKey =
         InlineStorageKey(parentKey, "$fieldName/$component")
 
