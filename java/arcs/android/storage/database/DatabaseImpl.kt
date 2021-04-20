@@ -209,7 +209,9 @@ class DatabaseImpl(
       rawQuery(
         "SELECT name FROM sqlite_master WHERE type = 'table'",
         emptyArray()
-      ).map { "DROP TABLE ${it.getString(0)}" }.forEach(db::execSQL)
+      ).map { it.getString(0) }
+        .filterNot { SYSTEM_TABLES.contains(it) }
+        .forEach { db.execSQL("DROP TABLE $it") }
 
       initializeDatabase(this)
       Unit
@@ -2382,6 +2384,9 @@ class DatabaseImpl(
       TABLE_TEXT_PRIMITIVES,
       TABLE_NUMBER_PRIMITIVES
     )
+
+    // Tables managed by SQLiteDatabase that we cannot drop.
+    private val SYSTEM_TABLES = arrayOf("android_metadata", "sqlite_sequence")
 
     private val CREATE_VERSION_3 =
       """

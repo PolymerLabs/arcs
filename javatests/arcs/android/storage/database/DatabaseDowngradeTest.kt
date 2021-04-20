@@ -15,17 +15,28 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.map
 import arcs.android.common.transaction
+import arcs.android.util.testutil.AndroidLogRule
 import arcs.core.storage.database.DatabaseConfig
 import arcs.core.storage.testutil.DummyStorageKeyManager
+import arcs.flags.testing.BuildFlagsRule
+import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
-@RunWith(AndroidJUnit4::class)
-class DatabaseDowngradeTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+class DatabaseDowngradeTest(private val parameters: ParameterizedBuildFlags) {
+
+  @get:Rule
+  val rule = BuildFlagsRule.parameterized(parameters)
+
+  @get:Rule
+  val log = AndroidLogRule()
+
   @Test
   fun onDowngrade_dropsExistingTables_andRecreatesThem() {
     // Use the DatabaseImpl Version plus one for the Dummy to ensure that when we create the
@@ -58,14 +69,16 @@ class DatabaseDowngradeTest {
     // Make sure that none of the dummy tables are around anymore.
     dummyHelper.assertTablesMissing(databaseImpl.getTableNames())
     dummyHelper.assertIndexesMissing(databaseImpl.getIndexNames())
-    assertThat(databaseImpl.getTableNames()).containsExactly(*(DatabaseImpl.TABLES))
+    assertThat(databaseImpl.getTableNames()).containsExactly(
+      *(DatabaseImpl.TABLES + arrayOf("android_metadata", "sqlite_sequence"))
+    )
   }
 
   private fun SQLiteOpenHelper.getTableNames(): Collection<String> =
     readableDatabase.rawQuery(
       "SELECT name FROM sqlite_master WHERE type = 'table'",
       emptyArray()
-    ).map { it.getString(0) } - "android_metadata" - "sqlite_sequence"
+    ).map { it.getString(0) }
 
   private fun SQLiteOpenHelper.getIndexNames(): Collection<String> =
     readableDatabase.rawQuery(
@@ -88,7 +101,8 @@ class DatabaseDowngradeTest {
     override fun onCreate(db: SQLiteDatabase) = synchronized(db) {
       if (initialized) return
       db.transaction {
-        db.execSQL("CREATE TABLE foo (field TEXT)")
+        // Use an AUTOINCREMENT field, so the special sqlite_sequence table is created.
+        db.execSQL("CREATE TABLE foo (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, field TEXT)")
         db.execSQL("CREATE TABLE bar (field TEXT)")
         db.execSQL("CREATE TABLE baz (field TEXT)")
         db.execSQL("CREATE TABLE not_an_arcs_table_either (field TEXT)")
@@ -108,7 +122,9 @@ class DatabaseDowngradeTest {
           "foo",
           "bar",
           "baz",
-          "not_an_arcs_table_either"
+          "not_an_arcs_table_either",
+          "android_metadata",
+          "sqlite_sequence"
         )
     }
 
@@ -127,5 +143,14 @@ class DatabaseDowngradeTest {
       assertThat(actualNames).doesNotContain("foos")
       assertThat(actualNames).doesNotContain("bars")
     }
+  }
+
+  private companion object {
+    @JvmStatic
+    @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+    fun params() = ParameterizedBuildFlags.of(
+      "STORAGE_STRING_REDUCTION",
+      "REFERENCE_MODE_STORE_FIXES"
+    ).toList()
   }
 }
