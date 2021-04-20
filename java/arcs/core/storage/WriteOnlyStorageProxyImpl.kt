@@ -45,12 +45,29 @@ class WriteOnlyStorageProxyImpl<Data : CrdtData, Op : CrdtOperation, T> private 
   // WriteOnly proxies do not perform sync requests.
   override fun prepareForSync() = Unit
 
-  override fun maybeInitiateSync() = Unit
+  override fun maybeInitiateSync() {
+    notifyCallback?.let { callback ->
+      scheduler.schedule(
+        HandleCallbackTask(callbackId!!, "notify(READY)") {
+          callback(StorageEvent.READY)
+        }
+      )
+    }
+    callbackId = null
+    notifyCallback = null
+  }
+
+  private var callbackId: CallbackIdentifier? = null
+  private var notifyCallback: ((StorageEvent) -> Unit)? = null
 
   // WriteOnly proxies are immediately ready.
   override fun registerForStorageEvents(id: CallbackIdentifier, notify: (StorageEvent) -> Unit) {
     checkNotClosed()
-    notify(StorageEvent.READY)
+    require(callbackId == null && notifyCallback == null) {
+      "You can only registerForStorageEvents once."
+    }
+    callbackId = id
+    notifyCallback = notify
   }
 
   // WriteOnly proxies can't have errors as there are no events.
