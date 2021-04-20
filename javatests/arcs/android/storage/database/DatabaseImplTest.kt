@@ -35,6 +35,7 @@ import arcs.core.entity.testutil.FixtureEntity
 import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseConfig
 import arcs.core.storage.database.DatabaseData
@@ -387,7 +388,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
       createEntityStorageKeyId(key, "incorrect-entity-id")
     }
     assertThat(exception).hasMessageThat().isEqualTo(
-      "Expected storage key dummy://key to have entity ID incorrect-entity-id but was " +
+      "Expected storage key ${dummyProtocol}key to have entity ID incorrect-entity-id but was " +
         "correct-entity-id."
     )
   }
@@ -1724,14 +1725,14 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
       database.getCollection(entityKey, schema)
     }
     assertThat(exception1).hasMessageThat().isEqualTo(
-      "Expected storage key dummy://entity to be a Collection but was a Entity."
+      "Expected storage key ${dummyProtocol}entity to be a Collection but was a Entity."
     )
 
     val exception2 = assertFailsWith<IllegalArgumentException> {
       database.getSingleton(entityKey, schema)
     }
     assertThat(exception2).hasMessageThat().isEqualTo(
-      "Expected storage key dummy://entity to be a Singleton but was a Entity."
+      "Expected storage key ${dummyProtocol}entity to be a Singleton but was a Entity."
     )
   }
 
@@ -1751,14 +1752,14 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
       database.getSingleton(collectionKey, schema)
     }
     assertThat(exception1).hasMessageThat().isEqualTo(
-      "Expected storage key dummy://collection to be a Singleton but was a Collection."
+      "Expected storage key ${dummyProtocol}collection to be a Singleton but was a Collection."
     )
 
     val exception2 = assertFailsWith<IllegalArgumentException> {
       database.getEntity(collectionKey, schema)
     }
     assertThat(exception2).hasMessageThat().isEqualTo(
-      "Expected storage key dummy://collection to be an Entity but was a Collection."
+      "Expected storage key ${dummyProtocol}collection to be an Entity but was a Collection."
     )
   }
 
@@ -1778,14 +1779,14 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
       database.getCollection(singletonKey, schema)
     }
     assertThat(exception1).hasMessageThat().isEqualTo(
-      "Expected storage key dummy://singleton to be a Collection but was a Singleton."
+      "Expected storage key ${dummyProtocol}singleton to be a Collection but was a Singleton."
     )
 
     val exception2 = assertFailsWith<IllegalArgumentException> {
       database.getEntity(singletonKey, schema)
     }
     assertThat(exception2).hasMessageThat().isEqualTo(
-      "Expected storage key dummy://singleton to be an Entity but was a Singleton."
+      "Expected storage key ${dummyProtocol}singleton to be an Entity but was a Singleton."
     )
   }
 
@@ -4297,7 +4298,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
   companion object {
     @JvmStatic
     @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-    fun params() = ParameterizedBuildFlags.of("STORAGE_STRING_REDUCTION").toList()
+    fun params() = ParameterizedBuildFlags.of("STORAGE_KEY_REDUCTION").toList()
 
     /** The first free Type ID after all primitive types have been assigned. */
     private const val FIRST_ENTITY_TYPE_ID = DatabaseImpl.REFERENCE_TYPE_SENTINEL + 1
@@ -4362,6 +4363,8 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
         collections = emptyMap()
       )
     )
+
+    private val dummyProtocol get() = StorageKeyProtocol.Dummy.protocol
   }
 }
 

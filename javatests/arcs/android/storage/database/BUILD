@@ -68,7 +68,7 @@ arcs_kt_android_test_suite(
     srcs = ["DatabaseImplTest.kt"],
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.android.storage.database",
-    shard_count = 5,
+    shard_count = 10,
     deps = [
         "//java/arcs/android/common",  # buildcleaner: keep
         "//java/arcs/android/storage/database",
