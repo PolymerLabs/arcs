@@ -15,6 +15,7 @@ import arcs.core.data.Capabilities
 import arcs.core.data.Capability
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyFactory
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.StorageKeySpec
 
 /**
@@ -27,7 +28,7 @@ sealed class DatabaseStorageKey(
   open val unique: String,
   open val entitySchemaHash: String,
   open val dbName: String,
-  protocol: String
+  protocol: StorageKeyProtocol
 ) : StorageKey(protocol) {
   override fun toKeyString(): String = "$entitySchemaHash@$dbName/$unique"
 
@@ -76,7 +77,7 @@ sealed class DatabaseStorageKey(
 
     companion object : StorageKeySpec<Persistent> {
       /** Protocol to be used with the database driver for persistent databases. */
-      override val protocol = Protocols.DATABASE_DRIVER
+      override val protocol = StorageKeyProtocol.Database
 
       override fun parse(rawKeyString: String) = fromString<Persistent>(rawKeyString)
     }
@@ -112,7 +113,7 @@ sealed class DatabaseStorageKey(
 
     companion object : StorageKeySpec<Memory> {
       /** Protocol to be used with the database driver for in-memory databases. */
-      override val protocol = Protocols.MEMORY_DATABASE_DRIVER
+      override val protocol = StorageKeyProtocol.InMemoryDatabase
 
       override fun parse(rawKeyString: String) = fromString<Memory>(rawKeyString)
     }

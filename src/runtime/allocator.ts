@@ -9,37 +9,29 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Arc, ArcOptions} from './arc.js';
 import {ArcId, IdGenerator, Id} from './id.js';
 import {Manifest} from './manifest.js';
-import {Recipe, Particle, IsValidOptions} from './recipe/lib-recipe.js';
-import {StorageService} from './storage/storage-service.js';
-import {SlotComposer} from './slot-composer.js';
+import {Recipe, Particle} from './recipe/lib-recipe.js';
 import {Runtime} from './runtime.js';
 import {Dictionary} from '../utils/lib-utils.js';
 import {newRecipe} from './recipe/lib-recipe.js';
-import {CapabilitiesResolver} from './capabilities-resolver.js';
 import {VolatileStorageKey} from './storage/drivers/volatile.js';
-import {StorageKey} from './storage/storage-key.js';
-import {PecFactory} from './particle-execution-context.js';
-import {ArcInspectorFactory} from './arc-inspector.js';
-import {AbstractSlotObserver} from './slot-observer.js';
-import {Modality} from './arcs-types/modality.js';
-import {EntityType, ReferenceType, InterfaceType, SingletonType} from '../types/lib-types.js';
 import {Capabilities} from './capabilities.js';
 import {ArcInfo, StartArcOptions, DeserializeArcOptions, ArcInfoOptions, NewArcInfoOptions, RunArcOptions} from './arc-info.js';
 import {ArcHost, ArcHostFactory, SingletonArcHostFactory} from './arc-host.js';
-import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
+import {Exists} from './storage/drivers/driver.js';
+import {StoreInfo} from './storage/store-info.js';
+import {Type} from '../types/lib-types.js';
 
 export interface Allocator {
   registerArcHost(factory: ArcHostFactory);
 
-  startArc(options: StartArcOptions): Promise<ArcId>;
+  startArc(options: StartArcOptions): Promise<ArcInfo>;
   // TODO(b/182410550): Callers should pass RunArcOptions to runPlanInArc,
   // if initially calling startArc with no planName.
-  runPlanInArc(arcId: ArcId, plan: Recipe, arcOptions?: RunArcOptions, reinstantiate?: boolean): Promise<void[]>;
+  runPlanInArc(arcInfo: ArcInfo, plan: Recipe, arcOptions?: RunArcOptions, reinstantiate?: boolean): Promise<void[]>;
 
-  deserialize(options: DeserializeArcOptions): Promise<ArcId>;
+  deserialize(options: DeserializeArcOptions): Promise<ArcInfo>;
 
   stopArc(arcId: ArcId);
 
@@ -47,6 +39,8 @@ export interface Allocator {
   // It should become private, once Planning is incorporated into Allocator APIs.
   // Once private, consider not returning a value.
   assignStorageKeys(arcId: ArcId, plan: Recipe, idGenerator?: IdGenerator): Promise<Recipe>;
+
+  cloneArc(arcId: ArcId, options: StartArcOptions): Promise<ArcInfo>;
 }
 
 export class AllocatorImpl implements Allocator {
@@ -68,38 +62,45 @@ export class AllocatorImpl implements Allocator {
       arcId = options.arcId;
     } else {
       idGenerator = IdGenerator.newSession();
-      arcId = idGenerator.newArcId(options.arcName);
+      arcId = options.outerArcId
+          ? this.arcInfoById.get(options.outerArcId).generateID(options.arcName)
+          : idGenerator.newArcId(options.arcName);
     }
     assert(arcId);
     idGenerator = idGenerator || IdGenerator.newSession();
     if (!this.arcInfoById.has(arcId)) {
       assert(idGenerator, 'or maybe need to create one anyway?');
-      this.arcInfoById.set(arcId, new ArcInfo(this.buildArcInfoOptions(arcId, idGenerator)));
+      this.arcInfoById.set(arcId, new ArcInfo(this.buildArcInfoOptions(arcId, idGenerator, options.outerArcId, options.isSpeculative)));
     }
     return this.arcInfoById.get(arcId);
   }
 
-  private buildArcInfoOptions(id: ArcId, idGenerator? : IdGenerator): ArcInfoOptions {
+  private buildArcInfoOptions(id: ArcId, idGenerator? : IdGenerator, outerArcId?: ArcId, isSpeculative?: boolean): ArcInfoOptions {
     return {
       id,
       context: this.runtime.context,
       capabilitiesResolver: this.runtime.getCapabilitiesResolver(id),
-      idGenerator
+      idGenerator,
+      outerArcId,
+      isSpeculative
     };
   }
 
-  public async startArc(options: StartArcOptions): Promise<ArcId> {
+  public async startArc(options: StartArcOptions): Promise<ArcInfo> {
     const arcInfo = this.newArcInfo(options);
     if (options.planName) {
       const plan = this.runtime.context.allRecipes.find(r => r.name === options.planName);
       assert(plan);
-      await this.runPlanInArc(arcInfo.id, plan, options);
+      await this.runPlanInArc(arcInfo, plan, options);
     }
-    return arcInfo.id;
+    return arcInfo;
   }
 
-  async runPlanInArc(arcId: ArcId, plan: Recipe, arcOptions?: RunArcOptions, reinstantiate?: boolean): Promise<void[]> {
+  async runPlanInArc(arcInfo: ArcInfo, plan: Recipe, arcOptions?: RunArcOptions, reinstantiate?: boolean): Promise<void[]> {
     assert(plan.tryResolve(), `Cannot run an unresolved recipe: ${plan.toString({showUnresolved: true})}.`);
+    if (arcOptions?.modality) {
+      assert(plan.isCompatible(arcOptions?.modality), `Cannot instantiate recipe ${plan.toString()} with [${plan.modality.names}] modalities in '${arcOptions?.modality.names}' arc`);
+    }
 
     const partitionByFactory = new Map<ArcHostFactory, Particle[]>();
     // Partition the `plan` into particles by ArcHostFactory.
@@ -113,11 +114,9 @@ export class AllocatorImpl implements Allocator {
       partitionByFactory.get(hostFactory).push(particle);
     }
 
-    const arcInfo = this.arcInfoById.get(arcId);
-
-    plan = await this.assignStorageKeys(arcId, plan);
+    plan = await this.assignStorageKeys(arcInfo.id, plan);
     // Start all partitions.
-    return Promise.all([...partitionByFactory.keys()].map(async factory => {
+    const res = Promise.all([...partitionByFactory.keys()].map(async factory => {
       const host = factory.createHost();
       this.hostById[host.hostId] = host;
 
@@ -132,11 +131,24 @@ export class AllocatorImpl implements Allocator {
       });
       assert(partial.tryResolve());
 
-      const partition = {arcHostId: host.hostId, arcInfo, arcOptions, plan: partial, reinstantiate};
+      const {particles, handles} = await arcInfo.instantiate(partial);
+
+      const partition = {
+        arcHostId: host.hostId,
+        arcInfo,
+        arcOptions,
+        particles,
+        handles,
+        reinstantiate,
+        modality: arcOptions?.modality
+      };
       arcInfo.partitions.push(partition);
+      arcInfo.addSlotContainers(host.slotContainers);
 
       return host.start(partition);
     }));
+
+    return res;
   }
 
   async assignStorageKeys(arcId: ArcId, plan: Recipe, idGenerator?: IdGenerator): Promise<Recipe> {
@@ -171,8 +183,12 @@ export class AllocatorImpl implements Allocator {
   }
 
   public stopArc(arcId: ArcId) {
-    assert(this.arcInfoById.get(arcId));
-    for (const partition of this.arcInfoById.get(arcId).partitions) {
+    const arcInfo = this.arcInfoById.get(arcId);
+    assert(arcInfo);
+    for (const innerArcInfo of arcInfo.innerArcs) {
+      this.stopArc(innerArcInfo.id);
+    }
+    for (const partition of arcInfo.partitions) {
       const host = this.hostById[partition.arcHostId];
       assert(host);
       host.stop(arcId);
@@ -180,7 +196,7 @@ export class AllocatorImpl implements Allocator {
     this.arcInfoById.delete(arcId);
   }
 
-  async deserialize(options: DeserializeArcOptions): Promise<ArcId> {
+  async deserialize(options: DeserializeArcOptions): Promise<ArcInfo> {
     const {serialization, slotComposer, fileName, inspectorFactory} = options;
     const manifest = await this.runtime.parse(serialization, {fileName, context: this.runtime.context});
     const arcId = Id.fromString(manifest.meta.name);
@@ -188,19 +204,47 @@ export class AllocatorImpl implements Allocator {
 
     assert(!this.arcInfoById.has(arcId));
     const idGenerator = IdGenerator.newSession();
-    this.arcInfoById.set(arcId, new ArcInfo(this.buildArcInfoOptions(arcId, idGenerator)));
+    const arcInfo = new ArcInfo(this.buildArcInfoOptions(arcId, idGenerator));
+    this.arcInfoById.set(arcId, arcInfo);
     await this.startArc({...options, arcId, idGenerator});
 
     await this.createStoresAndCopyTags(arcId, manifest);
 
-    await this.runPlanInArc(arcId, manifest.activeRecipe, {}, /* reinstantiate= */ true);
-    return arcId;
+    await this.runPlanInArc(arcInfo, manifest.activeRecipe, {}, /* reinstantiate= */ true);
+    return arcInfo;
   }
 
   protected async createStoresAndCopyTags(arcId: ArcId, manifest: Manifest): Promise<void[]> {
     // Temporarily this can only be implemented in SingletonAllocator subclass,
     // because it requires access to `host` and Arc's store creation API.
     return Promise.all([]);
+  }
+
+  async cloneArc(arcId: ArcId, options: StartArcOptions): Promise<ArcInfo> {
+    const arcInfo = this.arcInfoById.get(arcId);
+    assert(arcInfo);
+    const clonedArcInfo = await this.startArc({arcId: arcInfo.generateID(), outerArcId: arcInfo.outerArcId, ...options});  // , isSpeculative: true
+    const storeMap: Map<StoreInfo<Type>, StoreInfo<Type>> = new Map();
+    for (const storeInfo of arcInfo.stores) {
+      // TODO(alicej): Should we be able to clone a StoreMux as well?
+      const cloneInfo = await clonedArcInfo.createStoreInfo(storeInfo.type, {
+        storageKey: new VolatileStorageKey(clonedArcInfo.id, storeInfo.id),
+        exists: Exists.MayExist,
+        id: storeInfo.id
+      });
+      storeMap.set(storeInfo, cloneInfo);
+      if (arcInfo.storeDescriptions.has(storeInfo)) {
+        clonedArcInfo.storeDescriptions.set(cloneInfo, arcInfo.storeDescriptions.get(storeInfo));
+      }
+    }
+
+    await this.runPlanInArc(clonedArcInfo, arcInfo.activeRecipe.clone());
+
+    for (const innerArcInfo of arcInfo.innerArcs) {
+      await this.cloneArc(innerArcInfo.id, options);
+    }
+
+    return clonedArcInfo;
   }
 }
 
@@ -212,16 +256,23 @@ export class SingletonAllocator extends AllocatorImpl {
               public readonly host: ArcHost) {
     super(runtime);
     this.registerArcHost(new SingletonArcHostFactory(host));
+    this.hostById[host.hostId] = host;
   }
 
   protected newArcInfo(options: NewArcInfoOptions & RunArcOptions): ArcInfo {
     const arcInfo = super.newArcInfo(options);
 
-    this.host.start({
+    arcInfo.addSlotContainers(this.host.slotContainers);
+    const partition = {
       arcInfo,
       arcOptions: {...options},
-      arcHostId: this.host.hostId
-    });
+      arcHostId: this.host.hostId,
+      particles: [],
+      handles: [],
+      modality: options.modality
+    };
+    arcInfo.partitions.push(partition);
+    this.host.start(partition);
     return arcInfo;
   }
 

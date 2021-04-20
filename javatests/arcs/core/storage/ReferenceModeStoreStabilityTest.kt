@@ -11,6 +11,7 @@
 
 package arcs.core.storage
 
+import arcs.core.analytics.Analytics
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
@@ -439,6 +440,73 @@ class ReferenceModeStoreStabilityTest {
       // Verify the sync request resolves with data.
       assertThat(modelValue.await().values.keys).containsExactly("foo_value")
     }
+  }
+
+  @Test
+  fun collection_partiallyMissingBackingData_timesOutAnd_logsTheTimeout() = runBlocking {
+    val loggedTimeout = CompletableDeferred<Boolean>()
+    val fakeAnalytics = object : Analytics {
+      override fun logPendingReferenceTimeout() {
+        loggedTimeout.complete(true)
+      }
+    }
+    val setCrdt = CrdtSet<RawReference>()
+    setCrdt.applyOperation(
+      CrdtSet.Operation.Add(
+        "foo",
+        VersionMap("foo" to 1),
+        RawReference(
+          "foo_value",
+          backingKey,
+          VersionMap("foo" to 1)
+        )
+      )
+    )
+    setCrdt.applyOperation(
+      CrdtSet.Operation.Add(
+        "foo",
+        VersionMap("foo" to 2),
+        RawReference(
+          "foo_value_2",
+          backingKey,
+          VersionMap("foo" to 2)
+        )
+      )
+    )
+    RamDisk.memory.set(containerKey, VolatileEntry(setCrdt.data, 1))
+
+    val entityCrdt = CrdtEntity.newWithEmptyEntity(
+      RawEntity("foo_value", setOf("name"), emptySet())
+    )
+    entityCrdt.applyOperation(
+      CrdtEntity.Operation.SetSingleton(
+        "foo",
+        VersionMap("foo" to 1),
+        "name",
+        CrdtEntity.ReferenceImpl("Alice".toReferencable().id)
+      )
+    )
+    RamDisk.memory.set(
+      backingKey.childKeyWithComponent("foo_value"),
+      VolatileEntry(entityCrdt.data, 1)
+    )
+
+    val store: RefModeStore = ActiveStore(
+      StoreOptions(
+        storageKey,
+        CollectionType(EntityType(schema))
+      ),
+      this,
+      testDriverFactory,
+      ::testWriteBackProvider,
+      null,
+      JvmTime,
+      fakeAnalytics
+    )
+
+    val id = store.on {}
+    store.onProxyMessage(ProxyMessage.SyncRequest(id))
+    assertThat(loggedTimeout.await()).isTrue()
   }
 
   companion object {

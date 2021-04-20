@@ -58,7 +58,7 @@ interface StorageKeyManager {
  */
 interface StorageKeyParser<T : StorageKey> {
   /** The protocol that this [StorageKeyParser] supports. */
-  val protocol: String
+  val protocol: StorageKeyProtocol
 
   /** Returns a structured key of type [T] give the [rawKeyString]. May throw an exception if:
    *   * The [rawKeyString] has invalid structure.

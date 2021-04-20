@@ -65,7 +65,7 @@ export class ArcPlannerInvoker {
 
   private async invokePlanner(manifestString: string, method: string) {
     if (!this.recipeIndex) {
-      this.recipeIndex = RecipeIndex.create(this.arc);
+      this.recipeIndex = RecipeIndex.create(this.arc.arcInfo);
       await this.recipeIndex.ready;
     }
 
@@ -122,7 +122,7 @@ export class ArcPlannerInvoker {
     //       the entered manifest. Right now strategies only see arc context, which means that
     //       various strategies will not see particles defined in the manifest entered in the
     //       editor. This may bite us with verb substitution, hosted particle resolution etc.
-    return new strategyClass(this.arc, {recipeIndex: this.recipeIndex});
+    return new strategyClass(this.arc.arcInfo, {recipeIndex: this.recipeIndex});
   }
 
   processStrategyOutput(inputs: Descendant<Recipe>[]) {

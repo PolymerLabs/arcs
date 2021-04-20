@@ -1,5 +1,6 @@
 package arcs.core.storage.testutil
 
+import arcs.core.analytics.Analytics
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.Schema
@@ -27,7 +28,8 @@ suspend fun ReferenceModeStore.Companion.singletonTestStore(
     driverFactory = driverFactory,
     writeBackProvider = ::testWriteBackProvider,
     devTools = null,
-    time = JvmTime
+    time = JvmTime,
+    Analytics.defaultAnalytics
   )
 }
 
@@ -47,6 +49,7 @@ suspend fun ReferenceModeStore.Companion.collectionTestStore(
     driverFactory = driverFactory,
     writeBackProvider = ::testWriteBackProvider,
     devTools = null,
-    time = JvmTime
+    time = JvmTime,
+    Analytics.defaultAnalytics
   )
 }

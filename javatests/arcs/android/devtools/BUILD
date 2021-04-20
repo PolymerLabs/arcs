@@ -24,11 +24,11 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage:proxy",
         "//java/arcs/core/storage:reference",
+        "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/testutil",
         "//java/arcs/core/util",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
-        "//third_party/kotlin/mockito_kotlin:mockito_kotlin-android",
     ],
 )
 

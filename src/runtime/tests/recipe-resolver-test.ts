@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Arc} from '../arc.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {RecipeResolver} from '../recipe-resolver.js';
@@ -26,7 +25,7 @@ describe('RecipeResolver', () => {
 
   const createArc = async (manifest) => {
     const runtime = new Runtime({loader: new Loader(), context: manifest});
-    return runtime.getArcById(await runtime.allocator.startArc({arcName: 'test'}));
+    return runtime.allocator.startArc({arcName: 'test'});
   };
 
   it('resolves a recipe', async () => {

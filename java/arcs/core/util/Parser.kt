@@ -226,7 +226,8 @@ sealed class ParseResult<out T>() {
 private tailrec fun rootCause(cause: Failure): Failure =
   if (cause.cause == null) cause else rootCause(cause.cause)
 
-private fun traceBack(cause: Failure?): String = when {
+/** VisibleForTesting */
+fun traceBack(cause: Failure?): String = when {
   cause == null -> ""
   cause.parser.isBlank() -> traceBack(cause.cause)
   else -> "\n  at ${cause.parser}" + traceBack(cause.cause)
@@ -365,7 +366,11 @@ class AnyOfParser<T>(val parsers: List<Parser<T>>) : Parser<T>() {
  * A parser that invokes another parser zero or more times until it fails, returning a list
  * of success values. If no parse succeeds, it returns an empty list.
  */
-class ManyOfParser<T>(val parser: Parser<T>) : Parser<List<T>>() {
+class ManyOfParser<T>(val parser: Parser<T>, val limit: Int? = null) : Parser<List<T>>() {
+
+  init {
+    require(limit == null || limit >= 0) { "Limit cannot be negative" }
+  }
 
   override fun leftTokens(): List<String> = parser.leftTokens()
 
@@ -380,10 +385,12 @@ class ManyOfParser<T>(val parser: Parser<T>) : Parser<List<T>>() {
       it
     }
 
-    // Stops with first Failure(msg, start, end)
+    // Stops with first Failure(msg, start, end) or when limit has been reached
     // But (start) is actually equal to the last Success's end
     fun parseUntilFail(pos: SourcePosition): ParseResult<T> {
-      return resultParser(string, pos).map { _, _, e, c ->
+      return if (limit != null && result.size >= limit) {
+        Failure("Limit reached", pos, end, consumed)
+      } else resultParser(string, pos).map { _, _, e, c ->
         end = e
         consumed += c
         parseUntilFail(end)
@@ -391,6 +398,24 @@ class ManyOfParser<T>(val parser: Parser<T>) : Parser<List<T>>() {
     }
 
     return parseUntilFail(pos).orElse { Success(result, pos, end, consumed) }
+  }
+}
+
+/**
+ * A parser providing a name for debugging purposes (traceback) but delegates parsing.
+ */
+class NamedParser<T>(name: String, val parser: Parser<T>) : Parser<T>() {
+
+  init {
+    this.name = name
+  }
+
+  override fun leftTokens(): List<String> = parser.leftTokens()
+  override fun invoke(string: String, pos: SourcePosition): ParseResult<T> {
+    return when (val result = parser.invoke(string, pos)) {
+      is Success<T> -> result
+      is Failure -> result.causedBy(name)
+    }
   }
 }
 
@@ -582,10 +607,13 @@ fun token(prefix: String) = StringToken(prefix)
 fun <T> optional(parser: Parser<T>) = Optional(parser)
 
 /** Helper for [ManyOfParser]. */
-fun <T> many(parser: Parser<T>) = ManyOfParser(parser)
+fun <T> many(parser: Parser<T>, limit: Int? = null) = ManyOfParser(parser, limit)
 
 /** Helper for [AnyOfParser]. */
 fun <T> any(parsers: List<Parser<T>>) = AnyOfParser(parsers)
+
+/** Helper for [NamedParser] */
+fun <T> Parser<T>.named(name: String) = NamedParser(name, this)
 
 /** Helper for [TransformParser]. */
 fun <T, R> Parser<T>.map(f: (T) -> R) = TransformParser(this, f)

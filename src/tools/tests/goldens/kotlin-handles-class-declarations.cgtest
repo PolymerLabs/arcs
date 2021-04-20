@@ -36,20 +36,76 @@ class Handles : arcs.sdk.HandleHolderBase(
 -----[end]-----
 
 -----[name]-----
-read, write and query handles
+read, write and query entity handles
 -----[input]-----
 particle P
   h1: reads Person {name: Text}
   h2: writes Person {name: Text}
-  h3: reads [Person {name: Text} [name == ?]]
+  h3: reads writes Person {name: Text}
+
+  h4: reads [Person {name: Text}]
+  h5: writes [Person {name: Text}]
+  h6: reads writes [Person {name: Text}]
+
+  h7: reads [Person {name: Text} [name == ?]]
+  h8: writes [Person {name: Text} [name == ?]]
+  h9: reads writes [Person {name: Text} [name == ?]]
 -----[results]-----
 class Handles : arcs.sdk.HandleHolderBase(
         "P",
-        mapOf("h1" to setOf(P_H1), "h2" to setOf(P_H2), "h3" to setOf(P_H3))
+        mapOf(
+            "h1" to setOf(P_H1),
+            "h2" to setOf(P_H2),
+            "h3" to setOf(P_H3),
+            "h4" to setOf(P_H4),
+            "h5" to setOf(P_H5),
+            "h6" to setOf(P_H6),
+            "h7" to setOf(P_H7),
+            "h8" to setOf(P_H8),
+            "h9" to setOf(P_H9)
+        )
     ) {
         val h1: arcs.sdk.ReadSingletonHandle<P_H1> by handles
-        val h2: arcs.sdk.WriteSingletonHandle<P_H2> by handles
-        val h3: arcs.sdk.ReadQueryCollectionHandle<P_H3, String> by handles
+        val h2: arcs.sdk.WriteSingletonHandle<P_H2_Slice> by handles
+        val h3: arcs.sdk.ReadWriteSingletonHandle<P_H3, P_H3_Slice> by handles
+        val h4: arcs.sdk.ReadCollectionHandle<P_H4> by handles
+        val h5: arcs.sdk.WriteCollectionHandle<P_H5_Slice> by handles
+        val h6: arcs.sdk.ReadWriteCollectionHandle<P_H6, P_H6_Slice> by handles
+        val h7: arcs.sdk.ReadQueryCollectionHandle<P_H7, String> by handles
+        val h8: arcs.sdk.WriteQueryCollectionHandle<P_H8_Slice, String> by handles
+        val h9: arcs.sdk.ReadWriteQueryCollectionHandle<P_H9, P_H9_Slice, String> by handles
+    }
+-----[end]-----
+
+-----[name]-----
+read and write reference handles
+-----[input]-----
+particle P
+  h1: reads &{name: Text}
+  h2: writes &{name: Text}
+  h3: reads writes &{name: Text}
+
+  h4: reads [&{name: Text}]
+  h5: writes [&{name: Text}]
+  h6: reads writes [&{name: Text}]
+-----[results]-----
+class Handles : arcs.sdk.HandleHolderBase(
+        "P",
+        mapOf(
+            "h1" to setOf(PInternal1),
+            "h2" to setOf(PInternal1),
+            "h3" to setOf(PInternal1),
+            "h4" to setOf(PInternal1),
+            "h5" to setOf(PInternal1),
+            "h6" to setOf(PInternal1)
+        )
+    ) {
+        val h1: arcs.sdk.ReadSingletonHandle<arcs.sdk.Reference<PInternal1>> by handles
+        val h2: arcs.sdk.WriteSingletonHandle<arcs.sdk.Reference<PInternal1>> by handles
+        val h3: arcs.sdk.ReadWriteSingletonHandle<arcs.sdk.Reference<PInternal1>, arcs.sdk.Reference<PInternal1>> by handles
+        val h4: arcs.sdk.ReadCollectionHandle<arcs.sdk.Reference<PInternal1>> by handles
+        val h5: arcs.sdk.WriteCollectionHandle<arcs.sdk.Reference<PInternal1>> by handles
+        val h6: arcs.sdk.ReadWriteCollectionHandle<arcs.sdk.Reference<PInternal1>, arcs.sdk.Reference<PInternal1>> by handles
     }
 -----[end]-----
 
@@ -80,18 +136,19 @@ class Handles : arcs.sdk.HandleHolderBase(
 handle with a tuple
 -----[input]-----
 particle P
-  h1: reads (
+  h1: reads writes (
     &Person {name: Text},
     &Accommodation {squareFootage: Number},
-    &Address {streetAddress: Text, postCode: Text}
+    Address {streetAddress: Text, postCode: Text}
   )
 -----[results]-----
 class Handles : arcs.sdk.HandleHolderBase(
         "P",
         mapOf("h1" to setOf(Person, Accommodation, Address))
     ) {
-        val h1: arcs.sdk.ReadSingletonHandle<
-    arcs.core.entity.Tuple3<arcs.sdk.Reference<Person>, arcs.sdk.Reference<Accommodation>, arcs.sdk.Reference<Address>>
+        val h1: arcs.sdk.ReadWriteSingletonHandle<
+    arcs.core.entity.Tuple3<arcs.sdk.Reference<Person>, arcs.sdk.Reference<Accommodation>, Address>,
+    arcs.core.entity.Tuple3<arcs.sdk.Reference<Person>, arcs.sdk.Reference<Accommodation>, AddressSlice>
 > by handles
     }
 -----[end]-----
@@ -109,7 +166,7 @@ class Handles : arcs.sdk.HandleHolderBase(
         mapOf("h1" to setOf(T_H1), "h2" to setOf(T_H2), "h3" to setOf(T_H3))
     ) {
         val h1: arcs.sdk.ReadSingletonHandle<T_H1> by handles
-        val h2: arcs.sdk.WriteSingletonHandle<T_H2> by handles
-        val h3: arcs.sdk.ReadWriteSingletonHandle<T_H3, T_H3> by handles
+        val h2: arcs.sdk.WriteSingletonHandle<T_H2_Slice> by handles
+        val h3: arcs.sdk.ReadWriteSingletonHandle<T_H3, T_H3_Slice> by handles
     }
 -----[end]-----

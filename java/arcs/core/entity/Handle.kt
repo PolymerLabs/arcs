@@ -181,7 +181,12 @@ interface ReadSingletonHandle<E : Storable> : ReadableHandle<E?, SingletonDelta<
   fun fetch(): E?
 }
 
-/** A singleton handle with write access. [I] is the interface for an entity class. */
+/**
+ * A singleton handle with write access. [I] is the interface for an entity class.
+ *
+ * Write operations return a Job that will be completed once the op has been sent to the backing
+ * store for this handle.
+ */
 interface WriteSingletonHandle<I : Storable> : Handle {
   /** Sets the value of the singleton. */
   fun store(element: I): Job
@@ -209,7 +214,12 @@ interface ReadCollectionHandle<E : Storable> : ReadableHandle<Set<E>, Collection
   fun fetchById(entityId: String): E?
 }
 
-/** A collection handle with write access. [I] is the interface for an entity class. */
+/**
+ * A collection handle with write access. [I] is the interface for an entity class.
+ *
+ * Write operations return a Job that will be completed once the op has been sent to the backing
+ * store for this handle.
+ */
 interface WriteCollectionHandle<I : Storable> : Handle {
   /** Adds the given [element] to the collection. */
   fun store(element: I): Job

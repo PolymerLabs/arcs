@@ -11,22 +11,29 @@
 package arcs.core.storage.referencemode
 
 import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.embed
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.flags.testing.BuildFlagsRule
+import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.runners.Parameterized
 
 /** Tests for [ReferenceModeStorageKey]. */
-@RunWith(JUnit4::class)
-class ReferenceModeStorageKeyTest {
+@RunWith(Parameterized::class)
+class ReferenceModeStorageKeyTest(parameters: ParameterizedBuildFlags) {
+
+  @get:Rule
+  val buildFlagsRule = BuildFlagsRule.parameterized(parameters)
 
   @Before
-  fun setup() {
+  fun setUp() {
     StorageKeyManager.GLOBAL_INSTANCE.reset(
       ReferenceModeStorageKey,
       RamDiskStorageKey
@@ -41,7 +48,8 @@ class ReferenceModeStorageKeyTest {
       ReferenceModeStorageKey(backing, direct)
     }
     assertThat(exception).hasMessageThat().startsWith(
-      "Different protocols (db and ramdisk) in a ReferenceModeStorageKey can cause problems"
+      "Different protocols (${StorageKeyProtocol.Database} and ${StorageKeyProtocol.RamDisk}) in " +
+        "a ReferenceModeStorageKey can cause problems"
     )
   }
 
@@ -52,7 +60,7 @@ class ReferenceModeStorageKeyTest {
     val key = ReferenceModeStorageKey(backing, direct)
 
     assertThat(key.toString())
-      .isEqualTo("${ReferenceModeStorageKey.protocol}://{$backing}{$direct}")
+      .isEqualTo("${StorageKeyProtocol.ReferenceMode.protocol}{$backing}{$direct}")
   }
 
   @Test
@@ -67,7 +75,7 @@ class ReferenceModeStorageKeyTest {
     val embeddedDirect = directReference.embed()
 
     assertThat(parent.toString())
-      .isEqualTo("${ReferenceModeStorageKey.protocol}://{$embeddedBacking}{$embeddedDirect}")
+      .isEqualTo("${StorageKeyProtocol.ReferenceMode.protocol}{$embeddedBacking}{$embeddedDirect}")
   }
 
   @Test
@@ -85,5 +93,11 @@ class ReferenceModeStorageKeyTest {
 
     // Check the embedded/nested case.
     assertThat(StorageKeyManager.GLOBAL_INSTANCE.parse(parent.toString())).isEqualTo(parent)
+  }
+
+  private companion object {
+    @get:JvmStatic
+    @get:Parameterized.Parameters(name = "{0}")
+    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_KEY_REDUCTION")
   }
 }

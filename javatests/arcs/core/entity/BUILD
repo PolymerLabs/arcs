@@ -1,5 +1,6 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_gen",
     "arcs_kt_jvm_test_suite",
 )
 
@@ -10,6 +11,8 @@ arcs_kt_jvm_test_suite(
     srcs = glob(["*.kt"]),
     package = "arcs.core.entity",
     deps = [
+        ":codegen",
+        "//java/arcs/core/allocator",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
@@ -36,7 +39,9 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/flags:flags-kt",
         "//java/arcs/flags:unit_test_build_flags",
         "//java/arcs/flags/testing:testing-kt",
+        "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
+        "//javatests/arcs/core/host:testhost",
         "//third_party/java/junit:junit-android",
         "//third_party/java/mockito",
         "//third_party/java/truth:truth-android",
@@ -45,4 +50,9 @@ arcs_kt_jvm_test_suite(
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
         "//third_party/kotlin/mockito_kotlin",
     ],
+)
+
+arcs_kt_gen(
+    name = "codegen",
+    srcs = ["type_slicing.arcs"],
 )

@@ -27,15 +27,14 @@ async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?,
   if (typeof manifest === 'string') {
     manifest = await runtime.parse(manifest);
   }
-
-  arcFactory = arcFactory || (manifest => StrategyTestHelper.createTestArc(manifest));
+  arcFactory = arcFactory || (manifest => StrategyTestHelper.createTestArcInfo(manifest));
   testSteps = testSteps || (planner => planner.plan(Infinity, []));
 
-  const arc = await arcFactory(manifest);
+  const arcInfo = await arcFactory(manifest);
 
   const planner = new Planner();
-  const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
-  planner.init(arc, options);
+  const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arcInfo)};
+  planner.init(arcInfo, options);
 
   const result = await testSteps(planner);
   return result;
@@ -94,13 +93,13 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
   manifestLoadedCallback(loadedManifest);
 
   const runtime = new Runtime({context: loadedManifest, loader});
-  const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-plan-arc'}));
+  const arcInfo = await runtime.allocator.startArc({arcName: 'test-plan-arc'});
   const planner = new Planner();
-  const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc), speculator: new Speculator(runtime)};
-  planner.init(arc, options);
+  const options = {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arcInfo), speculator: new Speculator(runtime)};
+  planner.init(arcInfo, options);
 
   const plans = await planner.suggest(Infinity);
-  return {plans, arc};
+  return {plans, arcInfo};
 };
 
 describe('Planner', () => {
@@ -403,11 +402,11 @@ ${recipeManifest}
       tags: [],
     });
 
-    const arc = await StrategyTestHelper.createTestArc(manifest);
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(manifest);
 
     const planner = new Planner();
-    const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
-    planner.init(arc, options);
+    const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arcInfo)};
+    planner.init(arcInfo, options);
     const plans = await planner.plan(1000);
 
     assert.lengthOf(plans, expectedResults, recipeManifest);
@@ -567,10 +566,10 @@ describe('Type variable resolution', () => {
   const loadAndPlan = async manifestStr => {
     const runtime = new Runtime({loader: new NullLoader()});
     const manifest = await runtime.parse(manifestStr);
-    const arc = await StrategyTestHelper.createTestArc(manifest);
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(manifest);
     const planner = new Planner();
-    const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)};
-    planner.init(arc, options);
+    const options = {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arcInfo)};
+    planner.init(arcInfo, options);
     return planner.plan(Infinity);
   };
   const verifyResolvedPlan = async (manifestStr) => {
@@ -779,14 +778,14 @@ describe('Description', () => {
         thing: writes handle1
         root: consumes slot0
     `;
-    const {plans, arc} = await loadTestArcAndRunSpeculation(manifest,
+    const {plans, arcInfo} = await loadTestArcAndRunSpeculation(manifest,
       manifest => {
         assertRecipeResolved(manifest.recipes[0]);
       }
     );
     assert.lengthOf(plans, 1);
     assert.strictEqual('Make MYTHING.', await plans[0].descriptionText);
-    assert.lengthOf(arc.stores, 0);
+    assert.lengthOf(arcInfo.stores, 0);
   });
 });
 
@@ -794,9 +793,9 @@ describe('Automatic resolution', () => {
   const loadAndPlan = async (manifestStr: string, arcCreatedCallback?) => {
     return planFromManifest(manifestStr, {
       arcFactory: async manifest => {
-        const arc = await StrategyTestHelper.createTestArc(manifest);
-        if (arcCreatedCallback) await arcCreatedCallback(arc, manifest);
-        return arc;
+        const arcInfo = await StrategyTestHelper.createTestArcInfo(manifest);
+        if (arcCreatedCallback) await arcCreatedCallback(arcInfo, manifest);
+        return arcInfo;
       }
     });
   };
@@ -911,9 +910,9 @@ describe('Automatic resolution', () => {
       recipe
         A
       `,
-      async (arc, manifest) => {
+      async (arcInfo, manifest) => {
         const thing = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
-        await arc.createStore(new SingletonType(thing.type), undefined, 'test:1');
+        await arcInfo.createStoreInfo(new SingletonType(thing.type), {id: 'test:1'});
       }
     );
 
@@ -924,7 +923,6 @@ describe('Automatic resolution', () => {
   });
 
   it('composes recipe rendering a list of items from a recipe', async () => {
-    let arc = null;
     const recipes = await verifyResolvedPlans(`
       import './src/runtime/tests/artifacts/Common/List.recipes'
       schema Thing
@@ -938,7 +936,7 @@ describe('Automatic resolution', () => {
 
       recipe ProducingRecipe
         things: create #items
-        ThingProducer`, arcRef => arc = arcRef);
+        ThingProducer`);
 
     assert.lengthOf(recipes, 2);
     const composedRecipes = recipes.filter(r => r.name !== 'ProducingRecipe');
@@ -968,7 +966,6 @@ describe('Automatic resolution', () => {
   });
 
   it('composes recipe rendering a list of items from the current arc', async () => {
-    let arc = null;
     const recipes = await verifyResolvedPlans(`
         import './src/runtime/tests/artifacts/Common/List.recipes'
         schema Thing
@@ -976,10 +973,9 @@ describe('Automatic resolution', () => {
         particle ThingRenderer
           thing: reads Thing
           item: consumes Slot`,
-        async (arcRef, manifest) => {
-          arc = arcRef;
+        async (arcInfo, manifest) => {
           const thing = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
-          await arc.createStore(thing.type.collectionOf(), undefined, 'test-store', ['items']);
+          await arcInfo.createStoreInfo(thing.type.collectionOf(), {id: 'test-store', tags: ['items']});
         });
 
     assert.lengthOf(recipes, 1);
@@ -1089,7 +1085,7 @@ describe('Automatic resolution', () => {
         search \`${searchStr}\`
         // Description is needed to differentiate this recipe from its equivalent in .recipes file.
         description \`This is the test recipe\`
-    `, () => {});
+    `);
 
     recipes = recipes.filter(recipe => recipe.search);
     assert.lengthOf(recipes, 1, 'Expected the recipe list to contain a search.');
@@ -1166,7 +1162,7 @@ describe('Automatic resolution', () => {
 
       recipe
         search \`find restaurants\`
-    `, () => {});
+    `);
 
     assert.lengthOf(recipes, 1);
     assert.deepEqual(recipes[0].particles.map(p => p.name).sort(),

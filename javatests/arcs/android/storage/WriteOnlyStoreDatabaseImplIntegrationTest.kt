@@ -149,6 +149,15 @@ class WriteOnlyStoreDatabaseImplIntegrationTest {
     assertThat(database.readCollection()).isEqualTo(expectedCollection)
   }
 
+  // Regression test for b/182713034.
+  @Test
+  fun databaseRoundTrip_sameAsCrdtModel() = runFuzzTest {
+    val (writeStore, readStore) = createStores()
+    val ops = FixtureEntitiesOperationsGenerator(it, IntInRange(it, 1, 20))
+
+    invariant_storeRoundTrip_sameAsCrdtModel(writeStore, readStore, ops())
+  }
+
   private suspend fun createStores(): Pair<UntypedActiveStore, UntypedActiveStore> {
     val writeStore = createStore(true)
     assertThat(writeStore).isInstanceOf(WriteOnlyDirectStore::class.java)

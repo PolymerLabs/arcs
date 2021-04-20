@@ -28,15 +28,16 @@ Description
   Generates entity class code from schemas for use in wasm particles.
 
 Options
-  --cpp, -c      generate C++ code
-  --kotlin, -k   generate Kotlin code
-  --graph, -g    generate a Graphviz (.dot) file for the type lattice
-  --wasm         whether to output wasm-specific code (applies to Kotlin only)
-  --test_harness whether to output a particle test harness only (applies to Kotlin only)
-  --outdir, -d   output directory; defaults to '.'
-  --outfile, -f  output filename; if omitted, generated from the manifest name
-  --update, -u   only generate if the source file is newer than the destination
-  --help         usage info
+  --cpp, -c       generate C++ code
+  --kotlin, -k    generate Kotlin code
+  --graph, -g     generate a Graphviz (.dot) file for the type lattice
+  --outdir, -d    output directory; defaults to '.'
+  --outfile, -f   output filename; if omitted, generated from the manifest name
+  --update, -u    only generate if the source file is newer than the destination
+  --help          usage info
+Kotlin-specific options
+  --wasm          whether to output wasm-specific code
+  --test_harness  whether to output particle test harnesses only
 `);
   process.exit(0);
 }

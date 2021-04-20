@@ -28,6 +28,7 @@ STORE_SRCS = [
 STORAGE_KEY_SRCS = [
     "StorageKey.kt",
     "StorageKeyParser.kt",
+    "StorageKeyProtocol.kt",
     "StorageKeyManagerImpl.kt",
     "StorageKeyUtils.kt",
 ]
@@ -102,6 +103,9 @@ arcs_kt_library(
 arcs_kt_library(
     name = "storage_key",
     srcs = STORAGE_KEY_SRCS,
+    deps = [
+        "//java/arcs/flags",
+    ],
 )
 
 arcs_kt_library(
@@ -136,7 +140,7 @@ arcs_kt_library(
     name = "writeback",
     srcs = WRITEBACK_SRCS,
     deps = [
-        "//java/arcs/core/storage/keys:protocols",
+        ":storage_key",
         "//java/arcs/core/util",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",

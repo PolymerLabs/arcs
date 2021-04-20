@@ -50,11 +50,13 @@ import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageProxyImpl
 import arcs.core.storage.StoreOptions
+import arcs.core.storage.WriteOnlyStorageProxyImpl
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.FORBIDDEN_STRINGS
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
+import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import java.lang.IllegalStateException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -111,7 +113,8 @@ class HandleManagerImpl(
     particleId: String,
     immediateSync: Boolean,
     storeSchema: Schema?,
-    actor: String?
+    actor: String?,
+    writeOnly: Boolean
   ): Handle {
     val handleName: String = if (BuildFlags.STORAGE_STRING_REDUCTION) {
       if (actor.isNullOrEmpty()) {
@@ -133,6 +136,14 @@ class HandleManagerImpl(
         idGenerator.newChildId(arcId.toArcId(), hostId),
         spec.baseName
       ).toString()
+    }
+
+    if (writeOnly && !BuildFlags.WRITE_ONLY_STORAGE_STACK) {
+      throw BuildFlagDisabledError("WRITE_ONLY_STORAGE_STACK")
+    } else {
+      if (writeOnly && spec.mode.canRead) {
+        throw IllegalArgumentException("Readable handle cannot use write only mode.")
+      }
     }
 
     val storageAdapter = when (spec.dataType) {
@@ -168,7 +179,8 @@ class HandleManagerImpl(
       storageKey,
       storageAdapter,
       particleId,
-      immediateSync
+      immediateSync,
+      writeOnly
     )
     return createHandle(config)
   }
@@ -206,12 +218,14 @@ class HandleManagerImpl(
     val storageKey: StorageKey,
     val storageAdapter: StorageAdapter<E, I, R>,
     val particleId: String,
-    val immediateSync: Boolean
+    val immediateSync: Boolean,
+    val writeOnly: Boolean
   )
 
   private suspend fun <E : I, I : Storable, R : Referencable> createSingletonHandle(
     config: HandleConfig<E, I, R>
   ): Handle {
+    require(!config.writeOnly) { "Singleton handles not supported in write-only mode." }
     val singletonConfig = SingletonHandle.Config(
       name = config.handleName,
       spec = config.spec,
@@ -245,7 +259,8 @@ class HandleManagerImpl(
       spec = config.spec,
       proxy = collectionStoreProxy(
         config.storageKey,
-        config.spec.entitySpecs.single().SCHEMA
+        config.spec.entitySpecs.single().SCHEMA,
+        config.writeOnly
       ),
       storageAdapter = config.storageAdapter,
       dereferencerFactory = dereferencerFactory,
@@ -295,25 +310,39 @@ class HandleManagerImpl(
   @Suppress("UNCHECKED_CAST")
   private suspend fun <R : Referencable> collectionStoreProxy(
     storageKey: StorageKey,
-    schema: Schema
+    schema: Schema,
+    writeOnly: Boolean
   ): CollectionProxy<R> = proxyMutex.withLock {
     if (singletonStorageProxies.containsKey(storageKey)) {
       throw IllegalStateException(
         "Storage key is already being used for a singleton, it cannot be reused for a collection."
       )
     }
+
     collectionStorageProxies.getOrPut(storageKey) {
-      StorageProxyImpl.create(
-        storeOptions = StoreOptions(
-          storageKey = storageKey,
-          type = CollectionType(EntityType(schema))
-        ),
-        storageEndpointManager = storageEndpointManager,
-        crdt = CrdtSet(),
-        scheduler = scheduler,
-        time = time,
-        analytics = analytics
-      )
+      if (writeOnly) {
+        WriteOnlyStorageProxyImpl.create(
+          storeOptions = StoreOptions(
+            storageKey = storageKey,
+            type = CollectionType(EntityType(schema)),
+            writeOnly = true
+          ),
+          storageEndpointManager = storageEndpointManager,
+          scheduler
+        )
+      } else {
+        StorageProxyImpl.create(
+          storeOptions = StoreOptions(
+            storageKey = storageKey,
+            type = CollectionType(EntityType(schema))
+          ),
+          storageEndpointManager = storageEndpointManager,
+          crdt = CrdtSet(),
+          scheduler = scheduler,
+          time = time,
+          analytics = analytics
+        )
+      }
     } as CollectionProxy<R>
   }
 }

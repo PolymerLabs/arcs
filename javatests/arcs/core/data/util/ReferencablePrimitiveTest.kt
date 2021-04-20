@@ -11,6 +11,10 @@
 
 package arcs.core.data.util
 
+import arcs.core.common.Referencable
+import arcs.core.common.ReferenceId
+import arcs.core.data.util.ReferencablePrimitive.Companion.DOUBLE_TOLERANCE
+import arcs.core.data.util.ReferencablePrimitive.Companion.FLOAT_TOLERANCE
 import arcs.core.data.util.ReferencablePrimitive.Companion.isSupportedPrimitive
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
@@ -25,7 +29,7 @@ import org.junit.runners.Parameterized
 class ReferencablePrimitiveTest(private val params: UnwrapWrapParams) {
 
   @Test
-  fun valueRepr_arcsInstant_isEpochMilisString() {
+  fun valueRepr_arcsInstant_isEpochMillisString() {
     val instant = ArcsInstant.ofEpochMilli(DUMMY_MILLIS)
 
     assertThat(ReferencablePrimitive(ArcsInstant::class, instant).valueRepr)
@@ -78,6 +82,40 @@ class ReferencablePrimitiveTest(private val params: UnwrapWrapParams) {
     val foo = ReferencablePrimitive(String::class, "Foo")
     val bar = ReferencablePrimitive(String::class, "Bar")
     assertThat(foo.klass).isSameInstanceAs(bar.klass)
+  }
+
+  @Test
+  fun equals_floatWithinTolerance() {
+    val one = ReferencablePrimitive(Float::class, 1.0f)
+    assertThat(one).isEqualTo(ReferencablePrimitive(Float::class, 1.0f))
+    assertThat(one).isNotEqualTo(ReferencablePrimitive(Float::class, 2.0f))
+    assertThat(one).isEqualTo(ReferencablePrimitive(Float::class, 1.0f + FLOAT_TOLERANCE / 2))
+    assertThat(one).isEqualTo(ReferencablePrimitive(Float::class, 1.0f - FLOAT_TOLERANCE / 2))
+    assertThat(one).isNotEqualTo(ReferencablePrimitive(Float::class, 1.0f + FLOAT_TOLERANCE * 2))
+    assertThat(one).isNotEqualTo(ReferencablePrimitive(Float::class, 1.0f - FLOAT_TOLERANCE * 2))
+  }
+
+  @Test
+  fun equals_doubleWithinTolerance() {
+    val one = ReferencablePrimitive(Double::class, 1.0)
+    assertThat(one).isEqualTo(ReferencablePrimitive(Double::class, 1.0))
+    assertThat(one).isNotEqualTo(ReferencablePrimitive(Double::class, 2.0))
+    assertThat(one).isEqualTo(ReferencablePrimitive(Double::class, 1.0 + DOUBLE_TOLERANCE / 2))
+    assertThat(one).isEqualTo(ReferencablePrimitive(Double::class, 1.0 - DOUBLE_TOLERANCE / 2))
+    assertThat(one).isNotEqualTo(ReferencablePrimitive(Double::class, 1.0 + DOUBLE_TOLERANCE * 2))
+    assertThat(one).isNotEqualTo(ReferencablePrimitive(Double::class, 1.0 - DOUBLE_TOLERANCE * 2))
+  }
+
+  // Regression test for bug where this was evaluating to true (but should be false, since they are
+  // different Referencable subclasses): ReferencablePrimitive(<id>) == ReferenceImpl(<id>)
+  @Test
+  fun equals_otherImplWithSameId_returnsFalse() {
+    val primitive = ReferencablePrimitive(String::class, "abc")
+    val other = object : Referencable {
+      override val id: ReferenceId = primitive.id
+    }
+    assertThat(primitive.id).isEqualTo(other.id)
+    assertThat(primitive).isNotEqualTo(other)
   }
 
   data class UnwrapWrapParams(
@@ -162,7 +200,7 @@ class ReferencablePrimitiveTest(private val params: UnwrapWrapParams) {
       UnwrapWrapParams(
         value = BigInt("4213371337133713371337421337133713371337").toReferencable(),
         primitiveStringKt =
-          "Primitive<${BigInt::class.java.name}>(4213371337133713371337421337133713371337)",
+        "Primitive<${BigInt::class.java.name}>(4213371337133713371337421337133713371337)",
         primitiveStringJava = null
       ),
       UnwrapWrapParams(

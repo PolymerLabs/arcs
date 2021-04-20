@@ -20,24 +20,28 @@ import arcs.sdk.toBigInt
 import javax.annotation.Generated
 
 typealias KotlinPrimitivesGolden_Data_Ref = AbstractKotlinPrimitivesGolden.KotlinPrimitivesGolden_Data_Ref
-typealias KotlinPrimitivesGolden_Data_Ref_Slice = AbstractKotlinPrimitivesGolden.KotlinPrimitivesGolden_Data_Ref
+typealias KotlinPrimitivesGolden_Data_Ref_Slice = AbstractKotlinPrimitivesGolden.KotlinPrimitivesGolden_Data_Ref_Slice
 typealias KotlinPrimitivesGolden_Data_Thinglst = AbstractKotlinPrimitivesGolden.Thing
-typealias KotlinPrimitivesGolden_Data_Thinglst_Slice = AbstractKotlinPrimitivesGolden.Thing
+typealias KotlinPrimitivesGolden_Data_Thinglst_Slice = AbstractKotlinPrimitivesGolden.ThingSlice
 typealias KotlinPrimitivesGolden_Data_Detail_Nested = AbstractKotlinPrimitivesGolden.Nested
-typealias KotlinPrimitivesGolden_Data_Detail_Nested_Slice = AbstractKotlinPrimitivesGolden.Nested
+typealias KotlinPrimitivesGolden_Data_Detail_Nested_Slice = AbstractKotlinPrimitivesGolden.NestedSlice
 typealias KotlinPrimitivesGolden_Data_Colors = AbstractKotlinPrimitivesGolden.Color
-typealias KotlinPrimitivesGolden_Data_Colors_Slice = AbstractKotlinPrimitivesGolden.Color
+typealias KotlinPrimitivesGolden_Data_Colors_Slice = AbstractKotlinPrimitivesGolden.ColorSlice
 typealias KotlinPrimitivesGolden_Data_Products = AbstractKotlinPrimitivesGolden.Product
-typealias KotlinPrimitivesGolden_Data_Products_Slice = AbstractKotlinPrimitivesGolden.Product
+typealias KotlinPrimitivesGolden_Data_Products_Slice = AbstractKotlinPrimitivesGolden.ProductSlice
 typealias KotlinPrimitivesGolden_Data_Detail = AbstractKotlinPrimitivesGolden.Detail
-typealias KotlinPrimitivesGolden_Data_Detail_Slice = AbstractKotlinPrimitivesGolden.Detail
+typealias KotlinPrimitivesGolden_Data_Detail_Slice = AbstractKotlinPrimitivesGolden.DetailSlice
 typealias KotlinPrimitivesGolden_Data = AbstractKotlinPrimitivesGolden.KotlinPrimitivesGolden_Data
-typealias KotlinPrimitivesGolden_Data_Slice = AbstractKotlinPrimitivesGolden.KotlinPrimitivesGolden_Data
+typealias KotlinPrimitivesGolden_Data_Slice = AbstractKotlinPrimitivesGolden.KotlinPrimitivesGolden_Data_Slice
 
 @Generated("src/tools/schema2kotlin.ts")
 abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
     override val handles: Handles = Handles()
 
+
+    interface KotlinPrimitivesGolden_Data_Ref_Slice : arcs.sdk.Entity {
+        val val_: String
+    }
 
     @Suppress("UNCHECKED_CAST")
     class KotlinPrimitivesGolden_Data_Ref(
@@ -52,9 +56,9 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         creationTimestamp,
         expirationTimestamp,
         false
-    ) {
+    ), KotlinPrimitivesGolden_Data_Ref_Slice {
 
-        var val_: String
+        override var val_: String
             get() = super.getSingletonValue("val") as String? ?: ""
             private set(_value) = super.setSingletonValue("val", _value)
 
@@ -105,15 +109,19 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         }
     }
 
+    interface ThingSlice : arcs.sdk.Entity {
+        val name: String
+    }
+
     @Suppress("UNCHECKED_CAST")
     class Thing(
         name: String = "",
         entityId: String? = null,
         creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : arcs.sdk.EntityBase("Thing", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+    ) : arcs.sdk.EntityBase("Thing", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false), ThingSlice {
 
-        var name: String
+        override var name: String
             get() = super.getSingletonValue("name") as String? ?: ""
             private set(_value) = super.setSingletonValue("name", _value)
 
@@ -164,6 +172,11 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         }
     }
 
+    interface NestedSlice : arcs.sdk.Entity {
+        val txt: String
+        val num: Double
+    }
+
     @Suppress("UNCHECKED_CAST")
     class Nested(
         txt: String = "",
@@ -171,12 +184,12 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         entityId: String? = null,
         creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : arcs.sdk.EntityBase("Nested", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+    ) : arcs.sdk.EntityBase("Nested", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false), NestedSlice {
 
-        var txt: String
+        override var txt: String
             get() = super.getSingletonValue("txt") as String? ?: ""
             private set(_value) = super.setSingletonValue("txt", _value)
-        var num: Double
+        override var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("num", _value)
 
@@ -232,6 +245,12 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         }
     }
 
+    interface ColorSlice : arcs.sdk.Entity {
+        val red: Char
+        val green: Char
+        val blue: Char
+    }
+
     @Suppress("UNCHECKED_CAST")
     class Color(
         red: Char = '\u0000',
@@ -240,15 +259,15 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         entityId: String? = null,
         creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : arcs.sdk.EntityBase("Color", SCHEMA, entityId, creationTimestamp, expirationTimestamp, true) {
+    ) : arcs.sdk.EntityBase("Color", SCHEMA, entityId, creationTimestamp, expirationTimestamp, true), ColorSlice {
 
-        var red: Char
+        override var red: Char
             get() = super.getSingletonValue("red") as Char? ?: '\u0000'
             private set(_value) = super.setSingletonValue("red", _value)
-        var green: Char
+        override var green: Char
             get() = super.getSingletonValue("green") as Char? ?: '\u0000'
             private set(_value) = super.setSingletonValue("green", _value)
-        var blue: Char
+        override var blue: Char
             get() = super.getSingletonValue("blue") as Char? ?: '\u0000'
             private set(_value) = super.setSingletonValue("blue", _value)
 
@@ -307,6 +326,12 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         }
     }
 
+    interface ProductSlice : arcs.sdk.Entity {
+        val name: String
+        val price: Float
+        val stock: Int
+    }
+
     @Suppress("UNCHECKED_CAST")
     class Product(
         name: String = "",
@@ -315,15 +340,15 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         entityId: String? = null,
         creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : arcs.sdk.EntityBase("Product", SCHEMA, entityId, creationTimestamp, expirationTimestamp, true) {
+    ) : arcs.sdk.EntityBase("Product", SCHEMA, entityId, creationTimestamp, expirationTimestamp, true), ProductSlice {
 
-        var name: String
+        override var name: String
             get() = super.getSingletonValue("name") as String? ?: ""
             private set(_value) = super.setSingletonValue("name", _value)
-        var price: Float
+        override var price: Float
             get() = super.getSingletonValue("price") as Float? ?: 0.0f
             private set(_value) = super.setSingletonValue("price", _value)
-        var stock: Int
+        override var stock: Int
             get() = super.getSingletonValue("stock") as Int? ?: 0
             private set(_value) = super.setSingletonValue("stock", _value)
 
@@ -382,6 +407,12 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         }
     }
 
+    interface DetailSlice : arcs.sdk.Entity {
+        val nested: Nested
+        val txt: String
+        val num: Double
+    }
+
     @Suppress("UNCHECKED_CAST")
     class Detail(
         nested: Nested = Nested(),
@@ -390,15 +421,15 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         entityId: String? = null,
         creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : arcs.sdk.EntityBase("Detail", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+    ) : arcs.sdk.EntityBase("Detail", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false), DetailSlice {
 
-        var nested: Nested
+        override var nested: Nested
             get() = super.getSingletonValue("nested") as Nested? ?: Nested()
             private set(_value) = super.setSingletonValue("nested", _value)
-        var txt: String
+        override var txt: String
             get() = super.getSingletonValue("txt") as String? ?: ""
             private set(_value) = super.setSingletonValue("txt", _value)
-        var num: Double
+        override var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("num", _value)
 
@@ -457,6 +488,29 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         }
     }
 
+    interface KotlinPrimitivesGolden_Data_Slice : arcs.sdk.Entity {
+        val num: Double
+        val txt: String
+        val lnk: String
+        val flg: Boolean
+        val ref: arcs.sdk.Reference<KotlinPrimitivesGolden_Data_Ref>?
+        val bt: Byte
+        val shrt: Short
+        val integer: Int
+        val long_val: Long
+        val big: BigInt
+        val instant: ArcsInstant
+        val chr: Char
+        val flt: Float
+        val dbl: Double
+        val txtlst: List<String>
+        val lnglst: List<Long>
+        val thinglst: List<arcs.sdk.Reference<Thing>>
+        val detail: Detail
+        val colors: Set<Color>
+        val products: List<Product>
+    }
+
     @Suppress("UNCHECKED_CAST")
     class KotlinPrimitivesGolden_Data(
         num: Double = 0.0,
@@ -489,66 +543,66 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         creationTimestamp,
         expirationTimestamp,
         false
-    ) {
+    ), KotlinPrimitivesGolden_Data_Slice {
 
-        var num: Double
+        override var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("num", _value)
-        var txt: String
+        override var txt: String
             get() = super.getSingletonValue("txt") as String? ?: ""
             private set(_value) = super.setSingletonValue("txt", _value)
-        var lnk: String
+        override var lnk: String
             get() = super.getSingletonValue("lnk") as String? ?: ""
             private set(_value) = super.setSingletonValue("lnk", _value)
-        var flg: Boolean
+        override var flg: Boolean
             get() = super.getSingletonValue("flg") as Boolean? ?: false
             private set(_value) = super.setSingletonValue("flg", _value)
-        var ref: arcs.sdk.Reference<KotlinPrimitivesGolden_Data_Ref>?
+        override var ref: arcs.sdk.Reference<KotlinPrimitivesGolden_Data_Ref>?
             get() = super.getSingletonValue("ref") as arcs.sdk.Reference<KotlinPrimitivesGolden_Data_Ref>?
             private set(_value) = super.setSingletonValue("ref", _value)
-        var bt: Byte
+        override var bt: Byte
             get() = super.getSingletonValue("bt") as Byte? ?: 0.toByte()
             private set(_value) = super.setSingletonValue("bt", _value)
-        var shrt: Short
+        override var shrt: Short
             get() = super.getSingletonValue("shrt") as Short? ?: 0.toShort()
             private set(_value) = super.setSingletonValue("shrt", _value)
-        var integer: Int
+        override var integer: Int
             get() = super.getSingletonValue("integer") as Int? ?: 0
             private set(_value) = super.setSingletonValue("integer", _value)
-        var long_val: Long
+        override var long_val: Long
             get() = super.getSingletonValue("long_val") as Long? ?: 0L
             private set(_value) = super.setSingletonValue("long_val", _value)
-        var big: BigInt
+        override var big: BigInt
             get() = super.getSingletonValue("big") as BigInt? ?: BigInt.ZERO
             private set(_value) = super.setSingletonValue("big", _value)
-        var instant: ArcsInstant
+        override var instant: ArcsInstant
             get() = super.getSingletonValue("instant") as ArcsInstant? ?: ArcsInstant.ofEpochMilli(-1L)
             private set(_value) = super.setSingletonValue("instant", _value)
-        var chr: Char
+        override var chr: Char
             get() = super.getSingletonValue("chr") as Char? ?: '\u0000'
             private set(_value) = super.setSingletonValue("chr", _value)
-        var flt: Float
+        override var flt: Float
             get() = super.getSingletonValue("flt") as Float? ?: 0.0f
             private set(_value) = super.setSingletonValue("flt", _value)
-        var dbl: Double
+        override var dbl: Double
             get() = super.getSingletonValue("dbl") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("dbl", _value)
-        var txtlst: List<String>
+        override var txtlst: List<String>
             get() = super.getSingletonValue("txtlst") as List<String>? ?: emptyList()
             private set(_value) = super.setSingletonValue("txtlst", _value)
-        var lnglst: List<Long>
+        override var lnglst: List<Long>
             get() = super.getSingletonValue("lnglst") as List<Long>? ?: emptyList()
             private set(_value) = super.setSingletonValue("lnglst", _value)
-        var thinglst: List<arcs.sdk.Reference<Thing>>
+        override var thinglst: List<arcs.sdk.Reference<Thing>>
             get() = super.getSingletonValue("thinglst") as List<arcs.sdk.Reference<Thing>>? ?: emptyList()
             private set(_value) = super.setSingletonValue("thinglst", _value)
-        var detail: Detail
+        override var detail: Detail
             get() = super.getSingletonValue("detail") as Detail? ?: Detail()
             private set(_value) = super.setSingletonValue("detail", _value)
-        var colors: Set<Color>
+        override var colors: Set<Color>
             get() = super.getCollectionValue("colors") as Set<Color>
             private set(_value) = super.setCollectionValue("colors", _value)
-        var products: List<Product>
+        override var products: List<Product>
             get() = super.getSingletonValue("products") as List<Product>? ?: emptyList()
             private set(_value) = super.setSingletonValue("products", _value)
 

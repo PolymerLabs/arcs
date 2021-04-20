@@ -17,16 +17,16 @@ import {Type} from '../../types/lib-types.js';
 export class SearchTokensToHandles extends Strategy {
 
   async generate(inputParams) {
-    const arc = this.arc;
+    const arcInfo = this.arcInfo;
     // Finds stores matching the provided token and compatible with the provided handle's type,
     // which are not already mapped into the provided handle's recipe
     const findMatchingStores = (token, handle) => {
       const counts = directionCounts(handle);
       let stores: StoreInfo<Type>[];
-      stores = arc.findStoresByType(handle.type, {tags: [`${token}`]});
+      stores = arcInfo.findStoresByType(handle.type, {tags: [`${token}`]});
       let fate = 'use';
       if (stores.length === 0) {
-        stores = arc.context.findStoresByType(handle.type, {tags: [`${token}`], subtype: counts.writes === 0});
+        stores = arcInfo.context.findStoresByType(handle.type, {tags: [`${token}`], subtype: counts.writes === 0});
         fate = counts.writes === 0 ? 'map' : 'copy';
       }
       stores = stores.filter(store => !handle.recipe.handles.find(handle => handle.id === store.id));

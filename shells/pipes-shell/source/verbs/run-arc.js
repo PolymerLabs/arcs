@@ -29,7 +29,7 @@ export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
     warn(`found no recipes matching [${recipe}]`);
     return null;
   }
-  const arc = runtime.getArcById(await runtime.allocator.startArc({
+  const arcInfo = await runtime.allocator.startArc({
     arcName: arcId,
     storageKeyPrefix: storageKeyPrefix || defaultStorageKeyPrefix,
     fileName: './serialized.manifest',
@@ -42,12 +42,12 @@ export const runArc = async (msg, bus, runtime, defaultStorageKeyPrefix) => {
       },
       dispose: () => null
     }
-  }));
+  });
   // optionally instantiate recipe
   if (action) {
-    const plan = await runtime.resolveRecipe(arc, action);
-    await runtime.allocator.runPlanInArc(arc.id, plan);
-    log(`successfully instantiated ${plan} in ${arc.id}`);
+    const plan = await runtime.resolveRecipe(arcInfo, action);
+    await runtime.allocator.runPlanInArc(arcInfo, plan);
+    log(`successfully instantiated ${plan} in ${arcInfo.id}`);
   }
-  return arc;
+  return runtime.getArcById(arcInfo.id);
 };

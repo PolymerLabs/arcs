@@ -141,7 +141,7 @@ class ReferenceModeStoreTest(
 
   private data class MockHierarchicalStorageKey(
     private val segment: String = ""
-  ) : StorageKey("testing-hierarchy") {
+  ) : StorageKey(StorageKeyProtocol.Dummy) {
     override fun toKeyString(): String = segment
 
     override fun childKeyWithComponent(component: String): StorageKey =

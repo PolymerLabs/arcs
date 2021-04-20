@@ -26,6 +26,7 @@ arcs_kt_jvm_test_suite(
         ":testhostbase",
         "//java/arcs/core/allocator",  # buildcleaner: keep
         "//java/arcs/core/common",
+        "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema-serializer",
         "//java/arcs/core/entity",
@@ -33,7 +34,9 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/entity/testutil:testutil-kt",
         "//java/arcs/core/host",
         "//java/arcs/core/host/api",
+        "//java/arcs/core/storage:proxy",
         "//java/arcs/core/storage:storage-kt",
+        "//java/arcs/core/storage:store",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/driver:ramdisk",
         "//java/arcs/core/storage/keys",
@@ -49,6 +52,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/jvm/util",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk",
+        "//javatests/arcs/core/storage:fakes",
         "//third_party/java/junit",
         "//third_party/java/mockito",
         "//third_party/java/truth",
@@ -62,6 +66,7 @@ arcs_kt_jvm_test_suite(
 arcs_kt_schema(
     name = "schemas",
     srcs = [
+        "complex_lifecycle.arcs",
         "lifecycle.arcs",
         "person.arcs",
         "reflective.arcs",
@@ -73,6 +78,7 @@ arcs_kt_schema(
 arcs_kt_plan(
     name = "plans",
     srcs = [
+        "complex_lifecycle.arcs",
         "lifecycle.arcs",
         "person.arcs",
         "reflective.arcs",
@@ -152,6 +158,7 @@ arcs_kt_jvm_library(
     name = "particle",
     testonly = 1,
     srcs = [
+        "ComplexLifecycleParticles.kt",
         "LifecycleParticles.kt",
         "NonRelevant.kt",
         "ReadPerson.kt",

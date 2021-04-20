@@ -22,6 +22,7 @@ arcs_kt_library(
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
+        "//java/arcs/flags",
         "//java/arcs/flags:build_flags",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",

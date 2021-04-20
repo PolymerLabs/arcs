@@ -15,7 +15,7 @@ import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.storage.StorageKey
-import arcs.core.storage.keys.Protocols
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.TaggedLog
 
@@ -45,6 +45,14 @@ interface Analytics {
     event: Event
   ) {
   }
+
+  /**
+   *  Log pending reference timeout occurrence.
+   *
+   *  A timeout may occur when an entity cannot be obtained from the reference mode store within
+   *  30 seconds.
+   */
+  fun logPendingReferenceTimeout() {}
 
   /** Types of Storage to log. */
   enum class StorageType {
@@ -77,18 +85,18 @@ interface Analytics {
     fun storageKeyToStorageType(storageKey: StorageKey): StorageType {
       if (storageKey is ReferenceModeStorageKey) {
         return when (storageKey.backingKey.protocol) {
-          Protocols.DATABASE_DRIVER -> StorageType.REFERENCE_MODE_DATABASE
-          Protocols.MEMORY_DATABASE_DRIVER -> StorageType.REFERENCE_MODE_MEMORY_DATABASE
-          Protocols.RAMDISK_DRIVER -> StorageType.REFERENCE_MODE_RAM_DISK
-          Protocols.VOLATILE_DRIVER -> StorageType.REFERENCE_MODE_VOLATILE
+          StorageKeyProtocol.Database -> StorageType.REFERENCE_MODE_DATABASE
+          StorageKeyProtocol.InMemoryDatabase -> StorageType.REFERENCE_MODE_MEMORY_DATABASE
+          StorageKeyProtocol.RamDisk -> StorageType.REFERENCE_MODE_RAM_DISK
+          StorageKeyProtocol.Volatile -> StorageType.REFERENCE_MODE_VOLATILE
           else -> StorageType.REFERENCE_MODE_OTHER
         }
       } else {
         return when (storageKey.protocol) {
-          Protocols.DATABASE_DRIVER -> StorageType.DATABASE
-          Protocols.MEMORY_DATABASE_DRIVER -> StorageType.MEMORY_DATABASE
-          Protocols.RAMDISK_DRIVER -> StorageType.RAM_DISK
-          Protocols.VOLATILE_DRIVER -> StorageType.VOLATILE
+          StorageKeyProtocol.Database -> StorageType.DATABASE
+          StorageKeyProtocol.InMemoryDatabase -> StorageType.MEMORY_DATABASE
+          StorageKeyProtocol.RamDisk -> StorageType.RAM_DISK
+          StorageKeyProtocol.Volatile -> StorageType.VOLATILE
           else -> StorageType.OTHER
         }
       }
@@ -129,6 +137,10 @@ interface Analytics {
           "Analytics: logStorageLatency: " +
             "$event, $handleType, $storageType: $latencyMillis (ms)."
         }
+      }
+
+      override fun logPendingReferenceTimeout() {
+        log.debug { "Analytics: logPendingReferenceTimeout." }
       }
     }
   }

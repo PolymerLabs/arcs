@@ -12,6 +12,7 @@ package arcs.core.storage.keys
 
 import arcs.core.data.Schema
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.StorageKeySpec
 
 /*
@@ -30,7 +31,7 @@ class ForeignStorageKey(
     ForeignStorageKey("$namespace/$component")
 
   companion object : StorageKeySpec<ForeignStorageKey> {
-    override val protocol = "foreign"
+    override val protocol = StorageKeyProtocol.Foreign
 
     override fun parse(rawKeyString: String): ForeignStorageKey {
       return ForeignStorageKey(rawKeyString)

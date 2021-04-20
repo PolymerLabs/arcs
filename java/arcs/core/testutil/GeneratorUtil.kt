@@ -11,7 +11,8 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.testutil.FieldTypeGenerator
 import arcs.core.data.testutil.FieldTypeWithReferencedSchemas
-import arcs.core.data.testutil.ReferencableFromFieldType
+import arcs.core.data.testutil.NonNullableReferencableFromFieldType
+import arcs.core.data.testutil.NullableReferencableFromFieldType
 import arcs.core.data.testutil.ReferencablePrimitiveFromPrimitiveType
 import arcs.core.data.testutil.SchemaGenerator
 import arcs.core.data.testutil.SchemaWithReferencedSchemas
@@ -43,12 +44,12 @@ fun freeSchemaGenerator(
  * Returns a [Transformer] that produces [Referencable]s matching a given [FieldType], with as few
  * constraints as feasible.
  */
-fun freeReferencableFromFieldType(
+fun freeNonNullableReferencableFromFieldType(
   s: FuzzingRandom
 ): Transformer<FieldTypeWithReferencedSchemas, Referencable> {
   val noneOrMore = IntInRange(s, 0, 5)
   return transformerWithRecursion {
-    ReferencableFromFieldType(
+    NonNullableReferencableFromFieldType(
       ReferencablePrimitiveFromPrimitiveType(s),
       noneOrMore,
       RawEntityFromSchema(
@@ -59,6 +60,33 @@ fun freeReferencableFromFieldType(
         RandomLong(s)
       ),
       dummyReference(s)
+    )
+  }
+}
+
+/**
+ * Returns a [Transformer] that produces [Referencable?]s matching a given [FieldType], with as few
+ * constraints as feasible.
+ */
+fun freeReferencableFromFieldType(
+  s: FuzzingRandom
+): Transformer<FieldTypeWithReferencedSchemas, Referencable?> {
+  val noneOrMore = IntInRange(s, 0, 5)
+  return transformerWithRecursion {
+    NullableReferencableFromFieldType(
+      NonNullableReferencableFromFieldType(
+        ReferencablePrimitiveFromPrimitiveType(s),
+        noneOrMore,
+        RawEntityFromSchema(
+          midSizedAlphaNumericString(s),
+          it,
+          noneOrMore,
+          RandomLong(s),
+          RandomLong(s)
+        ),
+        dummyReference(s)
+      ),
+      RandomBoolean(s)
     )
   }
 }
@@ -75,9 +103,8 @@ fun referencableFieldValueFromFieldTypeDbCompatible(
   // Empty collection in inline entities are not stored in the database.
   val oneOrMore = IntInRange(s, 1, 5)
   return transformerWithRecursion {
-    ReferencableFromFieldType(
-      // Turn off unicode for text field, due to b/182713034.
-      ReferencablePrimitiveFromPrimitiveType(s, unicode = false),
+    NonNullableReferencableFromFieldType(
+      ReferencablePrimitiveFromPrimitiveType(s, unicode = true),
       oneOrMore,
       RawEntityFromSchema(
         midSizedAlphaNumericString(s),
@@ -106,7 +133,7 @@ fun freeEntityGenerator(s: FuzzingRandom): Generator<CrdtEntity> {
       collectionFields = SetOf(midSizedAlphaNumericString(s), noneOrMore),
       collectionSize = noneOrMore,
       fieldType = FieldTypeGenerator(s, freeSchemaGenerator(s)),
-      fieldValue = freeReferencableFromFieldType(s),
+      fieldValue = freeNonNullableReferencableFromFieldType(s),
       creationTimestamp = RandomLong(s),
       expirationTimestamp = RandomLong(s),
       id = midSizedAlphaNumericString(s)

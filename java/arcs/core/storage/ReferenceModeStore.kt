@@ -11,6 +11,7 @@
 
 package arcs.core.storage
 
+import arcs.core.analytics.Analytics
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtData
@@ -47,8 +48,8 @@ import arcs.core.util.Result
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
 import arcs.core.util.computeNotNull
-import arcs.core.util.nextVersionMapSafeString
 import arcs.core.util.nextSafeRandomLong
+import arcs.core.util.nextVersionMapSafeString
 import arcs.flags.BuildFlags
 import kotlin.properties.Delegates
 import kotlinx.coroutines.CoroutineScope
@@ -93,7 +94,8 @@ class ReferenceModeStore private constructor(
   val backingStore: DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>,
   private val scope: CoroutineScope,
   private val devTools: DevToolsForRefModeStore?,
-  private val time: Time
+  private val time: Time,
+  private val analytics: Analytics
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
   // TODO(#5551): Consider including a hash of the storage key in log prefix.
   private val log = TaggedLog { "ReferenceModeStore" }
@@ -399,6 +401,7 @@ class ReferenceModeStore private constructor(
   }
 
   private suspend fun handlePendingReferenceTimeout(proxyMessage: RefModeProxyMessage) {
+    analytics.logPendingReferenceTimeout()
     // If the queued+blocked send item times out (likely due to missing data in
     // the backing-store), assume that the backing store is corrupted and
     // clear-out the collection store before re-attempting the sync.
@@ -543,7 +546,8 @@ class ReferenceModeStore private constructor(
             when (op) {
               is CrdtSet.Operation.Remove<*> -> versions.remove(op.removed)
               is CrdtSet.Operation.Clear<*> -> versions.clear()
-              is CrdtSet.Operation.FastForward<*> -> versions.keys.removeAll(op.removed)
+              is CrdtSet.Operation.FastForward<*> ->
+                versions.keys.removeAll(op.removed.map { it.id })
             }
           }
         is ProxyMessage.ModelUpdate -> {
@@ -884,7 +888,8 @@ class ReferenceModeStore private constructor(
       driverFactory: DriverFactory,
       writeBackProvider: WriteBackProvider,
       devTools: DevToolsForStorage?,
-      time: Time
+      time: Time,
+      analytics: Analytics
     ): ReferenceModeStore {
       val refableOptions =
         requireNotNull(
@@ -937,7 +942,8 @@ class ReferenceModeStore private constructor(
         backingStore,
         scope,
         devTools?.forRefModeStore(options),
-        time
+        time,
+        analytics
       ).also { refModeStore ->
         // Since `on` is a suspending method, we need to setup both the container store callback and
         // the backing store callback here in this create method, which is inside of a coroutine.

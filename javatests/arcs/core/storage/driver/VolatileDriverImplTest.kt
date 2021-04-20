@@ -14,6 +14,7 @@ package arcs.core.storage.driver
 import arcs.core.common.ArcId
 import arcs.core.storage.DriverReceiver
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.driver.volatiles.VolatileDriver
 import arcs.core.storage.driver.volatiles.VolatileDriverImpl
 import arcs.core.storage.driver.volatiles.VolatileEntry
@@ -80,7 +81,7 @@ class VolatileDriverImplTest {
 
   @Test(expected = IllegalArgumentException::class)
   fun constructor_notVolatileOrRamdiskStorageKey_throws() = runBlockingTest {
-    class NotVolatileKey : StorageKey("notRight") {
+    class NotVolatileKey : StorageKey(StorageKeyProtocol.Dummy) {
       override fun toKeyString(): String = "M'eh"
       override fun childKeyWithComponent(component: String): StorageKey = NotVolatileKey()
     }

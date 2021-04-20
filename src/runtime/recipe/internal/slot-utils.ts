@@ -14,14 +14,14 @@ import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../../arcs-t
 import {Recipe, Particle, Slot, SlotConnection} from './recipe-interface.js';
 
 // Returns all possible slot candidates, sorted by "quality"
-export function findAllSlotCandidates(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, arc) {
+export function findAllSlotCandidates(particle: Particle, slotSpec: ConsumeSlotConnectionSpec, arcInfo) {
   const slotConn = particle.getSlandleConnectionByName(slotSpec.name);
   return {
     // Note: during manfiest parsing, target slot is only set in slot connection, if the slot exists in the recipe.
     // If this slot is internal to the recipe, it has the sourceConnection set to the providing connection
     // (and hence the consuming connection is considered connected already). Otherwise, this may only be a remote slot.
     local: !slotConn || !slotConn.targetSlot ? _findSlotCandidates(particle, slotSpec, particle.recipe.slots) : [],
-    remote: _findSlotCandidates(particle, slotSpec, arc.peh.slotComposer.getAvailableContexts())
+    remote: _findSlotCandidates(particle, slotSpec, [...arcInfo.slotContainers, ...arcInfo.activeRecipe.slots])
   };
 }
 

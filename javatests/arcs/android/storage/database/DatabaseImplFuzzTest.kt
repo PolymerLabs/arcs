@@ -20,6 +20,7 @@ import arcs.android.storage.database.testutil.SmallIntegerIdGenerator
 import arcs.android.util.testutil.AndroidLogRule
 import arcs.core.data.SchemaRegistry
 import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.database.DatabaseConfig
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.DummyStorageKeyManager
 import arcs.core.testutil.runFuzzTest
@@ -48,7 +49,8 @@ class DatabaseImplFuzzTest {
     database = DatabaseImpl(
       ApplicationProvider.getApplicationContext(),
       DummyStorageKeyManager(),
-      "test.sqlite3"
+      "test.sqlite3",
+      databaseConfigGetter = { DatabaseConfig() }
     )
     StorageKeyManager.GLOBAL_INSTANCE.addParser(DummyStorageKey)
   }

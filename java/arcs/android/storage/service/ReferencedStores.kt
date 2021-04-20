@@ -12,6 +12,7 @@
 package arcs.android.storage.service
 
 import androidx.annotation.VisibleForTesting
+import arcs.core.analytics.Analytics
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
@@ -38,7 +39,8 @@ class ReferencedStores(
   private val driverFactory: () -> DriverFactory,
   private val writeBackProvider: WriteBackProvider,
   private val devToolsProxy: DevToolsProxyImpl?,
-  private val time: Time
+  private val time: Time,
+  private val analytics: Analytics = Analytics.defaultAnalytics
 ) {
 
   private val mutex = Mutex()
@@ -58,7 +60,8 @@ class ReferencedStores(
         driverFactory(),
         writeBackProvider,
         devToolsProxy,
-        time
+        time,
+        analytics
       )
       ReferencedStore(newStore, atomic(0))
     }

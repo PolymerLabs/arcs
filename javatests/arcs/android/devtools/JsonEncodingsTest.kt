@@ -18,6 +18,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.RawReference
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.util.JsonValue.JsonArray
 import arcs.core.util.JsonValue.JsonBoolean
@@ -74,7 +75,7 @@ class JsonEncodingsTest {
     ).isEqualTo(
       JsonObject(
         "id" to JsonString("a:b:c"),
-        "storageKey" to JsonString("dummy://foo"),
+        "storageKey" to JsonString("${StorageKeyProtocol.Dummy.protocol}foo"),
         "version" to JsonObject("foo" to JsonNumber(1.toDouble())),
         "creationTimestamp" to JsonNumber(100.toDouble()),
         "expirationTimestamp" to JsonNumber(200.toDouble()),
@@ -144,7 +145,7 @@ class JsonEncodingsTest {
           "nickname" to JsonString("Ollie"),
           "pet" to JsonObject(
             "id" to JsonString("ollie:buddy"),
-            "storageKey" to JsonString("dummy://foo"),
+            "storageKey" to JsonString("${StorageKeyProtocol.Dummy.protocol}foo"),
             "version" to JsonObject("foo" to JsonNumber(1.toDouble())),
             "creationTimestamp" to JsonNumber(100.toDouble()),
             "expirationTimestamp" to JsonNumber(200.toDouble()),

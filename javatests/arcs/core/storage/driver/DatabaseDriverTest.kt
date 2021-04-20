@@ -27,6 +27,7 @@ import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
@@ -94,7 +95,7 @@ class DatabaseDriverTest {
     }.also {
       assertThat(it).hasMessageThat()
         .isEqualTo(
-          "StorageKey of type ramdisk not supported by DatabaseDriver."
+          "StorageKey of type ${StorageKeyProtocol.RamDisk} not supported by DatabaseDriver."
         )
     }
   }

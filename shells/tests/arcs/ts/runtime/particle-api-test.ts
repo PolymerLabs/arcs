@@ -61,14 +61,15 @@ describe('particle-api', () => {
       '*': `defineParticle(({UiParticle}) => class extends UiParticle {});`,
     });
     const runtime = new Runtime({loader, context});
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', planName: 'ApiTestRecipe'}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', planName: 'ApiTestRecipe'});
+    const arc = runtime.getArcById(arcInfo.id);
     await arc.idle;
 
-    assert.lengthOf(arc.activeRecipe.particles, 1);
-    const [transformationParticle] = arc.activeRecipe.particles;
+    assert.lengthOf(arcInfo.activeRecipe.particles, 1);
+    const [transformationParticle] = arcInfo.activeRecipe.particles;
 
-    assert.lengthOf(arc.recipeDeltas, 1);
-    const [innerArc] = arc.findInnerArcs(transformationParticle);
+    assert.lengthOf(arcInfo.recipeDeltas, 1);
+    const [innerArc] = arcInfo.findInnerArcs(transformationParticle);
 
     const sessionId = innerArc.idGenerator.currentSessionIdForTesting;
     assert.strictEqual(innerArc.activeRecipe.toString(), `recipe

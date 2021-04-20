@@ -30,7 +30,7 @@ import {mockFirebaseStorageKeyOptions} from '../storage/testing/mock-firebase.js
 import {Flags} from '../flags.js';
 import {TupleType, CollectionType, EntityType, TypeVariable, Schema, BinaryExpression,
         FieldNamePrimitive, NumberPrimitive, PrimitiveField} from '../../types/lib-types.js';
-import {handleForStoreInfo, CollectionEntityType} from '../storage/storage.js';
+import {CollectionEntityType} from '../storage/storage.js';
 import {Ttl} from '../capabilities.js';
 import {StoreInfo} from '../storage/store-info.js';
 import {deleteFieldRecursively} from '../../utils/lib-utils.js';
@@ -1986,7 +1986,8 @@ recipe SomeRecipe
     const manifest = await runtime.parseFile('./the.manifest', {loader});
     const storageStub = manifest.findStoreByName('Store0') as StoreInfo<CollectionEntityType>;
     assert(storageStub);
-    const handle = await handleForStoreInfo(storageStub, {...manifest, storageService});
+    await runtime.storageService.getActiveStore(storageStub);
+    const handle = await runtime.storageService.handleForStoreInfo(storageStub, manifest.generateID(), manifest.idGenerator);
 
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [
       {
@@ -2041,7 +2042,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     `);
     const storeInfo = manifest.findStoreByName('Store0') as StoreInfo<CollectionEntityType>;
     assert(storeInfo);
-    const handle = await handleForStoreInfo(storeInfo, {...manifest, storageService});
+    const handle = await runtime.storageService.handleForStoreInfo(storeInfo, manifest.generateID(), manifest.idGenerator);
 
     // TODO(shans): address as part of storage refactor
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [
@@ -2065,7 +2066,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       }
     `);
     const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, {...manifest, storageService});
+    const handle = await runtime.storageService.handleForStoreInfo(store, manifest.generateID(), manifest.idGenerator);
     const entities = (await handle.toList()).map(Entity.serialize);
     assert.lengthOf(entities, 2);
 
@@ -2098,7 +2099,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       }
     `);
     const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, {...manifest, storageService});
+    const handle = await runtime.storageService.handleForStoreInfo(store, manifest.generateID(), manifest.idGenerator);
     const entities = (await handle.toList()).map(Entity.serialize);
     assert.lengthOf(entities, 2);
 
@@ -2134,7 +2135,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       }
     `);
     const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, {...manifest, storageService});
+    const handle = await runtime.storageService.handleForStoreInfo(store, manifest.generateID(), manifest.idGenerator);
     const entities = (await handle.toList()).map(Entity.serialize);
     assert.lengthOf(entities, 2);
 
@@ -2160,7 +2161,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       }
     `);
     const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, {...manifest, storageService});
+    const handle = await runtime.storageService.handleForStoreInfo(store, manifest.generateID(), manifest.idGenerator);
     const entities = (await handle.toList()).map(e => Entity.serialize(e).rawData);
 
     assert.deepStrictEqual(entities, [
@@ -2175,7 +2176,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     const check = async (manifestStr, msg) => {
       const manifest = await runtime.parse(manifestStr);
       const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-      const handle = await handleForStoreInfo(store, {...manifest, storageService});
+      const handle = await runtime.storageService.handleForStoreInfo(store, manifest.generateID(), manifest.idGenerator);
       await assertThrowsAsync(async () => handle.toList(), msg);
     };
 

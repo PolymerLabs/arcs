@@ -384,7 +384,7 @@ abstract class AbstractArcHost(
     // Create the handles and register them with the ParticleContext. On construction, readable
     // handles notify their underlying StorageProxy's that they will be synced at a later
     // time by the ParticleContext state machine.
-    particle.createAndSetHandles(runningArc.handleManager, spec, immediateSync = false)
+    particle.createAndSetHandles(partition, runningArc.handleManager, spec, immediateSync = false)
       .forEach { handle ->
         val onError: (Exception) -> Unit = { error ->
           context.arcState = ArcState.errorWith(error)

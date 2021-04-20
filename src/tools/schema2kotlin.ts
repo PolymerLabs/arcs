@@ -7,6 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+import minimist from 'minimist';
 import {EntityGenerator, NodeAndGenerator, Schema2Base} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
@@ -16,8 +17,6 @@ import {CollectionType, EntityType, Type, TypeVariable} from '../types/lib-types
 import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
 import {Direction} from '../runtime/arcs-types/enums.js';
 import {KotlinEntityGenerator, interfaceName} from './kotlin-entity-generator.js';
-
-// TODO(b/182330900): use the type lattice to generate interfaces
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -93,7 +92,9 @@ ${imports.join('\n')}
 }
 
 export class GeneratorBase {
-  constructor(readonly isWasm: boolean, readonly namespace: string) {}
+  isEdgeParticle = false;
+
+  constructor(readonly opts: minimist.ParsedArgs, readonly namespace: string) {}
 
   /**
    * Returns the handle interface type, e.g. WriteSingletonHandle,
@@ -109,7 +110,7 @@ export class GeneratorBase {
     }
 
     const containerType = this.handleContainerType(connection.type);
-    if (this.isWasm) {
+    if (this.opts.wasm) {
       const topLevelNodes = SchemaNode.topLevelNodes(connection, nodes);
       if (topLevelNodes.length !== 1) throw new Error('Wasm does not support handles of tuples');
       const entityType = topLevelNodes[0].humanName(connection);
@@ -122,7 +123,29 @@ export class GeneratorBase {
     if (queryType) {
       typeArguments.push(queryType);
     }
-    return `arcs.sdk.${handleMode}${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, {startIndent: 4})}>`;
+
+    const edge = this.isEdgeParticle ? 'Edge' : '';
+    return `arcs.sdk.${edge}${handleMode}${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, {startIndent: 4})}>`;
+  }
+
+  /**
+   * Similar to [handleInterfaceType], but generates the type for a delegated edge handle. It will not
+   * have the read/write component in the name and will always use the 'reads writes' generic typing.
+   *
+   * For example, if handleInterfaceType returns 'arcs.sdk.EdgeReadSingletonHandle<MyEntity>', this will
+   * return 'arcs.sdk.EdgeSingletonHandle<MyEntity, MyEntitySlice>'.
+   */
+  protected edgeDelegateType(connection: HandleConnectionSpec, nodes: SchemaNode[]) {
+    const direction = connection.direction;
+    connection.direction = 'reads writes';
+    const containerType = this.handleContainerType(connection.type);
+    const typeArguments = this.handleTypeArguments(connection, nodes, /* particleScope = */ true);
+    const queryType = this.getQueryType(connection);
+    if (queryType) {
+      typeArguments.push(queryType);
+    }
+    connection.direction = direction;
+    return `arcs.sdk.Edge${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, {startIndent: 4})}>`;
   }
 
   protected async handleSpec(handleName: string, connection: HandleConnectionSpec, nodes: SchemaNode[]): Promise<string> {
@@ -182,8 +205,7 @@ export class GeneratorBase {
       res.push(generateInnerType(type, false));
     }
     if (connection.direction.includes('writes')) {
-      // TODO(b/182330900): temporary state; will flip to true when type slicing logic is added
-      res.push(generateInnerType(type, false));
+      res.push(generateInnerType(type, true));
     }
     return res;
   }
@@ -233,23 +255,42 @@ export class GeneratorBase {
 
 export class KotlinParticleGenerator extends GeneratorBase {
   constructor(parent: Schema2Kotlin, readonly particle: ParticleSpec, readonly nodeGenerators: NodeAndGenerator[]) {
-    super(parent.opts.wasm, parent.namespace);
+    super(parent.opts, parent.namespace);
+    this.isEdgeParticle = this.particle.getAnnotation('edge') != null;
   }
 
   async generateParticleClass(): Promise<string> {
+    const classHeader = this.generateParticleClassHeader();
     const {typeAliases, classes, handleClassDecl} = await this.generateParticleClassComponents();
     return `
 ${typeAliases.join(`\n`)}
 
 @Generated("src/tools/schema2kotlin.ts")
-abstract class Abstract${this.particle.name} : ${this.isWasm ? 'WasmParticleImpl' : 'arcs.sdk.BaseParticle'}() {
-    ${this.isWasm ? '' : 'override '}val handles: Handles = Handles(${this.isWasm ? 'this' : ''})
+${classHeader}
 
     ${ktUtils.indentFollowing(classes, 1)}
 
     ${handleClassDecl}
 }
 `;
+  }
+
+  generateParticleClassHeader() {
+    if (this.opts.wasm) {
+      return `abstract class Abstract${this.particle.name} : WasmParticleImpl() {
+    val handles: Handles = Handles(this)`;
+    } else if (this.isEdgeParticle) {
+      return `class ${this.particle.name} : arcs.sdk.BaseParticle() {
+    private val edgeHandles = mutableMapOf<String, arcs.sdk.EdgeHandle>()
+    override val handles: Handles = Handles(edgeHandles)
+
+    override fun onReady() {
+      edgeHandles.values.forEach { it.moveToReady() }
+    }`;
+    } else {
+      return `abstract class Abstract${this.particle.name} : arcs.sdk.BaseParticle() {
+    override val handles: Handles = Handles()`;
+    }
   }
 
   async generateParticleClassComponents() {
@@ -261,7 +302,7 @@ abstract class Abstract${this.particle.name} : ${this.isWasm ? 'WasmParticleImpl
     for (const nodeGenerator of this.nodeGenerators) {
       const kotlinGenerator = nodeGenerator.generator as KotlinEntityGenerator;
       classes.push(await kotlinGenerator.generateClasses());
-      typeAliases.push(...kotlinGenerator.generateAliases(this.particle.name));
+      typeAliases.push(...kotlinGenerator.generateAliases(this.particle.name, this.isEdgeParticle ? '' : 'Abstract'));
     }
 
     const nodes = this.nodeGenerators.map(ng => ng.node);
@@ -269,26 +310,49 @@ abstract class Abstract${this.particle.name} : ${this.isWasm ? 'WasmParticleImpl
       const handleName = connection.name;
       const handleInterfaceType = this.handleInterfaceType(connection, nodes, /* particleScope= */ true);
       const entityNames = SchemaNode.topLevelNodes(connection, nodes).map(node => node.humanName(connection));
-      if (this.isWasm) {
+      if (this.opts.wasm) {
         if (entityNames.length !== 1) throw new Error('Wasm does not support handles of tuples');
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityNames[0]})`);
       } else {
         specDecls.push(`"${handleName}" to ${ktUtils.setOf(entityNames)}`);
-        handleDecls.push(`val ${handleName}: ${handleInterfaceType} by handles`);
+        if (this.isEdgeParticle) {
+          // This can be written as a single initialiser statement, but that hits a compiler bug: https://youtrack.jetbrains.com/issue/KT-45609
+          handleDecls.push(`val ${handleName}: ${handleInterfaceType}
+        init {
+            ${this.edgeDelegateType(connection, nodes)}().let {
+                ${handleName} = object : ${handleInterfaceType} by it {}
+                edgeHandles.set("${handleName}", it)
+            }
+        }
+        `);
+        } else {
+          handleDecls.push(`val ${handleName}: ${handleInterfaceType} by handles`);
+        }
       }
     }
 
-    const header = this.isWasm
-      ? `${handleDecls.length ? '' : '@Suppress("UNUSED_PARAMETER")\n    '}class Handles(
+    let header: string;
+    let footer = '';
+    if (this.opts.wasm) {
+      header = `${handleDecls.length ? '' : '@Suppress("UNUSED_PARAMETER")\n    '}class Handles(
         particle: WasmParticleImpl
-    )`
-      : `class Handles : arcs.sdk.HandleHolderBase(
+    )`;
+    } else {
+      const arg = this.isEdgeParticle ? '(val edgeHandles: MutableMap<String, arcs.sdk.EdgeHandle>)' : '';
+      header = `class Handles${arg} : arcs.sdk.HandleHolderBase(
         "${this.particle.name}",
         mapOf(${ktUtils.joinWithIndents(specDecls, {startIndent: 4, numberOfIndents: 3})})
     )`;
-
+      if (this.isEdgeParticle) {
+        footer = `
+        override fun setHandle(handleName: String, handle: arcs.sdk.Handle) {
+          super.setHandle(handleName, handle)
+          edgeHandles.get(handleName)!!.handle = handle
+        }`;
+      }
+    }
     const handleClassDecl = `${header} {
-        ${ktUtils.indentFollowing(handleDecls, 2)}
+        ${ktUtils.indentFollowing(handleDecls, 2)}${footer}
     }`;
 
     return {typeAliases, classes, handleClassDecl};
@@ -297,11 +361,10 @@ abstract class Abstract${this.particle.name} : ${this.isWasm ? 'WasmParticleImpl
 
 class KotlinTestHarnessGenerator extends GeneratorBase {
   constructor(parent: Schema2Kotlin, readonly particle: ParticleSpec, readonly nodes: SchemaNode[]) {
-    super(parent.opts.wasm, parent.namespace);
+    super(parent.opts, parent.namespace);
   }
 
   async generateTestHarness(): Promise<string> {
-    const particleName = this.particle.name;
     const handleDecls: string[] = [];
     const handleSpecs: string[] = [];
 
@@ -319,7 +382,7 @@ class KotlinTestHarnessGenerator extends GeneratorBase {
 
     return `
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-class ${particleName}TestHarness<P : Particle>(
+class ${this.particle.name}TestHarness<P : Particle>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
     ${handleSpecs.join(',\n    ')}

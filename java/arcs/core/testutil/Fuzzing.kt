@@ -254,8 +254,15 @@ open class SeededRandom(val seed: Long) : FuzzingRandom {
   override fun nextBoolean(): Boolean = random.nextBoolean()
   override fun nextByte(): Byte = random.nextBytes(1)[0]
   override fun nextShort(): Short = random.nextInt(Short.MAX_VALUE.toInt()).toShort()
-  override fun nextChar(): Char = nextByte().toChar()
   override fun nextFloat(): Float = random.nextFloat()
+
+  override fun nextChar(): Char {
+    // Valid UTF-16 code points that don't have complex encodings lie in the range U+0000 to U+D7FF.
+    // Exclude the NULL character U+0000 too.
+    // See b/182713034 for more details about how this range was chosen.
+    return nextInRange(0x0001, 0xD7FF).toChar()
+  }
+
   fun printSeed() {
     println("Test was run with SeededRandom seed $seed")
   }
@@ -271,6 +278,17 @@ class DateSeededRandom : SeededRandom(System.currentTimeMillis())
  */
 class Value<T>(val value: T) : Generator<T> {
   override operator fun invoke(): T = value
+}
+
+/**
+ * A [Generator] that produces a boolean.
+ */
+class RandomBoolean(
+  val s: FuzzingRandom
+) : Generator<Boolean> {
+  override fun invoke(): Boolean {
+    return s.nextBoolean()
+  }
 }
 
 /**

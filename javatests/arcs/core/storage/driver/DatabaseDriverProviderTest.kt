@@ -20,6 +20,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -95,7 +96,7 @@ class DatabaseDriverProviderTest {
   fun willSupport_returnsFalse_whenNotDatabaseKey() = runBlockingTest {
     val ramdisk = RamDiskStorageKey("foo")
     val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
-    val other = object : StorageKey("outofnowhere") {
+    val other = object : StorageKey(StorageKeyProtocol.Dummy) {
       override fun toKeyString(): String = "something"
       override fun childKeyWithComponent(component: String): StorageKey = this
     }

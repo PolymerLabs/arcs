@@ -35,7 +35,9 @@ import arcs.core.entity.testutil.FixtureEntity
 import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.database.DatabaseClient
+import arcs.core.storage.database.DatabaseConfig
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseOp
 import arcs.core.storage.database.ReferenceWithVersion
@@ -91,7 +93,8 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
     database = DatabaseImpl(
       ApplicationProvider.getApplicationContext(),
       DummyStorageKeyManager(),
-      "test.sqlite3"
+      "test.sqlite3",
+      databaseConfigGetter = { DatabaseConfig() }
     )
     db = database.writableDatabase
     StorageKeyManager.GLOBAL_INSTANCE.addParser(DummyStorageKey)
@@ -385,7 +388,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
       createEntityStorageKeyId(key, "incorrect-entity-id")
     }
     assertThat(exception).hasMessageThat().isEqualTo(
-      "Expected storage key dummy://key to have entity ID incorrect-entity-id but was " +
+      "Expected storage key ${dummyProtocol}key to have entity ID incorrect-entity-id but was " +
         "correct-entity-id."
     )
   }
@@ -1245,7 +1248,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
     val expectedCollection = DatabaseData.Collection(
       values = setOf(),
       schema = schema,
-      databaseVersion = 2,
+      databaseVersion = 3,
       versionMap = VersionMap(DATABASE_CRDT_ACTOR to 2)
     )
     assertThat(database.getCollection(collectionKey, schema)).isEqualTo(expectedCollection)
@@ -1424,7 +1427,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
         ReferenceWithVersion(reference2, VersionMap(DATABASE_CRDT_ACTOR to 2))
       ),
       schema = schema,
-      databaseVersion = 2,
+      databaseVersion = 3,
       versionMap = VersionMap(DATABASE_CRDT_ACTOR to 2)
     )
     assertThat(database.getCollection(collectionKey, schema)).isEqualTo(expectedCollection)
@@ -1722,14 +1725,14 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
       database.getCollection(entityKey, schema)
     }
     assertThat(exception1).hasMessageThat().isEqualTo(
-      "Expected storage key dummy://entity to be a Collection but was a Entity."
+      "Expected storage key ${dummyProtocol}entity to be a Collection but was a Entity."
     )
 
     val exception2 = assertFailsWith<IllegalArgumentException> {
       database.getSingleton(entityKey, schema)
     }
     assertThat(exception2).hasMessageThat().isEqualTo(
-      "Expected storage key dummy://entity to be a Singleton but was a Entity."
+      "Expected storage key ${dummyProtocol}entity to be a Singleton but was a Entity."
     )
   }
 
@@ -1749,14 +1752,14 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
       database.getSingleton(collectionKey, schema)
     }
     assertThat(exception1).hasMessageThat().isEqualTo(
-      "Expected storage key dummy://collection to be a Singleton but was a Collection."
+      "Expected storage key ${dummyProtocol}collection to be a Singleton but was a Collection."
     )
 
     val exception2 = assertFailsWith<IllegalArgumentException> {
       database.getEntity(collectionKey, schema)
     }
     assertThat(exception2).hasMessageThat().isEqualTo(
-      "Expected storage key dummy://collection to be an Entity but was a Collection."
+      "Expected storage key ${dummyProtocol}collection to be an Entity but was a Collection."
     )
   }
 
@@ -1776,14 +1779,14 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
       database.getCollection(singletonKey, schema)
     }
     assertThat(exception1).hasMessageThat().isEqualTo(
-      "Expected storage key dummy://singleton to be a Collection but was a Singleton."
+      "Expected storage key ${dummyProtocol}singleton to be a Collection but was a Singleton."
     )
 
     val exception2 = assertFailsWith<IllegalArgumentException> {
       database.getEntity(singletonKey, schema)
     }
     assertThat(exception2).hasMessageThat().isEqualTo(
-      "Expected storage key dummy://singleton to be an Entity but was a Singleton."
+      "Expected storage key ${dummyProtocol}singleton to be an Entity but was a Singleton."
     )
   }
 
@@ -1908,7 +1911,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
         )
       )
     assertThat(database.getCollection(collectionKey, schema))
-      .isEqualTo(collection.copy(values = setOf()))
+      .isEqualTo(collection.copy(values = setOf(), databaseVersion = 2))
   }
 
   @Test
@@ -2019,7 +2022,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
       )
     )
     assertThat(database.getCollection(collectionKey, schema))
-      .isEqualTo(collection.copy(values = newValues))
+      .isEqualTo(collection.copy(values = newValues, databaseVersion = 2))
   }
 
   @Test
@@ -2610,7 +2613,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
       )
     )
     assertThat(database.getCollection(collectionKey, schema))
-      .isEqualTo(collection.copy(values = newValues))
+      .isEqualTo(collection.copy(values = newValues, databaseVersion = 2))
 
     // Check the expired entity ref is gone (there will be IDs for referenced/inner entities too).
     val entityIds = readEntityRefsEntityId()
@@ -2709,7 +2712,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
 
     // Check the singleton now contains null.
     assertThat(database.getSingleton(singletonKey, schema))
-      .isEqualTo(singleton.copy(value = null))
+      .isEqualTo(singleton.copy(value = null, databaseVersion = 2))
 
     // Check the corrent clients were notified.
     singletonClient.eventMutex.withLock {
@@ -2728,7 +2731,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
         RawReference("entity", backingKey, VersionMap("ref" to 1)),
         VersionMap("actor" to 2)
       ),
-      databaseVersion = FIRST_VERSION_NUMBER + 1
+      databaseVersion = FIRST_VERSION_NUMBER + 2
     )
     database.insertOrUpdate(singletonKey, singleton2)
 
@@ -2837,7 +2840,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
 
     // Check the collection is empty.
     assertThat(database.getCollection(collectionKey, schema))
-      .isEqualTo(collection.copy(values = setOf()))
+      .isEqualTo(collection.copy(values = setOf(), databaseVersion = 2))
 
     // Check unused values have been deleted from the global table as well.
     assertTableIsEmpty("field_values")
@@ -2889,7 +2892,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
     database.removeAllEntities()
 
     assertThat(database.getCollection(collectionKey, schema))
-      .isEqualTo(collection.copy(values = emptySet()))
+      .isEqualTo(collection.copy(values = emptySet(), databaseVersion = 2))
   }
 
   @Test
@@ -2959,7 +2962,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
 
     // Check the collection only contain the non-expired reference.
     assertThat(database.getCollection(collectionKey, schema))
-      .isEqualTo(collection.copy(values = setOf(okRef)))
+      .isEqualTo(collection.copy(values = setOf(okRef), databaseVersion = 2))
 
     // Check the expired entity ref is gone.
     assertThat(readEntityRefsEntityId()).containsExactly("entity2")
@@ -3039,10 +3042,70 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
 
     // Only entity 2 and 4 are left in the collection.
     assertThat(database.getCollection(collectionKey, schema))
-      .isEqualTo(dbCollection(backingKey, schema, entity2, entity4))
+      .isEqualTo(dbCollection(backingKey, schema, entity2, entity4).copy(databaseVersion = 2))
 
     // Check that rerunning the method returns zero (entities are not double counted).
     assertThat(database.removeEntitiesHardReferencing(foreignKey, "refId")).isEqualTo(0)
+  }
+
+  @Test
+  fun removeEntitiesReferencing_inlineField() = runBlockingTest {
+    /*
+     * Regression test for b/184594207: this test carefully reproduce a setup where a field_value
+     * entry is pointing to a inline entity, and has the same value as another field_value entry
+     * pointing to a foreign reference. When modifying this test, please be careful to maintain this
+     * property.
+     */
+    newSchema("child")
+    newSchema("inlineHash")
+    val schema = newSchema(
+      "hash",
+      SchemaFields(
+        singletons = mapOf(
+          "ref" to FieldType.EntityRef("child"),
+          "inline" to FieldType.InlineEntity("inlineHash")
+        ),
+        collections = mapOf()
+      )
+    )
+    val collectionKey = DummyStorageKey("collection")
+    val backingKey = DummyStorageKey("backing")
+    val entity1Key = DummyStorageKey("backing/entity1")
+    val entity2Key = DummyStorageKey("backing/entity2")
+    val foreignKey = DummyStorageKey("foreign")
+
+    // The ref field of this entity points to row #2 in entity_refs.
+    val entity1 = RawEntity(
+      "entity1",
+      mapOf(
+        "ref" to RawReference("refId", foreignKey, null, isHardReference = true),
+        "inline" to RawEntity("ie1")
+      )
+    ).toDatabaseData(schema)
+    // The inline field of this entity points to row #2 in storage_keys..
+    val entity2 = RawEntity(
+      "entity2",
+      mapOf(
+        "ref" to RawReference("refId2", foreignKey, null, isHardReference = true),
+        "inline" to RawEntity("ie2")
+      )
+    ).toDatabaseData(schema)
+    val collection = dbCollection(backingKey, schema, entity1, entity2)
+
+    database.insertOrUpdate(entity2Key, entity2)
+    database.insertOrUpdate(entity1Key, entity1)
+    database.insertOrUpdate(collectionKey, collection)
+
+    assertThat(database.removeEntitiesHardReferencing(foreignKey, "refId")).isEqualTo(1)
+    assertThat(database.getAllHardReferenceIds(foreignKey)).doesNotContain("refId")
+
+    // Entities 1 should be cleared.
+    assertThat(database.getEntity(entity1Key, schema)).isEqualTo(entity1.nulled())
+    assertThat(database.getEntity(entity2Key, schema)).isEqualTo(entity2)
+
+    // Only entity 2 is left in the collection.
+    assertThat(database.getCollection(collectionKey, schema))
+      .isEqualTo(dbCollection(backingKey, schema, entity2).copy(databaseVersion = 2))
   }
 
   @Test
@@ -3165,7 +3228,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
     assertThat(database.getAllHardReferenceIds(foreignKey)).doesNotContain("refId")
 
     assertThat(database.getCollection(collectionKey, schema))
-      .isEqualTo(collection.copy(values = setOf()))
+      .isEqualTo(collection.copy(values = setOf(), databaseVersion = 3))
   }
 
   @Test
@@ -3914,7 +3977,8 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
       ApplicationProvider.getApplicationContext(),
       DummyStorageKeyManager(),
       "test.sqlite3",
-      persistent = false
+      persistent = false,
+      { DatabaseConfig() }
     )
 
     assertThat(inMemoryDatabase.getSize()).isGreaterThan(0)
@@ -4074,6 +4138,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
       ApplicationProvider.getApplicationContext(),
       DummyStorageKeyManager(),
       "test.sqlite3",
+      databaseConfigGetter = { DatabaseConfig() },
       onDatabaseClose = {
         onCloseCalled = true
       }
@@ -4090,6 +4155,34 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
     // Remove final client.
     database.removeClient(client1)
     assertThat(onCloseCalled).isTrue()
+  }
+
+  @Test
+  fun fromFieldType_handlesInlineType() = runBlockingTest {
+    val inline = FieldType.InlineEntity("inlineHash")
+    assertThat(FieldClass.fromFieldType(inline)).isEqualTo(FieldClass.InlineEntity)
+  }
+
+  @Test
+  fun fromFieldType_handlesNullableOfInlineType() = runBlockingTest {
+    BuildFlags.NULLABLE_VALUE_SUPPORT = true
+    newSchema(
+      "inlineHash",
+      SchemaFields(
+        singletons = mapOf("text" to FieldType.Text),
+        collections = emptyMap()
+      )
+    )
+    val inline = FieldType.InlineEntity("inlineHash").nullable()
+    assertThat(FieldClass.fromFieldType(inline)).isEqualTo(FieldClass.InlineEntity)
+  }
+
+  @Test
+  fun fromFieldType_throwsOnTuple() = runBlockingTest {
+    val tuple = FieldType.Tuple(FieldType.Number, FieldType.Number)
+    val exception = assertFailsWith<NotImplementedError> {
+      FieldClass.fromFieldType(tuple)
+    }
   }
 
   /** Returns a list of all the rows in the 'fields' table. */
@@ -4205,7 +4298,7 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
   companion object {
     @JvmStatic
     @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-    fun params() = ParameterizedBuildFlags.of("STORAGE_STRING_REDUCTION").toList()
+    fun params() = ParameterizedBuildFlags.of("STORAGE_KEY_REDUCTION").toList()
 
     /** The first free Type ID after all primitive types have been assigned. */
     private const val FIRST_ENTITY_TYPE_ID = DatabaseImpl.REFERENCE_TYPE_SENTINEL + 1
@@ -4270,6 +4363,8 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
         collections = emptyMap()
       )
     )
+
+    private val dummyProtocol get() = StorageKeyProtocol.Dummy.protocol
   }
 }
 
