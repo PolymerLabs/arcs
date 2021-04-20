@@ -161,10 +161,13 @@ class WriteOnlyStorageProxyImplTest {
   }
 
   @Test
-  fun storageEventReadyImmediatelyCalled() = runTest {
+  fun storageEventReadyCalledAfterMaybeInitiateSync() = runTest {
     val proxy = mockProxy()
     val callback: () -> Unit = mock()
     proxy.registerForStorageEvents(callbackId) { callback() }
+    proxy.prepareForSync()
+    proxy.maybeInitiateSync()
+    scheduler.waitForIdle()
     verify(callback).invoke()
   }
 
