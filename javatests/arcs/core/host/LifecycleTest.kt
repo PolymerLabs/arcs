@@ -43,21 +43,20 @@ import org.junit.runners.JUnit4
 
 // TODO: test desync/resync
 
-@RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-class LifecycleTest {
+open class LifecycleTestBase(vararg val particles: ParticleRegistration) {
   @get:Rule
   val log = LogRule()
 
-  private lateinit var schedulerProvider: SchedulerProvider
-  private lateinit var scheduler: Scheduler
-  private lateinit var testHost: TestingHost
-  private lateinit var hostRegistry: HostRegistry
-  private lateinit var handleManagerFactory: HandleManagerFactory
-  private lateinit var handleManagerImpl: HandleManagerImpl
-  private lateinit var allocator: Allocator
+  protected lateinit var schedulerProvider: SchedulerProvider
+  protected lateinit var scheduler: Scheduler
+  protected lateinit var testHost: TestingHost
+  protected lateinit var hostRegistry: HostRegistry
+  protected lateinit var handleManagerFactory: HandleManagerFactory
+  protected lateinit var handleManagerImpl: HandleManagerImpl
+  protected lateinit var allocator: Allocator
 
-  private val testScope = TestCoroutineScope()
+  protected val testScope = TestCoroutineScope()
 
   @Before
   fun setUp() = runBlocking {
@@ -70,21 +69,7 @@ class LifecycleTest {
       testStorageEndpointManager(),
       platformTime = FakeTime()
     )
-    testHost = TestingHost(
-      handleManagerFactory,
-      ::SingleReadHandleParticle.toRegistration(),
-      ::SingleWriteHandleParticle.toRegistration(),
-      ::MultiHandleParticle.toRegistration(),
-      ::PausingParticle.toRegistration(),
-      ::ReadWriteAccessParticle.toRegistration(),
-      ::PipelineProducerParticle.toRegistration(),
-      ::PipelineTransportParticle.toRegistration(),
-      ::PipelineConsumerParticle.toRegistration(),
-      ::UpdateDeltasParticle.toRegistration(),
-      ::FailingReadParticle.toRegistration(),
-      ::FailingWriteParticle.toRegistration(),
-      ::StartupTimeoutParticle.toRegistration()
-    )
+    testHost = TestingHost(handleManagerFactory, *particles)
     hostRegistry = ExplicitHostRegistry().also { it.registerHost(testHost) }
     handleManagerImpl = HandleManagerImpl(
       time = FakeTime(),
@@ -94,7 +79,10 @@ class LifecycleTest {
     )
     allocator = Allocator.create(hostRegistry, handleManagerImpl, testScope)
     testHost.setup()
+    extraSetUp()
   }
+
+  open fun extraSetUp() = Unit
 
   @After
   fun tearDown() = runBlocking {
@@ -105,7 +93,23 @@ class LifecycleTest {
       schedulerProvider.cancelAll()
     }
   }
+}
 
+@RunWith(JUnit4::class)
+class LifecycleTest : LifecycleTestBase(
+  ::SingleReadHandleParticle.toRegistration(),
+  ::SingleWriteHandleParticle.toRegistration(),
+  ::MultiHandleParticle.toRegistration(),
+  ::PausingParticle.toRegistration(),
+  ::ReadWriteAccessParticle.toRegistration(),
+  ::PipelineProducerParticle.toRegistration(),
+  ::PipelineTransportParticle.toRegistration(),
+  ::PipelineConsumerParticle.toRegistration(),
+  ::UpdateDeltasParticle.toRegistration(),
+  ::FailingReadParticle.toRegistration(),
+  ::FailingWriteParticle.toRegistration(),
+  ::StartupTimeoutParticle.toRegistration()
+) {
   // Tests the lifecycle of a particle reading from a read-only handle.
   // The particle just records lifecycle method calls in the `events` field.
   //

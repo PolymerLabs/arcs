@@ -66,6 +66,7 @@ arcs_kt_jvm_test_suite(
 arcs_kt_schema(
     name = "schemas",
     srcs = [
+        "complex_lifecycle.arcs",
         "lifecycle.arcs",
         "person.arcs",
         "reflective.arcs",
@@ -77,6 +78,7 @@ arcs_kt_schema(
 arcs_kt_plan(
     name = "plans",
     srcs = [
+        "complex_lifecycle.arcs",
         "lifecycle.arcs",
         "person.arcs",
         "reflective.arcs",
@@ -156,6 +158,7 @@ arcs_kt_jvm_library(
     name = "particle",
     testonly = 1,
     srcs = [
+        "ComplexLifecycleParticles.kt",
         "LifecycleParticles.kt",
         "NonRelevant.kt",
         "ReadPerson.kt",
