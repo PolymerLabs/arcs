@@ -41,6 +41,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import org.mockito.Mock
+import org.mockito.Mockito.verifyZeroInteractions
 import org.mockito.MockitoAnnotations
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -161,10 +162,14 @@ class WriteOnlyStorageProxyImplTest {
   }
 
   @Test
-  fun storageEventReadyImmediatelyCalled() = runTest {
+  fun storageEventReadyCalledAfterMaybeInitiateSync() = runTest {
     val proxy = mockProxy()
     val callback: () -> Unit = mock()
     proxy.registerForStorageEvents(callbackId) { callback() }
+    verifyZeroInteractions(callback)
+    proxy.prepareForSync()
+    proxy.maybeInitiateSync()
+    scheduler.waitForIdle()
     verify(callback).invoke()
   }
 
