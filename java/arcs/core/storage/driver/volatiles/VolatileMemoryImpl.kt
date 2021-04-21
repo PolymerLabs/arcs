@@ -47,8 +47,7 @@ class VolatileMemoryImpl : VolatileMemory {
 
   override fun countEntities(): Long {
     return entries.values
-      .map { v -> v.data }
-      .filter { it is CrdtEntity || it is CrdtEntity.Data }
+      .filter { it.data is CrdtEntity || it.data is CrdtEntity.Data }
       .count()
       .toLong()
   }
