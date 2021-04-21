@@ -16,9 +16,11 @@ import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.testing.CrdtSetHelper
 import arcs.core.data.RawEntity
+import arcs.core.data.testutil.RawEntitySubject.Companion.rawEntities
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.UntypedActiveStore
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.CompletableDeferred
 
 /**
@@ -35,6 +37,17 @@ suspend fun invariant_storeRoundTrip_sameAsCrdtModel(
   val set = applyOpsToSet(ops).data
 
   assertThat(model.versionMap).isEqualTo(set.versionMap)
+  // Print better error messages if the set of values are different.
+  if (model.values != set.values) {
+    assertThat(model.values.keys).containsExactlyElementsIn(set.values.keys)
+    model.values.forEach { (key, actual) ->
+      val expected = set.values.getValue(key)
+      assertWithMessage("Failed for key $key")
+        .that(actual.versionMap).isEqualTo(expected.versionMap)
+      assertWithMessage("Failed for key $key").about(rawEntities())
+        .that(actual.value).isEqualTo(expected.value)
+    }
+  }
   assertThat(model.values).isEqualTo(set.values)
 }
 

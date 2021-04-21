@@ -14,6 +14,7 @@ package arcs.core.storage.driver
 import arcs.core.common.ArcId
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
@@ -53,7 +54,7 @@ class RamDiskDriverProviderTest {
   @Test
   fun willSupport_returnsFalse_whenNotRamDiskKey() {
     val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
-    val other = object : StorageKey("outofnowhere") {
+    val other = object : StorageKey(StorageKeyProtocol.Dummy) {
       override fun toKeyString(): String = "something"
       override fun childKeyWithComponent(component: String): StorageKey = this
     }

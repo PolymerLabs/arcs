@@ -61,7 +61,7 @@ class DirectStoreTest {
   fun setup() {
     testScope = TestCoroutineScope(TestCoroutineDispatcher())
     testWriteBackProvider = object : WriteBackProvider {
-      override fun invoke(protocol: Protocol): WriteBack {
+      override fun invoke(protocol: StorageKeyProtocol): WriteBack {
         this@DirectStoreTest.testStoreWriteBack = TestStoreWriteBack(protocol, testScope)
         return this@DirectStoreTest.testStoreWriteBack
       }

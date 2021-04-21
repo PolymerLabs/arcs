@@ -1,25 +1,34 @@
 package arcs.core.storage
 
 import arcs.core.storage.testutil.DummyStorageKey
+import arcs.flags.BuildFlags
+import arcs.flags.testing.BuildFlagsRule
+import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.TruthJUnit.assume
 import java.util.concurrent.Executors
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.runners.Parameterized
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(JUnit4::class)
-class StorageKeyManagerImplTest {
+@RunWith(Parameterized::class)
+class StorageKeyManagerImplTest(private val parameters: ParameterizedBuildFlags) {
+
+  @get:Rule
+  val buildFlagsRule = BuildFlagsRule.parameterized(parameters)
+
   @Test
   fun init_registersParser() {
     val storageKeyManager = StorageKeyManagerImpl(DummyStorageKey)
 
-    assertThat(storageKeyManager.parse(DUMMY_STORAGE_KEY_STR)).isEqualTo(DUMMY_STORAGE_KEY)
+    assertThat(storageKeyManager.parse(dummyStorageKeyStr)).isEqualTo(dummyStorageKey)
   }
 
   @Test
@@ -28,7 +37,7 @@ class StorageKeyManagerImplTest {
 
     storageKeyManager.addParser(DummyStorageKey)
 
-    assertThat(storageKeyManager.parse(DUMMY_STORAGE_KEY_STR)).isEqualTo(DUMMY_STORAGE_KEY)
+    assertThat(storageKeyManager.parse(dummyStorageKeyStr)).isEqualTo(dummyStorageKey)
   }
 
   @Test
@@ -36,15 +45,46 @@ class StorageKeyManagerImplTest {
     val storageKeyManager = StorageKeyManagerImpl()
 
     val e = assertFailsWith<IllegalArgumentException> { storageKeyManager.parse("no-protocol") }
-    assertThat(e).hasMessageThat().isEqualTo("Invalid key pattern")
+    assertThat(e).hasMessageThat().isEqualTo("Invalid key pattern: no-protocol")
+  }
+
+  @Test
+  fun parse_unknownLongProtocol_throws() {
+    val storageKeyManager = StorageKeyManagerImpl()
+
+    val e = assertFailsWith<IllegalArgumentException> { storageKeyManager.parse("unknown://abc") }
+    assertThat(e).hasMessageThat().isEqualTo("Unknown storage key protocol: unknown")
+  }
+
+  @Test
+  fun parse_flagOff_shortProtocol_throws() {
+    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isFalse()
+
+    val storageKeyManager = StorageKeyManagerImpl()
+
+    val e = assertFailsWith<IllegalArgumentException> { storageKeyManager.parse("u|abc") }
+    assertThat(e).hasMessageThat().isEqualTo("Invalid key pattern: u|abc")
+  }
+
+  @Test
+  fun parse_flagOn_unknownShortProtocol_throws() {
+    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isTrue()
+
+    val storageKeyManager = StorageKeyManagerImpl()
+
+    val e = assertFailsWith<IllegalArgumentException> { storageKeyManager.parse("x|abc") }
+    assertThat(e).hasMessageThat().isEqualTo("Unknown storage key protocol: x")
   }
 
   @Test
   fun parse_unregisteredProtocol_throws() {
     val storageKeyManager = StorageKeyManagerImpl()
 
-    val e = assertFailsWith<IllegalArgumentException> { storageKeyManager.parse("unknown://abc") }
-    assertThat(e).hasMessageThat().isEqualTo("No registered parsers for protocol \"unknown\"")
+    val e = assertFailsWith<IllegalArgumentException> { storageKeyManager.parse("dummy://abc") }
+
+    assertThat(e).hasMessageThat().isEqualTo(
+      "No registered parsers for protocol \"${StorageKeyProtocol.Dummy}\""
+    )
   }
 
   @Test
@@ -54,9 +94,12 @@ class StorageKeyManagerImplTest {
     storageKeyManager.reset()
 
     val e = assertFailsWith<IllegalArgumentException> {
-      storageKeyManager.parse(DUMMY_STORAGE_KEY_STR)
+      storageKeyManager.parse(dummyStorageKeyStr)
     }
-    assertThat(e).hasMessageThat().isEqualTo("No registered parsers for protocol \"dummy\"")
+
+    assertThat(e).hasMessageThat().isEqualTo(
+      "No registered parsers for protocol \"${StorageKeyProtocol.Dummy}\""
+    )
   }
 
   /**
@@ -77,13 +120,18 @@ class StorageKeyManagerImplTest {
     }
     launch(threadTwo) {
       (1..1000).forEach { _ ->
-        assertThat(storageKeyManager.parse(DUMMY_STORAGE_KEY_STR)).isEqualTo(DUMMY_STORAGE_KEY)
+        assertThat(storageKeyManager.parse(dummyStorageKeyStr)).isEqualTo(dummyStorageKey)
       }
     }
   }
 
   private companion object {
-    private val DUMMY_STORAGE_KEY = DummyStorageKey("abc")
-    private val DUMMY_STORAGE_KEY_STR = DUMMY_STORAGE_KEY.toString()
+    // Implemented using getter methods since the representation changes according to build flags.
+    private val dummyStorageKey get() = DummyStorageKey("abc")
+    private val dummyStorageKeyStr get() = dummyStorageKey.toString()
+
+    @get:JvmStatic
+    @get:Parameterized.Parameters(name = "{0}")
+    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_KEY_REDUCTION")
   }
 }

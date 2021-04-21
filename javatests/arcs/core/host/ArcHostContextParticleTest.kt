@@ -87,7 +87,7 @@ class ArcHostContextParticleTest {
           Capabilities(),
           ARC_ID
         )
-        this.createAndSetHandles(handleManager, partition.particles[0])
+        this.createAndSetHandles(partition, handleManager, partition.particles[0])
       }
     }
     particles.add(particle)

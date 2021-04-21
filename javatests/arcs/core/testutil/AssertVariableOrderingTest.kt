@@ -43,26 +43,32 @@ class AssertVariableOrderingTest {
     // Interleaved with full coverage
     assertVariableOrdering(
       (1..9).toList(),
-      sequence(2, 3, 5, 7),
-      sequence(4, 6, 8),
-      sequence(1, 9)
+      group(
+        sequence(2, 3, 5, 7),
+        sequence(4, 6, 8),
+        sequence(1, 9)
+      )
     )
 
     // Interleaved with unmatched items.
     assertVariableOrdering(
       listOf(44, 1, 2, 3, 66, 4, 5, 6, 7, 22, 8, 9),
-      sequence(2, 3, 5, 7),
-      sequence(4, 6, 8),
-      sequence(1, 9),
+      group(
+        sequence(2, 3, 5, 7),
+        sequence(4, 6, 8),
+        sequence(1, 9)
+      ),
       allowUnmatched = true
     )
 
     // In order.
     assertVariableOrdering(
       (1..6).toList(),
-      sequence(1, 2, 3),
-      sequence(4),
-      sequence(5, 6)
+      group(
+        sequence(1, 2, 3),
+        sequence(4),
+        sequence(5, 6)
+      )
     )
   }
 
@@ -71,26 +77,32 @@ class AssertVariableOrderingTest {
     // Interleaved with full coverage
     assertVariableOrdering(
       (1..9).toList(),
-      group(2, 3, 5, 7),
-      group(4, 6, 8),
-      group(1, 9)
+      group(
+        group(2, 3, 5, 7),
+        group(4, 6, 8),
+        group(1, 9)
+      )
     )
 
     // Interleaved with unmatched items.
     assertVariableOrdering(
       listOf(44, 1, 2, 3, 66, 4, 5, 6, 7, 22, 8, 9),
-      group(2, 3, 5, 7),
-      group(4, 6, 8),
-      group(1, 9),
+      group(
+        group(2, 3, 5, 7),
+        group(4, 6, 8),
+        group(1, 9)
+      ),
       allowUnmatched = true
     )
 
     // In order.
     assertVariableOrdering(
       (1..6).toList(),
-      group(1, 2, 3),
-      group(4),
-      group(5, 6)
+      group(
+        group(1, 2, 3),
+        group(4),
+        group(5, 6)
+      )
     )
   }
 
@@ -115,7 +127,7 @@ class AssertVariableOrderingTest {
     assertVariableOrdering(actual, nested, allowUnmatched = true)
 
     // Add a parallel group to capture the lower-case items.
-    assertVariableOrdering(actual, nested, group("g", "f", "t", "z", "m", "w"))
+    assertVariableOrdering(actual, group(nested, group("g", "f", "t", "z", "m", "w")))
 
     // Nested groups - pointless when not re-using constraint objects, but should still work.
     assertVariableOrdering(
@@ -152,29 +164,27 @@ class AssertVariableOrderingTest {
   fun deeplyNestedConstraints() {
     assertVariableOrdering(
       (1..30).toList(),
-      sequence(
-        sequence(1, 2),
-        group(
-          sequence(
-            group(5, 4),
-            group(6, 7)
-          ),
-          sequence(3, 8)
+      sequence(1, 2),
+      group(
+        sequence(
+          group(5, 4),
+          group(6, 7)
         ),
-        group(
-          sequence(
-            group(12, 16, 15),
-            group(
-              sequence(21, 23, 28, 29),
-              group(24, 22, 19)
-            )
-          ),
-          sequence(25, 26, 27),
-          sequence(9, 10, 13, 18, 20),
-          group(17, 11, 14)
+        sequence(3, 8)
+      ),
+      group(
+        sequence(
+          group(12, 16, 15),
+          group(
+            sequence(21, 23, 28, 29),
+            group(24, 22, 19)
+          )
         ),
-        group(30)
-      )
+        sequence(25, 26, 27),
+        sequence(9, 10, 13, 18, 20),
+        group(17, 11, 14)
+      ),
+      group(30)
     )
   }
 
@@ -229,17 +239,68 @@ class AssertVariableOrderingTest {
   }
 
   @Test
-  fun reuseConstraintObjectsInASingleCall() {
+  fun reuseConstraintObjects() {
     val seq = sequence(1, 2)
     val grp = group(3, 4, 5)
+
+    // In a single call.
     assertVariableOrdering(
-      listOf(1, 2, 5, 3, 4, 10, 3, 1, 4, 2, 5),
-      sequence(
-        sequence(seq, grp),
-        group(10),
-        group(seq, grp)
-      )
+      listOf(1, 2, 5, 3, 4, 10, 3, 1, 4, 2, 5, 20, 30),
+      sequence(seq, grp),
+      group(10),
+      group(seq, grp),
+      sequence(20, 30)
     )
+    assertThat(seq.maxIndex).isEqualTo(9)
+    assertThat(grp.maxIndex).isEqualTo(10)
+
+    // Across multiple calls - note that the new matches occur at an earlier index than the
+    // last matches of the previous call.
+    assertVariableOrdering(
+    listOf(1, 2, 5, 3, 4, 10),
+      seq,
+      grp,
+      single(10)
+    )
+    assertThat(seq.maxIndex).isEqualTo(1)
+    assertThat(grp.maxIndex).isEqualTo(4)
+  }
+
+  @Test
+  fun singleValueConstraint() {
+    assertVariableOrdering(
+      (1..18).toList(),
+      single(2),
+      sequence(4, 5),
+      group(
+        single(12),
+        single(7),
+        sequence(9, 10, 15)
+      ),
+      group(18, 17),
+      allowUnmatched = true
+    )
+
+    verifyExceptionMessage(
+      """
+        assertVariableOrdering: single constraint failed with unmatched values: [x]
+
+            Actual   Match result
+        0 | a        seq(>a<, b)
+        1 | b        seq(a, >b<)
+          :          ?? sng(x)
+        2 | c
+        3 | d
+        4 | e
+      """
+    ) {
+      assertVariableOrdering(
+        listOf("a", "b", "c", "d", "e"),
+        sequence("a", "b"),
+        single("x"),
+        group("d", "e")
+      )
+    }
   }
 
   @Test
@@ -248,12 +309,10 @@ class AssertVariableOrderingTest {
 
     assertVariableOrdering(
       listOfSets,
-      sequence(
-        sequence(setOf(1, 2), setOf(3, 4, 5)),
-        // API quirk: a single setOf() matches the group(Iterable<T>) method instead of the
-        // intended vararg one. The workaround is to wrap it in listOf.
-        group(listOf(setOf(6)))
-      )
+      sequence(setOf(1, 2), setOf(3, 4, 5)),
+      // API quirk: a single setOf() matches the group(Iterable<T>) method instead of the
+      // intended vararg one. group(listOf(setOf())) works but single() is more readable.
+      single(setOf(6))
     )
 
     verifyExceptionMessage(
@@ -267,7 +326,10 @@ class AssertVariableOrderingTest {
         2 | [6]         seq([1, 2], [8, 9], >[6]<)
       """
     ) {
-      assertVariableOrdering(listOfSets, sequence(setOf(1, 2), setOf(8, 9), setOf(6)))
+      assertVariableOrdering(
+        listOfSets,
+        sequence(setOf(1, 2), setOf(8, 9), setOf(6))
+      )
     }
   }
 
@@ -278,13 +340,11 @@ class AssertVariableOrderingTest {
 
     assertVariableOrdering(
       listOfBobs,
-      sequence(
-        group(
-          sequence(Bob(1, "one"), Bob(4)),
-          sequence(Bob(2), Bob(3, "three"))
-        ),
-        sequence(Bob(5))
-      )
+      group(
+        sequence(Bob(1, "one"), Bob(4)),
+        sequence(Bob(2), Bob(3, "three"))
+      ),
+      sequence(Bob(5))
     )
 
     verifyExceptionMessage(
@@ -300,7 +360,10 @@ class AssertVariableOrderingTest {
         4 | Bob(x=5, y=)
       """
     ) {
-      assertVariableOrdering(listOfBobs, group(Bob(2), Bob(10, "ten")))
+      assertVariableOrdering(
+        listOfBobs,
+        group(Bob(2), Bob(10, "ten"))
+      )
     }
   }
 
@@ -326,14 +389,12 @@ class AssertVariableOrderingTest {
     ) {
       assertVariableOrdering(
         actual,
-        sequence(
-          group("a1", "z"),
-          group(
-            sequence("a1", "a2", "a3"),
-            sequence("b1", "b2")
-          ),
-          sequence("x", "y")
-        )
+        group("a1", "z"),
+        group(
+          sequence("a1", "a2", "a3"),
+          sequence("b1", "b2")
+        ),
+        sequence("x", "y")
       )
     }
 
@@ -356,10 +417,8 @@ class AssertVariableOrderingTest {
     ) {
       assertVariableOrdering(
         actual,
-        sequence(
-          sequence("a1", "z"),
-          group("b1", "z", "b2", "k")
-        )
+        sequence("a1", "z"),
+        group("b1", "z", "b2", "k")
       )
     }
   }
@@ -455,10 +514,8 @@ class AssertVariableOrderingTest {
     ) {
       assertVariableOrdering(
         listOf("a", "b"),
-        sequence(
-          sequence("x", "y"),
-          group("a", "b")
-        )
+        sequence("x", "y"),
+        group("a", "b")
       )
     }
 
@@ -475,10 +532,8 @@ class AssertVariableOrderingTest {
     ) {
       assertVariableOrdering(
         listOf("a", "b"),
-        sequence(
-          group("a", "b"),
-          group("x", "y")
-        )
+        group("a", "b"),
+        group("x", "y")
       )
     }
   }
@@ -501,9 +556,103 @@ class AssertVariableOrderingTest {
     ) {
       assertVariableOrdering(
         listOf("lorem", "ipsum", "dolor", "sit", "consectetur", "elit", "sed", "eiusmod"),
-        sequence("dolor", "sit", "eiusmod"),
-        group("lorem", "sed")
+        group(
+          sequence("dolor", "sit", "eiusmod"),
+          group("lorem", "sed")
+        )
       )
     }
+  }
+
+  @Test
+  fun nestingGroupMustAttemptAllPermutations() {
+    // Without the permutation logic in Constraint.NestGroup, this would fail because seq(a,b,x,y)
+    // matches the initial a-b and trailing x-y, leaving c-d-a-b to fail against seq(a,b,c,d).
+    assertVariableOrdering(
+      listOf("a", "b", "c", "d", "a", "b", "x", "y"),
+      group(
+        sequence("a", "b", "x", "y"),
+        sequence("a", "b", "c", "d")
+      )
+    )
+
+    // Try every permutation over 4 inputs.
+    val a = sequence(1, 2)
+    val b = sequence(1, 3)
+    val c = sequence(1, 4)
+    val d = sequence(1, 5)
+    listOf(
+      listOf(a, b, c, d), listOf(a, b, d, c), listOf(a, c, d, b), listOf(a, c, b, d),
+      listOf(a, d, b, c), listOf(a, d, c, b), listOf(b, c, d, a), listOf(b, c, a, d),
+      listOf(b, d, a, c), listOf(b, d, c, a), listOf(b, a, c, d), listOf(b, a, d, c),
+      listOf(c, d, a, b), listOf(c, d, b, a), listOf(c, a, b, d), listOf(c, a, d, b),
+      listOf(c, b, d, a), listOf(c, b, a, d), listOf(d, a, b, c), listOf(d, a, c, b),
+      listOf(d, b, c, a), listOf(d, b, a, c), listOf(d, c, a, b), listOf(d, c, b, a)
+    ).forEach {
+      assertVariableOrdering(
+        listOf(9, 8, 1, 2, 1, 3, 1, 4, 1, 5, 7),
+        sequence(9, 8),
+        group(it),
+        single(7)
+      )
+    }
+
+    // When a nesting group cannot possibly match the input, the exception will will show the
+    // message from the first attempt, i.e. where the nested constraints were evaluated in the
+    // same order as given in the assertVariableOrdering call.
+    verifyExceptionMessage(
+      """
+        assertVariableOrdering: sequence constraint failed with unmatched values: [Z]
+
+             Actual   Match result
+         0 | x        seq(>x<, y)
+         1 | y        seq(x, >y<)
+         2 | a        seq(>a<, b, e)
+         3 | b        seq(a, >b<, e)
+         4 | c
+         5 | a        seq(>a<, b, Z)
+         6 | b        seq(a, >b<, Z)
+           :          ?? seq(a, b, >Z<)
+         7 | d
+         8 | a
+         9 | b
+        10 | e        seq(a, b, >e<)
+      """
+    ) {
+      assertVariableOrdering(
+        listOf("x", "y", "a", "b", "c", "a", "b", "d", "a", "b", "e"),
+        sequence("x", "y"),
+        group(
+          sequence("a", "b", "e"),
+          sequence("a", "b", "Z"),
+          sequence("a", "b", "c")
+        )
+      )
+    }
+  }
+
+  @Test
+  fun regressionTest_nestingGroupMustClearMatchArrayCorrectly() {
+    // The first impl of runPermutations did not clear the match array correctly, so processing
+    // of the next permutation was polluted by the failed match entries from previous ones.
+    assertVariableOrdering(
+      listOf("A", "B", "C", "A", "D", "E", "X", "C", "Y"),
+      group(
+        sequence("A", "D", "E"),
+        sequence("A", "B", "C"),
+        sequence("X", "C", "Y")
+      )
+    )
+
+    // Make sure the clearing logic works with a non-zero 'from' starting index.
+    assertVariableOrdering(
+      listOf("k", "l", "f", "A", "B", "C", "A", "D", "E", "X", "C", "Y"),
+      sequence("k", "l", "f"),
+      group(
+        sequence("A", "D", "E"),
+        sequence("A", "B", "C"),
+        sequence("X", "C", "Y")
+      )
+    )
   }
 }

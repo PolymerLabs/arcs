@@ -184,7 +184,7 @@ class ParticleContext(
         // Trigger the StorageProxy sync request for each readable handle. Once
         // the StorageEvent.READY notifications have all, been received, we can
         // call particle.onReady (handled by notify below).
-        awaitingReady.forEach { it.maybeInitiateSync() }
+        awaitingReady.toSet().forEach { it.maybeInitiateSync() }
       }
 
       log.debug { "runParticleAsync finished" }

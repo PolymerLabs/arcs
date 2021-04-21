@@ -30,10 +30,10 @@ class CrdtEntityHelperTest {
     val helper = CrdtEntityHelper(ACTOR, entity)
 
     helper.update(SINGLETON_FIELD1, REFERENCE1)
-    assertThat(entity.consumerView.singletons[SINGLETON_FIELD1]).isEqualTo(REFERENCE1)
+    assertThat(entity.consumerView.singletons[SINGLETON_FIELD1]).isEqualTo(PRIMITIVE1)
 
     helper.update(SINGLETON_FIELD1, REFERENCE2)
-    assertThat(entity.consumerView.singletons[SINGLETON_FIELD1]).isEqualTo(REFERENCE2)
+    assertThat(entity.consumerView.singletons[SINGLETON_FIELD1]).isEqualTo(PRIMITIVE2)
   }
 
   @Test
@@ -58,8 +58,8 @@ class CrdtEntityHelperTest {
     helper.update(SINGLETON_FIELD2, REFERENCE2)
 
     assertThat(entity.consumerView.singletons).containsExactly(
-      SINGLETON_FIELD1, REFERENCE1,
-      SINGLETON_FIELD2, REFERENCE2
+      SINGLETON_FIELD1, PRIMITIVE1,
+      SINGLETON_FIELD2, PRIMITIVE2
     )
   }
 
@@ -105,12 +105,12 @@ class CrdtEntityHelperTest {
     val helper = CrdtEntityHelper(ACTOR, entity)
 
     helper.add(COLLECTION_FIELD1, REFERENCE1)
-    assertThat(entity.consumerView.collections[COLLECTION_FIELD1]).containsExactly(REFERENCE1)
+    assertThat(entity.consumerView.collections[COLLECTION_FIELD1]).containsExactly(PRIMITIVE1)
 
     helper.add(COLLECTION_FIELD1, REFERENCE2)
     assertThat(entity.consumerView.collections[COLLECTION_FIELD1]).containsExactly(
-      REFERENCE1,
-      REFERENCE2
+      PRIMITIVE1,
+      PRIMITIVE2
     )
   }
 
@@ -176,8 +176,10 @@ class CrdtEntityHelperTest {
     private const val SINGLETON_FIELD2 = "SINGLETON_FIELD2"
     private const val COLLECTION_FIELD1 = "COLLECTION_FIELD1"
     private const val COLLECTION_FIELD2 = "COLLECTION_FIELD2"
-    private val REFERENCE1 = CrdtEntity.ReferenceImpl(1.toReferencable().id)
-    private val REFERENCE2 = CrdtEntity.ReferenceImpl(2.toReferencable().id)
+    private val PRIMITIVE1 = 1.toReferencable()
+    private val PRIMITIVE2 = 2.toReferencable()
+    private val REFERENCE1 = CrdtEntity.ReferenceImpl(PRIMITIVE1.id)
+    private val REFERENCE2 = CrdtEntity.ReferenceImpl(PRIMITIVE2.id)
 
     /** Returns a map from field name to [VersionMap] for each singleton field in [entity]. */
     private fun getSingletonVersionMaps(entity: CrdtEntity): Map<String, VersionMap> {

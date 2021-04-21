@@ -25,7 +25,8 @@ interface HandleManager {
     particleId: String = "",
     immediateSync: Boolean = true,
     storeSchema: Schema? = null,
-    actor: String? = null
+    actor: String? = null,
+    writeOnly: Boolean = false
   ): Handle
 
   /** Return the scheduler used by this [HandleManeger] */

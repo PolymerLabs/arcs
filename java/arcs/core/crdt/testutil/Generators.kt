@@ -175,9 +175,9 @@ class RawEntityGenerator(
  * [FieldType]s (noting that [FieldType] is represented by [FieldTypeWithReferencedSchemas] for the
  * same reason as above).
  */
-class RawEntityFromSchema(
+class RawEntityFromSchema<T : Referencable?>(
   val id: Generator<String>,
-  val referencable: Transformer<FieldTypeWithReferencedSchemas, Referencable>,
+  val referencable: Transformer<FieldTypeWithReferencedSchemas, T>,
   val collectionSize: Generator<Int>,
   val creationTimestamp: Generator<Long>,
   val expirationTimestamp: Generator<Long>
@@ -189,7 +189,7 @@ class RawEntityFromSchema(
     val collections = i.schema.fields.collections.mapValues {
       (1..collectionSize()).map { _ ->
         referencable(FieldTypeWithReferencedSchemas(it.value, i.schemas))
-      }.toSet()
+      }.filterNotNull().toSet()
     }
     return RawEntity(id(), singletons, collections, creationTimestamp(), expirationTimestamp())
   }

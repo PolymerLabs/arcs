@@ -12,16 +12,24 @@
 package arcs.core.storage.keys
 
 import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.testutil.fail
+import arcs.flags.testing.BuildFlagsRule
+import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.runners.Parameterized
 
-@RunWith(JUnit4::class)
-class DatabaseStorageKeyTest {
+@RunWith(Parameterized::class)
+class DatabaseStorageKeyTest(parameters: ParameterizedBuildFlags) {
+
+  @get:Rule
+  val buildFlagsRule = BuildFlagsRule.parameterized(parameters)
+
   @Before
   fun setUp() {
     StorageKeyManager.GLOBAL_INSTANCE.addParser(DatabaseStorageKey.Memory)
@@ -32,14 +40,14 @@ class DatabaseStorageKeyTest {
   fun toString_persistent_rendersCorrectly() {
     val key = DatabaseStorageKey.Persistent("foo", "1234a", dbName = "myDb")
     assertThat(key.toString())
-      .isEqualTo("${DatabaseStorageKey.Persistent.protocol}://1234a@myDb/foo")
+      .isEqualTo("${StorageKeyProtocol.Database.protocol}1234a@myDb/foo")
   }
 
   @Test
   fun toString_memory_rendersCorrectly() {
     val key = DatabaseStorageKey.Memory("foo", "1234a", dbName = "myDb")
     assertThat(key.toString())
-      .isEqualTo("${DatabaseStorageKey.Memory.protocol}://1234a@myDb/foo")
+      .isEqualTo("${StorageKeyProtocol.InMemoryDatabase.protocol}1234a@myDb/foo")
   }
 
   @Test
@@ -172,7 +180,7 @@ class DatabaseStorageKeyTest {
 
   @Test
   fun persistentParse_viaRegistration_parsesCorrectly() {
-    val keyString = "${DatabaseStorageKey.Persistent.protocol}://1234a@myDb/foo"
+    val keyString = "${StorageKeyProtocol.Database.protocol}1234a@myDb/foo"
     val key = StorageKeyManager.GLOBAL_INSTANCE.parse(keyString) as? DatabaseStorageKey.Persistent
       ?: fail("Expected a DatabaseStorageKey")
     assertThat(key.dbName).isEqualTo("myDb")
@@ -182,7 +190,7 @@ class DatabaseStorageKeyTest {
 
   @Test
   fun memoryParse_viaRegistration_parsesCorrectly() {
-    val keyString = "${DatabaseStorageKey.Memory.protocol}://1234a@myDb/foo"
+    val keyString = "${StorageKeyProtocol.InMemoryDatabase.protocol}1234a@myDb/foo"
     val key = StorageKeyManager.GLOBAL_INSTANCE.parse(keyString) as? DatabaseStorageKey.Memory
       ?: fail("Expected a DatabaseStorageKey")
     assertThat(key.dbName).isEqualTo("myDb")
@@ -195,7 +203,7 @@ class DatabaseStorageKeyTest {
     val parent = DatabaseStorageKey.Persistent("parent", "1234a")
     val child = parent.childKeyWithComponent("child") as DatabaseStorageKey.Persistent
     assertThat(child.toString())
-      .isEqualTo("${DatabaseStorageKey.Persistent.protocol}://${parent.toKeyString()}/child")
+      .isEqualTo("${StorageKeyProtocol.Database.protocol}${parent.toKeyString()}/child")
   }
 
   @Test
@@ -203,6 +211,12 @@ class DatabaseStorageKeyTest {
     val parent = DatabaseStorageKey.Memory("parent", "1234a")
     val child = parent.childKeyWithComponent("child") as DatabaseStorageKey.Memory
     assertThat(child.toString())
-      .isEqualTo("${DatabaseStorageKey.Memory.protocol}://${parent.toKeyString()}/child")
+      .isEqualTo("${StorageKeyProtocol.InMemoryDatabase.protocol}${parent.toKeyString()}/child")
+  }
+
+  private companion object {
+    @get:JvmStatic
+    @get:Parameterized.Parameters(name = "{0}")
+    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_KEY_REDUCTION")
   }
 }

@@ -80,6 +80,7 @@ class StoreWriteBackTest {
   private val writeBackScope = CoroutineScope(
     executor.asCoroutineDispatcher() + SupervisorJob()
   )
+
   @Before
   fun setUp() {
     databaseFactory = FakeDatabaseManager()
@@ -87,7 +88,7 @@ class StoreWriteBackTest {
     random = Random(System.currentTimeMillis())
 
     writeBack = StoreWriteBack(
-      "testing",
+      StorageKeyProtocol.Dummy,
       Channel.Factory.UNLIMITED,
       forceEnable = true,
       scope = writeBackScope
@@ -236,7 +237,7 @@ class StoreWriteBackTest {
   fun passThroughEnabled_completesTasksInOrder() = runBlocking {
     // Enable pass-trough with forceEnable = false and scope = null.
     val writeBack = StoreWriteBack(
-      "testing",
+      StorageKeyProtocol.Dummy,
       Channel.Factory.UNLIMITED,
       forceEnable = false,
       scope = null

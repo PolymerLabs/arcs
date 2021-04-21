@@ -366,7 +366,11 @@ class AnyOfParser<T>(val parsers: List<Parser<T>>) : Parser<T>() {
  * A parser that invokes another parser zero or more times until it fails, returning a list
  * of success values. If no parse succeeds, it returns an empty list.
  */
-class ManyOfParser<T>(val parser: Parser<T>) : Parser<List<T>>() {
+class ManyOfParser<T>(val parser: Parser<T>, val limit: Int? = null) : Parser<List<T>>() {
+
+  init {
+    require(limit == null || limit >= 0) { "Limit cannot be negative" }
+  }
 
   override fun leftTokens(): List<String> = parser.leftTokens()
 
@@ -381,10 +385,12 @@ class ManyOfParser<T>(val parser: Parser<T>) : Parser<List<T>>() {
       it
     }
 
-    // Stops with first Failure(msg, start, end)
+    // Stops with first Failure(msg, start, end) or when limit has been reached
     // But (start) is actually equal to the last Success's end
     fun parseUntilFail(pos: SourcePosition): ParseResult<T> {
-      return resultParser(string, pos).map { _, _, e, c ->
+      return if (limit != null && result.size >= limit) {
+        Failure("Limit reached", pos, end, consumed)
+      } else resultParser(string, pos).map { _, _, e, c ->
         end = e
         consumed += c
         parseUntilFail(end)
@@ -601,7 +607,7 @@ fun token(prefix: String) = StringToken(prefix)
 fun <T> optional(parser: Parser<T>) = Optional(parser)
 
 /** Helper for [ManyOfParser]. */
-fun <T> many(parser: Parser<T>) = ManyOfParser(parser)
+fun <T> many(parser: Parser<T>, limit: Int? = null) = ManyOfParser(parser, limit)
 
 /** Helper for [AnyOfParser]. */
 fun <T> any(parsers: List<Parser<T>>) = AnyOfParser(parsers)

@@ -261,7 +261,8 @@ class CapabilitiesResolverTest {
       CapabilitiesResolver(Options(ArcId.newForTest("test")), listOf(FAKE_FACTORY, FAKE_FACTORY))
     }
     assertThat(e).hasMessageThat().isEqualTo(
-      "Storage keys protocol must be unique, but was: [test, test]."
+      "Storage keys protocol must be unique, but was: " +
+        "[${StorageKeyProtocol.Dummy}, ${StorageKeyProtocol.Dummy}]."
     )
   }
 
@@ -282,7 +283,10 @@ class CapabilitiesResolverTest {
     private val ON_DISK = Capabilities(Persistence.ON_DISK)
     private val ON_DISK_WITH_TTL = Capabilities(listOf(Persistence.ON_DISK, Ttl.Days(1)))
 
-    val FAKE_FACTORY = object : StorageKeyFactory(protocol = "test", capabilities = IN_MEMORY) {
+    val FAKE_FACTORY = object : StorageKeyFactory(
+      protocol = StorageKeyProtocol.Dummy,
+      capabilities = IN_MEMORY
+    ) {
       override fun create(options: StorageKeyOptions): StorageKey {
         return if (options is StorageKeyFactory.ContainerStorageKeyOptions) {
           DatabaseStorageKey.Persistent(options.location, options.entitySchema.hash)

@@ -1083,7 +1083,7 @@ export class ReferenceType<T extends Type> extends Type {
 
   constructor(reference: T) {
     super('Reference');
-    if (reference == null) {
+    if (!reference) {
       throw new Error('invalid type! Reference types must include a referenced type declaration');
     }
     this.referredType = reference;
@@ -1179,7 +1179,7 @@ export class MuxType<T extends Type> extends Type {
 
   constructor(type: T) {
     super('Mux');
-    if (type == null) {
+    if (!type) {
       throw new Error('invalid type! Mux types must include an inner type declaration');
     }
     this.innerType = type;
@@ -1348,11 +1348,11 @@ export class TypeVariableInfo {
   // Helper to generalize canReadSubset and canWriteSuperset merging
   private _maybeMerge(target: Type, constraint: Type,
                       merger: (left: Schema, right: Schema) => Schema): { success: boolean; result: Type } {
-    if (constraint == null) {
+    if (!constraint) {
       return {success: true, result: target};
     }
 
-    if (target == null) {
+    if (!target) {
       return {success: true, result: constraint};
     }
 
@@ -1499,7 +1499,7 @@ export class TypeVariableInfo {
   }
 
   toLiteral() {
-    assert(this.resolution == null);
+    assert(!this.resolution);
     return this.toLiteralIgnoringResolutions();
   }
 
@@ -1619,7 +1619,7 @@ export abstract class InterfaceInfo {
 
   abstract readonly  canWriteSuperset : InterfaceInfo;
 
-  abstract isAtLeastAsSpecificAs(other: InterfaceInfo) : boolean;
+  abstract isAtLeastAsSpecificAs(other: InterfaceInfo): boolean;
 
   abstract _applyExistenceTypeTest(test: Predicate<TypeVarReference>) : boolean;
 
@@ -1654,7 +1654,9 @@ export abstract class InterfaceInfo {
   }
 
   static mustMatch(reference: TypeVariable | Type | string | boolean): boolean {
-    return !(reference == undefined || InterfaceInfo.isTypeVar(reference));
+    return !(
+        reference === null || reference === undefined ||
+        InterfaceInfo.isTypeVar(reference));
   }
 
   static handleConnectionsMatch : HandleConnectionMatcher = null;
@@ -1720,9 +1722,25 @@ export abstract class FieldType {
 
   // TODO(shans): output AtLeastAsSpecific here. This is necessary to support
   // refinements on nested structures and references.
+  _isAtLeastAsSpecificAs(other: FieldType): boolean {
+    // Default implementation for all field types.
+    // Override this where custom behaviour is needed.
+    return this.kind === other.kind && this.equals(other);
+  }
+
+  // TODO(shans): output AtLeastAsSpecific here. This is necessary to support
+  // refinements on nested structures and references.
   isAtLeastAsSpecificAs(other: FieldType): boolean {
-    assert(this.kind === other.kind);
-    return this.equals(other);
+    // Generic implementation for all field types.
+    // Do not override this.
+    if (other instanceof NullableField && !(this instanceof NullableField)) {
+      // Non nullable types are `atLeastAsSpecificAs` nullable types of a
+      // type that they are `atLeastAsSpecificAs`.
+      // i.e. T :> U? iff T :> U.
+      // additionally T? :> U iff U == V?
+      return this._isAtLeastAsSpecificAs(other.schema);
+    }
+    return this._isAtLeastAsSpecificAs(other);
   }
 
   static fromLiteral(field: SchemaFieldLiteralShape|string): FieldType {
@@ -1840,7 +1858,7 @@ export class CollectionField extends FieldType {
     return `[${this.schema.normalizeForHash()}]`;
   }
 
-  isAtLeastAsSpecificAs(other: FieldType): boolean {
+  _isAtLeastAsSpecificAs(other: FieldType): boolean {
     assert(this.kind === other.kind);
     return this.getFieldType().isAtLeastAsSpecificAs(other.getFieldType());
   }
@@ -1864,8 +1882,10 @@ export class ReferenceField extends FieldType {
 
   normalizeForHash(): string { return `&(${this.schema.getEntityType().entitySchema.normalizeForHash()})`; }
 
-  isAtLeastAsSpecificAs(other: FieldType): boolean {
-    assert(this.kind === other.kind);
+  _isAtLeastAsSpecificAs(other: FieldType): boolean {
+    assert(
+        this.kind === other.kind,
+        `ReferenceField: Non-matching kinds ${this.kind} vs ${other.kind}.`);
     return this.getFieldType().getEntityType().isAtLeastAsSpecificAs(other.getFieldType().getEntityType());
   }
 
@@ -1898,9 +1918,9 @@ export class NullableField extends FieldType {
     return `${this.schema.normalizeForHash()}?`;
   }
 
-  isAtLeastAsSpecificAs(other: FieldType): boolean {
-    assert(this.kind === other.kind);
-    return this.getFieldType().isAtLeastAsSpecificAs(other.getFieldType());
+  _isAtLeastAsSpecificAs(other: FieldType): boolean {
+    return this.kind === other.kind &&
+        this.getFieldType().isAtLeastAsSpecificAs(other.getFieldType());
   }
 
   // tslint:disable-next-line: no-any
@@ -1929,8 +1949,10 @@ export class OrderedListField extends FieldType {
     return `List<${this.schema.normalizeForHash()}>`;
   }
 
-  isAtLeastAsSpecificAs(other: FieldType): boolean {
-    assert(this.kind === other.kind);
+  _isAtLeastAsSpecificAs(other: FieldType): boolean {
+    assert(
+        this.kind === other.kind,
+        `OrderedListField: Non-matching kinds ${this.kind} vs ${other.kind}.`);
     return this.getFieldType().isAtLeastAsSpecificAs(other.getFieldType());
   }
 
@@ -1988,8 +2010,10 @@ export class NestedField extends FieldType {
 
   normalizeForHash(): string { return `inline ${this.getEntityType().entitySchema.normalizeForHash()}`; }
 
-  isAtLeastAsSpecificAs(other: FieldType): boolean {
-    assert(this.kind === other.kind);
+  _isAtLeastAsSpecificAs(other: FieldType): boolean {
+    assert(
+        this.kind === other.kind,
+        `NestedField: Non-matching kinds ${this.kind} vs ${other.kind}.`);
     return this.getEntityType().isAtLeastAsSpecificAs(other.getEntityType());
   }
 
@@ -2367,7 +2391,7 @@ export class Schema {
     }
     let best = AtLeastAsSpecific.YES;
     for (const [name, type] of Object.entries(otherSchema.fields)) {
-      if (fields[name] == undefined) {
+      if (!fields[name]) {
         return AtLeastAsSpecific.NO;
       }
       if (!fields[name].isAtLeastAsSpecificAs(type)) {
@@ -2435,7 +2459,7 @@ export class Schema {
           break;
         }
         case 'schema-collection': {
-          if (schema == undefined) {
+          if (!schema) {
             throw new Error(`there is no schema for the entity field ${fieldName}`);
           }
           if (['Text', 'URL', 'Boolean', 'Number'].includes(schema.getType())) {

@@ -12,6 +12,7 @@ arcs_kt_jvm_test_suite(
     name = "allocator",
     size = "large",
     srcs = glob(["*Test.kt"]),
+    flaky = True,
     package = "arcs.core.allocator",
     deps = [
         ":allocator-test-util",

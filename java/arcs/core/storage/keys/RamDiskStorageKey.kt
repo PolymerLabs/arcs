@@ -15,6 +15,7 @@ import arcs.core.data.Capabilities
 import arcs.core.data.Capability
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyFactory
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.StorageKeySpec
 
 /** Storage key for a piece of data managed by the ramdisk driver. */
@@ -42,7 +43,7 @@ data class RamDiskStorageKey(private val unique: String) : StorageKey(protocol) 
 
   companion object : StorageKeySpec<RamDiskStorageKey> {
     /** Protocol to be used with the ramdisk driver. */
-    override val protocol = Protocols.RAMDISK_DRIVER
+    override val protocol = StorageKeyProtocol.RamDisk
 
     override fun parse(rawKeyString: String): RamDiskStorageKey {
       return RamDiskStorageKey(rawKeyString)

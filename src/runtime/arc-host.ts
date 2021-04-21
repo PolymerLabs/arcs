@@ -10,26 +10,19 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc, ArcOptions} from './arc.js';
-import {ArcId, IdGenerator} from './id.js';
-import {Manifest} from './manifest.js';
-import {Recipe, Particle} from './recipe/lib-recipe.js';
-import {StorageService} from './storage/storage-service.js';
+import {ArcId} from './id.js';
+import {Particle} from './recipe/lib-recipe.js';
+import {StorageService, HandleOptions} from './storage/storage-service.js';
 import {SlotComposer} from './slot-composer.js';
 import {Runtime} from './runtime.js';
-import {Dictionary} from '../utils/lib-utils.js';
-import {newRecipe} from './recipe/lib-recipe.js';
-import {CapabilitiesResolver} from './capabilities-resolver.js';
 import {VolatileStorageKey} from './storage/drivers/volatile.js';
-import {StorageKey} from './storage/storage-key.js';
-import {PecFactory} from './particle-execution-context.js';
-import {ArcInspectorFactory} from './arc-inspector.js';
-import {AbstractSlotObserver} from './slot-observer.js';
-import {Modality} from './arcs-types/modality.js';
-import {EntityType, ReferenceType, InterfaceType, SingletonType} from '../types/lib-types.js';
-import {Capabilities} from './capabilities.js';
-import {PlanPartition, ArcInfo, RunArcOptions} from './arc-info.js';
-import {StoreInfo} from './storage/store-info.js';
+import {PlanPartition, ArcInfo} from './arc-info.js';
 import {Type} from '../types/lib-types.js';
+import {StoreInfo} from './storage/store-info.js';
+import {ToHandle, TypeToCRDTTypeRecord} from './storage/storage.js';
+import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
+import {ActiveStore} from './storage/active-store.js';
+import {ProvideSlotConnectionSpec} from './arcs-types/particle-spec.js';
 
 export interface ArcHost {
   hostId: string;
@@ -41,6 +34,9 @@ export interface ArcHost {
   getArcById(arcId: ArcId): Arc;
   isHostForParticle(particle: Particle): boolean;
   findArcByParticleId(particleId: string): Arc;
+  slotContainers: {}[];
+
+  handleForStoreInfo<T extends Type>(storeInfo: StoreInfo<T>, arcInfo: ArcInfo, options?: HandleOptions): Promise<ToHandle<TypeToCRDTTypeRecord<T>>>;
 }
 
 export class ArcHostImpl implements ArcHost {
@@ -51,7 +47,7 @@ export class ArcHostImpl implements ArcHost {
 
   async start(partition: PlanPartition) {
     const arcId = partition.arcInfo.id;
-      if (!arcId || !this.arcById.has(arcId)) {
+    if (!arcId || !this.arcById.has(arcId)) {
       const arc = new Arc(this.buildArcParams(partition));
       this.arcById.set(arcId, arc);
       if (partition.arcOptions.slotObserver) {
@@ -59,11 +55,15 @@ export class ArcHostImpl implements ArcHost {
       }
     }
     const arc = this.arcById.get(arcId);
-    if (partition.plan) {
-      assert(partition.plan.isResolved(), `Unresolved partition plan: ${partition.plan.toString({showUnresolved: true})}`);
-      await arc.instantiate(partition.plan, partition.reinstantiate);
+    if (partition.particles.length + partition.handles.length > 0) {
+      await arc.instantiate(partition.particles, partition.handles, partition.reinstantiate);
       // TODO(b/182410550): add await to instantiate and return arc.idle here!
       // TODO(b/182410550): move the call to ParticleExecutionHost's DefineHandle to here
+    }
+    if (partition.arcInfo.outerArcId) {
+      const outerArc = this.arcById.get(partition.arcInfo.outerArcId);
+      assert(outerArc);
+      outerArc.addInnerArc(arc);
     }
     return arc;
   }
@@ -84,11 +84,16 @@ export class ArcHostImpl implements ArcHost {
   buildArcParams(partition: PlanPartition): ArcOptions {
     const factories = Object.values(this.runtime.storageKeyFactories);
     const {arcInfo, arcOptions} = partition;
+    const slotComposer = arcInfo.isInnerArc
+        ? this.getArcById(arcInfo.outerArcId).peh.slotComposer
+        : new SlotComposer({containers: this.slotContainers});
     return {
       arcInfo,
       loader: this.runtime.loader,
       pecFactories: [this.runtime.pecFactory],
-      slotComposer: new SlotComposer(),
+      allocator: this.runtime.allocator,
+      host: this,
+      slotComposer,
       storageService: this.runtime.storageService,
       driverFactory: this.runtime.driverFactory,
       storageKey: arcOptions.storageKeyPrefix ? arcOptions.storageKeyPrefix(arcInfo.id) : new VolatileStorageKey(arcInfo.id, ''),
@@ -97,8 +102,43 @@ export class ArcHostImpl implements ArcHost {
     };
   }
 
+  get slotContainers(): {}[] {
+    return [this.createContextForContainer('root')];
+  }
+
+  createContextForContainer(name) {
+    return {
+      id: `rootslotid-${name}`,
+      name,
+      tags: [`${name}`],
+      spec: new ProvideSlotConnectionSpec({name}),
+      handles: []
+    };
+  }
+
   findArcByParticleId(particleId: string): Arc {
-    return [...this.arcById.values()].find(arc => !!arc.activeRecipe.findParticle(particleId));
+    return [...this.arcById.values()].find(arc => arc.loadedParticleInfo.has(particleId));
+  }
+
+  async handleForStoreInfo<T extends Type>(storeInfo: StoreInfo<T>, arcInfo: ArcInfo, options?: HandleOptions): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
+    options = options || {};
+    await this.getActiveStore(storeInfo, arcInfo);
+    const generateID = arcInfo.generateID ? () => arcInfo.generateID().toString() : () => '';
+    return this.storageService.handleForStoreInfo(storeInfo, generateID(), arcInfo.idGenerator, options);
+  }
+
+  private async getActiveStore<T extends Type>(storeInfo: StoreInfo<T>, arcInfo: ArcInfo) : Promise<ActiveStore<TypeToCRDTTypeRecord<T>>> {
+    if (storeInfo.storageKey instanceof ReferenceModeStorageKey) {
+      const containerInfo = arcInfo.findStoreInfoByStorageKey(storeInfo.storageKey.storageKey);
+      if (containerInfo) {
+        await this.storageService.getActiveStore(containerInfo);
+      }
+      const backingInfo = arcInfo.findStoreInfoByStorageKey(storeInfo.storageKey.backingKey);
+      if (backingInfo) {
+        await this.storageService.getActiveStore(backingInfo);
+      }
+    }
+    return this.storageService.getActiveStore(storeInfo);
   }
 }
 

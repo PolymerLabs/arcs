@@ -9,7 +9,7 @@
  */
 
 import {Arc} from '../../runtime/arc.js';
-import {Runnable} from '../../utils/lib-utils.js';
+import {ArcInfo} from '../../runtime/arc-info.js';
 import {Exists} from '../../runtime/storage/drivers/driver.js';
 import {StorageKey} from '../../runtime/storage/storage-key.js';
 import {checkDefined} from '../../runtime/testing/preconditions.js';
@@ -19,11 +19,12 @@ import {PlanConsumer} from './plan-consumer.js';
 import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {ReplanQueue} from './replan-queue.js';
-import {ActiveSingletonEntityStore, CRDTEntitySingleton, handleForActiveStore} from '../../runtime/storage/storage.js';
+import {ActiveSingletonEntityStore, CRDTEntitySingleton, SingletonEntityHandle} from '../../runtime/storage/storage.js';
 import {StoreInfo} from '../../runtime/storage/store-info.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {ActiveStore} from '../../runtime/storage/active-store.js';
 import {Runtime} from '../../runtime/runtime.js';
+import {StorageService} from '../../runtime/storage/storage-service.js';
 
 const planificatorId = 'plans';
 
@@ -51,43 +52,47 @@ export class Planificator {
   static searchEntityType = EntityType.make(['Search'], {current: 'Text'});
   static async create(arc: Arc, {storageKeyBase, runtime, onlyConsumer, debug = false, inspectorFactory, noSpecEx}: PlanificatorOptions) {
     debug = debug || (Boolean(storageKeyBase) && isVolatile(storageKeyBase));
-    const store = await Planificator._initSuggestStore(arc, storageKeyBase);
-    const searchStore = await Planificator._initSearchStore(arc);
-    const result = new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store);
+    const store = await Planificator.initSuggestStore(storageKeyBase || arc.storageKey, runtime.storageService);
+    const searchStore = await Planificator.initSearchStore(arc.storageKey, runtime.storageService);
+    const result = new PlanningResult({context: runtime.context, loader: runtime.loader, storageService: runtime.storageService}, store);
     await result.load();
-    const planificator = new Planificator(arc, runtime, result, searchStore, onlyConsumer, debug, inspectorFactory, noSpecEx);
+
+    const searchHandle = await runtime.host.handleForStoreInfo(searchStore.storeInfo, arc.arcInfo);
+    const planificator = new Planificator(arc, runtime, result, searchStore, searchHandle,
+      onlyConsumer, debug, inspectorFactory, noSpecEx);
+
     await planificator._storeSearch(); // Reset search value for the current arc.
     await planificator.requestPlanning({contextual: true, metadata: {trigger: Trigger.Init}});
     return planificator;
   }
 
-  readonly arc: Arc;
-  result: PlanningResult;
   consumer: PlanConsumer;
   producer?: PlanProducer;
   replanQueue?: ReplanQueue;
-  dataChangeCallback: Runnable;
   storeCallbackIds: Map<ActiveStore<CRDTTypeRecord>, number>;
   search: string|null = null;
-  searchStore: ActiveSingletonEntityStore;
   inspector: PlannerInspector|undefined;
-  noSpecEx: boolean;
 
-  constructor(arc: Arc, runtime: Runtime, result: PlanningResult, searchStore: ActiveSingletonEntityStore, onlyConsumer: boolean = false, debug: boolean = false, inspectorFactory?: PlannerInspectorFactory, noSpecEx: boolean = false) {
-    this.arc = arc;
-    this.searchStore = searchStore;
-    this.noSpecEx = noSpecEx;
+  constructor(readonly arc: Arc,
+    readonly runtime: Runtime,
+    readonly result: PlanningResult,
+    readonly searchStore: ActiveSingletonEntityStore,
+    readonly searchHandle: SingletonEntityHandle,
+    onlyConsumer: boolean = false,
+    debug: boolean = false,
+    inspectorFactory?: PlannerInspectorFactory,
+    noSpecEx: boolean = false
+  ) {
     if (inspectorFactory) {
       this.inspector = inspectorFactory.create(this);
     }
     this.result = checkDefined(result, 'Result cannot be null');
     if (!onlyConsumer) {
-      this.producer = new PlanProducer(this.arc, runtime, this.result, searchStore, this.inspector, {debug, noSpecEx});
+      this.producer = new PlanProducer(this.arc.arcInfo, this.runtime, this.result, searchStore, this.searchHandle, this.inspector, {debug, noSpecEx});
       this.replanQueue = new ReplanQueue(this.producer);
-      this.dataChangeCallback = () => this.replanQueue.addChange();
       this._listenToArcStores();
     }
-    this.consumer = new PlanConsumer(this.arc, this.result, this.inspector);
+    this.consumer = new PlanConsumer(this.arc.arcInfo, this.result, this.inspector);
   }
 
   async forceReplan() {
@@ -97,6 +102,8 @@ export class Planificator {
     await this.requestPlanning({metadata: {trigger: Trigger.Forced}});
     await this.loadSuggestions();
   }
+
+  get arcInfo(): ArcInfo { return this.arc.arcInfo; }
 
   async requestPlanning(options = {}) {
     if (!this.consumerOnly && this.producer) {
@@ -151,10 +158,10 @@ export class Planificator {
   }
 
   private _listenToArcStores() {
-    this.arc.onDataChange(this.dataChangeCallback, this);
+    this.arc.onDataChange(() => this.replanQueue.addChange(), this);
     this.storeCallbackIds = new Map();
-    this.arc.context.allStores.forEach(async storeInfo => {
-      const store = await this.arc.getActiveStore(storeInfo);
+    this.arcInfo.context.allStores.forEach(async storeInfo => {
+      const store = await this.runtime.storageService.getActiveStore(storeInfo);
       const callbackId = store.on(async () => this.replanQueue.addChange());
       this.storeCallbackIds.set(store, callbackId);
     });
@@ -162,43 +169,41 @@ export class Planificator {
 
   private _unlistenToArcStores() {
     this.arc.clearDataChange(this);
-    this.arc.context.allStores.forEach(async storeInfo => {
-      const store = await this.arc.getActiveStore(storeInfo);
+    this.arcInfo.context.allStores.forEach(async storeInfo => {
+      const store = await this.runtime.storageService.getActiveStore(storeInfo);
       const callbackId = this.storeCallbackIds.get(store);
       store.off(callbackId);
     });
   }
 
-  static constructSuggestionKey(arc: Arc, storageKeyBase?: StorageKey): StorageKey {
-    const keybase = storageKeyBase || arc.storageKey;
-    return keybase.childKeyForSuggestions(planificatorId);
+  static async initSuggestStore(storageKey: StorageKey, storageService: StorageService): Promise<ActiveSingletonEntityStore> {
+    return Planificator._initStore(
+      storageService,
+      'suggestions-id',
+      PlanningResult.suggestionEntityType,
+      storageKey.childKeyForSuggestions(planificatorId)
+    );
   }
 
-  static constructSearchKey(arc: Arc): StorageKey {
-    return arc.storageKey.childKeyForSearch(planificatorId);
+  static async initSearchStore(storageKey: StorageKey, storageService: StorageService): Promise<ActiveSingletonEntityStore> {
+    return Planificator._initStore(
+      storageService,
+      'search-id',
+      PlanningResult.suggestionEntityType,
+      storageKey.childKeyForSearch(planificatorId)
+    );
   }
 
-  private static async _initSuggestStore(arc: Arc, storageKeyBase?: StorageKey): Promise<ActiveSingletonEntityStore> {
-    const storageKey = Planificator.constructSuggestionKey(arc, storageKeyBase);
-    return Planificator._initStore(arc, 'suggestions-id', PlanningResult.suggestionEntityType, storageKey);
-  }
-
-  private static async _initSearchStore(arc: Arc): Promise<ActiveSingletonEntityStore> {
-    const storageKey = Planificator.constructSearchKey(arc);
-    return Planificator._initStore(arc, 'search-id', PlanningResult.suggestionEntityType, storageKey);
-  }
-
-  private static async _initStore(arc: Arc, id: string, type: EntityType, storageKey: StorageKey): Promise<ActiveSingletonEntityStore> {
+  private static async _initStore(storageService: StorageService, id: string, type: EntityType, storageKey: StorageKey): Promise<ActiveSingletonEntityStore> {
     const singletonType = new SingletonType(type);
-    return arc.getActiveStore(new StoreInfo({storageKey, exists: Exists.MayExist, type: singletonType, id}));
+    return storageService.getActiveStore(new StoreInfo({storageKey, exists: Exists.MayExist, type: singletonType, id}));
   }
 
   async _storeSearch(): Promise<void> {
-    const handle = handleForActiveStore(this.searchStore.storeInfo, this.arc);
-    const handleValue = await handle.fetch();
+    const handleValue = await this.searchHandle.fetch();
     const values = handleValue ? JSON.parse(handleValue.current) : [];
 
-    const arcKey = this.arc.id.idTreeAsString();
+    const arcKey = this.arcInfo.id.idTreeAsString();
     const newValues: {arc: string, search: string}[] = [];
     for (const {arc, search} of values) {
       if (arc === arcKey) {
@@ -212,6 +217,6 @@ export class Planificator {
     if (this.search) {
       newValues.push({search: this.search, arc: arcKey});
     }
-    await handle.setFromData({current: JSON.stringify(newValues)});
+    await this.searchHandle.setFromData({current: JSON.stringify(newValues)});
   }
 }

@@ -246,6 +246,25 @@ class ListFieldTypeGenerator(
 }
 
 /**
+ * A [Generator] of NullableOf [FieldType]s.
+ *
+ * Note that some [FieldType]s reference schema hashes that are expected to be in a global
+ * registry. For this reason, all [FieldType] generators return [FieldTypeWithReferencedSchemas]
+ * objects that encapsulate both a [FieldType] and any schemas referenced by that [FieldType].
+ */
+class NullableFieldTypeGenerator(
+  val field: Generator<FieldTypeWithReferencedSchemas>
+) : Generator<FieldTypeWithReferencedSchemas> {
+  override fun invoke(): FieldTypeWithReferencedSchemas {
+    val memberType = field()
+    return FieldTypeWithReferencedSchemas(
+      FieldType.NullableOf(memberType.fieldType),
+      memberType.schemas
+    )
+  }
+}
+
+/**
  * A [Generator] of [FieldType]s representing inline entities.
  *
  * Note that inline entities are referenced by schema hash rather than direct incorporation
@@ -326,7 +345,8 @@ class FieldTypeGenerator(
         PrimitiveFieldTypeGenerator(s),
         ListFieldTypeGenerator(FieldTypeValidForListGenerator(s, schema)),
         InlineEntityFieldTypeGenerator(schema),
-        ReferenceFieldTypeGenerator(schema)
+        ReferenceFieldTypeGenerator(schema),
+        NullableFieldTypeGenerator(FieldTypeValidForListGenerator(s, schema))
       )
     ).invoke().invoke()
   }
@@ -365,7 +385,7 @@ class ReferencablePrimitiveFromPrimitiveType(
  * A [Transformer] that, given a [FieldTypeWithReferencedSchemas] can produce [Referencable]
  * objects with appropriate data.
  */
-class ReferencableFromFieldType(
+class NonNullableReferencableFromFieldType(
   val referencablePrimitive: Transformer<PrimitiveType, ReferencablePrimitive<*>>,
   val listLength: Generator<Int>,
   val rawEntity: Transformer<SchemaWithReferencedSchemas, RawEntity>,
@@ -388,8 +408,29 @@ class ReferencableFromFieldType(
       is FieldType.EntityRef -> rawReference()
       is FieldType.Tuple ->
         TODO("b/180656030: values of Tuple type aren't yet supported")
-      is FieldType.NullableOf ->
-        TODO("b/182096850: Nullable field support not yet implemented")
+      is FieldType.NullableOf -> {
+        val innerField = FieldTypeWithReferencedSchemas(
+          i.fieldType.innerType,
+          i.schemas
+        )
+        invoke(innerField)
+      }
+    }
+  }
+}
+
+/**
+ * A [Transformer] that, given a [FieldTypeWithReferencedSchemas] can produce [Referencable?]
+ * objects with appropriate data.
+ */
+class NullableReferencableFromFieldType(
+  val nonNullableReferencablePrimitive: Transformer<FieldTypeWithReferencedSchemas, Referencable>,
+  val isNull: Generator<Boolean>
+) : Transformer<FieldTypeWithReferencedSchemas, Referencable?>() {
+  override fun invoke(i: FieldTypeWithReferencedSchemas): Referencable? {
+    return when {
+      i.fieldType is FieldType.NullableOf && isNull() -> null
+      else -> nonNullableReferencablePrimitive.invoke(i)
     }
   }
 }

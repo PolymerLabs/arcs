@@ -16,6 +16,7 @@ import arcs.core.data.Capabilities
 import arcs.core.data.Capability
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyFactory
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.StorageKeySpec
 
 /** Protocol to be used with the volatile driver. */
@@ -49,7 +50,7 @@ data class VolatileStorageKey(
 
   companion object : StorageKeySpec<VolatileStorageKey> {
     private val VOLATILE_STORAGE_KEY_PATTERN = "^([^/]+)/(.*)\$".toRegex()
-    override val protocol = Protocols.VOLATILE_DRIVER
+    override val protocol = StorageKeyProtocol.Volatile
 
     override fun parse(rawKeyString: String): VolatileStorageKey {
       val match =

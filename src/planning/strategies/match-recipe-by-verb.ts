@@ -33,7 +33,7 @@ type SlotConstraint = {targetSlot: Slot, providedSlots: Slot[]};
 export class MatchRecipeByVerb extends Strategy {
 
   async generate(inputParams: GenerateParams<Recipe>): Promise<Descendant<Recipe>[]> {
-    const arc = this.arc;
+    const arcInfo = this.arcInfo;
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
       onParticle(recipe: Recipe, particle: Particle) {
         if (particle.name) {
@@ -41,7 +41,7 @@ export class MatchRecipeByVerb extends Strategy {
           return undefined;
         }
 
-        let recipes = arc.context.findRecipesByVerb(particle.primaryVerb);
+        let recipes = arcInfo.context.findRecipesByVerb(particle.primaryVerb);
 
         // Extract slot information from recipe.
         //

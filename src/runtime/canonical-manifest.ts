@@ -88,9 +88,14 @@ annotation hardRef
   doc: 'It can be used on reference fields: a hard reference indicates that the entity with that field should be deleted when the referenced entity is deleted.'
 
 annotation actor(name: Text)
-    targets: [HandleConnection]
-    retention: Source
-    doc: 'Add an ActorId to reduce storage overhead'
+  targets: [HandleConnection]
+  retention: Source
+  doc: 'Add an ActorId to reduce storage overhead'
+
+annotation edge
+  targets: [Particle]
+  retention: Source
+  doc: 'The given particle will be generated as a concrete "edge" particle instead of an abstract base class, with handles that can treated as standard asynchronous data sources.'
 
 ${canonicalPolicyAnnotations}
 `;

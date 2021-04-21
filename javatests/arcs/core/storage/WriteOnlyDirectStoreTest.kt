@@ -36,7 +36,7 @@ class WriteOnlyDirectStoreTest {
   fun setUp() {
     BuildFlags.WRITE_ONLY_STORAGE_STACK = true
     testWriteBackProvider = object : WriteBackProvider {
-      override fun invoke(protocol: Protocol): WriteBack {
+      override fun invoke(protocol: StorageKeyProtocol): WriteBack {
         this@WriteOnlyDirectStoreTest.testStoreWriteBack =
           TestStoreWriteBack(protocol, TestCoroutineScope(TestCoroutineDispatcher()))
         return this@WriteOnlyDirectStoreTest.testStoreWriteBack

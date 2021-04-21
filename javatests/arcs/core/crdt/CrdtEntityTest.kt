@@ -1680,8 +1680,7 @@ class CrdtEntityTest {
 
     val stringEntity = "G'day!".toReferencable()
     val wrapped2 = CrdtEntity.ReferenceImpl(stringEntity.id)
-    assertThat(wrapped2.toString())
-      .isEqualTo("Reference(Primitive<kotlin.String>(G'day!))")
+    assertThat(wrapped2.toString()).isEqualTo("Reference(Primitive(G'day!))")
   }
 
   /**

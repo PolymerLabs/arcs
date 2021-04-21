@@ -21,6 +21,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.database.DatabaseConfig
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.testutil.DummyStorageKey
@@ -265,6 +266,27 @@ class AndroidSqliteDatabaseManagerTest {
     manager.getDatabase("bar", false).insertOrUpdate(key, entityWithHardRef("id1"))
 
     assertThat(manager.removeEntitiesHardReferencing(refKey, "id2")).isEqualTo(0)
+  }
+
+  @Test
+  fun updateDatabaseConfig_propagatesToDatabases() = runBlockingTest {
+    val database = manager.getDatabase("foo", true) as DatabaseImpl
+
+    val managerDatabaseConfigBefore = manager.databaseConfig.get()
+    val databaseDatabaseConfigBefore = database.databaseConfigGetter()
+
+    manager.updateDatabaseConfig(DatabaseConfig(diffbasedEntityInsertion = true))
+
+    val managerDatabaseConfigAfter = manager.databaseConfig.get()
+    val databaseDatabaseConfigAfter = database.databaseConfigGetter()
+
+    val expectedBefore = DatabaseConfig()
+    val expectedAfter = DatabaseConfig(diffbasedEntityInsertion = true)
+
+    assertThat(managerDatabaseConfigBefore).isEqualTo(expectedBefore)
+    assertThat(databaseDatabaseConfigBefore).isEqualTo(expectedBefore)
+    assertThat(managerDatabaseConfigAfter).isEqualTo(expectedAfter)
+    assertThat(databaseDatabaseConfigAfter).isEqualTo(expectedAfter)
   }
 
   private fun entityWithHardRef(refId: String) = DatabaseData.Entity(

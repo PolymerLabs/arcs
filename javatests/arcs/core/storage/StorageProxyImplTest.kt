@@ -12,14 +12,15 @@
 package arcs.core.storage
 
 import arcs.core.analytics.Analytics
+import arcs.core.common.ArcId
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.VersionMap
-import arcs.core.storage.StorageProxy.CallbackIdentifier
 import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.storage.StorageProxyImpl.ProxyState
-import arcs.core.storage.keys.Protocols
+import arcs.core.storage.keys.DatabaseStorageKey
+import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
 import arcs.core.util.ArcsStrictMode
@@ -724,17 +725,8 @@ class StorageProxyImplTest {
   }
 
   @Test
-  fun syncRequestToModelUpdate_NormalStorageKey_logged() = runTest {
-    val volatileStorageKey =
-      object : StorageKey(Protocols.VOLATILE_DRIVER) {
-        override fun toKeyString(): String {
-          return Protocols.VOLATILE_DRIVER
-        }
-
-        override fun childKeyWithComponent(component: String): StorageKey {
-          return mockStorageKey
-        }
-      }
+  fun syncRequestToModelUpdate_normalStorageKey_logged() = runTest {
+    val volatileStorageKey = VolatileStorageKey(ArcId.newForTest("arcId"), "unique")
 
     val proxy = StorageProxyImpl.create(
       StoreOptions(
@@ -770,28 +762,9 @@ class StorageProxyImplTest {
   }
 
   @Test
-  fun syncRequestToModelUpdate_ReferenceModeStorageKey_logged() = runTest {
-    val dbBackingStorageKey =
-      object : StorageKey(Protocols.DATABASE_DRIVER) {
-        override fun toKeyString(): String {
-          return Protocols.DATABASE_DRIVER
-        }
-
-        override fun childKeyWithComponent(component: String): StorageKey {
-          return mockStorageKey
-        }
-      }
-
-    val dbStorageKey =
-      object : StorageKey(Protocols.DATABASE_DRIVER) {
-        override fun toKeyString(): String {
-          return Protocols.DATABASE_DRIVER
-        }
-
-        override fun childKeyWithComponent(component: String): StorageKey {
-          return mockStorageKey
-        }
-      }
+  fun syncRequestToModelUpdate_referenceModeStorageKey_logged() = runTest {
+    val dbBackingStorageKey = DatabaseStorageKey.Persistent("backing", "abc")
+    val dbStorageKey = DatabaseStorageKey.Persistent("unique", "abc")
 
     val dbReferenceModeStorageKey =
       ReferenceModeStorageKey(dbBackingStorageKey, dbStorageKey)

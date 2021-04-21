@@ -27,6 +27,10 @@ export function annotationsToKotlin(annotations: AnnotationRef[]): string {
   const ktUtils = new KotlinGenerationUtils();
   const annotationStrs: string[] = [];
   for (const ref of annotations) {
+    if (!ref.annotation) {
+      throw new Error(
+          `Unknown annotation: ${ref.name} (constructed using: ${ref.constructor.name})`);
+    }
     const paramMappings = Object.entries(ref.annotation.params).map(([name, type]) => {
       const paramToMapping = () => {
         switch (type) {

@@ -12,8 +12,10 @@
 
 package arcs.core.host
 
+import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
+import arcs.core.data.HandleMode
 import arcs.core.data.Plan
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -26,9 +28,12 @@ import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.api.HandleHolder
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
+import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.testStorageEndpointManager
+import arcs.core.type.Type
+import arcs.flags.BuildFlags
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.HandleHolderBase
 import arcs.sdk.Particle
@@ -38,6 +43,7 @@ import kotlin.reflect.KClass
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -45,6 +51,21 @@ import org.junit.runners.Parameterized
 @ExperimentalCoroutinesApi
 @RunWith(Parameterized::class)
 class UtilsTest(private val params: Params) {
+
+  private val schema = Schema(
+    setOf(SchemaName("Foo")),
+    SchemaFields(mapOf("foo" to FieldType.Number), emptyMap()),
+    "42"
+  )
+
+  private val singletonType = SingletonType(EntityType(schema))
+  private val collectionType = CollectionType(EntityType(schema))
+
+  @Before
+  fun setUp() {
+    BuildFlags.WRITE_ONLY_STORAGE_STACK = false
+  }
+
   @Test
   fun kclass_className() {
     assertThat(params.classNameClass.className()).isEqualTo(params.expectedClassName)
@@ -149,6 +170,121 @@ class UtilsTest(private val params: Params) {
         holder
       )
     }
+  }
+
+  private fun generateHandle(key: String, type: Type, db: Boolean = true) =
+    Plan.Handle(
+      if (!db) RamDiskStorageKey(key)
+      else ReferenceModeStorageKey(
+        backingKey = DatabaseStorageKey.Persistent("backing$key", "1234a", dbName = "test"),
+        storageKey = DatabaseStorageKey.Persistent("entity$key", "1234a", dbName = "test")
+      ),
+      type,
+      emptyList()
+    )
+
+  private fun generateConnection(handle: Plan.Handle, type: Type, mode: HandleMode) =
+    Plan.HandleConnection(
+      handle,
+      mode,
+      type,
+      emptyList(),
+      null
+    )
+
+  private fun generateParticle(
+    name: String,
+    vararg connections: Pair<String, Plan.HandleConnection>
+  ) =
+    Plan.Particle(
+      name,
+      name,
+      mapOf(*connections)
+    )
+
+  @Test
+  fun isWriteOnlyStorageKey_withOneParticleAndAllWriteOnlyConnections_isTrue() {
+    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
+
+    val handle = generateHandle("foo", collectionType)
+    val connection = generateConnection(handle, collectionType, HandleMode.Write)
+    val particle = generateParticle("foo", "bar" to connection)
+
+    val partition = Plan.Partition(
+      "fooId",
+      "fooHost",
+      listOf(particle)
+    )
+    assertThat(isWriteOnlyStorageKey(partition, handle.storageKey)).isTrue()
+  }
+
+  @Test
+  fun isWriteOnlyStorageKey_withOneParticleAndAllWriteOnlyRamDiskConnections_isFalse() {
+    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
+
+    val handle = generateHandle("foo", collectionType, db = false)
+    val connection = generateConnection(handle, collectionType, HandleMode.Write)
+    val particle = generateParticle("foo", "bar" to connection)
+
+    val partition = Plan.Partition(
+      "fooId",
+      "fooHost",
+      listOf(particle)
+    )
+    assertThat(isWriteOnlyStorageKey(partition, handle.storageKey)).isFalse()
+  }
+
+  @Test
+  fun isWriteOnlyStorageKey_withOneParticleAndOneSingletonConnection_isFalse() {
+    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
+
+    val handle = generateHandle("foo", collectionType)
+    val connection = generateConnection(handle, singletonType, HandleMode.Write)
+    val connection2 = generateConnection(handle, collectionType, HandleMode.Write)
+
+    val particle = generateParticle("foo", "bar" to connection, "baz" to connection2)
+    val partition = Plan.Partition(
+      "fooId",
+      "fooHost",
+      listOf(particle)
+    )
+    assertThat(isWriteOnlyStorageKey(partition, handle.storageKey)).isFalse()
+  }
+
+  @Test
+  fun isWriteOnlyStorageKey_withOneParticleAndOneReadableConnection_isFalse() {
+    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
+
+    val handle = generateHandle("foo", collectionType)
+    val connection = generateConnection(handle, collectionType, HandleMode.Write)
+    val connection2 = generateConnection(handle, collectionType, HandleMode.ReadWrite)
+
+    val particle = generateParticle("foo", "bar" to connection, "baz" to connection2)
+    val partition = Plan.Partition(
+      "fooId",
+      "fooHost",
+      listOf(particle)
+    )
+    assertThat(isWriteOnlyStorageKey(partition, handle.storageKey)).isFalse()
+  }
+
+  @Test
+  fun isWriteOnlyStorageKey_withTwoParticlesAndAllWriteOnlyConnections_isTrue() {
+    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
+
+    val handle = generateHandle("foo", collectionType)
+    val connection = generateConnection(handle, collectionType, HandleMode.Write)
+    val connection2 = generateConnection(handle, collectionType, HandleMode.Write)
+
+    val particle = generateParticle("foo", "bar" to connection)
+    val particle2 = generateParticle("foo2", "bar2" to connection2)
+
+    val partition = Plan.Partition(
+      "fooId",
+      "fooHost",
+      listOf(particle, particle2)
+    )
+    assertThat(isWriteOnlyStorageKey(partition, handle.storageKey)).isTrue()
   }
 
   data class Params(

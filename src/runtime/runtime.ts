@@ -12,6 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
 import {ArcOptions, Arc} from './arc.js';
+import {ArcInfo} from './arc-info.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId, Id} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
@@ -81,18 +82,18 @@ export class Runtime {
   /**
    * Given an arc, returns it's description as a string.
    */
-  async getArcDescription(arc: Arc) : Promise<string> {
+  async getArcDescription(arcId: ArcId) : Promise<string> {
     // Verify that it's one of my arcs, and make this non-static, once I have
     // Runtime objects in the calling code.
-    return (await Description.create(arc)).getArcDescription();
+    return (await Description.create(this.getArcById(arcId).arcInfo, this)).getArcDescription();
   }
 
-  async resolveRecipe(arc: Arc, recipe: Recipe): Promise<Recipe | null> {
+  async resolveRecipe(arcInfo: ArcInfo, recipe: Recipe): Promise<Recipe | null> {
     const errors = new Map();
     if (recipe.tryResolve({errors})) {
       return recipe;
     }
-    const resolver = new RecipeResolver(arc);
+    const resolver = new RecipeResolver(arcInfo);
     const plan = await resolver.resolve(recipe);
     if (plan && plan.isResolved()) {
       return plan;

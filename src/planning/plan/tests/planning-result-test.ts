@@ -26,16 +26,15 @@ describe('planning result', () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile('./src/runtime/tests/artifacts/Products/Products.recipes');
 
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
 
-    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
     assert.isNotEmpty(suggestions);
 
-    const {loader, context} = runtime;
-    const {storageService} = arc;
+    const {loader, context, storageService} = runtime;
 
     const result = new PlanningResult({context, loader, storageService});
-    result.merge({suggestions}, arc);
+    result.merge({suggestions}, arcInfo);
 
     const serialization = result.toLiteral();
     assert(serialization.suggestions);
@@ -51,34 +50,33 @@ describe('planning result', () => {
     const runtime = new Runtime();
     runtime.context = await runtime.parseFile('./src/runtime/tests/artifacts/Products/Products.recipes');
 
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
-    const suggestions = await StrategyTestHelper.planForArc(runtime, arc);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
 
-    const {loader, context} = runtime;
-    const {storageService} = arc;
+    const {loader, context, storageService} = runtime;
 
     const result = new PlanningResult({loader, context, storageService});
 
     // Appends new suggestion.
-    assert.isTrue(result.merge({suggestions}, arc));
+    assert.isTrue(result.merge({suggestions}, arcInfo));
     assert.lengthOf(result.suggestions, 1);
 
     // Tries to append already existing suggestions.
-    assert.isFalse(result.merge({suggestions}, arc));
+    assert.isFalse(result.merge({suggestions}, arcInfo));
     assert.lengthOf(result.suggestions, 1);
 
     // Init results.
     const otherSuggestion = new Suggestion(suggestions[0].plan, 'other-hash', 0, suggestions[0].versionByStore);
     otherSuggestion.descriptionByModality['text'] = 'other description';
     suggestions.push(otherSuggestion);
-    assert.isTrue(result.merge({suggestions}, arc));
+    assert.isTrue(result.merge({suggestions}, arcInfo));
     assert.lengthOf(result.suggestions, 2);
 
     const suggestionWithSearch = new Suggestion(otherSuggestion.plan, 'other-hash', 0, otherSuggestion.versionByStore);
     suggestionWithSearch.descriptionByModality['text'] = otherSuggestion.descriptionText;
     suggestionWithSearch.setSearch(newSearch('hello world', /* unresolvedTokens= */[]));
     suggestions.push(suggestionWithSearch);
-    assert.isTrue(result.merge({suggestions}, arc));
+    assert.isTrue(result.merge({suggestions}, arcInfo));
     assert.lengthOf(result.suggestions, 2);
     assert.deepEqual(result.suggestions[1].searchGroups, [[''], ['hello', 'world']]);
   });
@@ -119,10 +117,10 @@ recipe R3
         `;
   async function prepareMerge(manifestStr1, manifestStr2) {
     const runtime = new Runtime();
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()}));
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
 
     const planToSuggestion = async (plan: Recipe): Promise<Suggestion> => {
-      const suggestion = Suggestion.create(plan, await plan.digest(), Relevance.create(arc, plan));
+      const suggestion = Suggestion.create(plan, await plan.digest(), Relevance.create(arcInfo, plan));
       suggestion.descriptionByModality['text'] = plan.name;
       for (const handle of plan.handles) {
         if (handle.id) {
@@ -131,18 +129,19 @@ recipe R3
       }
       return suggestion;
     };
+    // const arc = runtime.getArcById(arcInfo.id);
     const manifestToResult = async (manifestStr) =>  {
       const manifest = await runtime.parse(manifestStr);
-      const result = new PlanningResult({context: arc.context, loader: runtime.loader, storageService: arc.storageService});
+      const result = new PlanningResult({context: runtime.context, loader: runtime.loader, storageService: runtime.storageService});
 
       const suggestions: Suggestion[] = await Promise.all(
         manifest.recipes.map(async plan => planToSuggestion(plan)) as Promise<Suggestion>[]
       );
-      result.merge({suggestions}, arc);
+      result.merge({suggestions}, arcInfo);
       return result;
     };
     return {
-      arc,
+      arcInfo,
       result1: await manifestToResult(manifestStr1),
       result2: await manifestToResult(manifestStr2)
     };
@@ -150,27 +149,27 @@ recipe R3
 
   it('merges suggestions unchanged', async () => {
     // merging equivalent suggestions.
-    const {arc, result1, result2} = await prepareMerge(
+    const {arcInfo, result1, result2} = await prepareMerge(
         `${commonManifestStr}${recipeOneStr}${recipeTwoStr}`,
         `${commonManifestStr}${recipeOneStr}${recipeTwoStr}`);
     assert.lengthOf(result1.suggestions, 2);
-    assert.isFalse(result1.merge({suggestions: result2.suggestions}, arc));
+    assert.isFalse(result1.merge({suggestions: result2.suggestions}, arcInfo));
     assert.lengthOf(result1.suggestions, 2);
     assert.deepEqual(result1.suggestions.map(s => s.descriptionText), ['R1', 'R2']);
 
     // merging empty suggestions into existing ones.
-    assert.isFalse(result1.merge({suggestions: []}, arc));
+    assert.isFalse(result1.merge({suggestions: []}, arcInfo));
     assert.lengthOf(result1.suggestions, 2);
     assert.deepEqual(result1.suggestions.map(s => s.descriptionText), ['R1', 'R2']);
   });
 
   it('merges suggestions union', async () => {
-    const {arc, result1, result2} = await prepareMerge(
+    const {arcInfo, result1, result2} = await prepareMerge(
         `${commonManifestStr}${recipeOneStr}${recipeTwoStr}`,
         `${commonManifestStr}${recipeTwoStr}${recipeThreeStr}`);
     assert.lengthOf(result1.suggestions, 2);
     assert.lengthOf(result2.suggestions, 2);
-    assert.isTrue(result1.merge({suggestions: result2.suggestions}, arc));
+    assert.isTrue(result1.merge({suggestions: result2.suggestions}, arcInfo));
     assert.lengthOf(result1.suggestions, 3);
     assert.deepEqual(result1.suggestions.map(s => s.descriptionText), ['R1', 'R2', 'R3']);
   });
@@ -185,32 +184,32 @@ recipe R4
   P1
     thing: writes thing1Handle
     `;
-    const {arc, result1, result2} = await prepareMerge(
+    const {arcInfo, result1, result2} = await prepareMerge(
       `${commonManifestStr}${recipeOneStr}${recipeTwoStr}${recipeThreeStr}`,
       `${commonManifestStr}${recipeThreeStr}${recipeFourStr}`);
     assert.lengthOf(result1.suggestions, 3);
     assert.lengthOf(result2.suggestions, 2);
     // All recipes using store 'thing-id-0' are outdated
-    arc.getVersionByStore = () =>  ({'thing-id-0': 1});
-    assert.isTrue(result1.merge({suggestions: result2.suggestions}, arc));
+    arcInfo.getVersionByStore = () =>  ({'thing-id-0': 1});
+    assert.isTrue(result1.merge({suggestions: result2.suggestions}, arcInfo));
     assert.lengthOf(result1.suggestions, 2);
     assert.deepEqual(result1.suggestions.map(s => s.descriptionText), ['R1', 'R4']);
   });
 
   it('merges all outdated suggestions', async () => {
-    const {arc, result1, result2} = await prepareMerge(
+    const {arcInfo, result1, result2} = await prepareMerge(
       `${commonManifestStr}${recipeTwoStr}`,
       `${commonManifestStr}${recipeThreeStr}`);
     assert.lengthOf(result1.suggestions, 1);
     assert.lengthOf(result2.suggestions, 1);
     // All recipes using store 'thing-id-0' are outdated
-    arc.getVersionByStore = () =>  ({'thing-id-0': 1});
-    assert.isTrue(result1.merge({suggestions: result2.suggestions}, arc));
+    arcInfo.getVersionByStore = () =>  ({'thing-id-0': 1});
+    assert.isTrue(result1.merge({suggestions: result2.suggestions}, arcInfo));
     assert.isEmpty(result1.suggestions);
   });
 
   it('merges same suggestion with newer store versions', async () => {
-    const {arc, result1, result2} = await prepareMerge(
+    const {arcInfo, result1, result2} = await prepareMerge(
       `${commonManifestStr}${recipeTwoStr}`,
       `${commonManifestStr}${recipeTwoStr}${recipeThreeStr}`);
     assert.lengthOf(result1.suggestions, 1);
@@ -218,7 +217,7 @@ recipe R4
 
     // Increment store 'thing-id-0' version in result1.
     result2.suggestions[0].versionByStore['thing-id-0'] = 1;
-    assert.isTrue(result1.merge({suggestions: result2.suggestions}, arc));
+    assert.isTrue(result1.merge({suggestions: result2.suggestions}, arcInfo));
     assert.lengthOf(result1.suggestions, 2);
     assert.strictEqual(result1.suggestions[0].versionByStore['thing-id-0'], 1);
   });

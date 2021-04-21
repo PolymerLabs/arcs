@@ -12,7 +12,9 @@ particle T
   h1: reads Thing {num: Number}
 -----[results]-----
 
-    
+    interface ThingSlice : arcs.sdk.Entity {
+        val num: Double
+    }
 
     @Suppress("UNCHECKED_CAST")
     class Thing(
@@ -20,9 +22,9 @@ particle T
         entityId: String? = null,
         creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : arcs.sdk.EntityBase("Thing", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+    ) : arcs.sdk.EntityBase("Thing", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false), ThingSlice {
         
-        var num: Double
+        override var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("num", _value)
         
@@ -83,12 +85,14 @@ particle T
   h1: reads Thing {num: Number}
 -----[results]-----
 
-    
+    interface ThingSlice : WasmEntity {
+        val num: Double
+    }
 
     @Suppress("UNCHECKED_CAST")
-    class Thing(num: Double = 0.0) : WasmEntity {
+    class Thing(num: Double = 0.0) : WasmEntity, ThingSlice {
         
-        var num = num
+        override var num = num
             get() = field
             private set(_value) {
                 field = _value
@@ -163,7 +167,9 @@ particle T
   h1: reads ~a with {num: Number}
 -----[results]-----
 
-    
+    interface T_H1_Slice : arcs.sdk.Entity {
+        val num: Double
+    }
 
     @Suppress("UNCHECKED_CAST")
     class T_H1 private constructor(
@@ -178,9 +184,9 @@ particle T
         creationTimestamp,
         expirationTimestamp,
         false
-    ) {
+    ), T_H1_Slice {
         
-        var num: Double
+        override var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("num", _value)
         

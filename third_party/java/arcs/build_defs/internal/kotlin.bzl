@@ -22,7 +22,6 @@ load(
     "java_library",
     "java_test",
 )
-load("//third_party/java/arcs/flags:flags.bzl", "ARCS_BUILD_FLAGS")
 load("//tools/build_defs/android:rules.bzl", "android_local_test")
 load(
     "//tools/build_defs/kotlin:rules.bzl",
@@ -97,18 +96,6 @@ DEFAULT_LIBRARY_PLATFORMS = ["jvm"]
 
 # Default set of platforms for Kotlin particles.
 DEFAULT_PARTICLE_PLATFORMS = ["jvm"]
-
-# Controls output of type slicing interfaces for entities in generated particle classes.
-# Note that this uses the default value of the flag as defined in flags.bzl rather than
-# being overridden by clients.
-# TODO(b/182330900): hard-code to 'on' once type slicing has fully launched.
-def is_type_slicing_enabled():
-    for flag in ARCS_BUILD_FLAGS:
-        if flag.name == "particle_type_slicing":
-            return flag.status == "LAUNCHED"
-    return False
-
-KOTLIN_ENABLE_TYPE_SLICING = is_type_slicing_enabled()
 
 def arcs_java_library(**kwargs):
     """Wrapper around java_library for Arcs.
@@ -658,9 +645,7 @@ def arcs_kt_schema(
         deps = [],
         platforms = ["jvm"],
         test_harness = False,
-        visibility = None,
-        # TODO(b/182330900): remove once type slicing has been fully launched.
-        force_enable_type_slicing = False):
+        visibility = None):
     """Generates a Kotlin schemas, entities, specs, handle holders, and base particles for input .arcs manifest files.
 
     Example:
@@ -689,7 +674,6 @@ def arcs_kt_schema(
       platforms: list of target platforms (currently, `jvm` and `wasm` supported).
       test_harness: whether to generate a test harness target
       visibility: visibility of the generated arcs_kt_library
-      force_enable_type_slicing: temporary argument to force generation of type slicing interfaces
 
     Returns:
       Dictionary of:
@@ -722,7 +706,6 @@ def arcs_kt_schema(
                 language_name = "Kotlin",
                 wasm = wasm,
                 test_harness = False,
-                type_slicing = KOTLIN_ENABLE_TYPE_SLICING or force_enable_type_slicing,
             )
 
     arcs_kt_library(
@@ -749,7 +732,6 @@ def arcs_kt_schema(
                 language_name = "Kotlin",
                 wasm = False,
                 test_harness = True,
-                type_slicing = KOTLIN_ENABLE_TYPE_SLICING or force_enable_type_slicing,
             )
 
         arcs_kt_library(
@@ -772,9 +754,7 @@ def arcs_kt_gen(
         deps = [],
         platforms = ["jvm"],
         test_harness = False,
-        visibility = None,
-        # TODO(b/182330900): remove once type slicing has been fully launched.
-        force_enable_type_slicing = False):
+        visibility = None):
     """Generates Kotlin files for the given .arcs files.
 
     This is a convenience wrapper that combines all code generation targets based on arcs files.
@@ -788,7 +768,6 @@ def arcs_kt_gen(
       platforms: list of target platforms (currently, `jvm` and `wasm` supported).
       test_harness: whether to generate a test harness target
       visibility: visibility of the generated arcs_kt_library
-      force_enable_type_slicing: temporary argument to force generation of type slicing interfaces
     """
 
     manifest_name = name + "_manifest"
@@ -821,7 +800,6 @@ def arcs_kt_gen(
         platforms = platforms,
         test_harness = test_harness,
         visibility = visibility,
-        force_enable_type_slicing = force_enable_type_slicing,
     )
 
     plan = arcs_kt_plan(

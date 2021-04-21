@@ -15,6 +15,7 @@ import arcs.core.common.ArcId
 import arcs.core.crdt.CrdtEntity
 import arcs.core.data.RawEntity
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
@@ -34,7 +35,7 @@ class VolatileDriverProviderTest {
 
   @Test
   fun willSupport_requiresVolatileStorageKey() {
-    class NonVolatileKey : StorageKey("nonvolatile") {
+    class NonVolatileKey : StorageKey(StorageKeyProtocol.Dummy) {
       override fun toKeyString() = "blah"
       override fun childKeyWithComponent(component: String) = NonVolatileKey()
     }

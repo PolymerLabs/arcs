@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Arc} from '../../runtime/arc.js';
+import {ArcInfo} from '../../runtime/arc-info.js';
 import {Consumer} from '../../utils/lib-utils.js';
 import {PlanningResult} from './planning-result.js';
 import {Suggestion, SuggestionVisibilityOptions} from './suggestion.js';
@@ -19,24 +19,18 @@ import {PlannerInspector} from '../planner-inspector.js';
 export type VisibilityOptions = {reasons?: Map<string, SuggestionVisibilityOptions>};
 
 export class PlanConsumer {
-  readonly arc: Arc;
-  result: PlanningResult;
   suggestFilter = new SuggestFilter(false);
   // Callback is triggered when planning results have changed.
   private suggestionsChangeCallbacks: Consumer<{suggestions: Suggestion[]}>[] = [];
   // Callback is triggered when suggestions visible to the user have changed.
   private visibleSuggestionsChangeCallbacks: Consumer<Suggestion[]>[] = [];
   currentSuggestions: Suggestion[] = [];
-  readonly inspector?: PlannerInspector;
 
-  constructor(arc: Arc, result: PlanningResult, inspector?: PlannerInspector) {
-    assert(arc, 'arc cannot be null');
+  constructor(readonly arcInfo: ArcInfo, readonly result: PlanningResult, readonly inspector?: PlannerInspector) {
+    assert(arcInfo, 'arcInfo cannot be null');
     assert(result, 'result cannot be null');
-    this.arc = arc;
-    this.result = result;
     this.suggestionsChangeCallbacks = [];
     this.visibleSuggestionsChangeCallbacks = [];
-    this.inspector = inspector;
     this.result.registerChangeCallback(() => this.onSuggestionsChanged());
     this._maybeUpdateStrategyExplorer();
   }
@@ -69,7 +63,7 @@ export class PlanConsumer {
   getCurrentSuggestions(options?: VisibilityOptions): Suggestion[] {
     return this.result.suggestions.filter(suggestion => {
       const suggestOption: SuggestionVisibilityOptions|undefined = options && options.reasons ? {reasons: []} : undefined;
-      const isVisible = suggestion.isVisible(this.arc, this.suggestFilter, suggestOption);
+      const isVisible = suggestion.isVisible(this.arcInfo, this.suggestFilter, suggestOption);
       if (options && options.reasons) {
         options.reasons.set(suggestion.hash, suggestOption);
       }

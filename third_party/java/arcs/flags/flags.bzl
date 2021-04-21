@@ -38,7 +38,7 @@ ARCS_BUILD_FLAGS = [
         name = "remove_by_query_handle",
         desc = "Enable the removeByQuery methods on Handles.",
         bug_id = "b/169727261",
-        status = "NOT_READY",
+        status = "READY",
         stopwords = [
             "remove.?by.?query",
             "remove.?query.?collection.?handle",
@@ -110,28 +110,21 @@ ARCS_BUILD_FLAGS = [
         ],
     ),
     arcs_build_flag(
-        name = "storagekey_reduction",
+        name = "storage_key_reduction",
         desc = "Reduce storage size of storage keys",
-        bug_id = "b/179216388",
+        bug_id = "b/179216769",
         status = "NOT_READY",
         stopwords = [
             "storage.?key.?reduction",
         ],
     ),
-    # This is an unusual flag:
-    #  - It is not affected by any flag overrides; the value defined here will always
-    #    control the behaviour of affected code.
-    #  - Becuase it is build-time only, the only valid status values are NOT_READY and
-    #    LAUNCHED. Once it's turned on, the generated interfaces are available to all
-    #    clients; once any clients start relying on the slicing behaviour, turning the
-    #    flag off will break them.
     arcs_build_flag(
-        name = "particle_type_slicing",
-        desc = "Output of entity type slicing interfaces in generated particle classes",
-        bug_id = "b/182330900",
-        status = "NOT_READY",
+        name = "transaction_free_reads",
+        desc = "Remove transaction from getEntity in DatabaseImpl",
+        bug_id = "b/175140645",
+        status = "READY",
         stopwords = [
-            "particle.?type.?slicing",
+            "transaction.?free.?reads",
         ],
     ),
 ]

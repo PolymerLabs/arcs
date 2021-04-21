@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Arc} from '../arc.js';
 import {Description} from '../description.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
@@ -47,10 +46,10 @@ function assertManifestsEqual(actual: Manifest, expected: Manifest) {
 describe('Runtime', () => {
   it('gets an arc description for an arc', async () => {
     const runtime = new Runtime();
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcId: ArcId.newForTest('test')}));
-    const description = await Description.create(arc);
+    const arcInfo = await runtime.allocator.startArc({arcId: ArcId.newForTest('test')});
+    const description = await Description.create(arcInfo, runtime);
     const expected = await description.getArcDescription();
-    const actual = await runtime.getArcDescription(arc);
+    const actual = await runtime.getArcDescription(arcInfo.id);
     assert.strictEqual(expected, actual);
   });
   it('parses a Manifest', async () => {
@@ -83,14 +82,16 @@ describe('Runtime', () => {
     const runtime = new Runtime();
     const arcById = runtime => (runtime.host as ArcHostImpl).arcById;
     assert.equal(arcById(runtime).size, 0);
-    const arc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-arc', storageKeyPrefix: volatileStorageKeyPrefixForTest()}));
-    assert.isNotNull(arc);
-    assert(arc.id.toString().includes('test-arc'));
-    assert.hasAllKeys(arcById(runtime), [arc.id]);
-    runtime.getArcById(await runtime.allocator.startArc({storageKeyPrefix: volatileStorageKeyPrefixForTest(), arcId: arc.id}));
-    assert.hasAllKeys(arcById(runtime), [arc.id]);
-    const otherArc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'other-arc', storageKeyPrefix: volatileStorageKeyPrefixForTest()}));
-    assert.hasAllKeys(arcById(runtime), [arc.id, otherArc.id]);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test-arc', storageKeyPrefix: volatileStorageKeyPrefixForTest()});
+    assert.isNotNull(arcInfo);
+    assert(arcInfo.id.toString().includes('test-arc'));
+    assert.hasAllKeys(arcById(runtime), [arcInfo.id]);
+    assert.isNotNull(runtime.getArcById(arcInfo.id));
+    await runtime.allocator.startArc({storageKeyPrefix: volatileStorageKeyPrefixForTest(), arcId: arcInfo.id});
+    assert.hasAllKeys(arcById(runtime), [arcInfo.id]);
+    const otherArcInfo = await runtime.allocator.startArc({arcName: 'other-arc', storageKeyPrefix: volatileStorageKeyPrefixForTest()});
+    assert.hasAllKeys(arcById(runtime), [arcInfo.id, otherArcInfo.id]);
+    assert.isNotNull(runtime.getArcById(otherArcInfo.id));
   });
   it('registers and unregisters stores', Flags.withDefaultReferenceMode(async () => {
     const loader = new Loader(null, {
@@ -120,33 +121,33 @@ describe('Runtime', () => {
     const runtime = new Runtime({loader});
     const manifest = await runtime.parseFile('manifest');
     manifest.recipes[0].normalize();
-    const volatileArc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-arc-1', storageKeyPrefix: volatileStorageKeyPrefixForTest()}));
-    const ramdiskArc = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-arc-2', storageKeyPrefix: ramDiskStorageKeyPrefixForTest()}));
+    const volatileArc = await runtime.allocator.startArc({arcName: 'test-arc-1', storageKeyPrefix: volatileStorageKeyPrefixForTest()});
+    const ramdiskArc = await runtime.allocator.startArc({arcName: 'test-arc-2', storageKeyPrefix: ramDiskStorageKeyPrefixForTest()});
     assert.equal(runtime.context, ramdiskArc.context);
     assert.equal(runtime.context, volatileArc.context);
 
-    await runtime.allocator.runPlanInArc(volatileArc.id, manifest.recipes[0]);
+    await runtime.allocator.runPlanInArc(volatileArc, manifest.recipes[0]);
     assert.lengthOf(runtime.context.stores, 3);
 
-    await runtime.allocator.runPlanInArc(ramdiskArc.id, manifest.recipes[0]);
+    await runtime.allocator.runPlanInArc(ramdiskArc, manifest.recipes[0]);
     assert.lengthOf(runtime.context.stores, 6);
 
-    const volatileArc1 = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-arc-v1', storageKeyPrefix: volatileStorageKeyPrefixForTest()}));
+    const volatileArc1 = await runtime.allocator.startArc({arcName: 'test-arc-v1', storageKeyPrefix: volatileStorageKeyPrefixForTest()});
     const plan1 = await runtime.resolveRecipe(volatileArc1, manifest.recipes[1]);
-    await runtime.allocator.runPlanInArc(volatileArc1.id, plan1);
+    await runtime.allocator.runPlanInArc(volatileArc1, plan1);
     assert.lengthOf(runtime.context.stores, 6);
-    volatileArc1.dispose();
-    assert.lengthOf(runtime.context.stores, 6);
-
-    volatileArc.dispose();
+    runtime.allocator.stopArc(volatileArc1.id);
     assert.lengthOf(runtime.context.stores, 6);
 
-    ramdiskArc.dispose();
+    runtime.allocator.stopArc(volatileArc.id);
     assert.lengthOf(runtime.context.stores, 6);
 
-    const volatileArc2 = runtime.getArcById(await runtime.allocator.startArc({arcName: 'test-arc-v2', storageKeyPrefix: volatileStorageKeyPrefixForTest()}));
+    runtime.allocator.stopArc(ramdiskArc.id);
+    assert.lengthOf(runtime.context.stores, 6);
+
+    const volatileArc2 = await runtime.allocator.startArc({arcName: 'test-arc-v2', storageKeyPrefix: volatileStorageKeyPrefixForTest()});
     const plan2 = await runtime.resolveRecipe(volatileArc2, manifest.recipes[1]);
-    await runtime.allocator.runPlanInArc(volatileArc2.id, plan2);
+    await runtime.allocator.runPlanInArc(volatileArc2, plan2);
     assert.lengthOf(runtime.context.stores, 6);
     assert.isTrue(runtime.context.stores.map(s => s.storageKey).includes(
         volatileArc2.activeRecipe.handles[0].storageKey));

@@ -49,6 +49,9 @@ package arcs.core.testutil
  *     group(J, K),          // finally J and K must be after both A2 and B2
  *   )
  *
+ * If more than one item is provided in [constraints] they are implicitly considered a sequence.
+ * If parallel evaluation is required, wrap the list in an outer group.
+ *
  * By default, all values in [actual] must be matched by a constraint. This can be relaxed by
  * setting [allowUnmatched] to true.
  *
@@ -59,21 +62,29 @@ fun <T> assertVariableOrdering(
   vararg constraints: Constraint<T>,
   allowUnmatched: Boolean = false
 ) {
-  // Run top-level constraints in parallel; fail immediately if any do not succeed.
+  // Run top-level constraints in sequence; fail immediately if any do not succeed.
+  val topLevel = if (constraints.size == 1) {
+    constraints[0]
+  } else {
+    Constraint.NestSequence(constraints.toList())
+  }
+
   val matches = actual.map { Result<T>(it) }
-  constraints.forEach {
-    val report = it.process(matches)
+  topLevel.process(matches).let { report ->
     if (report.isFailure) throw report.toException()
   }
 
   // Unless otherwise directed, fail when any values were not matched by at least one constraint.
   if (!allowUnmatched) {
-    val report = Report.checkUnmatched(matches)
-    if (report.isFailure) throw report.toException()
+    Report.checkUnmatched(matches).let { report ->
+      if (report.isFailure) throw report.toException()
+    }
   }
 }
 
 /** Helpers for constructing value/nested sequences/groups. */
+fun <T> single(value: T) = Constraint.SingleValue(value)
+
 fun <T> sequence(vararg values: T) = Constraint.ValueSequence(values.toList())
 
 fun <T> sequence(values: Iterable<T>) = Constraint.ValueSequence(values.toList())
@@ -102,6 +113,12 @@ class Result<T>(
   var actualIndex: Int = -1
 ) {
   fun showIndexed() = constraint?.showIndexed(constraintIndex) ?: ""
+
+  fun reset() {
+    constraint = null
+    constraintIndex = -1
+    actualIndex = -1
+  }
 }
 
 /** Represents a sequence or group constraint for value type [T]. */
@@ -123,7 +140,9 @@ sealed class Constraint<T> {
   open fun showIndexed(i: Int): String = ""
 
   /** Represents a causally-ordered sequence of values. */
-  class ValueSequence<T>(val values: List<T>) : Constraint<T>() {
+  open class ValueSequence<T>(val values: List<T>) : Constraint<T>() {
+    open val label: String = "sequence"
+
     override fun process(matches: List<Result<T>>, from: Int): Report {
       var mutableFrom = from
       val unmatched = mutableListOf<Result<T>>()
@@ -144,7 +163,7 @@ sealed class Constraint<T> {
       return if (unmatched.isEmpty()) {
         Report.success()
       } else {
-        Report.failure("sequence", matches, unmatched)
+        Report.failure(label, matches, unmatched)
       }
     }
 
@@ -153,9 +172,17 @@ sealed class Constraint<T> {
     override fun toString() = values.toString()
   }
 
+  /** Single values are just a sequence of 1, but display failures with better labels. */
+  class SingleValue<T>(value: T) : ValueSequence<T>(listOf(value)) {
+    override val label = "single"
+
+    override fun showIndexed(i: Int) = "sng(${values.first()})"
+  }
+
   /** Represents an unordered group of values. */
   class ValueGroup<T>(val values: List<T>) : Constraint<T>() {
     override fun process(matches: List<Result<T>>, from: Int): Report {
+      maxIndex = -1
       val unmatched = mutableListOf<Result<T>>()
       values.forEachIndexed { ci, value ->
         val ai = search(matches, value, from)
@@ -203,22 +230,78 @@ sealed class Constraint<T> {
 
   /** Represents an unordered group of constraints. */
   class NestGroup<T>(val constraints: List<Constraint<T>>) : Constraint<T>() {
+    var failure: Report? = null
+
     override fun process(matches: List<Result<T>>, from: Int): Report {
-      constraints.forEach {
-        val report = it.process(matches, from)
-        if (report.isFailure) {
-          return report
-        }
-        maxIndex = it.maxIndex
+      failure = null
+      return if (runPermutations(constraints.toMutableList(), mutableListOf(), matches, from)) {
+        Report.success()
+      } else {
+        requireNotNull(failure)
       }
-      return Report.success()
+    }
+
+    /**
+     * Nesting groups may have to attempt every permutation to verify that no possible arrangement
+     * of the constraints can be satisfied against the input.
+     */
+    private fun runPermutations(
+      candidates: MutableList<Constraint<T>>,
+      permutation: MutableList<Constraint<T>>,
+      matches: List<Result<T>>,
+      from: Int
+    ): Boolean {
+      // Recursion leaf: we now have a full permutation list to evaluate against the input. If any
+      // constraint fails, return immediately with false to try the next permutation. If they all
+      // succeed, return true and halt further processing.
+      if (candidates.isEmpty()) {
+        // Clear any match results from the previous attempt.
+        (from until matches.size).forEach { matches[it].reset() }
+        maxIndex = -1
+        permutation.forEach {
+          val report = it.process(matches, from)
+          if (report.isFailure) {
+            // Record the first failure report (this matches the order of [constraints]). This will
+            // only be returned if there is no possible successful ordering of the constraints.
+            if (failure == null) {
+              failure = report
+            }
+            return false
+          }
+          maxIndex = Math.max(it.maxIndex, maxIndex)
+        }
+        return true
+      }
+
+      repeat(candidates.size) {
+        // Take the first candidate and move it to the permutation being assembled.
+        //   At level 1: c=[1,2,3,4]  p=[]   ->  c=[2,3,4]  p=[1]
+        //   At level 2: c=[2,3,4]    p=[1]  ->  c=[3,4]    p=[1,2]
+        //   ...
+        permutation.add(candidates.removeAt(0))
+
+        // Recurse with a copy of the reduced candidates list and a reference to the permutation.
+        if (runPermutations(candidates.toMutableList(), permutation, matches, from)) {
+          // We found a successful ordering! No need to check any more of them.
+          return true
+        }
+
+        // Restore the moved candidate to the end of the candidates list for the next round (so now
+        // item 2 will be first in the list and thus also first in the next round of permutations):
+        //   c=[2,3,4]  p=[1]  ->  c=[2,3,4,1]  p=[]
+        //
+        // Since the loop is over the size of the candidates list, we're done when the original
+        // first item is shifted back to the start.
+        candidates.add(permutation.removeLast())
+      }
+      return false
     }
 
     override fun toString() = "«" + constraints.joinToString(", ") + "»"
   }
 
   protected fun search(matches: List<Result<T>>, value: T, from: Int): Int? {
-    (from..(matches.size - 1)).forEach {
+    (from until matches.size).forEach {
       if (matches[it].constraint == null && matches[it].value == value) return it
     }
     return null

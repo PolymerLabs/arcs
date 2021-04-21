@@ -1,0 +1,12 @@
+meta
+  namespace: arcs.sdk
+
+@edge
+particle EdgeParticle
+  sr: reads {txt: Text}
+  sw: writes {txt: Text}
+  sb: reads writes {txt: Text}
+
+  cr: reads [{txt: Text}]
+  cw: writes [{txt: Text}]
+  cb: reads writes [{txt: Text}]
