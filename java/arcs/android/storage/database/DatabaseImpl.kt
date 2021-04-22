@@ -69,10 +69,10 @@ import arcs.core.util.BigInt
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
+import arcs.core.util.nextVersionMapSafeString
 import arcs.core.util.performance.Counters
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
-import arcs.core.util.nextVersionMapSafeString
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import arcs.jvm.util.JvmTime
@@ -2361,6 +2361,7 @@ class DatabaseImpl(
   )
 
   companion object {
+    // TODO(b/179216769): Wipe DB for STORAGE_KEY_REDUCTION flag.
     @VisibleForTesting
     val DB_VERSION get() = when {
       BuildFlags.STORAGE_STRING_REDUCTION && BuildFlags.REFERENCE_MODE_STORE_FIXES -> 8
@@ -2866,8 +2867,14 @@ class DatabaseImpl(
         }
       }
 
-      override fun childKeyWithComponent(component: String): StorageKey =
-        InlineStorageKey(parentKey, "$fieldName/$component")
+      override fun newKeyWithComponent(component: String): StorageKey {
+        val newComponent = if (BuildFlags.STORAGE_KEY_REDUCTION) {
+          component
+        } else {
+          "$fieldName/$component"
+        }
+        return InlineStorageKey(parentKey, newComponent)
+      }
 
       companion object {
         // Given a string inline storage key, returns the string storage key of the top

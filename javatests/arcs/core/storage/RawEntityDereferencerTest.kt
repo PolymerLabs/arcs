@@ -89,11 +89,11 @@ class RawEntityDereferencerTest {
     )
 
     aliceDriver = DefaultDriverFactory.get().getDriver(
-      backingKey.childKeyWithComponent("aliceId"),
+      backingKey.newKeyWithComponent("aliceId"),
       EntityType(schema)
     )!!
     bobDriver = DefaultDriverFactory.get().getDriver(
-      backingKey.childKeyWithComponent("bobId"),
+      backingKey.newKeyWithComponent("bobId"),
       EntityType(schema)
     )!!
 

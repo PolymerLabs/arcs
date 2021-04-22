@@ -57,7 +57,7 @@ suspend fun waitForEntity(handle: Handle, entity: Entity, type: EntityType) {
   val entityId =
     checkNotNull(entity.entityId) { "Can only wait for stored entities with an entity ID." }
   val entityKey =
-    (handle.getProxy().storageKey as ReferenceModeStorageKey).backingKey.childKeyWithComponent(
+    (handle.getProxy().storageKey as ReferenceModeStorageKey).backingKey.newKeyWithComponent(
       entityId
     )
   waitForKey(entityKey, type)

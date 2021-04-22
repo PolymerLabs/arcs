@@ -17,6 +17,7 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyFactory
 import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.StorageKeySpec
+import arcs.flags.BuildFlags
 
 /**
  * Default database name for DatabaseDriver usage, and referencing using [DatabaseStorageKey]s.
@@ -32,9 +33,12 @@ sealed class DatabaseStorageKey(
 ) : StorageKey(protocol) {
   override fun toKeyString(): String = "$entitySchemaHash@$dbName/$unique"
 
-  override fun childKeyWithComponent(component: String): StorageKey = when (this) {
-    is Persistent -> Persistent("$unique/$component", entitySchemaHash, dbName)
-    is Memory -> Memory("$unique/$component", entitySchemaHash, dbName)
+  override fun newKeyWithComponent(component: String): StorageKey {
+    val newComponent = if (BuildFlags.STORAGE_KEY_REDUCTION) component else "$unique/$component"
+    return when (this) {
+      is Persistent -> Persistent(newComponent, entitySchemaHash, dbName)
+      is Memory -> Memory(newComponent, entitySchemaHash, dbName)
+    }
   }
 
   protected fun checkValidity() {

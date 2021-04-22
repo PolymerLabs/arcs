@@ -24,7 +24,7 @@ class DummyStorageKey(val key: String) : StorageKey(protocol) {
 
   override fun toKeyString(): String = key
 
-  override fun childKeyWithComponent(component: String): StorageKey =
+  override fun newKeyWithComponent(component: String): StorageKey =
     DummyStorageKey("$key/$component")
 
   companion object : StorageKeyParser<DummyStorageKey> {

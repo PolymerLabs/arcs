@@ -58,7 +58,7 @@ class RamDiskDriverProviderTest {
     val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
     val other = object : StorageKey(StorageKeyProtocol.Dummy) {
       override fun toKeyString(): String = "something"
-      override fun childKeyWithComponent(component: String): StorageKey = this
+      override fun newKeyWithComponent(component: String): StorageKey = this
     }
 
     assertThat(provider.willSupport(volatile)).isFalse()

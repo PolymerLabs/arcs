@@ -37,7 +37,7 @@ class VolatileDriverProviderTest {
   fun willSupport_requiresVolatileStorageKey() {
     class NonVolatileKey : StorageKey(StorageKeyProtocol.Dummy) {
       override fun toKeyString() = "blah"
-      override fun childKeyWithComponent(component: String) = NonVolatileKey()
+      override fun newKeyWithComponent(component: String) = NonVolatileKey()
     }
 
     assertThat(providerFactory.willSupport(NonVolatileKey())).isFalse()

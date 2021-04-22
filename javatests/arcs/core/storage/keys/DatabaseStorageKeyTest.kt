@@ -14,6 +14,7 @@ package arcs.core.storage.keys
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StorageKeyProtocol
 import arcs.core.testutil.fail
+import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
@@ -199,19 +200,19 @@ class DatabaseStorageKeyTest(parameters: ParameterizedBuildFlags) {
   }
 
   @Test
-  fun childKeyWithComponent_persistent_isCorrect() {
+  fun newKeyWithComponent_persistent() {
     val parent = DatabaseStorageKey.Persistent("parent", "1234a")
-    val child = parent.childKeyWithComponent("child") as DatabaseStorageKey.Persistent
-    assertThat(child.toString())
-      .isEqualTo("${StorageKeyProtocol.Database.protocol}${parent.toKeyString()}/child")
+    val child = parent.newKeyWithComponent("child") as DatabaseStorageKey.Persistent
+    val expected = if (BuildFlags.STORAGE_KEY_REDUCTION) "child" else "parent/child"
+    assertThat(child).isEqualTo(DatabaseStorageKey.Persistent(expected, "1234a"))
   }
 
   @Test
-  fun childKeyWithComponent_memory_isCorrect() {
+  fun newKeyWithComponent_memory() {
     val parent = DatabaseStorageKey.Memory("parent", "1234a")
-    val child = parent.childKeyWithComponent("child") as DatabaseStorageKey.Memory
-    assertThat(child.toString())
-      .isEqualTo("${StorageKeyProtocol.InMemoryDatabase.protocol}${parent.toKeyString()}/child")
+    val child = parent.newKeyWithComponent("child") as DatabaseStorageKey.Memory
+    val expected = if (BuildFlags.STORAGE_KEY_REDUCTION) "child" else "parent/child"
+    assertThat(child).isEqualTo(DatabaseStorageKey.Memory(expected, "1234a"))
   }
 
   private companion object {

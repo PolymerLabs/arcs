@@ -30,7 +30,7 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class VolatileMemoryImplTest {
   private val bar = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
-  private val baz = bar.childKeyWithComponent("baz")
+  private val baz = bar.newKeyWithComponent("baz")
   private val expectedValue = VolatileEntry(data = 42)
   private lateinit var memory: VolatileMemory
 
@@ -103,7 +103,6 @@ class VolatileMemoryImplTest {
 
   @Test
   fun update_returnsValueWithIdOrDefaultFunction() = runBlockingTest {
-
     assertThat(memory.update<Int>(bar) { expectedValue }).isEqualTo(true to expectedValue)
     assertThat(memory.get<Int>(bar)).isEqualTo(expectedValue)
   }
