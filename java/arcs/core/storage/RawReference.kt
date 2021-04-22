@@ -71,7 +71,7 @@ data class RawReference(
       "No dereferencer installed on Reference object"
     }.dereference(this)
 
-  fun referencedStorageKey() = storageKey.childKeyWithComponent(id)
+  fun referencedStorageKey() = storageKey.newKeyWithComponent(id)
 }
 
 /** Defines an object capable of de-referencing a [RawReference]. */

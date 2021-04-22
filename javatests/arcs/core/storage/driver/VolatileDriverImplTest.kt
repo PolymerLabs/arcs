@@ -83,7 +83,7 @@ class VolatileDriverImplTest {
   fun constructor_notVolatileOrRamdiskStorageKey_throws() = runBlockingTest {
     class NotVolatileKey : StorageKey(StorageKeyProtocol.Dummy) {
       override fun toKeyString(): String = "M'eh"
-      override fun childKeyWithComponent(component: String): StorageKey = NotVolatileKey()
+      override fun newKeyWithComponent(component: String): StorageKey = NotVolatileKey()
     }
     VolatileDriverImpl.create<Int>(NotVolatileKey(), Int::class, memory)
   }

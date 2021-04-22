@@ -189,7 +189,7 @@ class BulkReferenceModeStoreTest {
       SlowRamDiskDriverProvider { op: MemoryOp, key: StorageKey? ->
         if (op == MemoryOp.Update) {
           log("Heard update for $key")
-          if (key == BACKING_KEY.childKeyWithComponent("1")) {
+          if (key == BACKING_KEY.newKeyWithComponent("1")) {
             delay(1000)
           }
           log("Finishing update for $key")

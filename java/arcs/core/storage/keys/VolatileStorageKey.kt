@@ -18,6 +18,7 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyFactory
 import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.StorageKeySpec
+import arcs.flags.BuildFlags
 
 /** Protocol to be used with the volatile driver. */
 /** Storage key for a piece of data kept in the volatile driver. */
@@ -29,8 +30,10 @@ data class VolatileStorageKey(
 ) : StorageKey(protocol) {
   override fun toKeyString(): String = "$arcId/$unique"
 
-  override fun childKeyWithComponent(component: String): StorageKey =
-    VolatileStorageKey(arcId, "$unique/$component")
+  override fun newKeyWithComponent(component: String): StorageKey {
+    val newComponent = if (BuildFlags.STORAGE_KEY_REDUCTION) component else "$unique/$component"
+    return VolatileStorageKey(arcId, newComponent)
+  }
 
   override fun toString(): String = super.toString()
 

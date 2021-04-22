@@ -10,6 +10,7 @@
  */
 package arcs.core.storage
 
+import arcs.core.type.Type
 import kotlin.reflect.KClass
 
 interface DriverFactory : ExternalStorageOps {
@@ -18,7 +19,8 @@ interface DriverFactory : ExternalStorageOps {
    */
   suspend fun <Data : Any> getDriver(
     storageKey: StorageKey,
-    dataClass: KClass<Data>
+    dataClass: KClass<Data>,
+    type: Type
   ): Driver<Data>?
 
   /**
@@ -67,5 +69,6 @@ interface DriverFactory : ExternalStorageOps {
  * Fetches a [Driver] of type [Data] given its [storageKey].
  */
 suspend inline fun <reified Data : Any> DriverFactory.getDriver(
-  storageKey: StorageKey
-): Driver<Data>? = getDriver(storageKey, Data::class)
+  storageKey: StorageKey,
+  type: Type
+): Driver<Data>? = getDriver(storageKey, Data::class, type)

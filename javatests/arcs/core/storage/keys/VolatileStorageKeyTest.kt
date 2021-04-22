@@ -14,6 +14,7 @@ import arcs.core.common.ArcId
 import arcs.core.common.toArcId
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StorageKeyProtocol
+import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
@@ -43,12 +44,13 @@ class VolatileStorageKeyTest(parameters: ParameterizedBuildFlags) {
   }
 
   @Test
-  fun childKeyWithComponent_isCorrect() {
+  fun newKeyWithComponent_isCorrect() {
     val arcId = ArcId.newForTest("arc")
     val parent = VolatileStorageKey(arcId, "parent")
-    val child = parent.childKeyWithComponent("child")
+    val child = parent.newKeyWithComponent("child")
+    val expected = if (BuildFlags.STORAGE_KEY_REDUCTION) "child" else "parent/child"
     assertThat(child.toString()).isEqualTo(
-      "${StorageKeyProtocol.Volatile.protocol}$arcId/parent/child"
+      "${StorageKeyProtocol.Volatile.protocol}$arcId/$expected"
     )
   }
 

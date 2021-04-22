@@ -118,7 +118,7 @@ class DatabaseDriverTest {
         "phone_numbers" to setOf(
           RawReference(
             ReferencablePrimitive(String::class, "555-5555").id,
-            driver.storageKey.childKeyWithComponent("phone_numbers"),
+            driver.storageKey.newKeyWithComponent("phone_numbers"),
             VersionMap()
           )
         )
@@ -400,7 +400,7 @@ class DatabaseDriverTest {
         DEFAULT_SCHEMA
       )
     )
-    val entityKey = DEFAULT_STORAGE_KEY.childKeyWithComponent("id")
+    val entityKey = DEFAULT_STORAGE_KEY.newKeyWithComponent("id")
     val databaseValue = checkNotNull(database.data[entityKey] as? DatabaseData.Entity)
     assertThat(databaseValue.rawEntity).isEqualTo(rawEntity)
     assertThat(databaseValue.databaseVersion).isEqualTo(1)
@@ -421,7 +421,7 @@ class DatabaseDriverTest {
         DEFAULT_SCHEMA
       )
     )
-    val entityKey = REFMODE_STORAGE_KEY.backingKey.childKeyWithComponent("id")
+    val entityKey = REFMODE_STORAGE_KEY.backingKey.newKeyWithComponent("id")
     val databaseValue = checkNotNull(database.data[entityKey] as? DatabaseData.Entity)
     assertThat(databaseValue.rawEntity).isEqualTo(rawEntity)
     assertThat(databaseValue.databaseVersion).isEqualTo(1)
@@ -495,7 +495,7 @@ class DatabaseDriverTest {
       )
     )
     val databaseValue = checkNotNull(
-      database.data[DEFAULT_STORAGE_KEY.childKeyWithComponent("id")]
+      database.data[DEFAULT_STORAGE_KEY.newKeyWithComponent("id")]
         as? DatabaseData.Entity
     )
     assertThat(databaseValue.rawEntity).isEqualTo(rawEntity)
@@ -710,7 +710,7 @@ class DatabaseDriverTest {
 
     private fun CrdtEntity.Data.toRawReference(baseKey: StorageKey): RawReference {
       val id = hashCode().toString()
-      return RawReference(id, baseKey.childKeyWithComponent(id), versionMap)
+      return RawReference(id, baseKey.newKeyWithComponent(id), versionMap)
     }
   }
 }

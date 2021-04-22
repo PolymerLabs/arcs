@@ -90,6 +90,7 @@ arcs_kt_library(
         ":external_storage_ops",
         ":storage_key",
         "//java/arcs/core/crdt",
+        "//java/arcs/core/type",
     ],
 )
 

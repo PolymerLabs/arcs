@@ -49,7 +49,7 @@ import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-class DirectStoreMuxerTest(parameters: ParameterizedBuildFlags) {
+class DirectStoreMuxerImplTest(parameters: ParameterizedBuildFlags) {
 
   private val entityCrdtA = createPersonEntityCrdt("bob", 42)
   private val entityCrdtB = createPersonEntityCrdt("alice", 10)
@@ -105,7 +105,7 @@ class DirectStoreMuxerTest(parameters: ParameterizedBuildFlags) {
     )
     val otherStore = DirectStore.create<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
       StoreOptions(
-        storageKey = STORAGE_KEY.childKeyWithComponent(MUX_ID_A),
+        storageKey = STORAGE_KEY.newKeyWithComponent(MUX_ID_A),
         type = EntityType(SCHEMA)
       ),
       this,
@@ -357,10 +357,11 @@ class DirectStoreMuxerTest(parameters: ParameterizedBuildFlags) {
   private fun createDirectStoreMuxer(
     scope: CoroutineScope,
     driverFactory: DriverFactory = FixedDriverFactory(MockDriverProvider()),
-    time: Time = JvmTime
+    time: Time = JvmTime,
+    storageKey: StorageKey = STORAGE_KEY
   ): DirectStoreMuxerImpl<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity> {
     return DirectStoreMuxerImpl(
-      STORAGE_KEY,
+      storageKey,
       backingType = EntityType(SCHEMA),
       scope = scope,
       driverFactory = driverFactory,
@@ -411,6 +412,9 @@ class DirectStoreMuxerTest(parameters: ParameterizedBuildFlags) {
 
     @get:JvmStatic
     @get:Parameterized.Parameters(name = "{0}")
-    val PARAMETERS = ParameterizedBuildFlags.of("DIRECT_STORE_MUXER_LRU_TTL")
+    val PARAMETERS = ParameterizedBuildFlags.of(
+      "DIRECT_STORE_MUXER_LRU_TTL",
+      "STORAGE_KEY_REDUCTION"
+    )
   }
 }

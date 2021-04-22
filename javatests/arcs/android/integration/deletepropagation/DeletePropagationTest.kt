@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.integration.IntegrationEnvironment
 import arcs.android.util.testutil.AndroidLogRule
 import arcs.core.allocator.Arc
+import arcs.core.data.EntityType
 import arcs.core.entity.ForeignReferenceChecker
 import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.Reference
@@ -83,7 +84,7 @@ class DeletePropagationTest {
     val entity1 = Writer_Output(hard = reference)
 
     writer.write(entity1)
-    waitForEntity(writer.handles.foos, foo)
+    waitForEntity(writer.handles.foos, foo, FOO_ENTITY_TYPE)
     env.waitForIdle(arc)
     val entityOut = reader.read().single()
 
@@ -116,8 +117,8 @@ class DeletePropagationTest {
     val entity2 = Writer_Output(hardForeign = writer.createForeignReference(ID2))
     writer.write(entity1)
     writer.write(entity2)
-    waitForEntity(writer.handles.output, entity1)
-    waitForEntity(writer.handles.output, entity2)
+    waitForEntity(writer.handles.output, entity1, OUTPUT_ENTITY_TYPE)
+    waitForEntity(writer.handles.output, entity2, OUTPUT_ENTITY_TYPE)
 
     assertThat(env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)).isEqualTo(1)
     env.triggerCleanupWork()
@@ -134,9 +135,9 @@ class DeletePropagationTest {
     writer.write(entity1)
     writer.write(entity2)
     writer.write(entity3)
-    waitForEntity(writer.handles.output, entity1)
-    waitForEntity(writer.handles.output, entity2)
-    waitForEntity(writer.handles.output, entity3)
+    waitForEntity(writer.handles.output, entity1, OUTPUT_ENTITY_TYPE)
+    waitForEntity(writer.handles.output, entity2, OUTPUT_ENTITY_TYPE)
+    waitForEntity(writer.handles.output, entity3, OUTPUT_ENTITY_TYPE)
 
     assertThat(env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)).isEqualTo(2)
     env.triggerCleanupWork()
@@ -151,8 +152,8 @@ class DeletePropagationTest {
     val entity2 = Writer_Output(hardForeign = writer.createForeignReference(ID2))
     writer.write(entity1)
     writer.write(entity2)
-    waitForEntity(writer.handles.output, entity1)
-    waitForEntity(writer.handles.output, entity2)
+    waitForEntity(writer.handles.output, entity1, OUTPUT_ENTITY_TYPE)
+    waitForEntity(writer.handles.output, entity2, OUTPUT_ENTITY_TYPE)
 
     assertThat(env.reconcileHardReference(AbstractWriter.Foreign.SCHEMA, setOf(ID2))).isEqualTo(1)
     env.triggerCleanupWork()
@@ -167,7 +168,7 @@ class DeletePropagationTest {
       inner_ = Writer_Output_Inner(ref = writer.createForeignReference(ID1))
     )
     writer.write(entity)
-    waitForEntity(writer.handles.output, entity)
+    waitForEntity(writer.handles.output, entity, OUTPUT_ENTITY_TYPE)
 
     assertThat(env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)).isEqualTo(1)
     env.triggerCleanupWork()
@@ -184,7 +185,7 @@ class DeletePropagationTest {
       )
     )
     writer.write(entity)
-    waitForEntity(writer.handles.output, entity)
+    waitForEntity(writer.handles.output, entity, OUTPUT_ENTITY_TYPE)
 
     assertThat(env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)).isEqualTo(1)
     env.triggerCleanupWork()
@@ -199,7 +200,7 @@ class DeletePropagationTest {
       inners = setOf(Writer_Output_Inner(ref = writer.createForeignReference(ID1)))
     )
     writer.write(entity)
-    waitForEntity(writer.handles.output, entity)
+    waitForEntity(writer.handles.output, entity, OUTPUT_ENTITY_TYPE)
 
     assertThat(env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)).isEqualTo(1)
     env.triggerCleanupWork()
@@ -212,7 +213,7 @@ class DeletePropagationTest {
   fun hardForeignReference_inReferenceCollection_parentIsRemovedByDelete() = runBlocking {
     val entity = Writer_Output(refs = setOf(writer.createForeignReference(ID1)))
     writer.write(entity)
-    waitForEntity(writer.handles.output, entity)
+    waitForEntity(writer.handles.output, entity, OUTPUT_ENTITY_TYPE)
 
     assertThat(env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)).isEqualTo(1)
     env.triggerCleanupWork()
@@ -227,7 +228,7 @@ class DeletePropagationTest {
       list = listOf(Writer_Output_Inner(ref = writer.createForeignReference(ID1)))
     )
     writer.write(entity)
-    waitForEntity(writer.handles.output, entity)
+    waitForEntity(writer.handles.output, entity, OUTPUT_ENTITY_TYPE)
 
     assertThat(env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)).isEqualTo(1)
     env.triggerCleanupWork()
@@ -240,7 +241,7 @@ class DeletePropagationTest {
   fun hardForeignReference_inListOfReferences_parentIsRemovedByDelete() = runBlocking {
     val entity = Writer_Output(reflist = listOf(writer.createForeignReference(ID1)))
     writer.write(entity)
-    waitForEntity(writer.handles.output, entity)
+    waitForEntity(writer.handles.output, entity, OUTPUT_ENTITY_TYPE)
 
     assertThat(env.triggerHardReferenceDelete(AbstractWriter.Foreign.SCHEMA, ID1)).isEqualTo(1)
     env.triggerCleanupWork()
@@ -267,5 +268,8 @@ class DeletePropagationTest {
           }
         )
       )
+
+    private val FOO_ENTITY_TYPE = EntityType(Writer_Foos.SCHEMA)
+    private val OUTPUT_ENTITY_TYPE = EntityType(Writer_Output.SCHEMA)
   }
 }

@@ -15,6 +15,7 @@ import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtEntity.Reference.Companion.buildReference
 import arcs.core.crdt.VersionMap
+import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -88,10 +89,12 @@ class RawEntityDereferencerTest {
     )
 
     aliceDriver = DefaultDriverFactory.get().getDriver(
-      backingKey.childKeyWithComponent("aliceId")
+      backingKey.newKeyWithComponent("aliceId"),
+      EntityType(schema)
     )!!
     bobDriver = DefaultDriverFactory.get().getDriver(
-      backingKey.childKeyWithComponent("bobId")
+      backingKey.newKeyWithComponent("bobId"),
+      EntityType(schema)
     )!!
 
     aliceDriver.send(CrdtEntity.Data(VersionMap("alice" to 1), alice, referenceBuilder), 1)

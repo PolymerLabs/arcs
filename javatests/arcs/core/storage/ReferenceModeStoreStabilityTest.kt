@@ -203,7 +203,7 @@ class ReferenceModeStoreStabilityTest {
       )
     )
     RamDisk.memory.set(
-      backingKey.childKeyWithComponent("foo_value"),
+      backingKey.newKeyWithComponent("foo_value"),
       VolatileEntry(entityCrdt.data, 1)
     )
 
@@ -277,7 +277,7 @@ class ReferenceModeStoreStabilityTest {
       )
     )
     RamDisk.memory.set(
-      backingKey.childKeyWithComponent("foo_value"),
+      backingKey.newKeyWithComponent("foo_value"),
       VolatileEntry(entityCrdt.data, 1)
     )
 
@@ -348,7 +348,7 @@ class ReferenceModeStoreStabilityTest {
       )
     )
     RamDisk.memory.set(
-      backingKey.childKeyWithComponent("foo_value"),
+      backingKey.newKeyWithComponent("foo_value"),
       VolatileEntry(entityCrdt.data, 1)
     )
 
@@ -487,7 +487,7 @@ class ReferenceModeStoreStabilityTest {
       )
     )
     RamDisk.memory.set(
-      backingKey.childKeyWithComponent("foo_value"),
+      backingKey.newKeyWithComponent("foo_value"),
       VolatileEntry(entityCrdt.data, 1)
     )
 
