@@ -85,7 +85,7 @@ ARCS_BUILD_FLAGS = [
         name = "write_only_storage_stack",
         desc = "Optimized write-only storage stack.",
         bug_id = "b/181723292",
-        status = "NOT_READY",
+        status = "READY",
         stopwords = [
             "write.?only.?storage.?stack",
             "DatabaseOp",
