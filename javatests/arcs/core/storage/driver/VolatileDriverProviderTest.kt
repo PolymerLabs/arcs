@@ -135,8 +135,8 @@ class VolatileDriverProviderTest {
 
   @Test
   fun getEntitiesCount_inMemory_nonEntities_returnsZero() = runBlocking {
-    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class)
-    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_2, Int::class)
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_2, Int::class, DummyType)
     // Initialize some data in the memory via first driver
     driver1.send(DUMMY_DATA, 1)
     // Initialize some data in the memory via second driver
@@ -147,8 +147,8 @@ class VolatileDriverProviderTest {
 
   @Test
   fun getEntitiesCount_inMemory_onlyEntities_returnsTotal() = runBlocking {
-    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, CrdtEntity.Data::class)
-    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_2, CrdtEntity::class)
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, CrdtEntity.Data::class, DummyType)
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_2, CrdtEntity::class, DummyType)
     // Initialize some data in the memory via first driver
     driver1.send(DUMMY_ENTITY_DATA, 1)
     // Initialize some data in the memory via second driver
@@ -159,8 +159,8 @@ class VolatileDriverProviderTest {
 
   @Test
   fun getEntitiesCount_notInMemory_returnsZero() = runBlocking {
-    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, CrdtEntity.Data::class)
-    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_2, CrdtEntity::class)
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, CrdtEntity.Data::class, DummyType)
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_2, CrdtEntity::class, DummyType)
     // Initialize some data in the memory via first driver
     driver1.send(DUMMY_ENTITY_DATA, 1)
     // Initialize some data in the memory via second driver
