@@ -15,6 +15,8 @@ import arcs.core.common.ArcId
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.keys.VolatileStorageKey
+import arcs.core.type.Tag
+import arcs.core.type.Type
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
@@ -43,7 +45,12 @@ class VolatileDriverProviderTest {
 
   @Test
   fun getDriver_getsDriverForStorageKey() = runBlocking {
-    val driver = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class)
+    val driver =
+      providerFactory.getDriver(
+        DUMMY_STORAGE_KEY_1,
+        Int::class,
+        DummyType
+      )
 
     assertThat(driver).isNotNull()
     assertThat(driver.storageKey).isEqualTo(DUMMY_STORAGE_KEY_1)
@@ -51,36 +58,36 @@ class VolatileDriverProviderTest {
 
   @Test
   fun getDriver_forDifferentStorageKey_providesDifferentInstance() = runBlocking {
-    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class)
-    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_2, Int::class)
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_2, Int::class, DummyType)
 
     assertThat(driver1).isNotSameInstanceAs(driver2)
   }
 
   @Test
   fun getDriver_forSameStorageKey_providesDifferentInstance() = runBlocking {
-    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class)
-    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class)
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
 
     assertThat(driver1).isNotSameInstanceAs(driver2)
   }
 
   @Test
   fun getDriver_forSameStorageKey_afterClosingFirst_providesDifferentInstance() = runBlocking {
-    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class)
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
     driver1.close()
-    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class)
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
 
     assertThat(driver1).isNotSameInstanceAs(driver2)
   }
 
   @Test
   fun getDriver_forDifferentStorageKey_usesDifferentVolatileMemory() = runBlocking {
-    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class)
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
     // Initialize some data in the memory via first driver
     driver1.send(DUMMY_DATA, 1)
 
-    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_2, Int::class)
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_2, Int::class, DummyType)
     // This should fail, driver2 is a different memory, not affected by driver1.send
     val version2Success = driver2.send(data = DUMMY_DATA + 1, version = 2)
     // This should succeed, driver1 is still waiting for its first version
@@ -92,11 +99,11 @@ class VolatileDriverProviderTest {
 
   @Test
   fun getDriver_forSameStorageKey_usesSameVolatileMemory() = runBlocking {
-    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class)
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
     // Initialize some data in the memory via first driver
     driver1.send(DUMMY_DATA, 1)
 
-    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class)
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
     // This should fail, as the driver is already at version 1
     val version1Success = driver2.send(data = DUMMY_DATA + 1, version = 1)
     // This should succeed, the driver is at version 1 from the driver1.send
@@ -108,12 +115,12 @@ class VolatileDriverProviderTest {
 
   @Test
   fun getDriver_forSameStorageKey_afterFirstOneClosed_usesDifferentVolatileMemory() = runBlocking {
-    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class)
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
     // Initialize some data in the memory via first driver
     driver1.send(DUMMY_DATA, 1)
     driver1.close()
 
-    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class)
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
     // This should fail, driver2 is for the same storage key, but since driver1 was closed, no
     // more drivers were using the volatile memory; it should have  been released.
     val version2Success = driver2.send(data = DUMMY_DATA + 1, version = 2)
@@ -132,5 +139,9 @@ class VolatileDriverProviderTest {
 
     private val DUMMY_STORAGE_KEY_1 = VolatileStorageKey(DUMMY_ARCID_1, "myfoo")
     private val DUMMY_STORAGE_KEY_2 = VolatileStorageKey(DUMMY_ARCID_2, "mybar")
+
+    object DummyType : Type {
+      override val tag = Tag.Count
+    }
   }
 }

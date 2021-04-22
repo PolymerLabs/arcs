@@ -410,7 +410,7 @@ open class HandlesTestBase(val params: Params) {
 
     writeHandle.dispatchStore(entityWithInnerNestedField)
 
-    waitForKey(nestedRef.toReferencable().referencedStorageKey())
+    waitForKey(nestedRef.toReferencable().referencedStorageKey(), MORE_NESTED_ENTITY_TYPE)
     readOnUpdate.join()
 
     // Read out the entity, and fetch its moreNested.
@@ -530,7 +530,7 @@ open class HandlesTestBase(val params: Params) {
     writeRefHandle.dispatchStore(entity1Ref)
     log("Created and stored a reference")
 
-    waitForKey(entity1Ref.toReferencable().referencedStorageKey())
+    waitForKey(entity1Ref.toReferencable().referencedStorageKey(), FIXTURE_ENTITY_TYPE)
     refHeard.join()
 
     // Now read back the reference from a different handle.
@@ -551,7 +551,7 @@ open class HandlesTestBase(val params: Params) {
     writeEntityHandle.dispatchStore(modEntity1)
     assertThat(writeEntityHandle.dispatchSize()).isEqualTo(1)
     entityModified.join()
-    waitForEntity(writeEntityHandle, modEntity1)
+    waitForEntity(writeEntityHandle, modEntity1, FIXTURE_ENTITY_TYPE)
 
     // Reference should still be alive.
     reference = readRefHandle.dispatchFetch()!!
@@ -566,7 +566,7 @@ open class HandlesTestBase(val params: Params) {
     val heardTheDelete = monitorHandle.onUpdateDeferred { it.isEmpty() }
     writeEntityHandle.dispatchRemove(entity1)
     heardTheDelete.join()
-    waitForEntity(writeEntityHandle, entity1)
+    waitForEntity(writeEntityHandle, entity1, FIXTURE_ENTITY_TYPE)
 
     // Reference should be dead. (Removed entities currently aren't actually deleted, but
     // instead are "nulled out".)
@@ -1367,8 +1367,8 @@ open class HandlesTestBase(val params: Params) {
     writeEntityHandle.dispatchStore(modEntity1, modEntity2)
     entitiesWritten.join()
 
-    waitForEntity(writeEntityHandle, modEntity1)
-    waitForEntity(writeEntityHandle, modEntity2)
+    waitForEntity(writeEntityHandle, modEntity1, FIXTURE_ENTITY_TYPE)
+    waitForEntity(writeEntityHandle, modEntity2, FIXTURE_ENTITY_TYPE)
 
     // Reference should still be alive.
     // TODO(b/163308113): There's no way to wait for a reference's value to update right now,
@@ -1393,8 +1393,8 @@ open class HandlesTestBase(val params: Params) {
     val entitiesDeleted = monitorHandle.onUpdateDeferred { it.isEmpty() }
     writeEntityHandle.dispatchRemove(entity1, entity2)
     entitiesDeleted.join()
-    waitForEntity(writeEntityHandle, entity1)
-    waitForEntity(writeEntityHandle, entity2)
+    waitForEntity(writeEntityHandle, entity1, FIXTURE_ENTITY_TYPE)
+    waitForEntity(writeEntityHandle, entity2, FIXTURE_ENTITY_TYPE)
 
     log("Checking that they are empty when de-referencing.")
 
@@ -1541,5 +1541,7 @@ open class HandlesTestBase(val params: Params) {
       isSameManager = false,
       isSameStore = false
     )
+    private val FIXTURE_ENTITY_TYPE = EntityType(FixtureEntity.SCHEMA)
+    private val MORE_NESTED_ENTITY_TYPE = EntityType(MoreNested.SCHEMA)
   }
 }

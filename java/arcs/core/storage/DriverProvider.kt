@@ -1,5 +1,6 @@
 package arcs.core.storage
 
+import arcs.core.type.Type
 import kotlin.reflect.KClass
 
 /** Provider of information on the [Driver] and characteristics of the storage behind it. */
@@ -10,7 +11,8 @@ interface DriverProvider {
   /** Gets a [Driver] for the given [storageKey] and type [Data] (declared by [dataClass]). */
   suspend fun <Data : Any> getDriver(
     storageKey: StorageKey,
-    dataClass: KClass<Data>
+    dataClass: KClass<Data>,
+    type: Type
   ): Driver<Data>
 
   /**

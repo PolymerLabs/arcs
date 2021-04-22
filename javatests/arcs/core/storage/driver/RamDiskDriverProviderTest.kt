@@ -17,6 +17,8 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
+import arcs.core.type.Tag
+import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -67,7 +69,7 @@ class RamDiskDriverProviderTest {
   fun getDriver_throwsOnInvalidKey() = runBlocking {
     val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
 
-    provider.getDriver(volatile, Int::class)
+    provider.getDriver(volatile, Int::class, DummyType)
     Unit
   }
 
@@ -77,9 +79,9 @@ class RamDiskDriverProviderTest {
 
     val key = RamDiskStorageKey("foo")
 
-    val driver1 = provider.getDriver(key, Int::class)
-    val driver2 = provider.getDriver(key, Int::class)
-    val driver3 = provider2.getDriver(key, Int::class)
+    val driver1 = provider.getDriver(key, Int::class, DummyType)
+    val driver2 = provider.getDriver(key, Int::class, DummyType)
+    val driver3 = provider2.getDriver(key, Int::class, DummyType)
 
     var driver2Value: Int? = null
     var driver2Version: Int? = null
@@ -106,7 +108,7 @@ class RamDiskDriverProviderTest {
   @Test
   fun removeAllEntities() = runBlocking {
     val key = RamDiskStorageKey("foo")
-    val driver = provider.getDriver(key, Int::class)
+    val driver = provider.getDriver(key, Int::class, DummyType)
     driver.send(42, 1)
 
     provider.removeAllEntities()
@@ -118,12 +120,18 @@ class RamDiskDriverProviderTest {
   @Test
   fun removeEntitiesBetween() = runBlocking {
     val key = RamDiskStorageKey("foo")
-    val driver = provider.getDriver(key, Int::class)
+    val driver = provider.getDriver(key, Int::class, DummyType)
     driver.send(42, 1)
 
     provider.removeEntitiesCreatedBetween(1, 2)
 
     // Receiver are not updated, so check memory directly.
     assertThat(RamDisk.memory.contains(key)).isFalse()
+  }
+
+  companion object {
+    object DummyType : Type {
+      override val tag = Tag.Count
+    }
   }
 }

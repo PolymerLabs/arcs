@@ -3,6 +3,7 @@ package arcs.android.integration.ttl
 import arcs.android.integration.IntegrationEnvironment
 import arcs.android.util.testutil.AndroidLogRule
 import arcs.core.allocator.Arc
+import arcs.core.data.EntityType
 import arcs.core.entity.testutil.FixtureEntities
 import arcs.core.entity.testutil.FixtureEntity
 import arcs.core.host.toRegistration
@@ -183,21 +184,21 @@ class TtlTest(garbageCollectionV2Enabled: Boolean) {
   private suspend fun writeNewEntityToCollection(): AbstractWriter.FixtureEntity {
     val entity = fixtureEntities.generate().toWriterEntity()
     writer.writeCollection(entity)
-    waitForEntity(writer.handles.collection, entity)
+    waitForEntity(writer.handles.collection, entity, FIXTURE_ENTITY_TYPE)
     return entity
   }
 
   private suspend fun writeNewEntityToCollectionNoTtl(): AbstractWriter.FixtureEntity {
     val entity = fixtureEntities.generate().toWriterEntity()
     writer.writeCollectionNoTtl(entity)
-    waitForEntity(writer.handles.collectionNoTtl, entity)
+    waitForEntity(writer.handles.collectionNoTtl, entity, FIXTURE_ENTITY_TYPE)
     return entity
   }
 
   private suspend fun writeNewEntityToSingleton(): AbstractWriter.FixtureEntity {
     val entity = fixtureEntities.generate().toWriterEntity()
     writer.write(entity)
-    waitForEntity(writer.handles.output, entity)
+    waitForEntity(writer.handles.output, entity, FIXTURE_ENTITY_TYPE)
     return entity
   }
 
@@ -219,5 +220,7 @@ class TtlTest(garbageCollectionV2Enabled: Boolean) {
     @JvmStatic
     @Parameters(name = "garbageCollectionV2Enabled = {0}")
     fun parameters() = listOf(false, true)
+
+    private val FIXTURE_ENTITY_TYPE = EntityType(AbstractWriter.FixtureEntity.SCHEMA)
   }
 }

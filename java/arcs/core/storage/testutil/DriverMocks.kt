@@ -14,6 +14,7 @@ package arcs.core.storage.testutil
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverProvider
 import arcs.core.storage.StorageKey
+import arcs.core.type.Type
 import kotlin.reflect.KClass
 
 class MockDriverProvider : DriverProvider {
@@ -21,7 +22,8 @@ class MockDriverProvider : DriverProvider {
 
   override suspend fun <Data : Any> getDriver(
     storageKey: StorageKey,
-    dataClass: KClass<Data>
+    dataClass: KClass<Data>,
+    type: Type
   ): Driver<Data> = MockDriver(storageKey, dataClass)
 
   override suspend fun removeAllEntities() = Unit
