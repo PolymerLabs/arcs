@@ -13,6 +13,7 @@ package arcs.core.storage.testutil
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
+import arcs.core.type.Type
 import kotlin.reflect.KClass
 
 /** [FakeDriverFactory] is used to control what [Driver] is returned in tests. */
@@ -22,7 +23,8 @@ class FakeDriverFactory(val driver: Driver<*>) : DriverFactory {
 
   override suspend fun <Data : Any> getDriver(
     storageKey: StorageKey,
-    dataClass: KClass<Data>
+    dataClass: KClass<Data>,
+    type: Type
   ): Driver<Data> {
     getDriverCalls++
     return driver as Driver<Data>

@@ -183,7 +183,7 @@ class WriteOnlyStoreDatabaseImplIntegrationTest {
   private fun entity(id: String) = fixtureEntities.generate(id).serialize()
 
   private suspend fun Database.readEntity(): DatabaseData.Entity? {
-    val entityKey = TEST_KEY.backingKey.childKeyWithComponent(ID)
+    val entityKey = TEST_KEY.backingKey.newKeyWithComponent(ID)
     return get(entityKey, DatabaseData.Entity::class, FixtureEntity.SCHEMA) as? DatabaseData.Entity
   }
 

@@ -144,7 +144,7 @@ class ReferenceModeStoreTest(
   ) : StorageKey(StorageKeyProtocol.Dummy) {
     override fun toKeyString(): String = segment
 
-    override fun childKeyWithComponent(component: String): StorageKey =
+    override fun newKeyWithComponent(component: String): StorageKey =
       MockHierarchicalStorageKey("$segment$component")
   }
 

@@ -27,8 +27,10 @@ class ForeignStorageKey(
 
   override fun toKeyString(): String = namespace
 
-  override fun childKeyWithComponent(component: String): StorageKey =
-    ForeignStorageKey("$namespace/$component")
+  override fun newKeyWithComponent(component: String): StorageKey {
+    // Nest the given component as a child under the current key.
+    return ForeignStorageKey("$namespace/$component")
+  }
 
   companion object : StorageKeySpec<ForeignStorageKey> {
     override val protocol = StorageKeyProtocol.Foreign

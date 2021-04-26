@@ -15,6 +15,7 @@ import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.embed
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
@@ -93,6 +94,16 @@ class ReferenceModeStorageKeyTest(parameters: ParameterizedBuildFlags) {
 
     // Check the embedded/nested case.
     assertThat(StorageKeyManager.GLOBAL_INSTANCE.parse(parent.toString())).isEqualTo(parent)
+  }
+
+  @Test
+  fun newKeyWithComponent() {
+    val backing = RamDiskStorageKey("backing")
+    val direct = RamDiskStorageKey("direct")
+    val parent = ReferenceModeStorageKey(backing, direct)
+    val expected = if (BuildFlags.STORAGE_KEY_REDUCTION) "child" else "direct/child"
+    assertThat(parent.newKeyWithComponent("child"))
+      .isEqualTo(ReferenceModeStorageKey(backing, RamDiskStorageKey(expected)))
   }
 
   private companion object {

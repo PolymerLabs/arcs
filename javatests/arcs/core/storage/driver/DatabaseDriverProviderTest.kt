@@ -15,6 +15,7 @@ import arcs.core.common.ArcId
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
+import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
@@ -98,7 +99,7 @@ class DatabaseDriverProviderTest {
     val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
     val other = object : StorageKey(StorageKeyProtocol.Dummy) {
       override fun toKeyString(): String = "something"
-      override fun childKeyWithComponent(component: String): StorageKey = this
+      override fun newKeyWithComponent(component: String): StorageKey = this
     }
 
     assertThat(provider.willSupport(ramdisk)).isFalse()
@@ -182,7 +183,7 @@ class DatabaseDriverProviderTest {
     val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
 
     assertFailsWith<IllegalArgumentException> {
-      provider.getDriver(volatile, CrdtEntity.Data::class)
+      provider.getDriver(volatile, CrdtEntity.Data::class, DUMMY_ENTITY_TYPE)
     }
   }
 
@@ -191,7 +192,7 @@ class DatabaseDriverProviderTest {
     val key = DatabaseStorageKey.Persistent("foo", "1234a")
 
     assertFailsWith<IllegalArgumentException> {
-      provider.getDriver(key, CrdtEntity.Data::class)
+      provider.getDriver(key, CrdtEntity.Data::class, DUMMY_ENTITY_TYPE)
     }
   }
 
@@ -201,7 +202,7 @@ class DatabaseDriverProviderTest {
     schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
     assertFailsWith<IllegalArgumentException> {
-      provider.getDriver(key, Int::class)
+      provider.getDriver(key, Int::class, DUMMY_ENTITY_TYPE)
     }
   }
 
@@ -210,15 +211,15 @@ class DatabaseDriverProviderTest {
     val key = DatabaseStorageKey.Persistent("foo", "1234a")
     schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
-    val entityDriver = provider.getDriver(key, CrdtEntity.Data::class)
+    val entityDriver = provider.getDriver(key, CrdtEntity.Data::class, DUMMY_ENTITY_TYPE)
     assertThat(entityDriver).isInstanceOf(DatabaseDriver::class.java)
     assertThat(entityDriver.storageKey).isEqualTo(key)
 
-    val setDriver = provider.getDriver(key, CrdtSet.DataImpl::class)
+    val setDriver = provider.getDriver(key, CrdtSet.DataImpl::class, DUMMY_ENTITY_TYPE)
     assertThat(setDriver).isInstanceOf(DatabaseDriver::class.java)
     assertThat(setDriver.storageKey).isEqualTo(key)
 
-    val singletonDriver = provider.getDriver(key, CrdtSingleton.DataImpl::class)
+    val singletonDriver = provider.getDriver(key, CrdtSingleton.DataImpl::class, DUMMY_ENTITY_TYPE)
     assertThat(singletonDriver).isInstanceOf(DatabaseDriver::class.java)
     assertThat(singletonDriver.storageKey).isEqualTo(key)
   }
@@ -231,15 +232,15 @@ class DatabaseDriverProviderTest {
     )
     schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
-    val entityDriver = provider.getDriver(key, CrdtEntity.Data::class)
+    val entityDriver = provider.getDriver(key, CrdtEntity.Data::class, DUMMY_ENTITY_TYPE)
     assertThat(entityDriver).isInstanceOf(DatabaseDriver::class.java)
     assertThat(entityDriver.storageKey).isEqualTo(key)
 
-    val setDriver = provider.getDriver(key, CrdtSet.DataImpl::class)
+    val setDriver = provider.getDriver(key, CrdtSet.DataImpl::class, DUMMY_ENTITY_TYPE)
     assertThat(setDriver).isInstanceOf(DatabaseDriver::class.java)
     assertThat(setDriver.storageKey).isEqualTo(key)
 
-    val singletonDriver = provider.getDriver(key, CrdtSingleton.DataImpl::class)
+    val singletonDriver = provider.getDriver(key, CrdtSingleton.DataImpl::class, DUMMY_ENTITY_TYPE)
     assertThat(singletonDriver).isInstanceOf(DatabaseDriver::class.java)
     assertThat(singletonDriver.storageKey).isEqualTo(key)
   }
@@ -338,5 +339,6 @@ class DatabaseDriverProviderTest {
     )
     private const val DUMMY_START = 10000L
     private const val DUMMY_END = 20000L
+    private val DUMMY_ENTITY_TYPE = EntityType(DUMMY_SCHEMA)
   }
 }

@@ -12,6 +12,8 @@
 package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
+import arcs.core.crdt.CrdtEntity
+import arcs.core.data.RawEntity
 import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.volatiles.VolatileEntry
 import arcs.core.storage.driver.volatiles.VolatileMemory
@@ -30,7 +32,7 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class VolatileMemoryImplTest {
   private val bar = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
-  private val baz = bar.childKeyWithComponent("baz")
+  private val baz = bar.newKeyWithComponent("baz")
   private val expectedValue = VolatileEntry(data = 42)
   private lateinit var memory: VolatileMemory
 
@@ -102,8 +104,26 @@ class VolatileMemoryImplTest {
   }
 
   @Test
-  fun update_returnsValueWithIdOrDefaultFunction() = runBlockingTest {
+  fun count_whenNoEntities_returnsZero() {
+    assertThat(memory.countEntities()).isEqualTo(0)
+  }
 
+  @Test
+  fun count_whenEntitiesAdded_returnsNumberOfElements() = runBlockingTest {
+    memory.set(bar, VolatileEntry(CrdtEntity.Data()))
+    memory.set(baz, VolatileEntry(CrdtEntity.newWithEmptyEntity(RawEntity())))
+    assertThat(memory.countEntities()).isEqualTo(2)
+  }
+
+  @Test
+  fun count_whenNonEntitiesAdded_returnsZero() = runBlockingTest {
+    memory.set(bar, VolatileEntry(data = 41))
+    memory.set(baz, VolatileEntry(data = 42))
+    assertThat(memory.countEntities()).isEqualTo(0)
+  }
+
+  @Test
+  fun update_returnsValueWithIdOrDefaultFunction() = runBlockingTest {
     assertThat(memory.update<Int>(bar) { expectedValue }).isEqualTo(true to expectedValue)
     assertThat(memory.get<Int>(bar)).isEqualTo(expectedValue)
   }

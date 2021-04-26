@@ -177,7 +177,7 @@ class StorageServiceManagerTest {
 
     // Double check that no tombstones are left.
     val database = DatabaseDriverProvider.manager.getDatabase(DATABASE_NAME_DEFAULT, true)
-    val entityKey = databaseKey.backingKey.childKeyWithComponent(entity.entityId!!)
+    val entityKey = databaseKey.backingKey.newKeyWithComponent(entity.entityId!!)
     // Entity is gone, no tombstone left.
     assertThat(database.get(entityKey, DatabaseData.Entity::class, DummyEntity.SCHEMA)).isNull()
     // Collection is gone too.

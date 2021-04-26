@@ -13,15 +13,21 @@ package arcs.core.storage
 
 /** Locator for a specific piece of data within the storage layer. */
 abstract class StorageKey(val protocol: StorageKeyProtocol) {
-  val childKeyForArcInfo: StorageKey
-    get() = childKeyWithComponent("arc-info")
 
   abstract fun toKeyString(): String
 
-  abstract fun childKeyWithComponent(component: String): StorageKey
-
-  fun childKeyForHandle(handleId: String): StorageKey =
-    childKeyWithComponent("handle/$handleId")
+  /**
+   * Creates a new [StorageKey] of the same type, replacing the component with the given one.
+   * Callers must ensure that the component is unique (or sufficiently random) if they want the
+   * returned storage key to be unique. Other, non-component, properties of the [StorageKey] will be
+   * preserved (if any exist for the relevant [StorageKey] subclass).
+   *
+   * If the [arcs.flags.BuildFlags.STORAGE_KEY_REDUCTION] flag is disabled, the new [StorageKey]
+   * that is created will be a "child" of the current [StorageKey], with the given [component]
+   * appended to the current key's component. If the flag is enabled, the current key's component is
+   * discarded entirely.
+   */
+  abstract fun newKeyWithComponent(component: String): StorageKey
 
   override fun toString(): String {
     return "${protocol.protocol}${toKeyString()}"

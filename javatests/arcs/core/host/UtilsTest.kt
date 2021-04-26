@@ -28,6 +28,7 @@ import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.host.api.HandleHolder
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
+import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.testStorageEndpointManager
@@ -171,9 +172,13 @@ class UtilsTest(private val params: Params) {
     }
   }
 
-  private fun generateHandle(key: String, type: Type) =
+  private fun generateHandle(key: String, type: Type, db: Boolean = true) =
     Plan.Handle(
-      RamDiskStorageKey(key),
+      if (!db) RamDiskStorageKey(key)
+      else ReferenceModeStorageKey(
+        backingKey = DatabaseStorageKey.Persistent("backing$key", "1234a", dbName = "test"),
+        storageKey = DatabaseStorageKey.Persistent("entity$key", "1234a", dbName = "test")
+      ),
       type,
       emptyList()
     )
@@ -211,6 +216,22 @@ class UtilsTest(private val params: Params) {
       listOf(particle)
     )
     assertThat(isWriteOnlyStorageKey(partition, handle.storageKey)).isTrue()
+  }
+
+  @Test
+  fun isWriteOnlyStorageKey_withOneParticleAndAllWriteOnlyRamDiskConnections_isFalse() {
+    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
+
+    val handle = generateHandle("foo", collectionType, db = false)
+    val connection = generateConnection(handle, collectionType, HandleMode.Write)
+    val particle = generateParticle("foo", "bar" to connection)
+
+    val partition = Plan.Partition(
+      "fooId",
+      "fooHost",
+      listOf(particle)
+    )
+    assertThat(isWriteOnlyStorageKey(partition, handle.storageKey)).isFalse()
   }
 
   @Test

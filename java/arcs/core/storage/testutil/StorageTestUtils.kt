@@ -12,6 +12,7 @@
 package arcs.core.storage.testutil
 
 import arcs.core.crdt.CrdtEntity
+import arcs.core.data.EntityType
 import arcs.core.entity.Entity
 import arcs.core.entity.Handle
 import arcs.core.storage.DefaultDriverFactory
@@ -28,11 +29,11 @@ import kotlinx.coroutines.withContext
  * Returns when the given storage key has been updated in storage.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-suspend fun waitForKey(storageKey: StorageKey) {
+suspend fun waitForKey(storageKey: StorageKey, type: EntityType) {
   // Data could be already there (or not) by the time we register the receiver, registerReceiver
   // will call back with the data in any case.
   withContext(CoroutineScope(Dispatchers.Default).coroutineContext) {
-    val driver = DefaultDriverFactory.get().getDriver(storageKey, CrdtEntity.Data::class)!!
+    val driver = DefaultDriverFactory.get().getDriver(storageKey, CrdtEntity.Data::class, type)!!
     suspendCancellableCoroutine<Unit> { continuation ->
       launch {
         driver.registerReceiver { _, _ ->
@@ -52,12 +53,12 @@ suspend fun waitForKey(storageKey: StorageKey) {
  * Returns when the given [entity], which needs to be stored in the given [handle] has been updated
  * in storage.
  */
-suspend fun waitForEntity(handle: Handle, entity: Entity) {
+suspend fun waitForEntity(handle: Handle, entity: Entity, type: EntityType) {
   val entityId =
     checkNotNull(entity.entityId) { "Can only wait for stored entities with an entity ID." }
   val entityKey =
-    (handle.getProxy().storageKey as ReferenceModeStorageKey).backingKey.childKeyWithComponent(
+    (handle.getProxy().storageKey as ReferenceModeStorageKey).backingKey.newKeyWithComponent(
       entityId
     )
-  waitForKey(entityKey)
+  waitForKey(entityKey, type)
 }

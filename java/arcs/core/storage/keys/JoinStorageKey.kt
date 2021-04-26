@@ -29,7 +29,7 @@ class JoinStorageKey(
     return builder.toString()
   }
 
-  override fun childKeyWithComponent(component: String): StorageKey {
+  override fun newKeyWithComponent(component: String): StorageKey {
     TODO("Not yet implemented for JoinStorageKey")
   }
 

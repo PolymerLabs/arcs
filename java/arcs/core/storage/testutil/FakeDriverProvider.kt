@@ -3,6 +3,7 @@ package arcs.core.storage.testutil
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverProvider
 import arcs.core.storage.StorageKey
+import arcs.core.type.Type
 import kotlin.reflect.KClass
 
 /**
@@ -32,7 +33,8 @@ open class FakeDriverProvider(
   @Suppress("UNCHECKED_CAST")
   override suspend fun <Data : Any> getDriver(
     storageKey: StorageKey,
-    dataClass: KClass<Data>
+    dataClass: KClass<Data>,
+    type: Type
   ): Driver<Data> {
     require(storageKey in storageKeys)
     return drivers[storageKey] as Driver<Data>
@@ -58,12 +60,13 @@ open class FakeDriverProvider(
  * If you would prefer to configure a set of known [StorageKey]s and an explicit [Driver] for
  * each one, use [FakeDriverProvider] instead.
  */
-class FakeDriverVendor() : FakeDriverProvider() {
+class FakeDriverVendor : FakeDriverProvider() {
   @Suppress("UNCHECKED_CAST")
   override suspend fun <Data : Any> getDriver(
     storageKey: StorageKey,
-    dataClass: KClass<Data>
-  ): Driver<Data> = FakeDriver<Data>(storageKey, dataClass)
+    dataClass: KClass<Data>,
+    type: Type
+  ): Driver<Data> = FakeDriver(storageKey, dataClass)
 
   override fun willSupport(storageKey: StorageKey): Boolean = true
 }

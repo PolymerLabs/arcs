@@ -23,7 +23,7 @@ data class CreatableStorageKey(
 
   override fun toKeyString() = nameFromManifest
 
-  override fun childKeyWithComponent(component: String): StorageKey {
+  override fun newKeyWithComponent(component: String): StorageKey {
     throw UnsupportedOperationException("CreatableStorageKey is used as a placeholder only.")
   }
 

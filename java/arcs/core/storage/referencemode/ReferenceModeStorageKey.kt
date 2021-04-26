@@ -36,8 +36,8 @@ data class ReferenceModeStorageKey(
     }
   }
 
-  override fun childKeyWithComponent(component: String): StorageKey =
-    ReferenceModeStorageKey(backingKey, storageKey.childKeyWithComponent(component))
+  override fun newKeyWithComponent(component: String): StorageKey =
+    ReferenceModeStorageKey(backingKey, storageKey.newKeyWithComponent(component))
 
   override fun toKeyString(): String = "{${backingKey.embed()}}{${storageKey.embed()}}"
 

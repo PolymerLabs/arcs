@@ -12,6 +12,7 @@ package arcs.core.storage.keys
 
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StorageKeyProtocol
+import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
@@ -39,10 +40,11 @@ class RamDiskStorageKeyTest(parameters: ParameterizedBuildFlags) {
   }
 
   @Test
-  fun childKey_hasCorrectFormat() {
+  fun newKeyWithComponent_hasCorrectFormat() {
     val parent = RamDiskStorageKey("parent")
-    val child = parent.childKeyWithComponent("child")
-    assertThat(child.toString()).isEqualTo("${StorageKeyProtocol.RamDisk.protocol}parent/child")
+    val child = parent.newKeyWithComponent("child")
+    val expected = if (BuildFlags.STORAGE_KEY_REDUCTION) "child" else "parent/child"
+    assertThat(child.toString()).isEqualTo("${StorageKeyProtocol.RamDisk.protocol}$expected")
   }
 
   @Test

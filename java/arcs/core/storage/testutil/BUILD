@@ -56,6 +56,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/crdt",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:storage_key",
+        "//java/arcs/core/type",
     ],
 )
 

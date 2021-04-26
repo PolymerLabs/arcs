@@ -7,30 +7,34 @@ load(
 licenses(["notice"])
 
 arcs_kt_gen(
-    name = "codegen",
-    srcs = ["deletepropagation.arcs"],
+    name = "manifest_generation",
+    srcs = ["manifest.arcs"],
+    deps = [
+        "//java/arcs/core/entity/testutil:fixture_arcs_gen",  # unuseddeps: keep
+    ],
 )
 
 arcs_kt_android_test_suite(
-    name = "deletepropagation",
+    name = "writeonlystack-tests",
     size = "medium",
-    srcs = glob(["*.kt"]),
+    srcs = glob(["*Test.kt"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
-    package = "arcs.android.integration.deletepropagation",
-    shard_count = 2,
+    package = "arcs.android.integration.writeonlystack",
     deps = [
-        ":codegen",
+        ":manifest_generation",
         "//java/arcs/android/util/testutil",
-        "//java/arcs/core/allocator",
-        "//java/arcs/core/data",
         "//java/arcs/core/entity",
+        "//java/arcs/core/entity/testutil",
         "//java/arcs/core/host",
+        "//java/arcs/core/storage:storage-kt",
         "//java/arcs/core/storage/testutil",
         "//java/arcs/core/testutil",
+        "//java/arcs/flags:build_flags",
+        "//java/arcs/sdk/android/storage/service",
         "//javatests/arcs/android/integration",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/junit:junit-android",
-        "//third_party/java/robolectric:annotations",
+        "//third_party/java/robolectric",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
     ],

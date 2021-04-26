@@ -44,11 +44,10 @@ class ForeignStorageKeyTest(parameters: ParameterizedBuildFlags) {
   }
 
   @Test
-  fun childKeyWithComponent_isCorrect() {
+  fun newKeyWithComponent_isCorrect() {
     val parent = ForeignStorageKey("parent")
-    val child = parent.childKeyWithComponent("child")
-    assertThat(child.toString())
-      .isEqualTo("${StorageKeyProtocol.Foreign.protocol}parent/child")
+    val child = parent.newKeyWithComponent("child")
+    assertThat(child.toString()).isEqualTo("${StorageKeyProtocol.Foreign.protocol}parent/child")
   }
 
   @Test

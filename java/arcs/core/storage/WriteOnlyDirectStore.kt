@@ -127,7 +127,8 @@ class WriteOnlyDirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal *
       val driver = CrdtException.requireNotNull(
         driverFactory.getDriver(
           options.storageKey,
-          crdtType.crdtModelDataClass
+          crdtType.crdtModelDataClass,
+          options.type
         ) as? Driver<Data>
       ) { "No driver exists to support storage key ${options.storageKey}" }
 

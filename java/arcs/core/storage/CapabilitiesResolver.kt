@@ -17,6 +17,7 @@ import arcs.core.data.ReferenceType
 import arcs.core.data.toSchema
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
+import arcs.flags.BuildFlags
 
 /**
  * [CapabilitiesResolver] is a factory class that creates [StorageKey]s based on the registered
@@ -55,7 +56,13 @@ class CapabilitiesResolver(
     val containerKey = factory.create(
       StorageKeyFactory.ContainerStorageKeyOptions(options.arcId, type.toSchema())
     )
-    val containerChildKey = containerKey.childKeyForHandle(handleId)
+    val containerChildKey = if (BuildFlags.STORAGE_KEY_REDUCTION) {
+      // The ArcId needs to be encoded in the new storage key.
+      containerKey.newKeyWithComponent("${options.arcId}/handle/$handleId")
+    } else {
+      // The ArcId is encoded in containerKey and will appear in the child key.
+      containerKey.newKeyWithComponent("handle/$handleId")
+    }
     if (type is ReferenceType<*>) {
       return containerChildKey
     }

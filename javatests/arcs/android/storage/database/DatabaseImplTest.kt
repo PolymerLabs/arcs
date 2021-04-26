@@ -80,9 +80,6 @@ class DatabaseImplTest(private val parameters: ParameterizedBuildFlags) {
   @get:Rule
   val log = AndroidLogRule()
 
-  @get:Rule
-  val buildFlagsRule = BuildFlagsRule.create()
-
   private lateinit var database: DatabaseImpl
   private lateinit var db: SQLiteDatabase
   private val fixtureEntities = FixtureEntities()

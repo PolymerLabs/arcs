@@ -20,6 +20,7 @@ import arcs.core.storage.driver.volatiles.VolatileDriverImpl
 import arcs.core.storage.driver.volatiles.VolatileMemory
 import arcs.core.storage.driver.volatiles.VolatileMemoryImpl
 import arcs.core.storage.keys.VolatileStorageKey
+import arcs.core.type.Type
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
 import kotlin.reflect.KClass
@@ -60,7 +61,8 @@ class VolatileDriverProvider : DriverProvider {
    */
   override suspend fun <Data : Any> getDriver(
     storageKey: StorageKey,
-    dataClass: KClass<Data>
+    dataClass: KClass<Data>,
+    type: Type
   ): Driver<Data> {
     require(storageKey is VolatileStorageKey) {
       "Expected VolatileStorageKey, got ${storageKey::class.simpleName}"
@@ -81,8 +83,11 @@ class VolatileDriverProvider : DriverProvider {
   }
 
   override suspend fun getEntitiesCount(inMemory: Boolean): Long {
+    if (!inMemory) {
+      return 0L
+    }
     arcMemoryMutex.withLock {
-      return arcMemories.values.map { it.memory.count() }.sum()
+      return arcMemories.values.map { it.memory.countEntities() }.sum()
     }
   }
 
