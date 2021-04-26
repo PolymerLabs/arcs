@@ -54,18 +54,6 @@ class EgressBC : AbstractEgressBC() {
   fun fetchThings(): Set<Thing> = handles.egress.fetchAll()
 }
 
-/** Egresses Thing { a, b, c, d }. */
-class EgressABCD : AbstractEgressABCD() {
-  val handleRegistered = Job()
-
-  override fun onReady() {
-    fetchThings()
-    handleRegistered.complete()
-  }
-
-  fun fetchThings(): Set<Thing> = handles.egress.fetchAll()
-}
-
 /** Hashes texts fields of Thing { a, b }. */
 class RedactAB : AbstractRedactAB() {
   lateinit var redactionComplete: Job
@@ -78,18 +66,6 @@ class RedactAB : AbstractRedactAB() {
           b = it.b.hashCode().toString()
         )
       }
-    )
-  }
-}
-
-/** Combine Thing { a, b, c } and Thing { b, c, d } into Thing { a, b, c, d }. */
-class CombineThings : AbstractCombineThings() {
-  lateinit var combineComplete: Job
-  override fun onReady() {
-    val beg = handles.beginning.fetchAll()
-    val end = handles.ending.fetchAll()
-    combineComplete = handles.combined.storeAll(
-      beg.zip(end) { b, e -> CombineThings_Combined(b.a, b.b, e.c, e.d) }
     )
   }
 }
