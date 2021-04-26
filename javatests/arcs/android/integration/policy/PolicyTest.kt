@@ -212,7 +212,7 @@ class PolicyTest {
     assertThat(egressAB.fetchThings()).hasSize(6)
 
     // And only Thing {a, b} is written to volatile memory
-    assertThat(DefaultDriverFactory.get().getEntitiesCount(inMemory = true)).isEqualTo(7)
+    assertThat(DefaultDriverFactory.get().getEntitiesCount(inMemory = true)).isEqualTo(6)
 
     env.stopArc(arc)
     env.triggerCleanupWork()
@@ -270,70 +270,6 @@ class PolicyTest {
 
     // And Thing {a, b} data persists after runtime ends
     assertStorageContains(startingKey, singletons = setOf("a", "b"))
-  }
-
-  /**
-   * Scenario: A policy-compliant recipe with @persistent handles egresses data after labeling and
-   * stores ingress-restricted values to disk that is never deleted.
-   */
-  @Test
-  fun persistentTtlHandles_egressesDerivedData_dataEventuallyExpires() = runBlocking {
-    env.addNewHostWith(
-      ::IngressThing.toRegistration(),
-      ::CombineThings.toRegistration(),
-      ::EgressABCD.toRegistration()
-    )
-
-    // When the Arcs are run...
-    val arc1 = env.startArc(MixedPersistentIngressPlan)
-    val arc2 = env.startArc(MixedTtlEgressPlan)
-    env.waitForIdle(arc1)
-    env.waitForIdle(arc2)
-
-    val ingestABC = env.getParticle<IngressThing>(arc1)
-    val ingestBCD = env.getParticle<IngressThing>(arc2)
-    val egressABCD = env.getParticle<EgressABCD>(arc2)
-
-    withTimeout(30000) {
-      ingestABC.storeFinished.join()
-      ingestBCD.storeFinished.join()
-      egressABCD.handleRegistered.join()
-    }
-
-    // Then data with fields Thing {a, b, c, d} will be egressed
-    assertThat(egressABCD.fetchThings()).hasSize(6)
-
-    val keyABC = (ingestABC.handles.ingress.getProxy().storageKey as ReferenceModeStorageKey)
-      .storageKey
-    val keyBCD = (ingestBCD.handles.ingress.getProxy().storageKey as ReferenceModeStorageKey)
-      .storageKey
-    val keyABCD = (egressABCD.handles.egress.getProxy().storageKey as ReferenceModeStorageKey)
-      .storageKey
-
-    // And only Thing {a, b, c} is written to storage (disk)
-    assertStorageContains(keyABC, singletons = setOf("a", "b", "c"))
-    // And data with schemas Thing {b, c, d} and Thing {a, b, c, d} will remain in memory (RAMDisk)
-    assertThat(DefaultDriverFactory.get().getEntitiesCount(inMemory = true)).isEqualTo(13)
-
-//    // And this egressed data will be exfiltrated (filtered with no out read) after 2 hours have
-//    // passed
-    env.advanceClock(3.hours)
-    env.triggerCleanupWork()
-//    assertThat(egressABCD.fetchThings()).isEmpty()
-
-    // And data with schemas Thing {b, c, d} and Thing {a, b, c, d} will be deleted after 2 hours
-    // have passed
-    assertThat(DefaultDriverFactory.get().getEntitiesCount(inMemory = true)).isEqualTo(0)
-
-    env.stopArc(arc2)
-
-    // And Thing {a, b} data persists after the arc is run
-    assertStorageContains(keyABC, singletons = setOf("a", "b", "c"))
-
-    env.stopRuntime()
-
-    // And Thing {a, b} data persists after runtime ends
-    assertStorageContains(keyABC, singletons = setOf("a", "b", "c"))
   }
 
   /** Assert that all entities only contains values for the specified fields. */
