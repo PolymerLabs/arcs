@@ -61,7 +61,7 @@ object DatabaseDriverProvider : DriverProvider {
     val databaseInfo = requireNotNull(storageKey.getDatabaseInfo()) {
       "Unsupported StorageKey: $storageKey for DatabaseDriverProvider"
     }
-    requireNotNull(schemaLookup(databaseInfo.entitySchemaHash)) {
+    val schema = requireNotNull(schemaLookup(databaseInfo.entitySchemaHash)) {
       "Unsupported DatabaseStorageKey: No Schema found with hash: " +
         databaseInfo.entitySchemaHash
     }
@@ -76,7 +76,7 @@ object DatabaseDriverProvider : DriverProvider {
     return DatabaseDriver(
       storageKey,
       dataClass,
-      schemaLookup,
+      schema,
       manager.getDatabase(databaseInfo.dbName, databaseInfo.persistent)
     ).register()
   }

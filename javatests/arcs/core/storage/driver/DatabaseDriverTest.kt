@@ -27,14 +27,12 @@ import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseOp
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.keys.DatabaseStorageKey
-import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.toReference
 import arcs.core.type.Tag
@@ -86,18 +84,6 @@ class DatabaseDriverTest {
     val driver = buildDriver<CrdtEntity.Data>(database, REFMODE_STORAGE_KEY)
     assertThat(database.clients[driver.clientId]?.first).isEqualTo(driver.storageKey)
     assertThat(database.clients[driver.clientId]?.second).isSameInstanceAs(driver)
-  }
-
-  @Test
-  fun constructor_unsupportedStorageKey_throws() = runBlockingTest {
-    assertFailsWith<IllegalStateException> {
-      buildDriver<CrdtEntity.Data>(database, RAMDISK_KEY)
-    }.also {
-      assertThat(it).hasMessageThat()
-        .isEqualTo(
-          "StorageKey of type ${StorageKeyProtocol.RamDisk} not supported by DatabaseDriver."
-        )
-    }
   }
 
   @Test
@@ -161,18 +147,6 @@ class DatabaseDriverTest {
     driver.close()
 
     assertThat(driver.receiver).isNull()
-  }
-
-  @Test
-  fun send_throws_ifSchemaNotFound() = runBlockingTest {
-    val driver = buildDriver<CrdtEntity.Data>(database) {
-      schema = null
-    }
-
-    val e = assertFailsWith<IllegalStateException> {
-      driver.send(ENTITY, 1)
-    }
-    assertThat(e).hasMessageThat().contains("Schema not found")
   }
 
   @Test
@@ -602,33 +576,25 @@ class DatabaseDriverTest {
     var type: Type,
     var database: Database,
     var storageKey: StorageKey = DEFAULT_STORAGE_KEY,
-    var schemaLookup: (String) -> Schema? = { DEFAULT_SCHEMA }
+    var schema: Schema
   ) {
-    var schema: Schema?
-      get() = schemaLookup("whatever")
-      set(value) {
-        schemaLookup = createSchemaLookup(value)
-      }
-
-    suspend fun build(): DatabaseDriver<Data> =
-      DatabaseDriver(storageKey, dataClass, schemaLookup, database)
-        .register()
-
-    companion object {
-      private fun createSchemaLookup(schema: Schema?): (String) -> Schema? = { schema }
-    }
+    suspend fun build() = DatabaseDriver(storageKey, dataClass, schema, database).register()
   }
 
   private suspend inline fun <reified Data : Any> buildDriver(
     database: Database,
     storageKey: StorageKey = DEFAULT_STORAGE_KEY,
+    schema: Schema = DEFAULT_SCHEMA,
     crossinline block: DriverBuilder<Data>.() -> Unit = {}
-  ) = buildDriver(database, Data::class, storageKey) { this.block() }
+  ): DatabaseDriver<Data> {
+    return buildDriver(database, Data::class, storageKey, schema) { this.block() }
+  }
 
   private suspend fun <Data : Any> buildDriver(
     database: Database,
     dataClass: KClass<Data>,
     storageKey: StorageKey,
+    schema: Schema,
     block: DriverBuilder<Data>.() -> Unit = {}
   ): DatabaseDriver<Data> {
     val typeTag = when (dataClass) {
@@ -640,7 +606,7 @@ class DatabaseDriverTest {
     val type = object : Type {
       override val tag = typeTag
     }
-    return DriverBuilder(dataClass, type, database, storageKey).apply(block).build()
+    return DriverBuilder(dataClass, type, database, storageKey, schema).apply(block).build()
   }
 
   companion object {
@@ -657,7 +623,6 @@ class DatabaseDriverTest {
       ),
       DEFAULT_STORAGE_KEY
     )
-    private val RAMDISK_KEY = RamDiskStorageKey("foo")
     private val DEFAULT_SCHEMA = Schema(
       setOf(SchemaName("foo")),
       SchemaFields(

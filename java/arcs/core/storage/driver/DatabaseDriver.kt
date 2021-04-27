@@ -30,7 +30,6 @@ import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseOp
 import arcs.core.storage.database.ReferenceWithVersion
-import arcs.core.storage.driver.DatabaseDriverProvider.getDatabaseInfo
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.toReference
 import arcs.core.util.Random
@@ -44,22 +43,13 @@ import kotlin.reflect.KClass
 class DatabaseDriver<Data : Any>(
   override val storageKey: StorageKey,
   override val dataClass: KClass<Data>,
-  private val schemaLookup: (String) -> Schema?,
+  private val schema: Schema,
   /* internal */
   val database: Database
 ) : Driver<Data>, DatabaseClient {
   /* internal */ var receiver: (suspend (data: Data, version: Int) -> Unit)? = null
 
   /* internal */ var clientId: Int = -1
-
-  private val entitySchemaHash = checkNotNull(storageKey.getDatabaseInfo()?.entitySchemaHash) {
-    "StorageKey of type ${storageKey.protocol} not supported by DatabaseDriver."
-  }
-
-  private val schema: Schema
-    get() = checkNotNull(schemaLookup(entitySchemaHash)) {
-      "Schema not found for hash: $entitySchemaHash"
-    }
 
   private val containerStorageKey: StorageKey
     get() = (storageKey as? ReferenceModeStorageKey)?.storageKey ?: storageKey
@@ -261,7 +251,7 @@ class DatabaseDriver<Data : Any>(
   }
 
   override suspend fun clone(): Driver<Data> {
-    val clone = DatabaseDriver(storageKey, dataClass, schemaLookup, database)
+    val clone = DatabaseDriver(storageKey, dataClass, schema, database)
     clone.register()
     return clone
   }
