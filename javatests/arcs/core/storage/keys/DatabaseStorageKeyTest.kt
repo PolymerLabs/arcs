@@ -13,11 +13,11 @@ package arcs.core.storage.keys
 
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StorageKeyProtocol
-import arcs.core.testutil.fail
 import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.TruthJUnit.assume
 import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Rule
@@ -39,34 +39,48 @@ class DatabaseStorageKeyTest(parameters: ParameterizedBuildFlags) {
 
   @Test
   fun toString_persistent_rendersCorrectly() {
-    val key = DatabaseStorageKey.Persistent("foo", "1234a", dbName = "myDb")
-    assertThat(key.toString())
-      .isEqualTo("${StorageKeyProtocol.Database.protocol}1234a@myDb/foo")
+    val keyStr = DatabaseStorageKey.Persistent("foo", "1234a", dbName = "myDb").toString()
+    if (BuildFlags.STORAGE_KEY_REDUCTION) {
+      assertThat(keyStr).isEqualTo("${StorageKeyProtocol.Database.protocol}myDb/foo")
+    } else {
+      assertThat(keyStr).isEqualTo("${StorageKeyProtocol.Database.protocol}1234a@myDb/foo")
+    }
   }
 
   @Test
   fun toString_memory_rendersCorrectly() {
-    val key = DatabaseStorageKey.Memory("foo", "1234a", dbName = "myDb")
-    assertThat(key.toString())
-      .isEqualTo("${StorageKeyProtocol.InMemoryDatabase.protocol}1234a@myDb/foo")
+    val keyStr = DatabaseStorageKey.Memory("foo", "1234a", dbName = "myDb").toString()
+    if (BuildFlags.STORAGE_KEY_REDUCTION) {
+      assertThat(keyStr).isEqualTo("${StorageKeyProtocol.InMemoryDatabase.protocol}myDb/foo")
+    } else {
+      assertThat(keyStr).isEqualTo("${StorageKeyProtocol.InMemoryDatabase.protocol}1234a@myDb/foo")
+    }
   }
 
   @Test
   fun persistentParse_validString_parsesCorrectly() {
     val key = DatabaseStorageKey.Persistent.parse("1234a@myDb/foo")
     assertThat(key).isInstanceOf(DatabaseStorageKey.Persistent::class.java)
-    assertThat(key.unique).isEqualTo("foo")
-    assertThat(key.entitySchemaHash).isEqualTo("1234a")
-    assertThat(key.dbName).isEqualTo("myDb")
+    assertThat(key).isEqualTo(
+      DatabaseStorageKey.Persistent(
+        unique = "foo",
+        entitySchemaHash = "1234a",
+        dbName = "myDb"
+      )
+    )
   }
 
   @Test
   fun memoryParse_validString_parsesCorrectly() {
     val key = DatabaseStorageKey.Memory.parse("1234a@myDb/foo")
     assertThat(key).isInstanceOf(DatabaseStorageKey.Memory::class.java)
-    assertThat(key.unique).isEqualTo("foo")
-    assertThat(key.entitySchemaHash).isEqualTo("1234a")
-    assertThat(key.dbName).isEqualTo("myDb")
+    assertThat(key).isEqualTo(
+      DatabaseStorageKey.Memory(
+        unique = "foo",
+        entitySchemaHash = "1234a",
+        dbName = "myDb"
+      )
+    )
   }
 
   @Test
@@ -153,7 +167,9 @@ class DatabaseStorageKeyTest(parameters: ParameterizedBuildFlags) {
   }
 
   @Test
-  fun persistentConstructor_withInvalidEntitySchemaHashHexString_throws() {
+  fun persistentConstructor_flagOff_invalidEntitySchemaHashHexString_throws() {
+    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isFalse()
+
     assertFailsWith<IllegalArgumentException> {
       DatabaseStorageKey.Persistent("foo", "", "myDb")
     }
@@ -165,6 +181,11 @@ class DatabaseStorageKeyTest(parameters: ParameterizedBuildFlags) {
     assertFailsWith<IllegalArgumentException> {
       DatabaseStorageKey.Persistent("foo", "1234a_", "myDb")
     }
+  }
+
+  @Test
+  fun memoryConstructor_flagOff_invalidEntitySchemaHashHexString_throws() {
+    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isFalse()
 
     assertFailsWith<IllegalArgumentException> {
       DatabaseStorageKey.Memory("foo", "", "myDb")
@@ -182,21 +203,27 @@ class DatabaseStorageKeyTest(parameters: ParameterizedBuildFlags) {
   @Test
   fun persistentParse_viaRegistration_parsesCorrectly() {
     val keyString = "${StorageKeyProtocol.Database.protocol}1234a@myDb/foo"
-    val key = StorageKeyManager.GLOBAL_INSTANCE.parse(keyString) as? DatabaseStorageKey.Persistent
-      ?: fail("Expected a DatabaseStorageKey")
-    assertThat(key.dbName).isEqualTo("myDb")
-    assertThat(key.entitySchemaHash).isEqualTo("1234a")
-    assertThat(key.unique).isEqualTo("foo")
+    val key = StorageKeyManager.GLOBAL_INSTANCE.parse(keyString)
+    assertThat(key).isEqualTo(
+      DatabaseStorageKey.Persistent(
+        unique = "foo",
+        entitySchemaHash = "1234a",
+        dbName = "myDb"
+      )
+    )
   }
 
   @Test
   fun memoryParse_viaRegistration_parsesCorrectly() {
     val keyString = "${StorageKeyProtocol.InMemoryDatabase.protocol}1234a@myDb/foo"
-    val key = StorageKeyManager.GLOBAL_INSTANCE.parse(keyString) as? DatabaseStorageKey.Memory
-      ?: fail("Expected a DatabaseStorageKey")
-    assertThat(key.dbName).isEqualTo("myDb")
-    assertThat(key.entitySchemaHash).isEqualTo("1234a")
-    assertThat(key.unique).isEqualTo("foo")
+    val key = StorageKeyManager.GLOBAL_INSTANCE.parse(keyString)
+    assertThat(key).isEqualTo(
+      DatabaseStorageKey.Memory(
+        unique = "foo",
+        entitySchemaHash = "1234a",
+        dbName = "myDb"
+      )
+    )
   }
 
   @Test
@@ -215,9 +242,79 @@ class DatabaseStorageKeyTest(parameters: ParameterizedBuildFlags) {
     assertThat(child).isEqualTo(DatabaseStorageKey.Memory(expected, "1234a"))
   }
 
+  @Test
+  fun parseMemory_flagOff_rejectsShortFormat() {
+    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isFalse()
+
+    assertFailsWith<IllegalArgumentException> {
+      DatabaseStorageKey.Memory.parse("myDB/foo")
+    }
+  }
+
+  @Test
+  fun parsePersistent_flagOff_rejectsShortFormat() {
+    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isFalse()
+
+    assertFailsWith<IllegalArgumentException> {
+      DatabaseStorageKey.Persistent.parse("myDB/foo")
+    }
+  }
+
+  @Test
+  fun parseMemory_flagOn_acceptsShortFormat() {
+    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isTrue()
+
+    assertThat(DatabaseStorageKey.Memory.parse("myDB/foo")).isEqualTo(
+      DatabaseStorageKey.Memory("foo", SCHEMA_HASH_NOT_REQUIRED, "myDB")
+    )
+  }
+
+  @Test
+  fun parsePersistent_flagOn_acceptsShortFormat() {
+    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isTrue()
+
+    assertThat(DatabaseStorageKey.Persistent.parse("myDB/foo")).isEqualTo(
+      DatabaseStorageKey.Persistent("foo", SCHEMA_HASH_NOT_REQUIRED, "myDB")
+    )
+  }
+
+  @Test
+  fun entitySchemaHash_memory_flagOff_returnsValue() {
+    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isFalse()
+
+    val key = DatabaseStorageKey.Memory("foo", "1234a", "myDB")
+    assertThat(key.entitySchemaHash).isEqualTo("1234a")
+  }
+
+  @Test
+  fun entitySchemaHash_persistent_flagOff_returnsValue() {
+    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isFalse()
+
+    val key = DatabaseStorageKey.Persistent("foo", "1234a", "myDB")
+    assertThat(key.entitySchemaHash).isEqualTo("1234a")
+  }
+
+  @Test
+  fun entitySchemaHash_memory_flagOn_throws() {
+    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isTrue()
+
+    val key = DatabaseStorageKey.Memory("foo", "1234a", "myDB")
+    assertFailsWith<IllegalStateException> { key.entitySchemaHash }
+  }
+
+  @Test
+  fun entitySchemaHash_persistent_flagOn_throws() {
+    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isTrue()
+
+    val key = DatabaseStorageKey.Persistent("foo", "1234a", "myDB")
+    assertFailsWith<IllegalStateException> { key.entitySchemaHash }
+  }
+
   private companion object {
     @get:JvmStatic
     @get:Parameterized.Parameters(name = "{0}")
     val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_KEY_REDUCTION")
+
+    private const val SCHEMA_HASH_NOT_REQUIRED = "SCHEMA_HASH_NOT_REQUIRED"
   }
 }

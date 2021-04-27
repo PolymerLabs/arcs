@@ -14,13 +14,16 @@ import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.data.Schema
+import arcs.core.data.toSchema
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.DatabaseManager
+import arcs.core.storage.driver.DatabaseDriverProvider.getDatabaseInfo
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
+import arcs.flags.BuildFlags
 import kotlin.reflect.KClass
 
 /** [DriverProvider] which provides a [DatabaseDriver]. */
@@ -44,13 +47,19 @@ object DatabaseDriverProvider : DriverProvider {
 
   /**
    * Function which will be used to determine, at runtime, which [Schema] to associate with its
-   * hash value embedded in a [DatabaseStorageKey].
+   * hash value.
    */
   private var schemaLookup = DEFAULT_SCHEMA_LOOKUP
 
   override fun willSupport(storageKey: StorageKey): Boolean {
-    val databaseInfo = storageKey.getDatabaseInfo()
-    return databaseInfo != null && schemaLookup(databaseInfo.entitySchemaHash) != null
+    val databaseInfo = storageKey.getDatabaseInfo() ?: return false
+    if (!BuildFlags.STORAGE_KEY_REDUCTION) {
+      val entitySchemaHash = requireNotNull(databaseInfo.entitySchemaHash) {
+        "Entity schema hash missing"
+      }
+      return schemaLookup(entitySchemaHash) != null
+    }
+    return true
   }
 
   override suspend fun <Data : Any> getDriver(
@@ -61,9 +70,17 @@ object DatabaseDriverProvider : DriverProvider {
     val databaseInfo = requireNotNull(storageKey.getDatabaseInfo()) {
       "Unsupported StorageKey: $storageKey for DatabaseDriverProvider"
     }
-    val schema = requireNotNull(schemaLookup(databaseInfo.entitySchemaHash)) {
-      "Unsupported DatabaseStorageKey: No Schema found with hash: " +
-        databaseInfo.entitySchemaHash
+    val schema = if (BuildFlags.STORAGE_KEY_REDUCTION) {
+      // Use schema from the provided type.
+      type.toSchema()
+    } else {
+      // Pull the schema hash out of the storage key.
+      val hash = requireNotNull(storageKey.getDatabaseInfo()?.entitySchemaHash) {
+        "Schema hash missing from storage key."
+      }
+      requireNotNull(schemaLookup(hash)) {
+        "Unsupported DatabaseStorageKey: No Schema found with hash: $hash"
+      }
     }
     require(
       dataClass == CrdtEntity.Data::class ||
@@ -123,8 +140,10 @@ object DatabaseDriverProvider : DriverProvider {
     check(backingKey.dbName == storageKey.dbName) {
       "Database can support ReferenceModeStorageKey only with a single dbName."
     }
-    check(backingKey.entitySchemaHash == storageKey.entitySchemaHash) {
-      "Database can support ReferenceModeStorageKey only with a single entitySchemaHash."
+    if (!BuildFlags.STORAGE_KEY_REDUCTION) {
+      check(backingKey.entitySchemaHash == storageKey.entitySchemaHash) {
+        "Database can support ReferenceModeStorageKey only with a single entitySchemaHash."
+      }
     }
     check(
       backingKey is DatabaseStorageKey.Persistent == storageKey is DatabaseStorageKey.Persistent
@@ -132,7 +151,7 @@ object DatabaseDriverProvider : DriverProvider {
       "Database can support ReferenceModeStorageKey only if both or neither keys are persistent."
     }
     return DatabaseInfo(
-      backingKey.entitySchemaHash,
+      if (BuildFlags.STORAGE_KEY_REDUCTION) null else backingKey.entitySchemaHash,
       backingKey.dbName,
       backingKey is DatabaseStorageKey.Persistent
     )
@@ -142,16 +161,19 @@ object DatabaseDriverProvider : DriverProvider {
    * Extract DatabaseInfo from the StorageKey. Returns null if the storageKey is not a database or
    * reference-mode key.
    */
-  fun StorageKey.getDatabaseInfo(): DatabaseInfo? {
-    if (this is DatabaseStorageKey) {
-      return DatabaseInfo(this.entitySchemaHash, this.dbName, this is DatabaseStorageKey.Persistent)
-    }
-    if (this is ReferenceModeStorageKey) return this.getDatabaseInfo()
-    return null
+  private fun StorageKey.getDatabaseInfo(): DatabaseInfo? = when (this) {
+    is DatabaseStorageKey -> DatabaseInfo(
+      if (BuildFlags.STORAGE_KEY_REDUCTION) null else entitySchemaHash,
+      dbName,
+      this is DatabaseStorageKey.Persistent
+    )
+    is ReferenceModeStorageKey -> getDatabaseInfo()
+    else -> null
   }
 
   data class DatabaseInfo(
-    val entitySchemaHash: String,
+    // TODO(b/179216769): Delete this field from this file entirely.
+    val entitySchemaHash: String?,
     val dbName: String,
     val persistent: Boolean
   )
