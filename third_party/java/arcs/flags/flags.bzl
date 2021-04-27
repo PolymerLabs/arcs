@@ -113,7 +113,7 @@ ARCS_BUILD_FLAGS = [
         name = "storage_key_reduction",
         desc = "Reduce storage size of storage keys",
         bug_id = "b/179216769",
-        status = "NOT_READY",
+        status = "READY",
         stopwords = [
             "storage.?key.?reduction",
         ],
