@@ -2361,9 +2361,9 @@ class DatabaseImpl(
   )
 
   companion object {
-    // TODO(b/179216769): Wipe DB for STORAGE_KEY_REDUCTION flag.
     @VisibleForTesting
     val DB_VERSION get() = when {
+      BuildFlags.STORAGE_KEY_REDUCTION -> 9
       BuildFlags.STORAGE_STRING_REDUCTION && BuildFlags.REFERENCE_MODE_STORE_FIXES -> 8
       BuildFlags.STORAGE_STRING_REDUCTION -> 7
       else -> 6
@@ -2684,6 +2684,7 @@ class DatabaseImpl(
     private val CREATE_VERSION_5 = CREATE_VERSION_3
     private val CREATE_VERSION_7 = CREATE_VERSION_6
     private val CREATE_VERSION_8 = CREATE_VERSION_6
+    private val CREATE_VERSION_9 = CREATE_VERSION_6
 
     private val DROP_VERSION_2 =
       """
@@ -2726,6 +2727,9 @@ class DatabaseImpl(
     private val VERSION_8_MIGRATION =
       listOf(DROP_VERSION_3, CREATE_VERSION_8).flatten().toTypedArray()
 
+    private val VERSION_9_MIGRATION =
+      listOf(DROP_VERSION_3, CREATE_VERSION_9).flatten().toTypedArray()
+
     @VisibleForTesting
     val MIGRATION_STEPS = mapOf(
       2 to VERSION_2_MIGRATION,
@@ -2734,7 +2738,8 @@ class DatabaseImpl(
       5 to VERSION_5_MIGRATION,
       6 to VERSION_6_MIGRATION,
       7 to VERSION_7_MIGRATION,
-      8 to VERSION_8_MIGRATION
+      8 to VERSION_8_MIGRATION,
+      9 to VERSION_9_MIGRATION
     )
 
     @VisibleForTesting
@@ -2744,7 +2749,8 @@ class DatabaseImpl(
       5 to CREATE_VERSION_5,
       6 to CREATE_VERSION_6,
       7 to CREATE_VERSION_7,
-      8 to CREATE_VERSION_8
+      8 to CREATE_VERSION_8,
+      9 to CREATE_VERSION_9
     )
 
     private val CREATE = checkNotNull(CREATES_BY_VERSION[DB_VERSION])

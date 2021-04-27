@@ -109,7 +109,8 @@ class DatabaseUpgradeTest(private val parameters: ParameterizedBuildFlags) {
     @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
     fun params() = ParameterizedBuildFlags.of(
       "STORAGE_STRING_REDUCTION",
-      "REFERENCE_MODE_STORE_FIXES"
+      "REFERENCE_MODE_STORE_FIXES",
+      "STORAGE_KEY_REDUCTION"
     ).toList()
 
     // We start from 3 because we didn't record create statements for versions 1 and 2.
