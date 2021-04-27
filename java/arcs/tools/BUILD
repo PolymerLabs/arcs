@@ -110,7 +110,7 @@ kt_jvm_library(
         "//java/arcs/core/policy/proto:java_proto",
         "//third_party/java/arcs/deps:protobuf_java",
         "//third_party/kotlin/clikt",
-    ]
+    ],
 )
 
 java_binary(
