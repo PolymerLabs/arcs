@@ -1102,8 +1102,41 @@ class DatabaseImpl(
     // Retrieve existing collection ID for this storage key, if one exists.
     val metadata = getCollectionMetadata(storageKey, dataType, db)
 
-    val collectionId = if (metadata == null) {
-      createEmptyCollection(
+    fun insertReferencesIntoCollection(
+      refsWithVersion: Set<ReferenceWithVersion>,
+      collectionId: CollectionId
+    ) {
+      val content = ContentValues().apply {
+        put("collection_id", collectionId)
+      }
+
+      refsWithVersion
+        .map {
+          getEntityReferenceId(it.rawReference, db) to it.versionMap
+        }
+        .forEach { (referenceId, versionMap) ->
+          when (dataType) {
+            DataType.Collection ->
+              counters?.increment(DatabaseCounters.INSERT_COLLECTION_ENTRY)
+            DataType.Singleton ->
+              counters?.increment(DatabaseCounters.INSERT_SINGLETON_ENTRY)
+            else -> Unit
+          }
+          insertOrThrow(
+            TABLE_COLLECTION_ENTRIES,
+            null,
+            content.apply {
+              put("value_id", referenceId)
+              put("version_map", versionMap.toLiteral())
+            }
+          )
+        }
+    }
+
+    if (metadata == null) {
+      // Collection doesn't exist. Create the collection and insert all values from the provided
+      // data into the new collection.
+      val collectionId = createEmptyCollection(
         storageKey,
         data.versionMap,
         data.schema,
@@ -1112,27 +1145,14 @@ class DatabaseImpl(
         counters,
         db
       ).collectionId
+
+      insertReferencesIntoCollection(data.values, collectionId)
     } else {
       // Collection already exists; delete all existing entries.
       val collectionId = metadata.collectionId
       if (data.databaseVersion != metadata.versionNumber + 1) {
         return@transaction false
       }
-
-      // TODO(#4889): Don't blindly delete everything and re-insert: only insert/remove the
-      // diff.
-      when (dataType) {
-        DataType.Collection ->
-          counters?.increment(DatabaseCounters.DELETE_COLLECTION_ENTRIES)
-        DataType.Singleton ->
-          counters?.increment(DatabaseCounters.DELETE_SINGLETON_ENTRY)
-        else -> Unit
-      }
-      delete(
-        TABLE_COLLECTION_ENTRIES,
-        "collection_id = ?",
-        arrayOf(collectionId.toString())
-      )
 
       // Updated collection metadata.
       update(
@@ -1144,35 +1164,56 @@ class DatabaseImpl(
         "id = ?",
         arrayOf(collectionId.toString())
       )
-      collectionId
-    }
 
-    // Insert all elements into the collection.
-    val content = ContentValues().apply {
-      put("collection_id", collectionId)
-    }
-    // TODO(#4889): Don't do this one-by-one.
-    data.values
-      .map {
-        getEntityReferenceId(it.rawReference, db) to it.versionMap
-      }
-      .forEach { (referenceId, versionMap) ->
+      if (databaseConfigGetter().diffbasedEntityInsertion) {
+        // toBeRemoved initially contains all the references in the collection. The references that
+        // remain in the collection are removed from the toBeRemoved map, resulting in only the
+        // references that need to be removed from the collection.
+        val toBeRemoved = getCollectionReferencesWithValueId(collectionId, db)
+        val toBeInserted = mutableSetOf<ReferenceWithVersion>()
+        for (refWithVersion in data.values) {
+          val removed = toBeRemoved.remove(refWithVersion.rawReference)
+          if (removed == null) {
+            // The reference does not exist in the collection so it will need to be inserted.
+            toBeInserted.add(refWithVersion)
+          }
+        }
+
+        val collectionIdString = collectionId.toString()
+
+        // delete the entities to be removed from the collections table
+        toBeRemoved.forEach {
+          when (dataType) {
+            DataType.Collection ->
+              counters?.increment(DatabaseCounters.DELETE_COLLECTION_ENTRIES)
+            DataType.Singleton ->
+              counters?.increment(DatabaseCounters.DELETE_SINGLETON_ENTRY)
+            else -> Unit
+          }
+          delete(
+            TABLE_COLLECTION_ENTRIES,
+            "collection_id = ? AND value_id = ?",
+            arrayOf(collectionIdString, it.value)
+          )
+        }
+
+        insertReferencesIntoCollection(toBeInserted, collectionId)
+      } else {
         when (dataType) {
           DataType.Collection ->
-            counters?.increment(DatabaseCounters.INSERT_COLLECTION_ENTRY)
+            counters?.increment(DatabaseCounters.DELETE_COLLECTION_ENTRIES)
           DataType.Singleton ->
-            counters?.increment(DatabaseCounters.INSERT_SINGLETON_ENTRY)
+            counters?.increment(DatabaseCounters.DELETE_SINGLETON_ENTRY)
           else -> Unit
         }
-        insertOrThrow(
+        delete(
           TABLE_COLLECTION_ENTRIES,
-          null,
-          content.apply {
-            put("value_id", referenceId)
-            put("version_map", versionMap.toLiteral())
-          }
+          "collection_id = ?",
+          arrayOf(collectionId.toString())
         )
+        insertReferencesIntoCollection(data.values, collectionId)
       }
+    }
     true
   }
 
@@ -2020,6 +2061,37 @@ class DatabaseImpl(
       it.getVersionMap(5)!!
     )
   }.toSet()
+
+  private fun getCollectionReferencesWithValueId(
+    collectionId: CollectionId,
+    db: SQLiteDatabase
+  ): MutableMap<RawReference, String> {
+    val map = mutableMapOf<RawReference, String>()
+    db.rawQuery(
+      """
+        SELECT
+          entity_refs.entity_id,
+          entity_refs.creation_timestamp,
+          entity_refs.expiration_timestamp,
+          entity_refs.backing_storage_key,
+          entity_refs.version_map,
+          collection_entries.value_id
+        FROM collection_entries
+        JOIN entity_refs ON collection_entries.value_id = entity_refs.id
+        WHERE collection_entries.collection_id = ?
+      """.trimIndent(),
+      arrayOf(collectionId.toString())
+    ).forEach {
+      map[RawReference(
+        id = it.getString(0),
+        storageKey = storageKeyManager.parse(it.getString(3)),
+        version = it.getVersionMap(4),
+        _creationTimestamp = it.getLong(1),
+        _expirationTimestamp = it.getLong(2)
+      )] = it.getString(5)
+    }
+    return map
+  }
 
   /** Returns true if the given [TypeId] represents a primitive type. */
   private fun isPrimitiveType(typeId: TypeId) = typeId <= LARGEST_PRIMITIVE_TYPE_ID
