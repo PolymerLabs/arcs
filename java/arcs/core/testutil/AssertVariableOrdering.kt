@@ -69,15 +69,16 @@ fun <T> assertVariableOrdering(
     Constraint.NestSequence(constraints.toList())
   }
 
-  val matches = actual.map { Result<T>(it) }
-  topLevel.process(matches).let { report ->
-    if (report.isFailure) throw report.toException()
+  val report = topLevel.process(ResultList(actual.map { Result<T>(it) }))
+  if (report !is Report.Success) {
+    throw report.toException()
   }
 
   // Unless otherwise directed, fail when any values were not matched by at least one constraint.
   if (!allowUnmatched) {
-    Report.checkUnmatched(matches).let { report ->
-      if (report.isFailure) throw report.toException()
+    val unmatched = Report.checkUnmatched(report.matches)
+    if (unmatched !is Report.Success) {
+      throw unmatched.toException()
     }
   }
 }
@@ -102,8 +103,13 @@ fun <T> group(vararg constraints: Constraint<T>) = Constraint.NestGroup(constrai
 
 fun <T> group(constraints: Iterable<Constraint<T>>) = Constraint.NestGroup(constraints.toList())
 
-/** Holds the result of a [Constraint] match against a given value. */
-class Result<T>(
+/** Holds the overall results of a call to [assertVariableOrdering]. */
+class ResultList<T>(private val items: List<Result<T>>) : List<Result<T>> by items {
+  fun deepCopy() = ResultList(items.map { it.copy() })
+}
+
+/** Holds the result of a [Constraint] match against a single value. */
+data class Result<T>(
   val value: T,
   /** The constraint that matched or failed on [value]. */
   var constraint: Constraint<T>? = null,
@@ -113,12 +119,6 @@ class Result<T>(
   var actualIndex: Int = -1
 ) {
   fun showIndexed() = constraint?.showIndexed(constraintIndex) ?: ""
-
-  fun reset() {
-    constraint = null
-    constraintIndex = -1
-    actualIndex = -1
-  }
 }
 
 /** Represents a sequence or group constraint for value type [T]. */
@@ -128,14 +128,25 @@ sealed class Constraint<T> {
   var maxIndex = -1
 
   /**
-   * Evaluates this constraint against the input list provided to [assertVariableOrdering],
-   * starting at the [from] index.
+   * A set of the values held by this constraint. For nested constraints, this is the combined set
+   * of all the contained value constraints. Used to reduce processing for [NestGroup] permutations.
    */
-  abstract fun process(matches: List<Result<T>>, from: Int = 0): Report
+  abstract val valueSet: Set<T>
+
+  /**
+   * Evaluates this constraint against the input list provided to [assertVariableOrdering], starting
+   * at the [from] index. Returns null on success or a [Report] containing details of the match
+   * failure.
+   *
+   * If [failFast] is true, constraints will return an empty error report as soon as a failure is
+   * encountered (instead of attempting to match as much as possible of a failed constraint).
+   * This is used to reduce processing for [NestGroup] permutations.
+   */
+  abstract fun process(matches: ResultList<T>, from: Int = 0, failFast: Boolean = false): Report<T>
 
   /**
    * For value-based constraints, shows the list of expected values with a specific one
-   * highlighted: `seq(a, b, >c<, d)`. Unused for nesting constraints.
+   * highlighted: `seq(a, b, >c<, d)`. Unused for nested constraints.
    */
   open fun showIndexed(i: Int): String = ""
 
@@ -143,168 +154,259 @@ sealed class Constraint<T> {
   open class ValueSequence<T>(val values: List<T>) : Constraint<T>() {
     open val label: String = "sequence"
 
-    override fun process(matches: List<Result<T>>, from: Int): Report {
-      var mutableFrom = from
+    override val valueSet by lazy { values.toSet() }
+
+    override fun process(matches: ResultList<T>, from: Int, failFast: Boolean): Report<T> {
+      val newMatches = matches.deepCopy()
+      var varFrom = from
       val unmatched = mutableListOf<Result<T>>()
       values.forEachIndexed { ci, value ->
-        val ai = search(matches, value, mutableFrom)
-        if (ai != null) {
-          matches[ai].let {
+        val ai = search(newMatches, value, varFrom)
+        if (ai != -1) {
+          newMatches[ai].let {
             it.constraint = this
             it.constraintIndex = ci
             it.actualIndex = ai
           }
+          varFrom = ai + 1
           maxIndex = ai
-          mutableFrom = ai + 1
+        } else if (failFast) {
+          return Report.FastFailure()
         } else {
-          unmatched.add(Result(value, this, ci, mutableFrom))
+          unmatched.add(Result(value, this, ci, varFrom))
         }
       }
       return if (unmatched.isEmpty()) {
-        Report.success()
+        Report.Success(newMatches)
       } else {
-        Report.failure(label, matches, unmatched)
+        Report.MatchFailure(label, newMatches, unmatched)
       }
     }
 
     override fun showIndexed(i: Int) = "seq(${showIndexed(values, i)})"
 
-    override fun toString() = values.toString()
+    override fun toString() = "seq(${values.joinToString(", ")})"
   }
 
   /** Single values are just a sequence of 1, but display failures with better labels. */
   class SingleValue<T>(value: T) : ValueSequence<T>(listOf(value)) {
     override val label = "single"
 
+    override val valueSet = setOf(value)
+
     override fun showIndexed(i: Int) = "sng(${values.first()})"
   }
 
   /** Represents an unordered group of values. */
   class ValueGroup<T>(val values: List<T>) : Constraint<T>() {
-    override fun process(matches: List<Result<T>>, from: Int): Report {
-      maxIndex = -1
+
+    override val valueSet by lazy { values.toSet() }
+
+    override fun process(matches: ResultList<T>, from: Int, failFast: Boolean): Report<T> {
+      val newMatches = matches.deepCopy()
       val unmatched = mutableListOf<Result<T>>()
+      maxIndex = -1
       values.forEachIndexed { ci, value ->
-        val ai = search(matches, value, from)
-        if (ai != null) {
-          matches[ai].let {
+        val ai = search(newMatches, value, from)
+        if (ai != -1) {
+          newMatches[ai].let {
             it.constraint = this
             it.constraintIndex = ci
             it.actualIndex = ai
           }
           maxIndex = Math.max(ai, maxIndex)
+        } else if (failFast) {
+          return Report.FastFailure()
         } else {
           unmatched.add(Result(value, this, ci, 0))
         }
       }
       return if (unmatched.isEmpty()) {
-        Report.success()
+        Report.Success(newMatches)
       } else {
         unmatched.forEach { it.actualIndex = Math.max(maxIndex + 1, from) }
-        Report.failure("group", matches, unmatched)
+        Report.MatchFailure("group", newMatches, unmatched)
       }
     }
 
     override fun showIndexed(i: Int) = "grp(${showIndexed(values, i)})"
 
-    override fun toString() = "{" + values.joinToString(", ") + "}"
+    override fun toString() = "grp(${values.joinToString(", ")})"
   }
 
   /** Represents a causally-ordered sequence of constraints. */
   class NestSequence<T>(val constraints: List<Constraint<T>>) : Constraint<T>() {
-    override fun process(matches: List<Result<T>>, from: Int): Report {
-      var mutableFrom = from
-      constraints.forEach {
-        val report = it.process(matches, mutableFrom)
-        if (report.isFailure) {
+
+    override val valueSet by lazy {
+      mutableSetOf<T>().also { s -> constraints.forEach { s.addAll(it.valueSet) } }
+    }
+
+    override fun process(matches: ResultList<T>, from: Int, failFast: Boolean): Report<T> {
+      var varMatches = matches
+      var varFrom = from
+      for (c in constraints) {
+        val report = c.process(varMatches, varFrom, failFast)
+        if (report !is Report.Success) {
           return report
         }
-        maxIndex = it.maxIndex
-        mutableFrom = maxIndex + 1
+        varMatches = report.matches
+        varFrom = c.maxIndex + 1
+        maxIndex = c.maxIndex
       }
-      return Report.success()
+      return Report.Success(varMatches)
     }
 
-    override fun toString() = "<" + constraints.joinToString(", ") + ">"
+    override fun toString() = "seq(${constraints.joinToString(", ")})"
   }
 
-  /** Represents an unordered group of constraints. */
+  /**
+   * Represents an unordered group of constraints.
+   *
+   * Processing a nested group is a bit complicated. It's possible that the given order of
+   * constraints will fail against the input, but a different order will work. For example, an
+   * input of [A,X,A,Y] against grp(seq(A,Y), seq(A,X)) will match the first A and the Y, leaving
+   * [X,A] to fail against the second sequence. Swapping the two sequences will work, and more
+   * generally we need to look at the full set of permutations over the nested constraints.
+   *
+   * However, simply brute forcing all permutations quickly hits performance problems. This can be
+   * mitigated by only permuting the set of constraints that share values, and separately running
+   * the rest in sequence (order won't matter). For example, given the following nested group:
+   *
+   *    grp(seq(A,B), grp(B,D), seq(K,L), seq(A,C), grp(M,N))
+   *           1         2         3         4         5
+   *
+   * we want to test 3 and 5 in a single sequential pass and 1, 2, 4 via permutation.
+   *
+   * It is still possible for there to be enough constraints with common values to hit a factorial
+   * explosion. To guard against this, [process] will throw a RuntimeException after an arbitrary
+   * large number of attempts.
+   */
   class NestGroup<T>(val constraints: List<Constraint<T>>) : Constraint<T>() {
-    var failure: Report? = null
+    override val valueSet by lazy {
+      mutableSetOf<T>().also { s -> constraints.forEach { s.addAll(it.valueSet) } }
+    }
 
-    override fun process(matches: List<Result<T>>, from: Int): Report {
-      failure = null
-      return if (runPermutations(constraints.toMutableList(), mutableListOf(), matches, from)) {
-        Report.success()
-      } else {
-        requireNotNull(failure)
+    private var safetyLimit = 0
+
+    // Finds the set of "overlapping" constraints that have any common values.
+    private val toPermute: Set<Constraint<T>> by lazy {
+      // Build a map of value to constraint.
+      val valuesToConstraints = mutableMapOf<T, MutableList<Constraint<T>>>()
+      for (c in constraints) {
+        for (value in c.valueSet) {
+          val list = valuesToConstraints.getOrDefault(value, mutableListOf())
+          list.add(c)
+          valuesToConstraints[value] = list
+        }
+      }
+
+      // Collect the constraints from all values that map to more than one constraint.
+      mutableSetOf<Constraint<T>>().also {
+        for (list in valuesToConstraints.values) {
+          if (list.size > 1) {
+            it.addAll(list)
+          }
+        }
       }
     }
 
-    /**
-     * Nesting groups may have to attempt every permutation to verify that no possible arrangement
-     * of the constraints can be satisfied against the input.
-     */
+    // Finds the set of "non-overlapping" constraints that do not have any common values.
+    private val noPermute: Set<Constraint<T>> by lazy { constraints.toSet() - toPermute }
+
+    override fun process(matches: ResultList<T>, from: Int, failFast: Boolean): Report<T> {
+      maxIndex = -1
+      safetyLimit = 0
+
+      // First check that all the overlapping constraints can be satisfied individually against
+      // the initial [matches] state to quickly catch errors where one contains a value that
+      // simply isn't in the input.
+      for (c in toPermute) {
+        val report = c.process(matches, from, failFast)
+        if (report !is Report.Success) {
+          return report
+        }
+      }
+
+      // Now run the non-overlapping constraints as a single sequential pass.
+      var varMatches = matches
+      for (c in noPermute) {
+        val report = c.process(varMatches, from, failFast)
+        if (report !is Report.Success) {
+          return report
+        }
+        varMatches = report.matches
+        maxIndex = Math.max(c.maxIndex, maxIndex)
+      }
+
+      // Finally explore permutations of the overlapping constraints. This will call [process]
+      // with failFast on to disable the generation of error reports.
+      val report = runPermutations(toPermute.toMutableList(), varMatches, from)
+      if (report is Report.Success || failFast) {
+        return report
+      }
+
+      // No luck. Re-run one of the orderings with failFast off to generate a sample error report.
+      var sample: Report<T> = Report.FastFailure()
+      for (c in toPermute) {
+        sample = c.process(varMatches, from, false)
+        if (sample !is Report.Success) {
+          break
+        }
+        varMatches = sample.matches
+      }
+      return Report.MiscFailure(
+        "no ordering found to satisfy constraints with common values in a nested group",
+        "[Constraints]\n" + toPermute.joinToString("\n") + "\n\n[Sample failure]\n" + sample.body()
+      )
+    }
+
+    // Recursively explore the permutation space for the given [candidates] list. Constraints are
+    // executed as the ordering is built up (rather than building each ordering completely before
+    // processing), so as soon as one fails we can prune any further sub-orderings from that point
+    // on - this provides a massive performance improvement.
     private fun runPermutations(
       candidates: MutableList<Constraint<T>>,
-      permutation: MutableList<Constraint<T>>,
-      matches: List<Result<T>>,
+      matches: ResultList<T>,
       from: Int
-    ): Boolean {
-      // Recursion leaf: we now have a full permutation list to evaluate against the input. If any
-      // constraint fails, return immediately with false to try the next permutation. If they all
-      // succeed, return true and halt further processing.
-      if (candidates.isEmpty()) {
-        // Clear any match results from the previous attempt.
-        (from until matches.size).forEach { matches[it].reset() }
-        maxIndex = -1
-        permutation.forEach {
-          val report = it.process(matches, from)
-          if (report.isFailure) {
-            // Record the first failure report (this matches the order of [constraints]). This will
-            // only be returned if there is no possible successful ordering of the constraints.
-            if (failure == null) {
-              failure = report
-            }
-            return false
-          }
-          maxIndex = Math.max(it.maxIndex, maxIndex)
-        }
-        return true
+    ): Report<T> {
+      if (candidates.isEmpty()) return Report.Success(matches)
+
+      // This limit empirically allows up to 10 pathologically arranged overlapping constraints
+      // to be successfully processed in a reasonable time.
+      if (++safetyLimit == 2_000_000) {
+        throw RuntimeException("NestGroup required too many permutations to complete: $this")
       }
 
+      // At each level, run through the list of candidates, taking one from the front of the
+      // list to process. On success, recurse on the reduced list; if the recursive call finds
+      // a successful ordering, return immediately. On failure, do not recurse, thus pruning all
+      // of the sub-orderings under this particular point.
+      //
+      // If we haven't found a successful ordering, add the popped front candidate to the end of
+      // the candidates list and try the next one.
       repeat(candidates.size) {
-        // Take the first candidate and move it to the permutation being assembled.
-        //   At level 1: c=[1,2,3,4]  p=[]   ->  c=[2,3,4]  p=[1]
-        //   At level 2: c=[2,3,4]    p=[1]  ->  c=[3,4]    p=[1,2]
-        //   ...
-        permutation.add(candidates.removeAt(0))
-
-        // Recurse with a copy of the reduced candidates list and a reference to the permutation.
-        if (runPermutations(candidates.toMutableList(), permutation, matches, from)) {
-          // We found a successful ordering! No need to check any more of them.
-          return true
+        val candidate = candidates.removeAt(0)
+        val report = candidate.process(matches, from, true)
+        if (report is Report.Success) {
+          maxIndex = Math.max(candidate.maxIndex, maxIndex)
+          val subReport = runPermutations(candidates, report.matches, from)
+          if (subReport is Report.Success) {
+            return subReport
+          }
         }
-
-        // Restore the moved candidate to the end of the candidates list for the next round (so now
-        // item 2 will be first in the list and thus also first in the next round of permutations):
-        //   c=[2,3,4]  p=[1]  ->  c=[2,3,4,1]  p=[]
-        //
-        // Since the loop is over the size of the candidates list, we're done when the original
-        // first item is shifted back to the start.
-        candidates.add(permutation.removeLast())
+        candidates.add(candidate)
       }
-      return false
+      return Report.FastFailure()
     }
 
-    override fun toString() = "«" + constraints.joinToString(", ") + "»"
+    override fun toString() = "grp(${constraints.joinToString(", ")})"
   }
 
-  protected fun search(matches: List<Result<T>>, value: T, from: Int): Int? {
+  protected fun search(matches: ResultList<T>, value: T, from: Int): Int {
     (from until matches.size).forEach {
       if (matches[it].constraint == null && matches[it].value == value) return it
     }
-    return null
+    return -1
   }
 
   protected fun showIndexed(values: List<T>, index: Int) =
@@ -315,34 +417,27 @@ sealed class Constraint<T> {
  * Holds the result of a [Constraint.process] call, and for failed constraints can generate
  * an AssertionError providing detailed information on how the constraint failed.
  */
-class Report private constructor(
-  val description: String,
-  val rows: List<Row>
-) {
+sealed class Report<T> {
 
-  val isFailure = description.isNotEmpty()
+  /** Generate an AssertionError providing detailed information on how the constraint failed. */
+  fun toException() = AssertionError("assertVariableOrdering: " + description() + "\n\n" + body())
 
-  class Row(val sep: Char, val left: String, val right: String, index: Int = -1) {
-    val indexStr = if (index == -1) "" else index.toString()
-  }
+  open fun description(): String = ""
 
-  fun toException(): AssertionError {
-    var w1 = 1
-    var w2 = 1
-    rows.forEach {
-      w1 = Math.max(w1, it.indexStr.length)
-      w2 = Math.max(w2, it.left.length)
-    }
-    val rowStrings = rows.map {
-      "%${w1}s %c %-${w2}s   %s".format(it.indexStr, it.sep, it.left, it.right).trimEnd()
-    }
-    return AssertionError(description + "\n\n" + rowStrings.joinToString("\n"))
-  }
+  open fun body(): String = ""
 
-  companion object {
-    fun success() = Report("", emptyList())
+  class Success<T>(val matches: ResultList<T>) : Report<T>()
 
-    fun <T> failure(label: String, matches: List<Result<T>>, unmatched: List<Result<T>>): Report {
+  /** Reports a standard failure to match in a constraint. */
+  class MatchFailure<T>(
+    val label: String,
+    val matches: ResultList<T>,
+    val unmatched: List<Result<T>>
+  ) : Report<T>() {
+    override fun description() =
+      "$label constraint failed with unmatched values: ${unmatched.map { it.value }}"
+
+    override fun body(): String {
       val rows = mutableListOf(Row(' ', "Actual", "Match result"))
       var ai = 0
       var ui = 0
@@ -351,16 +446,30 @@ class Report private constructor(
           rows.add(Row('|', matches[ai].value.toString(), matches[ai].showIndexed(), ai))
           ai++
         } else {
-          unmatched[ui].let { rows.add(Row(':', "", "?? " + it.showIndexed())) }
+          rows.add(Row(':', "", "?? " + unmatched[ui].showIndexed()))
           ui++
         }
       }
-      val summary = unmatched.map { it.value }
-      val desc = "assertVariableOrdering: $label constraint failed with unmatched values: $summary"
-      return Report(desc, rows)
+      return layout(rows)
     }
+  }
 
-    fun <T> checkUnmatched(matches: List<Result<T>>): Report {
+  /** Reports other failures. */
+  class MiscFailure<T>(val descriptionStr: String, val bodyStr: String) : Report<T>() {
+    override fun description() = descriptionStr
+
+    override fun body() = bodyStr
+  }
+
+  /** Used to speed up the handling of permutations in NestGroup processing. */
+  class FastFailure<T> : Report<T>()
+
+  class Row(val sep: Char, val left: String, val right: String, index: Int = -1) {
+    val indexStr = if (index == -1) "" else index.toString()
+  }
+
+  companion object {
+    fun <T> checkUnmatched(matches: ResultList<T>): Report<T> {
       val summary = mutableListOf<T>()
       val rows = matches.mapIndexed { ai, t ->
         if (t.constraint == null) {
@@ -371,12 +480,26 @@ class Report private constructor(
         }
       }
       return if (summary.isEmpty()) {
-        Report.success()
+        Report.Success(matches)
       } else {
-        val desc = "assertVariableOrdering: " +
-          "all constraints satisfied but some values not matched: $summary"
-        Report(desc, rows)
+        Report.MiscFailure(
+          "all constraints satisfied but some values not matched: $summary",
+          layout(rows)
+        )
       }
+    }
+
+    protected fun layout(rows: List<Row>): String {
+      var w1 = 1
+      var w2 = 1
+      rows.forEach {
+        w1 = Math.max(w1, it.indexStr.length)
+        w2 = Math.max(w2, it.left.length)
+      }
+      val rowStrings = rows.map {
+        "%${w1}s %c %-${w2}s   %s".format(it.indexStr, it.sep, it.left, it.right).trimEnd()
+      }
+      return rowStrings.joinToString("\n")
     }
   }
 }

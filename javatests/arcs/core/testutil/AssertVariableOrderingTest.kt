@@ -239,7 +239,7 @@ class AssertVariableOrderingTest {
   }
 
   @Test
-  fun reuseConstraintObjects() {
+  fun reuseValueConstraintObjects() {
     val seq = sequence(1, 2)
     val grp = group(3, 4, 5)
 
@@ -257,13 +257,41 @@ class AssertVariableOrderingTest {
     // Across multiple calls - note that the new matches occur at an earlier index than the
     // last matches of the previous call.
     assertVariableOrdering(
-    listOf(1, 2, 5, 3, 4, 10),
+      listOf(1, 2, 5, 3, 4, 10),
       seq,
       grp,
       single(10)
     )
     assertThat(seq.maxIndex).isEqualTo(1)
     assertThat(grp.maxIndex).isEqualTo(4)
+  }
+
+  @Test
+  fun reuseNestedConstraintObjects() {
+    val seq = sequence(sequence(1, 2), group(3, 4))
+    val grp = group(single(5), sequence(6, 7))
+
+    // In a single call.
+    assertVariableOrdering(
+      listOf(1, 2, 4, 3, 6, 5, 7, 10, 1, 6, 2, 3, 4, 7, 5, 20),
+      sequence(seq, grp),
+      group(10),
+      group(seq, grp),
+      single(20)
+    )
+    assertThat(seq.maxIndex).isEqualTo(12)
+    assertThat(grp.maxIndex).isEqualTo(14)
+
+    // Across multiple calls - note that the new matches occur at an earlier index than the
+    // last matches of the previous call.
+    assertVariableOrdering(
+      listOf(1, 2, 3, 4, 5, 6, 7, 10),
+      seq,
+      grp,
+      single(10)
+    )
+    assertThat(seq.maxIndex).isEqualTo(3)
+    assertThat(grp.maxIndex).isEqualTo(6)
   }
 
   @Test
@@ -565,14 +593,17 @@ class AssertVariableOrderingTest {
   }
 
   @Test
-  fun nestingGroupMustAttemptAllPermutations() {
-    // Without the permutation logic in Constraint.NestGroup, this would fail because seq(a,b,x,y)
-    // matches the initial a-b and trailing x-y, leaving c-d-a-b to fail against seq(a,b,c,d).
+  fun nestedGroup_mustIteratePermutationsForOverlappingConstraints() {
+    // This wouldn't work without the permutation logic in Constraint.NestGroup, because seq(X,Z)
+    // matches the first X and the Z, leaving inputs Y-X to fail against seq(X,Y). Additionally,
+    // the extra non-overlapping sequences must be left out of the permutation processing to avoid
+    // a factorial explosion.
     assertVariableOrdering(
-      listOf("a", "b", "c", "d", "a", "b", "x", "y"),
+      listOf("X", "Y", "X", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"),
       group(
-        sequence("a", "b", "x", "y"),
-        sequence("a", "b", "c", "d")
+        sequence("X", "Z"), sequence("X", "Y"),
+        single("a"), single("b"), single("c"), single("d"), single("e"), single("f"),
+        single("g"), single("h"), single("i"), single("j"), single("k"), single("l")
       )
     )
 
@@ -596,43 +627,288 @@ class AssertVariableOrderingTest {
         single(7)
       )
     }
+  }
 
-    // When a nesting group cannot possibly match the input, the exception will will show the
-    // message from the first attempt, i.e. where the nested constraints were evaluated in the
-    // same order as given in the assertVariableOrdering call.
+  @Test
+  fun nestedGroup_errorReportFromOverlappingConstraintWithInvalidValue() {
     verifyExceptionMessage(
       """
-        assertVariableOrdering: sequence constraint failed with unmatched values: [Z]
+        assertVariableOrdering: sequence constraint failed with unmatched values: [-2]
 
-             Actual   Match result
-         0 | x        seq(>x<, y)
-         1 | y        seq(x, >y<)
-         2 | a        seq(>a<, b, e)
-         3 | b        seq(a, >b<, e)
-         4 | c
-         5 | a        seq(>a<, b, Z)
-         6 | b        seq(a, >b<, Z)
-           :          ?? seq(a, b, >Z<)
-         7 | d
-         8 | a
-         9 | b
-        10 | e        seq(a, b, >e<)
+            Actual   Match result
+        0 | 0        seq(>0<, -2)
+          :          ?? seq(0, >-2<)
+        1 | 1
+        2 | 0
+        3 | 2
+        4 | 0
+        5 | 3
       """
     ) {
       assertVariableOrdering(
-        listOf("x", "y", "a", "b", "c", "a", "b", "d", "a", "b", "e"),
-        sequence("x", "y"),
+        listOf(0, 1, 0, 2, 0, 3),
         group(
-          sequence("a", "b", "e"),
-          sequence("a", "b", "Z"),
-          sequence("a", "b", "c")
+          sequence(0, 3),
+          sequence(0, -2),
+          sequence(0, 1)
         )
       )
     }
   }
 
   @Test
-  fun regressionTest_nestingGroupMustClearMatchArrayCorrectly() {
+  fun nestedGroup_errorReportFromNonOverlappingConstraintWithInvalidValue() {
+    verifyExceptionMessage(
+      """
+        assertVariableOrdering: sequence constraint failed with unmatched values: [-6]
+
+            Actual   Match result
+        0 | 0
+        1 | 1
+        2 | 5        seq(>5<, -6)
+          :          ?? seq(5, >-6<)
+        3 | 6
+        4 | 0
+        5 | 3
+      """
+    ) {
+      assertVariableOrdering(
+        listOf(0, 1, 5, 6, 0, 3),
+        group(
+          sequence(0, 3),
+          sequence(5, -6),
+          sequence(0, 1)
+        )
+      )
+    }
+  }
+
+  @Test
+  fun nestedGroup_errorReportFromOverlappingConstraints() {
+    verifyExceptionMessage(
+      """
+        assertVariableOrdering: no ordering found to satisfy constraints with common values in a nested group
+
+        [Constraints]
+        seq(1, 5)
+        grp(0, 1, 2)
+        seq(5, 3, 6)
+
+        [Sample failure]
+            Actual   Match result
+        0 | 9        sng(9)
+          :          ?? seq(>5<, 3, 6)
+        1 | 0        grp(>0<, 1, 2)
+        2 | 1        seq(>1<, 5)
+        3 | 2        grp(0, 1, >2<)
+        4 | 1        grp(0, >1<, 2)
+        5 | 5        seq(1, >5<)
+        6 | 3        seq(5, >3<, 6)
+        7 | 6        seq(5, 3, >6<)
+      """
+    ) {
+      assertVariableOrdering(
+        listOf(9, 0, 1, 2, 1, 5, 3, 6),
+        single(9),
+        group(
+          sequence(1, 5),
+          sequence(5, 3, 6),
+          group(0, 1, 2)
+        )
+      )
+    }
+  }
+
+  @Test
+  fun nestedGroup_pathologicalInputs() {
+    // This has 13 overlapping constraints in the group; 13! is 6,227,020,800 orderings which
+    // is not feasible to brute force. The pruning algorithm in NestGroup.process() succesfully
+    // completes this call with just 46,496 invocations of runPermutations.
+    assertFailsWith<AssertionError> {
+      assertVariableOrdering(
+        listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14),
+        group(
+          sequence(1, 2), sequence(2, 3), sequence(3, 4), sequence(4, 5), sequence(5, 6),
+          sequence(6, 7), sequence(7, 8), sequence(8, 9), sequence(9, 10), sequence(10, 11),
+          sequence(11, 12), sequence(12, 13), sequence(13, 14)
+        )
+      )
+    }.let {
+      assertThat(it).hasMessageThat().contains("no ordering found to satisfy constraints")
+    }
+
+    // The following test would time out without the safety limit check in NestGroup.process().
+    assertFailsWith<RuntimeException> {
+      assertVariableOrdering(
+        listOf(
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+        ),
+        group(
+          sequence(0, 1),
+          sequence(0, 2),
+          sequence(0, 3),
+          sequence(0, 4),
+          sequence(0, 5),
+          sequence(0, 6, 7),
+          sequence(0, 7),
+          sequence(0, 8),
+          sequence(0, 9),
+          sequence(0, 10),
+          sequence(0, 11),
+          sequence(0, 12),
+          sequence(0, 13)
+        )
+      )
+    }.let {
+      assertThat(it).hasMessageThat()
+        .contains("NestGroup required too many permutations to complete")
+    }
+  }
+
+  @Test
+  fun deeplyNestedGroups_successfulMatch() {
+    assertVariableOrdering(
+      listOf(9, 0, 1, 3, 2, 2, 3, 4, 0, 5, 8, 4, 7),
+      group(
+        sequence(
+          single(9),
+          group(
+            group(
+              sequence(0, 1),
+              sequence(2, 0)
+            ),
+            sequence(3, 2)
+          )
+        ),
+        group(
+          sequence(3, 4),
+          group(4, 5)
+        ),
+        sequence(8, 7)
+      )
+    )
+  }
+
+  @Test
+  fun deeplyNestedGroups_failureInNonOverlappingConstraint() {
+    // This should fail in the "noPermute" loop in NestGroup.process
+    assertFailsWith<AssertionError> {
+      assertVariableOrdering(
+        listOf(9, 0, 1, 3, 2, 2, 3, 4, 0, 5, 8, 4, 7),
+        group(
+          sequence(
+            single(9),
+            group(
+              group(
+                sequence(0, 1),
+                sequence(2, 0)
+              ),
+              sequence(3, 2)
+            )
+          ),
+          group(
+            sequence(3, 4),
+            group(4, 5)
+          ),
+          sequence(-8, 7) // -8 is not in actual
+        )
+      )
+    }.let {
+      assertThat(it).hasMessageThat()
+        .contains("sequence constraint failed with unmatched values: [-8]")
+    }
+  }
+
+  @Test
+  fun deeplyNestedGroups_failureInOverlappingConstraint() {
+    // This should fail in the first "toPermute" loop in NestGroup.process
+    assertFailsWith<AssertionError> {
+      assertVariableOrdering(
+        listOf(9, 0, 1, 3, 2, 2, 3, 4, 0, 5, 8, 4, 7),
+        group(
+          sequence(
+            single(9),
+            group(
+              group(
+                sequence(0, 1),
+                sequence(2, 0)
+              ),
+              sequence(3, 2, -5) // -5 is not in actual
+            )
+          ),
+          group(
+            sequence(3, 4),
+            group(4, 5)
+          ),
+          sequence(8, 7)
+        )
+      )
+    }.let {
+      assertThat(it).hasMessageThat()
+        .contains("sequence constraint failed with unmatched values: [-5]")
+    }
+  }
+
+  @Test
+  fun deeplyNestedGroups_failureDuringPermutationAnalysis() {
+    assertFailsWith<AssertionError> {
+      assertVariableOrdering(
+        listOf(9, 0, 1, 3, 2, 2, 3, 4, 0, 5, 8, 4, 7),
+        group(
+          sequence(
+            single(9),
+            group(
+              group(
+                sequence(0, 1),
+                sequence(2, 0)
+              ),
+              sequence(3, 2)
+            )
+          ),
+          group(
+            sequence(3, 4),
+            group(4, 5, 8) // Extra 8 can't be satisfied but will pass the first "toPermute" check
+          ),
+          sequence(8, 7)
+        )
+      )
+    }.let {
+      assertThat(it).hasMessageThat().contains("no ordering found to satisfy constraints")
+    }
+  }
+
+  @Test
+  fun deeplyNestedGroups_unmatchedValues() {
+    assertFailsWith<AssertionError> {
+      assertVariableOrdering(
+        listOf(9, 0, 1, -5, 3, 2, 2, 3, 4, -1, 0, 5, 8, 4, 7, -6),
+        group(
+          sequence(
+            single(9),
+            group(
+              group(
+                sequence(0, 1),
+                sequence(2, 0)
+              ),
+              sequence(3, 2)
+            )
+          ),
+          group(
+            sequence(3, 4),
+            group(4, 5)
+          ),
+          sequence(8, 7)
+        )
+      )
+    }.let {
+      assertThat(it).hasMessageThat()
+        .contains("all constraints satisfied but some values not matched: [-5, -1, -6]")
+    }
+  }
+
+  @Test
+  fun regressionTest_nestedGroupMustClearMatchArrayCorrectly() {
     // The first impl of runPermutations did not clear the match array correctly, so processing
     // of the next permutation was polluted by the failed match entries from previous ones.
     assertVariableOrdering(
@@ -654,5 +930,29 @@ class AssertVariableOrderingTest {
         sequence("X", "C", "Y")
       )
     )
+  }
+
+  @Test
+  fun valueSets() {
+    assertThat(single(7).valueSet).isEqualTo(setOf(7))
+
+    val s1 = sequence(1, 2, 1, 3, 4)
+    val g1 = group(2, 4, 5, 5)
+    assertThat(s1.valueSet).isEqualTo(setOf(1, 2, 3, 4))
+    assertThat(g1.valueSet).isEqualTo(setOf(2, 4, 5))
+    assertThat(sequence(s1, g1).valueSet).isEqualTo(setOf(1, 2, 3, 4, 5))
+    assertThat(group(s1, g1).valueSet).isEqualTo(setOf(1, 2, 3, 4, 5))
+
+    val s2 = sequence(
+      group("y", "x", "a"),
+      single("x"),
+      sequence("y", "a")
+    )
+    val g2 = group(
+      sequence("a", "b", "a", "c", "d"),
+      group("a", "c", "e")
+    )
+    assertThat(sequence(s2, g2).valueSet).isEqualTo(setOf("a", "b", "c", "d", "e", "x", "y"))
+    assertThat(group(s2, g2).valueSet).isEqualTo(setOf("a", "b", "c", "d", "e", "x", "y"))
   }
 }
