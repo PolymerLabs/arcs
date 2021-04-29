@@ -37,3 +37,12 @@ Decodes a base64-encoded version map proto (e.g. as stored in the SQLite databas
 $ bazel run //java/arcs/tools:decode_version_map -- -e ChMKDzg3ODQ2NzAzNTAzODQxNhAB
 {878467035038416: 1}
 ```
+
+## inspect_manifest
+
+This tool makes manifest binaries human-readable: It converts manifest `.binarypb`s
+into textprotos.
+
+```
+$ bazel run --run_under="cd $PWD && " //java/arcs/tools:inspect_manifest -- ./ok_check_multiple_or_tags.binarypb ./ok_check_multiple_or_tags.textproto
+```

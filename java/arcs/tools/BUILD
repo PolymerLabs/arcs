@@ -101,6 +101,24 @@ java_binary(
     runtime_deps = [":recipe2plan_lib"],
 )
 
+kt_jvm_library(
+    name = "inpsect_manifest_lib",
+    srcs = ["InspectManifest.kt"],
+    deps = [
+        "//java/arcs/core/data/proto:manifest_java_proto",
+        "//java/arcs/core/data/proto:proto_for_test",
+        "//java/arcs/core/policy/proto:java_proto",
+        "//third_party/java/arcs/deps:protobuf_java",
+        "//third_party/kotlin/clikt",
+    ],
+)
+
+java_binary(
+    name = "inspect_manifest",
+    main_class = "arcs.tools.InspectManifestKt",
+    runtime_deps = ["inpsect_manifest_lib"],
+)
+
 sh_binary(
     name = "stopwords",
     srcs = ["stopwords.sh"],
