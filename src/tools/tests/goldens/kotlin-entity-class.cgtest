@@ -238,3 +238,261 @@ particle T
         }
     }
 -----[end]-----
+
+-----[name]-----
+generates inline entity collection
+-----[input]-----
+particle T
+  h1: reads Thing { foo: [inline InlineSchema {num: Number}] }
+-----[results]-----
+
+    @Suppress("UNCHECKED_CAST")
+    class InlineSchema(
+        num: Double = 0.0,
+        entityId: String? = null,
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase("InlineSchema", SCHEMA, entityId, creationTimestamp, expirationTimestamp, true) {
+        
+        var num: Double
+            get() = super.getSingletonValue("num") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("num", _value)
+        
+        init {
+            this.num = num
+        }
+        
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
+        fun copy(num: Double = this.num) = InlineSchema(num = num)
+
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(num: Double = this.num) = InlineSchema(
+            num = num,
+            entityId = entityId,
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
+        )
+        
+        companion object : arcs.sdk.EntitySpec<InlineSchema> {
+            
+            override val SCHEMA = arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("InlineSchema")),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                    collections = emptyMap()
+                ),
+                "4936551a045597882ec6826363354f5b85dba35b",
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
+            )
+
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
+                emptyMap()
+
+            init {
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
+            }
+            
+            override fun deserialize(data: arcs.core.data.RawEntity) = InlineSchema().apply {
+                deserialize(data, nestedEntitySpecs)
+            }
+        }
+    }
+-----[next]-----
+
+    @Suppress("UNCHECKED_CAST")
+    class Thing(
+        foo: Set<InlineSchema> = emptySet(),
+        entityId: String? = null,
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase("Thing", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+        
+        var foo: Set<InlineSchema>
+            get() = super.getCollectionValue("foo") as Set<InlineSchema>
+            private set(_value) = super.setCollectionValue("foo", _value)
+        
+        init {
+            this.foo = foo
+        }
+        
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
+        fun copy(foo: Set<InlineSchema> = this.foo) = Thing(foo = foo)
+
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(foo: Set<InlineSchema> = this.foo) = Thing(
+            foo = foo,
+            entityId = entityId,
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
+        )
+        
+        companion object : arcs.sdk.EntitySpec<Thing> {
+            
+            override val SCHEMA = arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Thing")),
+                arcs.core.data.SchemaFields(
+                    singletons = emptyMap(),
+                    collections = mapOf(
+                        "foo" to arcs.core.data.FieldType.InlineEntity("4936551a045597882ec6826363354f5b85dba35b")
+                    )
+                ),
+                "01be63e84cd3889bdcabf06013a7ab496f532d80",
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
+            )
+
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
+                mapOf("4936551a045597882ec6826363354f5b85dba35b" to InlineSchema)
+
+            init {
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
+            }
+            
+            override fun deserialize(data: arcs.core.data.RawEntity) = Thing().apply {
+                deserialize(data, nestedEntitySpecs)
+            }
+        }
+    }
+-----[end]-----
+
+-----[name]-----
+generates inline entity singleton
+-----[input]-----
+particle T
+  h1: reads Thing { foo: inline InlineSchema {num: Number} }
+-----[results]-----
+
+    @Suppress("UNCHECKED_CAST")
+    class InlineSchema(
+        num: Double = 0.0,
+        entityId: String? = null,
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase("InlineSchema", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+        
+        var num: Double
+            get() = super.getSingletonValue("num") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("num", _value)
+        
+        init {
+            this.num = num
+        }
+        
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
+        fun copy(num: Double = this.num) = InlineSchema(num = num)
+
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(num: Double = this.num) = InlineSchema(
+            num = num,
+            entityId = entityId,
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
+        )
+        
+        companion object : arcs.sdk.EntitySpec<InlineSchema> {
+            
+            override val SCHEMA = arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("InlineSchema")),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                    collections = emptyMap()
+                ),
+                "4936551a045597882ec6826363354f5b85dba35b",
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
+            )
+
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
+                emptyMap()
+
+            init {
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
+            }
+            
+            override fun deserialize(data: arcs.core.data.RawEntity) = InlineSchema().apply {
+                deserialize(data, nestedEntitySpecs)
+            }
+        }
+    }
+-----[next]-----
+
+    @Suppress("UNCHECKED_CAST")
+    class Thing(
+        foo: InlineSchema = InlineSchema(),
+        entityId: String? = null,
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase("Thing", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+        
+        var foo: InlineSchema
+            get() = super.getSingletonValue("foo") as InlineSchema? ?: InlineSchema()
+            private set(_value) = super.setSingletonValue("foo", _value)
+        
+        init {
+            this.foo = foo
+        }
+        
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
+        fun copy(foo: InlineSchema = this.foo) = Thing(foo = foo)
+
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(foo: InlineSchema = this.foo) = Thing(
+            foo = foo,
+            entityId = entityId,
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
+        )
+        
+        companion object : arcs.sdk.EntitySpec<Thing> {
+            
+            override val SCHEMA = arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Thing")),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf(
+                        "foo" to arcs.core.data.FieldType.InlineEntity("4936551a045597882ec6826363354f5b85dba35b")
+                    ),
+                    collections = emptyMap()
+                ),
+                "ae938906876876e9988f8789f586e40fac7c8e2f",
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
+            )
+
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
+                mapOf("4936551a045597882ec6826363354f5b85dba35b" to InlineSchema)
+
+            init {
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
+            }
+            
+            override fun deserialize(data: arcs.core.data.RawEntity) = Thing().apply {
+                deserialize(data, nestedEntitySpecs)
+            }
+        }
+    }
+-----[end]-----
