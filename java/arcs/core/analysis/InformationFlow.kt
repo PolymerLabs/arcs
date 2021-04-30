@@ -693,7 +693,13 @@ private fun Predicate.labels(): List<InformationFlowLabel> = when (this) {
 
 /** Returns true if the [check] is satisfied by the labels computed for [particle]. */
 fun InformationFlow.AnalysisResult.verify(particle: Recipe.Particle, check: Check): Boolean {
+  val log = TaggedLog { "AnalysisResult.verify" }
+
+  log.debug { "checking $check in $particle"}
+
   val result = fixpoint.getValue(particle)
+
+  log.debug { "result: $result" }
 
   // Unreachable particle => check is trivially satisfied.
   if (result.isBottom) return true
@@ -702,6 +708,8 @@ fun InformationFlow.AnalysisResult.verify(particle: Recipe.Particle, check: Chec
   if (result.isTop) return false
 
   val accessPathLabels = result.getLabels(check.accessPath)
+
+  log.debug { "accessPathLabels: $accessPathLabels" }
 
   // Unreachable => check is trivially satisfied.
   if (accessPathLabels.isBottom) return true

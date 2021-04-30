@@ -46,3 +46,15 @@ into textprotos.
 ```
 $ bazel run --run_under="cd $PWD && " //java/arcs/tools:inspect_manifest -- ./ok_check_multiple_or_tags.binarypb ./ok_check_multiple_or_tags.textproto
 ```
+
+## verify_policy
+
+Verifies that all recipes in an Arcs manifest file comply with their policies.
+
+```
+# bazel run //java/arcs/tools:verify_policy -- /absolute/path/to/binary_manifest.binarypb
+```
+
+Options: 
+- `-d, --debug`: Turn on debug tracing
+- `--help`: Display usage info
