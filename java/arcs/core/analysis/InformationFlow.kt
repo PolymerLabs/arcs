@@ -695,7 +695,7 @@ private fun Predicate.labels(): List<InformationFlowLabel> = when (this) {
 fun InformationFlow.AnalysisResult.verify(particle: Recipe.Particle, check: Check): Boolean {
   val log = TaggedLog { "AnalysisResult.verify" }
 
-  log.debug { "checking $check in ${particle.spec.name}"}
+  log.debug { "checking $check in ${particle.spec.name}" }
 
   val result = fixpoint.getValue(particle)
 
