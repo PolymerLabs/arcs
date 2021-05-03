@@ -1,48 +1,93 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 package arcs.tools
 
 import arcs.core.analysis.InformationFlow
 import arcs.core.analysis.verify
+import arcs.core.data.Annotation
 import arcs.core.data.Check
 import arcs.core.data.proto.ManifestProto
 import arcs.core.data.proto.decodeRecipes
+import arcs.core.util.Log
+import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.multiple
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.file
 import java.io.File
 import java.util.concurrent.TimeUnit
 
 /**
- * A command line tool to run DFA on a given list of manifest files. The usage for the command is
- * as follows:
- *     $ SIGH_CMD=/path/to/sigh run_dfa <file1> <file2> ...
- *
+ * A command line tool to run DFA on a given list of manifest files.
  */
-fun main(args: Array<String>) {
-  if (args.size == 0) {
-    print(
-      """
-              Usage:
-                SIGH_CMD=/path/to/sigh run_dfa <file1> <file2> ...
-            """.trimIndent()
-    )
-    return
+class RunDFA : CliktCommand(
+  name = "run_dfa",
+  help = """A command line tool to run DFA on a given list of manifest files. 
+    
+    If the tools is run without the `--binary` flag, the sigh binary must be 
+    exported to the `SIGH_CMD` environment variable. For example:
+    
+      SIGH_CMD=/path/to/sigh run_dfa <file1> <file2> ...,
+    """.trimIndent(),
+  printHelpOnEmptyArgs = true
+) {
+
+  val manifests by argument(help = "<file1> <file2> ...").file().multiple()
+  val proto by option(
+    "-b",
+    "--binary",
+    help = "Treat each input manifest as a .binarypb file."
+  ).flag(default = false)
+  val debug by option(
+    "-d",
+    "--debug",
+    help = "Turn on debug tracing."
+  ).flag(default = false)
+
+  override fun run() {
+    if (debug) {
+      Log.level = Log.Level.Debug
+    }
+    var sighCmd: String? = null
+    if (!proto) {
+      sighCmd = System.getenv("SIGH_CMD")
+      if (sighCmd == null) {
+        echo("Set `SIGH_CMD` environment variable to the sigh command binary.", err = true)
+        return
+      }
+    }
+
+    val dfaRunner = DFARunner(sighCmd)
+    manifests.forEach { dfaRunner.verifyChecksInFile(it.path) }
   }
-  val sighCmd: String? = System.getenv("SIGH_CMD")
-  if (sighCmd == null) {
-    print("Set `SIGH_CMD` environment variable to the sigh command binary.")
-    return
-  }
-  val dfaRunner = DFARunner(sighCmd)
-  args.forEach { dfaRunner.verifyChecksInFile(it) }
 }
 
 /**
- * A helper class to run DFA on a manifest. The [sighCmd] points to the `sigh` tool, which is used
- * to invoke `manifest2proto` on a given manifest to parse and generate the corresponding proto.
+ * A helper class to run DFA on a manifest.
+ *
+ * The [sighCmd] points to the `sigh` tool, which is used to invoke `manifest2proto` on a given
+ * manifest to parse and generate the corresponding proto.
+ *
+ * If [sighCmd] is `null`, it will assume each file is already in .binarypb format.
  */
-class DFARunner(val sighCmd: String) {
+class DFARunner(val sighCmd: String?) {
   private fun Check.asString(): String {
     return "$accessPath is $predicate"
   }
 
   private fun manifestToProto(manifestFile: String): ManifestProto {
+    if (sighCmd == null) {
+      return ManifestProto.parseFrom(File(manifestFile).readBytes())
+    }
     val WORKING_DIR = System.getProperty("user.dir")
     val manifestFileAbsolutePath = if (manifestFile.startsWith('/')) {
       manifestFile
@@ -84,17 +129,25 @@ class DFARunner(val sighCmd: String) {
         ingresses.add(it.replace(INGRESS_PREFIX, "", ignoreCase = true).trim())
       }
     }
+    val manifestProto = manifestToProto(manifestFile)
+    val recipes = manifestProto.decodeRecipes()
+
+    val annotatedIngresses = recipes
+      .flatMap { it.particles }
+      .filter { it.spec.annotations.contains(INGRESS_ANNOTATION) }
+      .map { it.spec.name }
+
+    ingresses.addAll(annotatedIngresses)
+
     if (ingresses.isEmpty()) {
       print("-- No ingresses. Skipping")
       return
     }
-    val manifestProto = manifestToProto(manifestFile)
-    val recipes = manifestProto.decodeRecipes()
     if (recipes.size > 1) {
       print("-- More than one recipe in manifest. Skipping")
       return
     }
-    if (recipes.size == 0) {
+    if (recipes.isEmpty()) {
       print("-- No recipes in manifest. Skipping")
       return
     }
@@ -117,10 +170,14 @@ class DFARunner(val sighCmd: String) {
       actualViolations.forEach { print("-- $it\n") }
     }
   }
+
+  companion object {
+    val INGRESS_ANNOTATION = Annotation("ingress", emptyMap())
+  }
 }
 
 /** A simple class to render colors in console. */
-public class ConsoleColors {
+class ConsoleColors {
   companion object {
     val ESCAPE = '\u001B'
     val RESET = "$ESCAPE[0m"
@@ -135,3 +192,5 @@ public class ConsoleColors {
     fun showInGreen(text: String) = "$BG_GREEN$text$RESET"
   }
 }
+
+fun main(args: Array<String>) = RunDFA().main(args)
