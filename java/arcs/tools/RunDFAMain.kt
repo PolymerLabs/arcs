@@ -16,7 +16,6 @@ import arcs.core.data.Annotation
 import arcs.core.data.Check
 import arcs.core.data.proto.ManifestProto
 import arcs.core.data.proto.decodeRecipes
-import arcs.core.util.Log
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
