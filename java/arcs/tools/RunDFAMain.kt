@@ -47,16 +47,8 @@ class RunDFA : CliktCommand(
     "--binary",
     help = "Treat each input manifest as a .binarypb file."
   ).flag(default = false)
-  val debug by option(
-    "-d",
-    "--debug",
-    help = "Turn on debug tracing."
-  ).flag(default = false)
 
   override fun run() {
-    if (debug) {
-      Log.level = Log.Level.Debug
-    }
     var sighCmd: String? = null
     if (!proto) {
       sighCmd = System.getenv("SIGH_CMD")
@@ -67,7 +59,7 @@ class RunDFA : CliktCommand(
     }
 
     val dfaRunner = DFARunner(sighCmd)
-    manifests.forEach { dfaRunner.verifyChecksInFile(it.path) }
+    manifests.forEach { dfaRunner.verifyChecksInFile(it) }
   }
 }
 
@@ -84,29 +76,23 @@ class DFARunner(val sighCmd: String?) {
     return "$accessPath is $predicate"
   }
 
-  private fun manifestToProto(manifestFile: String): ManifestProto {
+  private fun manifestToProto(manifestFile: File): ManifestProto {
     if (sighCmd == null) {
-      return ManifestProto.parseFrom(File(manifestFile).readBytes())
+      return ManifestProto.parseFrom(manifestFile.readBytes())
     }
     val WORKING_DIR = System.getProperty("user.dir")
-    val manifestFileAbsolutePath = if (manifestFile.startsWith('/')) {
-      manifestFile
-    } else {
-      "$WORKING_DIR/$manifestFile"
-    }
     val tmpDir = System.getProperty("java.io.tmpdir")
     val tmpFile = File
       .createTempFile("tmp", ".binarypb", File(tmpDir))
       .apply { deleteOnExit() }
-    val tmpFilePath = tmpFile.getAbsolutePath()
     val sighCommandArgs = listOf(
       sighCmd,
       "manifest2proto",
-      manifestFileAbsolutePath,
+      manifestFile.absolutePath,
       "--outfile",
-      tmpFile.getName(),
+      tmpFile.name,
       "--outdir",
-      tmpFile.getParent()
+      tmpFile.parent
     )
     ProcessBuilder(sighCommandArgs)
       .directory(File(WORKING_DIR))
@@ -114,17 +100,17 @@ class DFARunner(val sighCmd: String?) {
       .redirectError(ProcessBuilder.Redirect.INHERIT)
       .start()
       .waitFor(60, TimeUnit.MINUTES)
-    return ManifestProto.parseFrom(File(tmpFilePath).readBytes())
+    return ManifestProto.parseFrom(tmpFile.readBytes())
   }
 
   /** Verifies the checks the given [manifestFile] using DFA. */
-  fun verifyChecksInFile(manifestFile: String) {
+  fun verifyChecksInFile(manifestFile: File) {
     val INGRESS_PREFIX = "// #Ingress:"
 
     print("Verifying $manifestFile")
     // Collect ingresses and failures from the test file.
     val ingresses = mutableListOf<String>()
-    File(manifestFile).forEachLine {
+    manifestFile.forEachLine {
       if (it.startsWith(INGRESS_PREFIX, ignoreCase = true)) {
         ingresses.add(it.replace(INGRESS_PREFIX, "", ignoreCase = true).trim())
       }
