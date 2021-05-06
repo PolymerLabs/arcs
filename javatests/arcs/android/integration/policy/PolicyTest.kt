@@ -12,10 +12,13 @@ package arcs.android.integration.policy
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.integration.IntegrationEnvironment
+import arcs.core.crdt.CrdtSet
+import arcs.core.data.EntityType
 import arcs.core.host.toRegistration
 import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.waitForKey
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlin.time.days
@@ -256,6 +259,8 @@ class PolicyTest {
 
     val startingKey = (egressAB.handles.egress.getProxy().storageKey as ReferenceModeStorageKey)
       .storageKey
+
+    waitForKey(startingKey, EntityType(AbstractIngressThing.Thing.SCHEMA), CrdtSet.DataImpl::class)
 
     // And only Thing {a, b} is written to storage
     assertStorageContains(startingKey, singletons = setOf("a", "b"))
