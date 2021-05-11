@@ -25,10 +25,8 @@ import arcs.core.util.Time
 import arcs.jvm.util.JvmTime
 
 /** Android implementation of the arcs [DatabaseManifest]. */
-class AndroidSqliteDatabaseRegistry(
-  context: Context,
-  private val time: Time = JvmTime
-) : MutableDatabaseRegistry, SQLiteOpenHelper(context, MANIFEST_NAME, null, VERSION) {
+class AndroidSqliteDatabaseRegistry(context: Context, private val time: Time = JvmTime) :
+  MutableDatabaseRegistry, SQLiteOpenHelper(context, MANIFEST_DATABASE_NAME, null, VERSION) {
   private val nonPersistentEntries = mutableMapOf<String, DatabaseRegistration>()
 
   override fun onConfigure(db: SQLiteDatabase?) {
@@ -50,49 +48,46 @@ class AndroidSqliteDatabaseRegistry(
       return requireNotNull(
         nonPersistentEntries.compute(databaseName) { _, entry ->
           entry?.copy(lastAccessed = nowMillis)
-            ?: DatabaseRegistration(
-              databaseName,
-              false,
-              nowMillis,
-              nowMillis
-            )
+            ?: DatabaseRegistration(databaseName, false, nowMillis, nowMillis)
         }
       )
     }
 
     return writableDatabase.transaction {
-      val existingEntry = rawQuery(
-        """SELECT name, created, last_accessed FROM arcs_databases WHERE name = ?""",
-        arrayOf(databaseName)
-      ).forSingleResult {
-        DatabaseRegistration(
-          name = it.getString(0),
-          isPersistent = true,
-          created = it.getLong(1),
-          lastAccessed = it.getLong(2)
+      val existingEntry =
+        rawQuery(
+          """SELECT name, created, last_accessed FROM arcs_databases WHERE name = ?""",
+          arrayOf(databaseName)
         )
-      }
+          .forSingleResult {
+            DatabaseRegistration(
+              name = it.getString(0),
+              isPersistent = true,
+              created = it.getLong(1),
+              lastAccessed = it.getLong(2)
+            )
+          }
 
       if (existingEntry != null) {
-        val values = ContentValues().apply {
-          put("last_accessed", nowMillis)
-        }
+        val values = ContentValues().apply { put("last_accessed", nowMillis) }
         update("arcs_databases", values, "name = ?", arrayOf(databaseName))
         return@transaction existingEntry.copy(lastAccessed = nowMillis)
       }
 
-      val newEntry = DatabaseRegistration(
-        name = databaseName,
-        isPersistent = true,
-        created = nowMillis,
-        lastAccessed = nowMillis
-      )
+      val newEntry =
+        DatabaseRegistration(
+          name = databaseName,
+          isPersistent = true,
+          created = nowMillis,
+          lastAccessed = nowMillis
+        )
 
-      val values = ContentValues().apply {
-        put("name", newEntry.name)
-        put("created", newEntry.created)
-        put("last_accessed", newEntry.lastAccessed)
-      }
+      val values =
+        ContentValues().apply {
+          put("name", newEntry.name)
+          put("created", newEntry.created)
+          put("last_accessed", newEntry.lastAccessed)
+        }
       insert("arcs_databases", null, values)
       newEntry
     }
@@ -100,57 +95,62 @@ class AndroidSqliteDatabaseRegistry(
 
   @SuppressLint("Recycle")
   override fun fetchAll(): List<DatabaseRegistration> {
-    val persistentEntries = readableDatabase.rawQuery(
-      "SELECT name, created, last_accessed FROM arcs_databases",
-      emptyArray()
-    ).map {
-      DatabaseRegistration(
-        name = it.getString(0),
-        isPersistent = true,
-        created = it.getLong(1),
-        lastAccessed = it.getLong(2)
-      )
-    }
+    val persistentEntries =
+      readableDatabase.rawQuery(
+          "SELECT name, created, last_accessed FROM arcs_databases",
+          emptyArray()
+        )
+        .map {
+          DatabaseRegistration(
+            name = it.getString(0),
+            isPersistent = true,
+            created = it.getLong(1),
+            lastAccessed = it.getLong(2)
+          )
+        }
     return persistentEntries + nonPersistentEntries.values
   }
 
   override fun fetchAllCreatedIn(timeRange: LongRange): List<DatabaseRegistration> {
-    val persistentEntries = readableDatabase.rawQuery(
-      """
+    val persistentEntries =
+      readableDatabase.rawQuery(
+          """
                 SELECT name, created, last_accessed
                 FROM arcs_databases
                 WHERE created >= ? AND created <= ?
             """,
-      arrayOf(timeRange.first.toString(), timeRange.last.toString())
-    ).map {
-      DatabaseRegistration(
-        name = it.getString(0),
-        isPersistent = true,
-        created = it.getLong(1),
-        lastAccessed = it.getLong(2)
-      )
-    }
+          arrayOf(timeRange.first.toString(), timeRange.last.toString())
+        )
+        .map {
+          DatabaseRegistration(
+            name = it.getString(0),
+            isPersistent = true,
+            created = it.getLong(1),
+            lastAccessed = it.getLong(2)
+          )
+        }
     return persistentEntries + nonPersistentEntries.values.filter { it.created in timeRange }
   }
 
   override fun fetchAllAccessedIn(timeRange: LongRange): List<DatabaseRegistration> {
-    val persistentEntries = readableDatabase.rawQuery(
-      """
+    val persistentEntries =
+      readableDatabase.rawQuery(
+          """
                 SELECT name, created, last_accessed
                 FROM arcs_databases
                 WHERE last_accessed >= ? AND last_accessed <= ?
             """,
-      arrayOf(timeRange.first.toString(), timeRange.last.toString())
-    ).map {
-      DatabaseRegistration(
-        name = it.getString(0),
-        isPersistent = true,
-        created = it.getLong(1),
-        lastAccessed = it.getLong(2)
-      )
-    }
-    return persistentEntries +
-      nonPersistentEntries.values.filter { it.lastAccessed in timeRange }
+          arrayOf(timeRange.first.toString(), timeRange.last.toString())
+        )
+        .map {
+          DatabaseRegistration(
+            name = it.getString(0),
+            isPersistent = true,
+            created = it.getLong(1),
+            lastAccessed = it.getLong(2)
+          )
+        }
+    return persistentEntries + nonPersistentEntries.values.filter { it.lastAccessed in timeRange }
   }
 
   override fun onCreate(db: SQLiteDatabase) = db.execSQL(SCHEMA)
@@ -158,11 +158,12 @@ class AndroidSqliteDatabaseRegistry(
   override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
 
   companion object {
-    private val VERSION = 1
+    private const val VERSION = 1
 
-    private val MANIFEST_NAME = "arcs_database_manifest"
+    const val MANIFEST_DATABASE_NAME = "arcs_database_manifest"
 
-    private val SCHEMA = """
+    private val SCHEMA =
+      """
             CREATE TABLE IF NOT EXISTS arcs_databases (
                 name TEXT NOT NULL UNIQUE,
                 created INTEGER NOT NULL,
