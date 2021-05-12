@@ -122,7 +122,7 @@ ARCS_BUILD_FLAGS = [
         name = "transaction_free_reads",
         desc = "Remove transaction from getEntity in DatabaseImpl",
         bug_id = "b/175140645",
-        status = "LAUNCHED",
+        status = "NOT_READY",
         stopwords = [
             "transaction.?free.?reads",
         ],
