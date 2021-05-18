@@ -872,17 +872,17 @@ register_extension_info(
 
 register_extension_info(
     extension = arcs_kt_jvm_library,
-    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
+    label_regex_for_dep = "{extension_name}\\-kt",
 )
 
 register_extension_info(
     extension = arcs_kt_jvm_test_suite,
-    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
+    label_regex_for_dep = "{extension_name}\\-kt",
 )
 
 register_extension_info(
     extension = arcs_kt_library,
-    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
+    label_regex_for_dep = "{extension_name}\\-kt",
 )
 
 register_extension_info(
@@ -897,7 +897,7 @@ register_extension_info(
 
 register_extension_info(
     extension = arcs_kt_particles,
-    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
+    label_regex_for_dep = "{extension_name}\\-kt",
 )
 
 def _check_platforms(platforms):
