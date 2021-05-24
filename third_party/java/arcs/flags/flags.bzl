@@ -72,16 +72,6 @@ ARCS_BUILD_FLAGS = [
         ],
     ),
     arcs_build_flag(
-        name = "nullable_value_support",
-        desc = "Support returning nullable values",
-        bug_id = "b/174115805",
-        status = "LAUNCHED",
-        stopwords = [
-            "nullable.?value.?support",
-            "NullableOf",
-        ],
-    ),
-    arcs_build_flag(
         name = "write_only_storage_stack",
         desc = "Optimized write-only storage stack.",
         bug_id = "b/181723292",

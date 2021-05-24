@@ -4166,7 +4166,6 @@ class DatabaseImplTest(
 
   @Test
   fun fromFieldType_handlesNullableOfInlineType() = runBlockingTest {
-    BuildFlags.NULLABLE_VALUE_SUPPORT = true
     newSchema(
       "inlineHash",
       SchemaFields(

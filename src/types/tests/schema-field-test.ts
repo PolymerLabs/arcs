@@ -12,7 +12,6 @@ import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import * as AstNodes from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {Type} from '../lib-types.js';
-import {Flags} from '../../runtime/flags.js';
 import {deleteFieldRecursively} from '../../utils/lib-utils.js';
 
 describe('schema field', () => {
@@ -83,26 +82,20 @@ describe('schema field', () => {
     `);
   };
 
-  it('serializes type with many fields', Flags.withFlags(
-    {supportNullables: true},
-    async () => {
-      const manifest = await generateManifest();
-      const type = manifest.recipes[0].particles[0].spec.connections[0].type;
-      assert.deepEqual(type.toLiteral(), Type.fromLiteral(type.toLiteral()).toLiteral());
-    }
-  ));
+  it('serializes type with many fields', async () => {
+    const manifest = await generateManifest();
+    const type = manifest.recipes[0].particles[0].spec.connections[0].type;
+    assert.deepEqual(type.toLiteral(), Type.fromLiteral(type.toLiteral()).toLiteral());
+  });
 
-  it('toString round trips for a type with many fields', Flags.withFlags(
-    {supportNullables: true},
-    async () => {
-      const manifest = await generateManifest();
-      const reParsed = await Manifest.parse(`${manifest}`);
+  it('toString round trips for a type with many fields', async () => {
+    const manifest = await generateManifest();
+    const reParsed = await Manifest.parse(`${manifest}`);
 
-      const originalType = manifest.recipes[0].particles[0].spec.connections[0].type;
-      deleteFieldRecursively(originalType, 'location');
-      const type = reParsed.recipes[0].particles[0].spec.connections[0].type;
-      deleteFieldRecursively(type, 'location');
-      assert.deepEqual(originalType.toLiteral(), type.toLiteral());
-    }
-  ));
+    const originalType = manifest.recipes[0].particles[0].spec.connections[0].type;
+    deleteFieldRecursively(originalType, 'location');
+    const type = reParsed.recipes[0].particles[0].spec.connections[0].type;
+    deleteFieldRecursively(type, 'location');
+    assert.deepEqual(originalType.toLiteral(), type.toLiteral());
+  });
 });

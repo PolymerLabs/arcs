@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../platform/assert-web.js';
 import {Entity} from './entity.js';
 import {Flags} from './flags.js';
 import {Reference} from './reference.js';
@@ -48,7 +47,6 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
   }
   if (value === undefined || value === null) {
     if (fieldType.kind === SchemaFieldKind.Nullable) {
-      assert(Flags.supportNullables, 'nullable types are unsupported (see Flags.supportNullables)');
       return; // Value is optional and therefore correct.
     }
     if (!Flags.enforceStrictNullCheckingInJS) {

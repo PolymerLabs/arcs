@@ -12,27 +12,17 @@
 package arcs.android.type
 
 import android.os.Parcel
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.data.FieldType
 import arcs.core.data.SchemaFields
-import arcs.flags.testing.BuildFlagsRule
-import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.Test
-import org.junit.Rule
 import org.junit.runner.RunWith
-import org.robolectric.ParameterizedRobolectricTestRunner
 
 /** Tests for [ParcelableSchemaFields]. */
-@RunWith(ParameterizedRobolectricTestRunner::class)
-class ParcelableSchemaFieldsTest(private val parameters: ParameterizedBuildFlags) {
-  @get:Rule val rule = BuildFlagsRule.parameterized(parameters)
-
-  companion object {
-    @JvmStatic
-    @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-    fun params() = ParameterizedBuildFlags.of("NULLABLE_VALUE_SUPPORT").toList()
-  }
+@RunWith(AndroidJUnit4::class)
+class ParcelableSchemaFieldsTest {
 
   @Test
   fun parcelableRoundtrip_works() {
