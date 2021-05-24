@@ -13,6 +13,7 @@ arcs_kt_android_test_suite(
     name = "host",
     size = "medium",
     srcs = glob(["*Test.kt"]),
+    flaky = True,
     manifest = "AndroidManifest.xml",
     package = "arcs.android.host",
     deps = [

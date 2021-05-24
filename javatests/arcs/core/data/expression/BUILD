@@ -16,6 +16,7 @@ arcs_kt_gen(
 
 arcs_kt_jvm_test_suite(
     name = "expression",
+    flaky = True,
     package = "arcs.core.data.expression",
     deps = [
         ":codegen",
