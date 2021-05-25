@@ -15,8 +15,6 @@ import arcs.core.entity.testutil.InnerEntity
 import arcs.core.testutil.runTest
 import arcs.core.util.RandomBuilder
 import arcs.core.util.testutil.LogRule
-import arcs.flags.testing.BuildFlagsRule
-import arcs.flags.testing.ParameterizedBuildFlags
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.random.Random
@@ -26,21 +24,12 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.runners.JUnit4
 
 /** Tests for code-generated entity classes. */
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(Parameterized::class)
-class GeneratedEntityTest(private val parameters: ParameterizedBuildFlags) {
-
-  @get:Rule
-  val rule = BuildFlagsRule.parameterized(parameters)
-
-  companion object {
-    @get:JvmStatic
-    @get:Parameterized.Parameters(name = "{0}")
-    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_STRING_REDUCTION")
-  }
+@RunWith(JUnit4::class)
+class GeneratedEntityTest {
 
   private lateinit var idGenerator: Id.Generator
   private var currentTime: Long = 500L

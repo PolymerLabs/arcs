@@ -108,7 +108,6 @@ class DatabaseUpgradeTest(private val parameters: ParameterizedBuildFlags) {
     @JvmStatic
     @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
     fun params() = ParameterizedBuildFlags.of(
-      "STORAGE_STRING_REDUCTION",
       "REFERENCE_MODE_STORE_FIXES",
       "STORAGE_KEY_REDUCTION"
     ).toList()

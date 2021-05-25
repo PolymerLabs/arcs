@@ -54,15 +54,6 @@ ARCS_BUILD_FLAGS = [
         ],
     ),
     arcs_build_flag(
-        name = "storage_string_reduction",
-        desc = "Reduction of size of storage keys/ids",
-        bug_id = "b/179216388",
-        status = "LAUNCHED",
-        stopwords = [
-            "storage.?string.?reduction",
-        ],
-    ),
-    arcs_build_flag(
         name = "direct_store_muxer_lru_ttl",
         desc = "Expire stores in the muxer cache after a ttl",
         bug_id = "b/179046054",

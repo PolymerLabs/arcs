@@ -13,8 +13,6 @@ package arcs.core.crdt
 
 import arcs.core.util.ACTOR_VERSION_DELIMITER
 import arcs.core.util.ENTRIES_SEPARATOR
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 import kotlin.math.max
 
 /** Denotes an individual actor responsible for modifications to a CRDT. */
@@ -112,9 +110,6 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
    * `{foo: 1, bar:2, fooBar: 3}` this would be encoded as "foo|1;bar|2;fooBar|3".
    */
   fun encode(): String {
-    if (!BuildFlags.STORAGE_STRING_REDUCTION) {
-      throw BuildFlagDisabledError("STORAGE_STRING_REDUCTION")
-    }
     return backingMap.asSequence().joinToString(ENTRIES_SEPARATOR.toString()) { (actor, version) ->
       "$actor$ACTOR_VERSION_DELIMITER$version"
     }
@@ -142,9 +137,6 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
      * calling [encode]. See [encode] for details about the encoding format.
      */
     fun decode(str: String): VersionMap {
-      if (!BuildFlags.STORAGE_STRING_REDUCTION) {
-        throw BuildFlagDisabledError("STORAGE_STRING_REDUCTION")
-      }
       if (str.isEmpty()) return VersionMap()
       val versions = str.split(ENTRIES_SEPARATOR)
       val backingMap = versions.associate { version ->

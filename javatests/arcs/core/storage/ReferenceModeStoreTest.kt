@@ -44,7 +44,6 @@ class ReferenceModeStoreTest(
     @get:JvmStatic
     @get:Parameterized.Parameters(name = "{0}")
     val PARAMETERS = ParameterizedBuildFlags.of(
-      "STORAGE_STRING_REDUCTION",
       "BATCH_CONTAINER_STORE_OPS",
       "REFERENCE_MODE_STORE_FIXES"
     )

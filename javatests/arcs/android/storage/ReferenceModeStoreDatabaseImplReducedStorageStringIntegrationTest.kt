@@ -52,7 +52,6 @@ class ReferenceModeStoreDatabaseImplReducedStorageStringIntegrationTest(
     @JvmStatic
     @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
     fun params() = ParameterizedBuildFlags.of(
-      "STORAGE_STRING_REDUCTION",
       "REFERENCE_MODE_STORE_FIXES"
     ).toList()
   }

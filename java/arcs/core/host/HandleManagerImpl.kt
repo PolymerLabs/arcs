@@ -116,26 +116,19 @@ class HandleManagerImpl(
     actor: String?,
     writeOnly: Boolean
   ): Handle {
-    val handleName: String = if (BuildFlags.STORAGE_STRING_REDUCTION) {
-      if (actor.isNullOrEmpty()) {
-        idGenerator.newChildId(
-          idGenerator.newChildId(arcId.toArcId(), hostId),
-          spec.baseName
-        ).toString()
-      } else {
-        actor
-      }.also { handleName ->
-        if (handleName.findAnyOf(FORBIDDEN_STRINGS) != null) {
-          throw IllegalArgumentException(
-            "Handle name $handleName contains illegal char in set $FORBIDDEN_STRINGS."
-          )
-        }
-      }
-    } else {
+    val handleName: String = if (actor.isNullOrEmpty()) {
       idGenerator.newChildId(
         idGenerator.newChildId(arcId.toArcId(), hostId),
         spec.baseName
       ).toString()
+    } else {
+      actor
+    }.also { handleName ->
+      if (handleName.findAnyOf(FORBIDDEN_STRINGS) != null) {
+        throw IllegalArgumentException(
+          "Handle name $handleName contains illegal char in set $FORBIDDEN_STRINGS."
+        )
+      }
     }
 
     if (writeOnly && !BuildFlags.WRITE_ONLY_STORAGE_STACK) {

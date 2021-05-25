@@ -14,8 +14,6 @@ package arcs.core.common
 import arcs.core.util.Random
 import arcs.core.util.nextVersionMapSafeString
 import arcs.core.util.nextSafeRandomLong
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 
 /** Convenience extension to convert a string to an [Id]. */
 fun String.toId(): Id = Id.fromString(this)
@@ -72,11 +70,7 @@ interface Id {
      * Create a random 8-Byte string that can be used as an EntityId. This represents an [Id] with
      * a root equal to the string and no tree.
      */
-    fun newMinimizedId(): String = if (!BuildFlags.STORAGE_STRING_REDUCTION) {
-      throw BuildFlagDisabledError("STORAGE_STRING_REDUCTION")
-    } else {
-      Random.nextVersionMapSafeString(10)
-    }
+    fun newMinimizedId(): String = Random.nextVersionMapSafeString(10)
 
     companion object {
       /** Creates a new random session id and returns a [Generator] using it. */

@@ -17,7 +17,6 @@ import android.database.Cursor
 import android.database.DatabaseUtils
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Base64
 import androidx.annotation.VisibleForTesting
 import arcs.android.common.MAX_PLACEHOLDERS
 import arcs.android.common.batchDelete
@@ -37,8 +36,6 @@ import arcs.android.common.getNullableString
 import arcs.android.common.map
 import arcs.android.common.transaction
 import arcs.android.crdt.VersionMapProto
-import arcs.android.crdt.fromProto
-import arcs.android.crdt.toProto
 import arcs.core.common.Referencable
 import arcs.core.crdt.VersionMap
 import arcs.core.data.FieldName
@@ -76,7 +73,6 @@ import arcs.core.util.performance.Timer
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import arcs.jvm.util.JvmTime
-import com.google.protobuf.InvalidProtocolBufferException
 import kotlin.coroutines.coroutineContext
 import kotlin.math.roundToLong
 import kotlin.reflect.KClass
@@ -2335,32 +2331,14 @@ class DatabaseImpl(
 
   /** Returns a base-64 string representation of the [VersionMapProto] for this [VersionMap]. */
   // TODO(#4889): Find a way to store raw bytes as BLOBs, rather than having to base-64 encode.
-  private fun VersionMap.toLiteral() = if (BuildFlags.STORAGE_STRING_REDUCTION) {
-    encode()
-  } else {
-    Base64.encodeToString(toProto().toByteArray(), Base64.DEFAULT)
-  }
+  private fun VersionMap.toLiteral() = encode()
 
   /** Parses a [VersionMap] out of the [Cursor] for the given column. */
   private fun Cursor.getVersionMap(column: Int): VersionMap? {
     if (isNull(column)) return null
 
     val str = getString(column)
-    if (BuildFlags.STORAGE_STRING_REDUCTION) {
-      return VersionMap.decode(str)
-    } else {
-      val bytes = Base64.decode(str, Base64.DEFAULT)
-      val proto: VersionMapProto
-      try {
-        proto = VersionMapProto.parseFrom(bytes)
-      } catch (e: InvalidProtocolBufferException) {
-        // TODO(b/160251910): Make logging detail more cleanly conditional.
-        log.debug(e) { "Parsing serialized VersionMap \"$str\"." }
-        log.info { "Failed to parse serialized version map." }
-        throw e
-      }
-      return fromProto(proto)
-    }
+    return VersionMap.decode(str)
   }
 
   /** The type of the data stored at a storage key. */
@@ -2436,9 +2414,8 @@ class DatabaseImpl(
     @VisibleForTesting
     val DB_VERSION get() = when {
       BuildFlags.STORAGE_KEY_REDUCTION -> 9
-      BuildFlags.STORAGE_STRING_REDUCTION && BuildFlags.REFERENCE_MODE_STORE_FIXES -> 8
-      BuildFlags.STORAGE_STRING_REDUCTION -> 7
-      else -> 6
+      BuildFlags.REFERENCE_MODE_STORE_FIXES -> 8
+      else -> 7
     }
 
     // Crdt actor used for edits applied by this class.

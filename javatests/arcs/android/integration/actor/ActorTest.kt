@@ -4,7 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.integration.IntegrationEnvironment
 import arcs.core.allocator.Arc
 import arcs.core.host.toRegistration
-import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
@@ -42,7 +41,6 @@ class ActorTest {
 
   @Before
   fun setUp() = runBlocking {
-    BuildFlags.STORAGE_STRING_REDUCTION = true
     arc = env.startArc(ReadWriteRecipePlan)
     writer = env.getParticle(arc)
   }

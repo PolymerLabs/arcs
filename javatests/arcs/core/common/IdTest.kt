@@ -14,31 +14,18 @@ package arcs.core.common
 import arcs.core.util.RandomBuilder
 import arcs.core.util.nextVersionMapSafeString
 import arcs.core.util.nextSafeRandomLong
-import arcs.flags.BuildFlags
-import arcs.flags.testing.BuildFlagsRule
-import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.TruthJUnit.assume
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.runners.JUnit4
 
 /** Tests for [Id]. */
-@RunWith(Parameterized::class)
-class IdTest(private val parameters: ParameterizedBuildFlags) {
-
-  @get:Rule val rule = BuildFlagsRule.parameterized(parameters)
+@RunWith(JUnit4::class)
+class IdTest() {
 
   private val testSessionid = "sessionId"
   private lateinit var testGenerator: Id.Generator
-
-  companion object {
-    @get:JvmStatic
-    @get:Parameterized.Parameters(name = "{0}")
-    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_STRING_REDUCTION")
-  }
 
   @Before
   fun setup() {
@@ -117,8 +104,6 @@ class IdTest(private val parameters: ParameterizedBuildFlags) {
 
   @Test
   fun idGenerator_newStringId_generatesRandomEntityString() {
-    assume().that(BuildFlags.STORAGE_STRING_REDUCTION).isTrue()
-
     val seed = 0
     val knownRandom = { kotlin.random.Random(seed) }
 
