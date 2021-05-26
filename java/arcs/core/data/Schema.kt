@@ -36,6 +36,14 @@ data class Schema(
   val refinementExpression: Expression<Boolean> = true.asExpr(),
   val queryExpression: Expression<Boolean> = true.asExpr()
 ) {
+  private val hashCode by lazy {
+    var result = names.hashCode()
+    result = 31 * result + fields.hashCode()
+    result = 31 * result + hash.hashCode()
+    result = 31 * result + refinementExpression.hashCode()
+    result = 31 * result + queryExpression.hashCode()
+    result
+  }
 
   /** Ensure instance is registered on construction. */
   init {
@@ -70,6 +78,21 @@ data class Schema(
    */
   fun toString(options: Type.ToStringOptions) =
     names.map { it.name }.plusElement(fields.toString(options)).joinToString(" ")
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is Schema) return false
+
+    if (names != other.names) return false
+    if (fields != other.fields) return false
+    if (hash != other.hash) return false
+    if (refinementExpression != other.refinementExpression) return false
+    if (queryExpression != other.queryExpression) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int = hashCode
 
   data class Literal(
     val names: Set<SchemaName>,

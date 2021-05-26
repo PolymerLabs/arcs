@@ -19,6 +19,8 @@ typealias StoreId = String
  * Examples of access paths are `input.app.packageName`, `store.rawText`, store.entites[i], etc.
  */
 data class AccessPath(val root: Root, val selectors: List<Selector> = emptyList()) {
+  private val hashCode by lazy { 31 * root.hashCode() + selectors.hashCode() }
+
   /**
    * Constructs an [AccessPath] starting at a connection in [particle] identified
    * by [connectionSpec] followed by [selectors].
@@ -104,4 +106,16 @@ data class AccessPath(val root: Root, val selectors: List<Selector> = emptyList(
     }
     return AccessPath(Root.HandleConnection(particle, root.connectionSpec), selectors)
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is AccessPath) return false
+
+    if (root != other.root) return false
+    if (selectors != other.selectors) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int = hashCode
 }
