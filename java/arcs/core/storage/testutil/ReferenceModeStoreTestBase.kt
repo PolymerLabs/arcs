@@ -33,11 +33,7 @@ import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.toReference
 import arcs.core.util.testutil.LogRule
-import arcs.flags.BuildFlags
-import arcs.flags.testing.BuildFlagsRule
-import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.TruthJUnit.assume
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -49,23 +45,21 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.runners.JUnit4
 
 /**
  * Testing base class for [ReferenceModeStore] tests. Subclasses can override this class to run its
  * suite of tests for its own database backend.
  */
-@RunWith(Parameterized::class)
+@RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedBuildFlags) {
+abstract class ReferenceModeStoreTestBase {
   // TODO(b/171729186): Move all tests that are shared between ReferenceModeStoreTest,
   // ReferenceModeStoreDatabaseIntegrationTest and ReferenceModeStoreDatabaseImplIntegrationTest
   // here.
 
   @get:Rule
   val logRule = LogRule()
-
-  @get:Rule val rule = BuildFlagsRule.parameterized(parameters)
 
   protected abstract val TEST_KEY: ReferenceModeStorageKey
 
@@ -212,10 +206,7 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
     val capturedPeople =
       activeStore.containerStore.driver.getStoredDataForTesting() as CrdtSet.DataImpl<RawReference>
 
-    val referenceVersionMap = if (BuildFlags.REFERENCE_MODE_STORE_FIXES)
-      VersionMap(activeStore.crdtKey to 1)
-    else
-      capturedPeople.versionMap
+    val referenceVersionMap = VersionMap(activeStore.crdtKey to 1)
 
     assertThat(capturedPeople.values.values).containsExactly(
       CrdtSet.DataValue(
@@ -240,11 +231,7 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
     bobCollectionHelper.add(bob)
 
     val (referenceCollection, referenceCollectionHelper) = createCrdtSet<RawReference>("me")
-    val versionMap = if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
-      VersionMap(activeStore.crdtKey to 1)
-    } else {
-      bobCollectionHelper.versionMap
-    }
+    val versionMap = VersionMap(activeStore.crdtKey to 1)
     val bobRef = bob.toReference(
       activeStore.backingStore.storageKey,
       versionMap
@@ -709,7 +696,6 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
 
   @Test
   fun syncRequest_fromProxy_withPendingIds_becauseOfMissingBackingData() = runBlockingTest {
-    assume().that(BuildFlags.REFERENCE_MODE_STORE_FIXES).isTrue()
     val activeStore = collectionReferenceModeStore(scope = this)
 
     val actor = "me"
@@ -764,7 +750,6 @@ abstract class ReferenceModeStoreTestBase(private val parameters: ParameterizedB
 
   @Test
   fun syncRequest_fromProxy_withPendingIds_becauseOfOldBackingData() = runBlockingTest {
-    assume().that(BuildFlags.REFERENCE_MODE_STORE_FIXES).isTrue()
     val activeStore = collectionReferenceModeStore(scope = this)
     val actor = "me"
     val (collection, collectionHelper) = createCrdtSet<RawEntity>(actor)

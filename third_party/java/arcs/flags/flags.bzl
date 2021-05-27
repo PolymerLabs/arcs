@@ -82,15 +82,6 @@ ARCS_BUILD_FLAGS = [
         ],
     ),
     arcs_build_flag(
-        name = "reference_mode_store_fixes",
-        desc = "Resolve several reference mode store bugs",
-        bug_id = "b/184008372",
-        status = "LAUNCHED",
-        stopwords = [
-            "reference.?mode.?store.?fixes",
-        ],
-    ),
-    arcs_build_flag(
         name = "storage_key_reduction",
         desc = "Reduce storage size of storage keys",
         bug_id = "b/179216769",

@@ -27,14 +27,13 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.ReferenceModeStoreTestBase
 import arcs.core.util.RandomBuilder
-import arcs.flags.testing.ParameterizedBuildFlags
 import kotlin.random.Random
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
-import org.robolectric.ParameterizedRobolectricTestRunner
+import org.robolectric.RobolectricTestRunner
 
 /**
  * Implementation of [ReferenceModeStoreTestBase] that mirrors
@@ -43,18 +42,9 @@ import org.robolectric.ParameterizedRobolectricTestRunner
  */
 @Suppress("UNCHECKED_CAST")
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(ParameterizedRobolectricTestRunner::class)
-class ReferenceModeStoreDatabaseImplReducedStorageStringIntegrationTest(
-  private val parameters: ParameterizedBuildFlags
-) : ReferenceModeStoreTestBase(parameters) {
-
-  companion object {
-    @JvmStatic
-    @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-    fun params() = ParameterizedBuildFlags.of(
-      "REFERENCE_MODE_STORE_FIXES"
-    ).toList()
-  }
+@RunWith(RobolectricTestRunner::class)
+class ReferenceModeStoreDatabaseImplReducedStorageStringIntegrationTest :
+  ReferenceModeStoreTestBase() {
 
   override val TEST_KEY = ReferenceModeStorageKey(
     DatabaseStorageKey.Persistent("entities", HASH),

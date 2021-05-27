@@ -2414,8 +2414,7 @@ class DatabaseImpl(
     @VisibleForTesting
     val DB_VERSION get() = when {
       BuildFlags.STORAGE_KEY_REDUCTION -> 9
-      BuildFlags.REFERENCE_MODE_STORE_FIXES -> 8
-      else -> 7
+      else -> 8
     }
 
     // Crdt actor used for edits applied by this class.
