@@ -37,3 +37,15 @@ fun RecipeProto.decode(particleSpecs: Map<String, ParticleSpec>): Recipe {
   val annotations = annotationsList.map { it.decode() }
   return Recipe(name.ifBlank { null }, recipeHandles, particles, annotations)
 }
+
+/** Converts a [Recipe] into [RecipeProto]. */
+fun Recipe.encode(): RecipeProto {
+  val builder = RecipeProto.newBuilder()
+    .addAllHandles(handles.values.map { it.encode() })
+    .addAllParticles(particles.map { it.encode() })
+    .addAllAnnotations(annotations.map { it.encode() })
+
+  name?.let { builder.setName(it) }
+
+  return builder.build()
+}

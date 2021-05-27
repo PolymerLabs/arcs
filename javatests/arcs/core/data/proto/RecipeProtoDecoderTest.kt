@@ -27,25 +27,43 @@ fun arcIdAnnotationProto(id: String): AnnotationProto {
     .build()
 }
 
+/** Asserts that a [RecipeProto] is equal to itself after decoding and encoding. */
+fun assertRoundTrip(proto: RecipeProto, particleSpecs: Map<String, ParticleSpec>) {
+  assertThat(proto.decode(particleSpecs).encode()).isEqualTo(proto)
+}
+
+private fun typeVariable(name: String): TypeProto {
+  return TypeProto.newBuilder()
+    .setVariable(
+      TypeVariableProto.newBuilder()
+        .setName(name)
+        .setConstraint(ConstraintInfo.newBuilder().build())
+    )
+    .build()
+}
+
 @RunWith(JUnit4::class)
 class RecipeProtoDecoderTest {
   // The test environment.
   val ramdiskStorageKey = "ramdisk://"
   val thingTypeProto = parseTypeProtoText(
     """
-       entity {
-         schema {
-           names: "Thing"
-           fields {
-             key: "name"
-             value: { primitive: TEXT }
-           }
-         }
-       } 
+    entity {
+      schema {
+        names: "Thing"
+        fields {
+          key: "name"
+          value: { primitive: TEXT }
+        }
+        refinement: "true"
+        query: "true"
+      }
+    } 
     """.trimIndent()
   )
   val thingHandleProto = HandleProto.newBuilder()
     .setName("thing")
+    .setType(typeVariable("thing"))
     .setFate(HandleProto.Fate.CREATE)
     .setStorageKey(ramdiskStorageKey + "thing")
     .build()
@@ -64,6 +82,7 @@ class RecipeProtoDecoderTest {
   val thingEntity = EntityType(thingSchema)
   val thangHandleProto = HandleProto.newBuilder()
     .setName("thang")
+    .setType(typeVariable("thang"))
     .setFate(HandleProto.Fate.MAP)
     .setStorageKey(ramdiskStorageKey + "thang")
     .build()
@@ -77,6 +96,7 @@ class RecipeProtoDecoderTest {
   val joinHandleProto = HandleProto.newBuilder()
     .setName("pairs")
     .setFate(HandleProto.Fate.JOIN)
+    .setType(typeVariable("pairs"))
     .addAssociatedHandles("thing")
     .addAssociatedHandles("thang")
     .setStorageKey(ramdiskStorageKey + "pairs")
@@ -151,6 +171,11 @@ class RecipeProtoDecoderTest {
   }
 
   @Test
+  fun roundTripsRecipe() {
+    assertRoundTrip(recipeProto, context.particleSpecs)
+  }
+
+  @Test
   fun decodesEmptyRecipe() {
     val emptyRecipeProto = RecipeProto.newBuilder()
       .build()
@@ -160,6 +185,12 @@ class RecipeProtoDecoderTest {
       assertThat(particles).isEmpty()
       assertThat(annotations).isEmpty()
     }
+  }
+
+  @Test
+  fun roundTripsEmptyRecipe() {
+    val emptyRecipeProto = RecipeProto.newBuilder().build()
+    assertRoundTrip(emptyRecipeProto, context.particleSpecs)
   }
 
   @Test
@@ -190,5 +221,10 @@ class RecipeProtoDecoderTest {
       )
       assertThat(annotations).isEqualTo(listOf(Annotation.createArcId("arc-with-join")))
     }
+  }
+
+  @Test
+  fun roundTripsRecipeWithJoins() {
+    assertRoundTrip(recipeWithJoin, context.particleSpecs)
   }
 }

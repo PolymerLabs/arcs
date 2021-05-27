@@ -27,7 +27,7 @@ data class DecodingContext(
   var recipeHandles: Map<String, Handle>
 )
 
-/** Converts a [HandleConnectionProto] into a [Recipe.Particle.HandleConnection]. */
+/** Converts a [HandleConnectionProto] into a [HandleConnection]. */
 fun HandleConnectionProto.decode(
   particleSpec: ParticleSpec,
   context: DecodingContext
@@ -41,7 +41,15 @@ fun HandleConnectionProto.decode(
   return HandleConnection(handleSpec, recipeHandle, type.decode())
 }
 
-/** Converts a [ParticleProto] into a [Recipe.Particle]. */
+/** Converts a [HandleConnection] into a [HandleConnectionProto]. */
+fun HandleConnection.encode(): HandleConnectionProto =
+  HandleConnectionProto.newBuilder()
+    .setName(spec.name)
+    .setHandle(handle.name)
+    .setType(type.encode())
+    .build()
+
+/** Converts a [ParticleProto] into a [Particle]. */
 fun ParticleProto.decode(context: DecodingContext): Particle {
   val particleSpec = requireNotNull(context.particleSpecs[specName]) {
     "ParticleSpec '$specName' not found in decoding context."
@@ -49,3 +57,9 @@ fun ParticleProto.decode(context: DecodingContext): Particle {
   val handleConnections = connectionsList.map { it.decode(particleSpec, context) }
   return Particle(particleSpec, handleConnections)
 }
+
+/** Converts a [Particle] to a [ParticleProto]. */
+fun Particle.encode(): ParticleProto = ParticleProto.newBuilder()
+  .setSpecName(spec.name)
+  .addAllConnections(handleConnections.map { it.encode() })
+  .build()

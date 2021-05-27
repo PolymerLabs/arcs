@@ -16,6 +16,7 @@ import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.ParticleSpec
 import arcs.core.data.expression.PaxelParser
+import arcs.core.data.expression.stringify
 
 typealias DirectionProto = HandleConnectionSpecProto.Direction
 
@@ -26,10 +27,25 @@ fun DirectionProto.decode() =
       throw IllegalArgumentException("Direction not set in [HandleConnectionSpec]")
     DirectionProto.READS -> HandleMode.Read
     DirectionProto.WRITES -> HandleMode.Write
+    DirectionProto.QUERY -> HandleMode.Query
     DirectionProto.READS_WRITES -> HandleMode.ReadWrite
+    DirectionProto.READS_QUERY -> HandleMode.ReadQuery
+    DirectionProto.WRITES_QUERY -> HandleMode.WriteQuery
+    DirectionProto.READS_WRITES_QUERY -> HandleMode.ReadWriteQuery
     DirectionProto.UNRECOGNIZED ->
       throw IllegalArgumentException("Invalid direction when decoding [HandleConnectionSpec]")
   }
+
+/** Converts a [HandleMode] to a [HandleConnectionSpecProto.Direction]. */
+fun HandleMode.encode(): DirectionProto = when (this) {
+  HandleMode.Read -> DirectionProto.READS
+  HandleMode.Write -> DirectionProto.WRITES
+  HandleMode.Query -> DirectionProto.QUERY
+  HandleMode.ReadWrite -> DirectionProto.READS_WRITES
+  HandleMode.ReadQuery -> DirectionProto.READS_QUERY
+  HandleMode.WriteQuery -> DirectionProto.WRITES_QUERY
+  HandleMode.ReadWriteQuery -> DirectionProto.READS_WRITES_QUERY
+}
 
 /** Converts a [HandleConnnectionSpecProto] to the corresponding [HandleConnectionSpec] instance. */
 fun HandleConnectionSpecProto.decode() = HandleConnectionSpec(
@@ -42,6 +58,18 @@ fun HandleConnectionSpecProto.decode() = HandleConnectionSpec(
     PaxelParser.parse(expression)
   }
 )
+
+/** Converts a [HandleConnectionSpec] into a [HandeConnectionSpecProto]. */
+fun HandleConnectionSpec.encode(): HandleConnectionSpecProto {
+  val builder = HandleConnectionSpecProto.newBuilder()
+    .setName(name)
+    .setDirection(direction.encode())
+    .setType(type.encode())
+
+  expression?.let { builder.setExpression(it.stringify()) }
+
+  return builder.build()
+}
 
 /** Converts a [ParticleSpecProto] to the corresponding [ParticleSpec] instance. */
 fun ParticleSpecProto.decode(): ParticleSpec {
@@ -59,3 +87,13 @@ fun ParticleSpecProto.decode(): ParticleSpec {
   val annotations = annotationsList.map { it.decode() }
   return ParticleSpec(name, connections, location, claims, checks, annotations)
 }
+
+/** Converts a [ParticleSpec] into a [ParticleSpecProto]. */
+fun ParticleSpec.encode(): ParticleSpecProto = ParticleSpecProto.newBuilder()
+  .setName(name)
+  .addAllConnections(connections.values.map { it.encode() })
+  .setLocation(location)
+  .addAllClaims(claims.map { it.encode() })
+  .addAllChecks(checks.map { it.encode() })
+  .addAllAnnotations(annotations.map { it.encode() })
+  .build()

@@ -28,17 +28,25 @@ typealias DirectionProto = HandleConnectionSpecProto.Direction
 /**
  * Decodes the given [HandleConnectionSpecProto] text as [HandleConnectionSpec].
  */
-fun decodeHandleConnectionSpecProto(protoText: String): HandleConnectionSpec {
+fun toHandleConnectionSpecProto(protoText: String): HandleConnectionSpecProto {
   val builder = HandleConnectionSpecProto.newBuilder()
   TextFormat.getParser().merge(protoText, builder)
-  return builder.build().decode()
+  return builder.build()
 }
 
 /** Decodes the given [ParticleSpecProto] text as [ParticleSpec]. */
-fun decodeParticleSpecProto(protoText: String): ParticleSpec {
+fun toParticleSpecProto(protoText: String): ParticleSpecProto {
   val builder = ParticleSpecProto.newBuilder()
   TextFormat.getParser().merge(protoText, builder)
-  return builder.build().decode()
+  return builder.build()
+}
+
+fun assertRoundTrip(proto: HandleConnectionSpecProto) {
+  assertThat(proto.decode().encode()).isEqualTo(proto)
+}
+
+fun assertRoundTrip(proto: ParticleSpecProto) {
+  assertThat(proto.decode().encode()).isEqualTo(proto)
 }
 
 @RunWith(JUnit4::class)
@@ -51,9 +59,26 @@ class ParticleSpecProtoDecoderTest {
     assertThat(DirectionProto.READS.decode()).isEqualTo(HandleMode.Read)
     assertThat(DirectionProto.WRITES.decode()).isEqualTo(HandleMode.Write)
     assertThat(DirectionProto.READS_WRITES.decode()).isEqualTo(HandleMode.ReadWrite)
+    assertThat(DirectionProto.READS_WRITES_QUERY.decode()).isEqualTo(HandleMode.ReadWriteQuery)
+    assertThat(DirectionProto.QUERY.decode()).isEqualTo(HandleMode.Query)
+    assertThat(DirectionProto.READS_QUERY.decode()).isEqualTo(HandleMode.ReadQuery)
+    assertThat(DirectionProto.WRITES_QUERY.decode()).isEqualTo(HandleMode.WriteQuery)
+    assertThat(DirectionProto.READS_WRITES_QUERY.decode()).isEqualTo(HandleMode.ReadWriteQuery)
     assertFailsWith<IllegalArgumentException> {
       DirectionProto.UNRECOGNIZED.decode()
     }
+  }
+
+  @Test
+  fun roundTripsDirectionProto() {
+    assertThat(DirectionProto.READS.decode().encode()).isEqualTo(DirectionProto.READS)
+    assertThat(DirectionProto.WRITES.decode().encode()).isEqualTo(DirectionProto.WRITES)
+    assertThat(DirectionProto.READS_WRITES.decode().encode()).isEqualTo(DirectionProto.READS_WRITES)
+    assertThat(DirectionProto.QUERY.decode().encode()).isEqualTo(DirectionProto.QUERY)
+    assertThat(DirectionProto.READS_QUERY.decode().encode()).isEqualTo(DirectionProto.READS_QUERY)
+    assertThat(DirectionProto.WRITES_QUERY.decode().encode()).isEqualTo(DirectionProto.WRITES_QUERY)
+    assertThat(DirectionProto.READS_WRITES_QUERY.decode().encode())
+      .isEqualTo(DirectionProto.READS_WRITES_QUERY)
   }
 
   private val schema = Schema(
@@ -66,7 +91,7 @@ class ParticleSpecProtoDecoderTest {
     hash = ""
   )
 
-  private fun getHandleConnectionSpecProto(
+  private fun getHandleConnectionSpecProtoText(
     name: String,
     direction: String,
     schemaName: String,
@@ -83,6 +108,8 @@ class ParticleSpecProtoDecoderTest {
                 key: "name"
                 value: { primitive: TEXT }
               }
+              refinement: "true"
+              query: "true"
             }
           }
         }
@@ -92,8 +119,8 @@ class ParticleSpecProtoDecoderTest {
 
   @Test
   fun decodesHandleConnectionSpecProto() {
-    val handleConnectionSpecProto = getHandleConnectionSpecProto("data", "READS", "Thing")
-    val connectionSpec = decodeHandleConnectionSpecProto(handleConnectionSpecProto)
+    val handleConnectionSpecProto = getHandleConnectionSpecProtoText("data", "READS", "Thing")
+    val connectionSpec = toHandleConnectionSpecProto(handleConnectionSpecProto).decode()
     assertThat(connectionSpec.name).isEqualTo("data")
     assertThat(connectionSpec.direction).isEqualTo(HandleMode.Read)
     assertThat(connectionSpec.type).isEqualTo(EntityType(schema))
@@ -101,11 +128,19 @@ class ParticleSpecProtoDecoderTest {
   }
 
   @Test
+  fun roundTripsHandleConnectionSpecProto() {
+    val connectionSpec = toHandleConnectionSpecProto(
+      getHandleConnectionSpecProtoText("data", "READS", "Thing")
+    )
+    assertRoundTrip(connectionSpec)
+  }
+
+  @Test
   fun decodesHandleConnectionSpecProto_withExpression() {
-    val handleConnectionSpecProto = getHandleConnectionSpecProto(
+    val handleConnectionSpecProto = getHandleConnectionSpecProtoText(
       "data", "READS", "Thing", "new Thing {x: foo.y}"
     )
-    val connectionSpec = decodeHandleConnectionSpecProto(handleConnectionSpecProto)
+    val connectionSpec = toHandleConnectionSpecProto(handleConnectionSpecProto).decode()
     assertThat(connectionSpec.name).isEqualTo("data")
     assertThat(connectionSpec.direction).isEqualTo(HandleMode.Read)
     assertThat(connectionSpec.type).isEqualTo(EntityType(schema))
@@ -113,9 +148,25 @@ class ParticleSpecProtoDecoderTest {
   }
 
   @Test
+  fun roundTripsHandleConnectionSpecProto_withExpression() {
+    val connectionSpec = toHandleConnectionSpecProto(
+      getHandleConnectionSpecProtoText(
+        "data", "READS", "Thing", "new Thing {x: foo.y}"
+      )
+    )
+    with(connectionSpec.decode().encode()) {
+      assertThat(name).isEqualTo(connectionSpec.name)
+      assertThat(direction).isEqualTo(connectionSpec.direction)
+      assertThat(type).isEqualTo(connectionSpec.type)
+      assertThat(expression.replace("\\s+".toRegex(), ""))
+        .isEqualTo(connectionSpec.expression.replace("\\s+".toRegex(), ""))
+    }
+  }
+
+  @Test
   fun decodesParticleSpecProto() {
-    val readConnectionSpecProto = getHandleConnectionSpecProto("read", "READS", "Thing")
-    val writeConnectionSpecProto = getHandleConnectionSpecProto("write", "WRITES", "Thing")
+    val readConnectionSpecProto = getHandleConnectionSpecProtoText("read", "READS", "Thing")
+    val writeConnectionSpecProto = getHandleConnectionSpecProtoText("write", "WRITES", "Thing")
     val readerSpecProto = """
           name: "Reader"
           connections { $readConnectionSpecProto }
@@ -124,8 +175,8 @@ class ParticleSpecProtoDecoderTest {
             name: "isolated"
           }
         """.trimIndent()
-    val readerSpec = decodeParticleSpecProto(readerSpecProto)
-    val readConnectionSpec = decodeHandleConnectionSpecProto(readConnectionSpecProto)
+    val readerSpec = toParticleSpecProto(readerSpecProto).decode()
+    val readConnectionSpec = toHandleConnectionSpecProto(readConnectionSpecProto).decode()
     assertThat(readerSpec).isEqualTo(
       ParticleSpec(
         name = "Reader",
@@ -148,8 +199,8 @@ class ParticleSpecProtoDecoderTest {
             }
           }
         """.trimIndent()
-    val readerWriterSpec = decodeParticleSpecProto(readerWriterSpecProto)
-    val writeConnectionSpec = decodeHandleConnectionSpecProto(writeConnectionSpecProto)
+    val readerWriterSpec = toParticleSpecProto(readerWriterSpecProto).decode()
+    val writeConnectionSpec = toHandleConnectionSpecProto(writeConnectionSpecProto).decode()
     assertThat(readerWriterSpec).isEqualTo(
       ParticleSpec(
         name = "ReaderWriter",
@@ -161,9 +212,45 @@ class ParticleSpecProtoDecoderTest {
   }
 
   @Test
+  fun roundTripsParticleSpecProto() {
+    val readConnectionSpecProto = getHandleConnectionSpecProtoText("read", "READS", "Thing")
+    val writeConnectionSpecProto = getHandleConnectionSpecProtoText("write", "WRITES", "Thing")
+    val readerSpecProto = """
+          name: "Reader"
+          connections { $readConnectionSpecProto }
+          location: "Everywhere"
+          annotations {
+            name: "isolated"
+          }
+        """.trimIndent()
+    val readerSpec = toParticleSpecProto(readerSpecProto)
+    val readConnectionSpec = toHandleConnectionSpecProto(readConnectionSpecProto)
+    assertRoundTrip(readerSpec)
+    assertRoundTrip(readConnectionSpec)
+
+    val readerWriterSpecProto = """
+          name: "ReaderWriter"
+          connections { $readConnectionSpecProto }
+          connections { $writeConnectionSpecProto }
+          location: "Nowhere"
+          annotations {
+            name: "egress"
+            params {
+              name: "type"
+              str_value: "MyEgressType"
+            }
+          }
+        """.trimIndent()
+    val readerWriterSpec = toParticleSpecProto(readerWriterSpecProto)
+    val writeConnectionSpec = toHandleConnectionSpecProto(writeConnectionSpecProto)
+    assertRoundTrip(readerWriterSpec)
+    assertRoundTrip(writeConnectionSpec)
+  }
+
+  @Test
   fun decodesParticleSpecProtoWithClaims() {
-    val readConnectionSpecProto = getHandleConnectionSpecProto("read", "READS", "Thing")
-    val writeConnectionSpecProto = getHandleConnectionSpecProto("write", "WRITES", "Thing")
+    val readConnectionSpecProto = getHandleConnectionSpecProtoText("read", "READS", "Thing")
+    val writeConnectionSpecProto = getHandleConnectionSpecProtoText("write", "WRITES", "Thing")
     val readerWriterSpecProto = """
           name: "ReaderWriter"
           connections { $readConnectionSpecProto }
@@ -201,9 +288,9 @@ class ParticleSpecProtoDecoderTest {
             }
           }
        """.trimIndent()
-    val readerWriterSpec = decodeParticleSpecProto(readerWriterSpecProto)
-    val readConnectionSpec = decodeHandleConnectionSpecProto(readConnectionSpecProto)
-    val writeConnectionSpec = decodeHandleConnectionSpecProto(writeConnectionSpecProto)
+    val readerWriterSpec = toParticleSpecProto(readerWriterSpecProto).decode()
+    val readConnectionSpec = toHandleConnectionSpecProto(readConnectionSpecProto).decode()
+    val writeConnectionSpec = toHandleConnectionSpecProto(writeConnectionSpecProto).decode()
     assertThat(readerWriterSpec.claims).containsExactly(
       Claim.Assume(
         AccessPath("ReaderWriter", writeConnectionSpec),
@@ -217,8 +304,57 @@ class ParticleSpecProtoDecoderTest {
   }
 
   @Test
+  fun roundTripsParticleSpecProtoWithClaims() {
+    val readConnectionSpecProto = getHandleConnectionSpecProtoText("read", "READS", "Thing")
+    val writeConnectionSpecProto = getHandleConnectionSpecProtoText("write", "WRITES", "Thing")
+    val readerWriterSpecProto = """
+          name: "ReaderWriter"
+          connections { $readConnectionSpecProto }
+          connections { $writeConnectionSpecProto }
+          location: "Nowhere"
+          claims {
+            assume {
+              access_path {
+                handle {
+                  particle_spec: "ReaderWriter"
+                  handle_connection: "write"
+                }
+              }
+              predicate {
+                label {
+                  semantic_tag: "public"
+                }
+              }
+            }
+          }
+          claims {
+            derives_from {
+              target {
+                handle {
+                  particle_spec: "ReaderWriter"
+                  handle_connection: "write"
+                }
+              }
+              source {
+                handle {
+                  particle_spec: "ReaderWriter"
+                  handle_connection: "read"
+                }
+              }
+            }
+          }
+       """.trimIndent()
+    val readerWriterSpec = toParticleSpecProto(readerWriterSpecProto)
+    val readConnectionSpec = toHandleConnectionSpecProto(readConnectionSpecProto)
+    val writeConnectionSpec = toHandleConnectionSpecProto(writeConnectionSpecProto)
+    assertRoundTrip(readerWriterSpec)
+    assertRoundTrip(readConnectionSpec)
+    assertRoundTrip(writeConnectionSpec)
+  }
+
+  @Test
   fun decodesParticleSpecProtoWithChecks() {
-    val readConnectionSpecProto = getHandleConnectionSpecProto("read", "READS", "Thing")
+    val readConnectionSpecProto = getHandleConnectionSpecProtoText("read", "READS", "Thing")
     val readerWriterSpecProto = """
           name: "ReaderWriter"
           connections { $readConnectionSpecProto }
@@ -250,8 +386,8 @@ class ParticleSpecProtoDecoderTest {
             }
           }
        """.trimIndent()
-    val readerWriterSpec = decodeParticleSpecProto(readerWriterSpecProto)
-    val readConnectionSpec = decodeHandleConnectionSpecProto(readConnectionSpecProto)
+    val readerWriterSpec = toParticleSpecProto(readerWriterSpecProto).decode()
+    val readConnectionSpec = toHandleConnectionSpecProto(readConnectionSpecProto).decode()
     assertThat(readerWriterSpec.checks).containsExactly(
       Check(
         AccessPath("ReaderWriter", readConnectionSpec),
@@ -265,8 +401,48 @@ class ParticleSpecProtoDecoderTest {
   }
 
   @Test
+  fun roundTripsParticleSpecProtoWithChecks() {
+    val readConnectionSpecProto = getHandleConnectionSpecProtoText("read", "READS", "Thing")
+    val readerWriterSpecProto = """
+          name: "ReaderWriter"
+          connections { $readConnectionSpecProto }
+          location: "Nowhere"
+          checks {
+            access_path {
+              handle {
+                particle_spec: "ReaderWriter"
+                handle_connection: "read"
+              }
+            }
+            predicate {
+              label {
+                semantic_tag: "public"
+              }
+            }
+          }
+          checks {
+            access_path {
+              handle {
+                particle_spec: "ReaderWriter"
+                handle_connection: "read"
+              }
+            }
+            predicate {
+              label {
+                semantic_tag: "invalid"
+              }
+            }
+          }
+       """.trimIndent()
+    val readerWriterSpec = toParticleSpecProto(readerWriterSpecProto)
+    val readConnectionSpec = toHandleConnectionSpecProto(readConnectionSpecProto)
+    assertRoundTrip(readerWriterSpec)
+    assertRoundTrip(readConnectionSpec)
+  }
+
+  @Test
   fun detectsDuplicateConnections() {
-    val readConnectionSpecProto = getHandleConnectionSpecProto("read", "READS", "Thing")
+    val readConnectionSpecProto = getHandleConnectionSpecProtoText("read", "READS", "Thing")
     val readerSpecProto = """
           name: "Reader"
           connections { $readConnectionSpecProto }
@@ -274,7 +450,7 @@ class ParticleSpecProtoDecoderTest {
           location: "Everywhere"
         """.trimIndent()
     val exception = assertFailsWith<IllegalArgumentException> {
-      decodeParticleSpecProto(readerSpecProto)
+      toParticleSpecProto(readerSpecProto).decode()
     }
     assertThat(exception).hasMessageThat().contains("Duplicate connection 'read'")
   }
