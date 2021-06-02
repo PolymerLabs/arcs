@@ -15,7 +15,6 @@ import androidx.test.core.app.ApplicationProvider
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtSet
-import arcs.core.data.SchemaRegistry
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.FixedDriverFactory
@@ -39,8 +38,8 @@ import org.robolectric.RobolectricTestRunner
 class ReferenceModeStoreDatabaseImplIntegrationTest : ReferenceModeStoreTestBase() {
 
   override val TEST_KEY = ReferenceModeStorageKey(
-    DatabaseStorageKey.Persistent("entities", HASH),
-    DatabaseStorageKey.Persistent("set", HASH)
+    DatabaseStorageKey.Persistent("entities"),
+    DatabaseStorageKey.Persistent("set")
   )
 
   override lateinit var driverFactory: DriverFactory
@@ -51,7 +50,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest : ReferenceModeStoreTestBase
     super.setUp()
     StorageKeyManager.GLOBAL_INSTANCE.reset(DatabaseStorageKey.Persistent)
     databaseFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-    DatabaseDriverProvider.configure(databaseFactory, SchemaRegistry::getSchema)
+    DatabaseDriverProvider.configure(databaseFactory)
     driverFactory = FixedDriverFactory(DatabaseDriverProvider)
   }
 

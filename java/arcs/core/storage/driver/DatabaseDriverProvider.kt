@@ -13,24 +13,20 @@ package arcs.core.storage.driver
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
-import arcs.core.data.Schema
 import arcs.core.data.toSchema
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.DatabaseManager
-import arcs.core.storage.driver.DatabaseDriverProvider.getDatabaseInfo
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
-import arcs.flags.BuildFlags
 import kotlin.reflect.KClass
 
 /** [DriverProvider] which provides a [DatabaseDriver]. */
 object DatabaseDriverProvider : DriverProvider {
   /**
-   * Whether or not the [DatabaseDriverProvider] has been configured with a [DatabaseManager] and
-   * a schema lookup function.
+   * Whether or not the [DatabaseDriverProvider] has been configured with a [DatabaseManager].
    */
   val isConfigured: Boolean
     get() = _manager != null
@@ -41,24 +37,8 @@ object DatabaseDriverProvider : DriverProvider {
   val manager: DatabaseManager
     get() = requireNotNull(_manager) { ERROR_MESSAGE_CONFIGURE_NOT_CALLED }
 
-  private val DEFAULT_SCHEMA_LOOKUP: (String) -> Schema? = {
-    throw IllegalStateException(ERROR_MESSAGE_CONFIGURE_NOT_CALLED)
-  }
-
-  /**
-   * Function which will be used to determine, at runtime, which [Schema] to associate with its
-   * hash value.
-   */
-  private var schemaLookup = DEFAULT_SCHEMA_LOOKUP
-
   override fun willSupport(storageKey: StorageKey): Boolean {
-    val databaseInfo = storageKey.getDatabaseInfo() ?: return false
-    if (!BuildFlags.STORAGE_KEY_REDUCTION) {
-      val entitySchemaHash = requireNotNull(databaseInfo.entitySchemaHash) {
-        "Entity schema hash missing"
-      }
-      return schemaLookup(entitySchemaHash) != null
-    }
+    storageKey.getDatabaseInfo() ?: return false
     return true
   }
 
@@ -70,18 +50,8 @@ object DatabaseDriverProvider : DriverProvider {
     val databaseInfo = requireNotNull(storageKey.getDatabaseInfo()) {
       "Unsupported StorageKey: $storageKey for DatabaseDriverProvider"
     }
-    val schema = if (BuildFlags.STORAGE_KEY_REDUCTION) {
-      // Use schema from the provided type.
-      type.toSchema()
-    } else {
-      // Pull the schema hash out of the storage key.
-      val hash = requireNotNull(storageKey.getDatabaseInfo()?.entitySchemaHash) {
-        "Schema hash missing from storage key."
-      }
-      requireNotNull(schemaLookup(hash)) {
-        "Unsupported DatabaseStorageKey: No Schema found with hash: $hash"
-      }
-    }
+    val schema = type.toSchema()
+
     require(
       dataClass == CrdtEntity.Data::class ||
         dataClass == CrdtSet.DataImpl::class ||
@@ -119,11 +89,10 @@ object DatabaseDriverProvider : DriverProvider {
   }
 
   /**
-   * Configures the [DatabaseDriverProvider] with the given [schemaLookup].
+   * Configures the [DatabaseDriverProvider] with the provided [DatabaseManager].
    */
-  fun configure(databaseManager: DatabaseManager, schemaLookup: (String) -> Schema?) = apply {
+  fun configure(databaseManager: DatabaseManager) = apply {
     this._manager = databaseManager
-    this.schemaLookup = schemaLookup
   }
 
   /**
@@ -140,18 +109,12 @@ object DatabaseDriverProvider : DriverProvider {
     check(backingKey.dbName == storageKey.dbName) {
       "Database can support ReferenceModeStorageKey only with a single dbName."
     }
-    if (!BuildFlags.STORAGE_KEY_REDUCTION) {
-      check(backingKey.entitySchemaHash == storageKey.entitySchemaHash) {
-        "Database can support ReferenceModeStorageKey only with a single entitySchemaHash."
-      }
-    }
     check(
       backingKey is DatabaseStorageKey.Persistent == storageKey is DatabaseStorageKey.Persistent
     ) {
       "Database can support ReferenceModeStorageKey only if both or neither keys are persistent."
     }
     return DatabaseInfo(
-      if (BuildFlags.STORAGE_KEY_REDUCTION) null else backingKey.entitySchemaHash,
       backingKey.dbName,
       backingKey is DatabaseStorageKey.Persistent
     )
@@ -163,7 +126,6 @@ object DatabaseDriverProvider : DriverProvider {
    */
   private fun StorageKey.getDatabaseInfo(): DatabaseInfo? = when (this) {
     is DatabaseStorageKey -> DatabaseInfo(
-      if (BuildFlags.STORAGE_KEY_REDUCTION) null else entitySchemaHash,
       dbName,
       this is DatabaseStorageKey.Persistent
     )
@@ -172,17 +134,14 @@ object DatabaseDriverProvider : DriverProvider {
   }
 
   data class DatabaseInfo(
-    // TODO(b/179216769): Delete this field from this file entirely.
-    val entitySchemaHash: String?,
     val dbName: String,
     val persistent: Boolean
   )
 
   private const val ERROR_MESSAGE_CONFIGURE_NOT_CALLED =
-    "DatabaseDriverProvider.configure(databaseFactory, schemaLookup) has not been called"
+    "DatabaseDriverProvider.configure(databaseFactory) has not been called"
 
   /* internal */ fun resetForTests() {
     this._manager = null
-    this.schemaLookup = DEFAULT_SCHEMA_LOOKUP
   }
 }

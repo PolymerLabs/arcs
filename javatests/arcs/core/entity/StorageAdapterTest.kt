@@ -272,7 +272,6 @@ class StorageAdapterTest {
     // Storing the reference in a different db.
     val dbKey2 = DatabaseStorageKey.Persistent(
       "db",
-      DummyEntity.SCHEMA_HASH,
       dbName = "different"
     )
     assertFails { refAdapterWithKey(dbKey2).storableToReferencable(referenceWithKey(dbKey)) }
@@ -317,7 +316,6 @@ class StorageAdapterTest {
     // Storing the reference in a different db.
     val dbKey2 = DatabaseStorageKey.Persistent(
       "db",
-      DummyEntity.SCHEMA_HASH,
       dbName = "different"
     )
     assertFails {

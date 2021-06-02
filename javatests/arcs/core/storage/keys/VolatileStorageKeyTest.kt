@@ -14,22 +14,15 @@ import arcs.core.common.ArcId
 import arcs.core.common.toArcId
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StorageKeyProtocol
-import arcs.flags.BuildFlags
-import arcs.flags.testing.BuildFlagsRule
-import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.runners.JUnit4
 /** Tests for [VolatileStorageKey]. */
-@RunWith(Parameterized::class)
-class VolatileStorageKeyTest(parameters: ParameterizedBuildFlags) {
-
-  @get:Rule
-  val buildFlagsRule = BuildFlagsRule.parameterized(parameters)
+@RunWith(JUnit4::class)
+class VolatileStorageKeyTest() {
 
   @Before
   fun setUp() {
@@ -48,9 +41,8 @@ class VolatileStorageKeyTest(parameters: ParameterizedBuildFlags) {
     val arcId = ArcId.newForTest("arc")
     val parent = VolatileStorageKey(arcId, "parent")
     val child = parent.newKeyWithComponent("child")
-    val expected = if (BuildFlags.STORAGE_KEY_REDUCTION) "child" else "parent/child"
     assertThat(child.toString()).isEqualTo(
-      "${StorageKeyProtocol.Volatile.protocol}$arcId/$expected"
+      "${StorageKeyProtocol.Volatile.protocol}$arcId/child"
     )
   }
 
@@ -73,11 +65,5 @@ class VolatileStorageKeyTest(parameters: ParameterizedBuildFlags) {
     assertFailsWith<IllegalArgumentException>("need at least one /") {
       VolatileStorageKey.parse("nonsense")
     }
-  }
-
-  private companion object {
-    @get:JvmStatic
-    @get:Parameterized.Parameters(name = "{0}")
-    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_KEY_REDUCTION")
   }
 }

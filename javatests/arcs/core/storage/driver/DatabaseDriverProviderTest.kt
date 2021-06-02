@@ -27,12 +27,8 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.flags.BuildFlags
-import arcs.flags.testing.BuildFlagsRule
-import arcs.flags.testing.ParameterizedBuildFlags
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.TruthJUnit.assume
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
@@ -41,33 +37,27 @@ import kotlin.test.assertFailsWith
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.runners.JUnit4
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-@RunWith(Parameterized::class)
-class DatabaseDriverProviderTest(parameters: ParameterizedBuildFlags) {
-
-  @get:Rule
-  val buildFlagsRule = BuildFlagsRule.parameterized(parameters)
+@RunWith(JUnit4::class)
+class DatabaseDriverProviderTest {
 
   private var databaseManager: DatabaseManager? = null
-  private val schemaHashLookup = mutableMapOf<String, Schema>()
 
-  private val provider = DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
+  private val provider = DatabaseDriverProvider.configure(databaseFactory())
 
   @Before
   fun setUp() {
     DatabaseDriverProvider.resetForTests()
-    DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
+    DatabaseDriverProvider.configure(databaseFactory())
   }
 
   @After
   fun tearDown() {
     databaseManager = null
-    schemaHashLookup.clear()
   }
 
   @Test
@@ -83,20 +73,16 @@ class DatabaseDriverProviderTest(parameters: ParameterizedBuildFlags) {
   }
 
   @Test
-  fun willSupport_returnsTrue_whenDatabaseKey_andSchemaFound() = runBlockingTest {
-    schemaHashLookup["1234a"] = DUMMY_SCHEMA
-
-    val key = DatabaseStorageKey.Persistent("foo", "1234a")
+  fun willSupport_returnsTrue_whenDatabaseKey_found() = runBlockingTest {
+    val key = DatabaseStorageKey.Persistent("foo")
     assertThat(provider.willSupport(key)).isTrue()
   }
 
   @Test
-  fun willSupport_returnsTrue_whenReferenceModeKey_andSchemaFound() = runBlockingTest {
-    schemaHashLookup["1234a"] = DUMMY_SCHEMA
-
+  fun willSupport_returnsTrue_whenReferenceModeKey_found() = runBlockingTest {
     val key = ReferenceModeStorageKey(
-      DatabaseStorageKey.Persistent("foo", "1234a"),
-      DatabaseStorageKey.Persistent("bar", "1234a")
+      DatabaseStorageKey.Persistent("foo"),
+      DatabaseStorageKey.Persistent("bar")
     )
     assertThat(provider.willSupport(key)).isTrue()
   }
@@ -116,15 +102,6 @@ class DatabaseDriverProviderTest(parameters: ParameterizedBuildFlags) {
   }
 
   @Test
-  fun willSupport_returnsFalse_whenSchemaNotFound() = runBlockingTest {
-    // Behavior only true when flag is disabled.
-    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isFalse()
-
-    val key = DatabaseStorageKey.Persistent("foo", "1234a")
-    assertThat(provider.willSupport(key)).isFalse()
-  }
-
-  @Test
   fun willSupport_returnsFalse_whenReferenceModeKeyNoDb() = runBlockingTest {
     val key = ReferenceModeStorageKey(
       RamDiskStorageKey("foo"),
@@ -134,22 +111,10 @@ class DatabaseDriverProviderTest(parameters: ParameterizedBuildFlags) {
   }
 
   @Test
-  fun willSupport_returnsFalse_whenSchemaNotFound_RefMode() = runBlockingTest {
-    // Behavior only true when flag is disabled.
-    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isFalse()
-
-    val key = ReferenceModeStorageKey(
-      DatabaseStorageKey.Persistent("foo", "1234a"),
-      DatabaseStorageKey.Persistent("bar", "1234a")
-    )
-    assertThat(provider.willSupport(key)).isFalse()
-  }
-
-  @Test
   fun willSupport_throwsException_refMode_differentDbNames() = runBlockingTest {
     val key = ReferenceModeStorageKey(
-      DatabaseStorageKey.Persistent("foo", "1234a", "dbA"),
-      DatabaseStorageKey.Persistent("bar", "1234a", "dbB")
+      DatabaseStorageKey.Persistent("foo", "dbA"),
+      DatabaseStorageKey.Persistent("bar", "dbB")
     )
     assertFailsWith<IllegalStateException> {
       provider.willSupport(key)
@@ -157,43 +122,6 @@ class DatabaseDriverProviderTest(parameters: ParameterizedBuildFlags) {
       assertThat(it).hasMessageThat()
         .isEqualTo(
           "Database can support ReferenceModeStorageKey only with a single dbName."
-        )
-    }
-  }
-
-  @Test
-  fun willSupport_throwsException_refMode_differentSchemas() = runBlockingTest {
-    // Behavior only true when flag is disabled.
-    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isFalse()
-
-    val key = ReferenceModeStorageKey(
-      DatabaseStorageKey.Persistent("foo", "1234a"),
-      DatabaseStorageKey.Persistent("bar", "1234b")
-    )
-    assertFailsWith<IllegalStateException> {
-      provider.willSupport(key)
-    }.also {
-      assertThat(it).hasMessageThat()
-        .isEqualTo(
-          "Database can support ReferenceModeStorageKey only with a single entitySchemaHash."
-        )
-    }
-  }
-
-  @Test
-  fun willSupport_throwsException_whenNotConfigured() = runBlockingTest {
-    // Behavior only true when flag is disabled.
-    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isFalse()
-
-    provider.resetForTests()
-    val key = DatabaseStorageKey.Persistent("foo", "1234a")
-
-    assertFailsWith<IllegalStateException> {
-      provider.willSupport(key)
-    }.also {
-      assertThat(it).hasMessageThat()
-        .isEqualTo(
-          "DatabaseDriverProvider.configure(databaseFactory, schemaLookup) has not been called"
         )
     }
   }
@@ -208,21 +136,8 @@ class DatabaseDriverProviderTest(parameters: ParameterizedBuildFlags) {
   }
 
   @Test
-  fun getDriver_throwsOnInvalidKey_schemaNotFound() = runBlockingTest {
-    // Behavior only true when flag is disabled.
-    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isFalse()
-
-    val key = DatabaseStorageKey.Persistent("foo", "1234a")
-
-    assertFailsWith<IllegalArgumentException> {
-      provider.getDriver(key, CrdtEntity.Data::class, DUMMY_ENTITY_TYPE)
-    }
-  }
-
-  @Test
   fun getDriver_throwsOnInvalidDataClass() = runBlockingTest {
-    val key = DatabaseStorageKey.Persistent("foo", "1234a")
-    schemaHashLookup["1234a"] = DUMMY_SCHEMA
+    val key = DatabaseStorageKey.Persistent("foo")
 
     assertFailsWith<IllegalArgumentException> {
       provider.getDriver(key, Int::class, DUMMY_ENTITY_TYPE)
@@ -231,8 +146,7 @@ class DatabaseDriverProviderTest(parameters: ParameterizedBuildFlags) {
 
   @Test
   fun getDriver() = runBlockingTest {
-    val key = DatabaseStorageKey.Persistent("foo", "1234a")
-    schemaHashLookup["1234a"] = DUMMY_SCHEMA
+    val key = DatabaseStorageKey.Persistent("foo")
 
     val entityDriver = provider.getDriver(key, CrdtEntity.Data::class, DUMMY_ENTITY_TYPE)
     assertThat(entityDriver).isInstanceOf(DatabaseDriver::class.java)
@@ -250,10 +164,9 @@ class DatabaseDriverProviderTest(parameters: ParameterizedBuildFlags) {
   @Test
   fun getDriver_referenceModeKey() = runBlockingTest {
     val key = ReferenceModeStorageKey(
-      DatabaseStorageKey.Persistent("foo", "1234a"),
-      DatabaseStorageKey.Persistent("bar", "1234a")
+      DatabaseStorageKey.Persistent("foo"),
+      DatabaseStorageKey.Persistent("bar")
     )
-    schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
     val entityDriver = provider.getDriver(key, CrdtEntity.Data::class, DUMMY_ENTITY_TYPE)
     assertThat(entityDriver).isInstanceOf(DatabaseDriver::class.java)
@@ -271,7 +184,7 @@ class DatabaseDriverProviderTest(parameters: ParameterizedBuildFlags) {
   @Test
   fun removeAllEntities() = runBlockingTest {
     val mockManager = mock<DatabaseManager>()
-    provider.configure(mockManager, schemaHashLookup::get)
+    provider.configure(mockManager)
 
     provider.removeAllEntities()
 
@@ -281,7 +194,7 @@ class DatabaseDriverProviderTest(parameters: ParameterizedBuildFlags) {
   @Test
   fun removeEntitiesCreatedBetween() = runBlockingTest {
     val mockManager = mock<DatabaseManager>()
-    provider.configure(mockManager, schemaHashLookup::get)
+    provider.configure(mockManager)
 
     provider.removeEntitiesCreatedBetween(DUMMY_START, DUMMY_END)
 
@@ -291,7 +204,7 @@ class DatabaseDriverProviderTest(parameters: ParameterizedBuildFlags) {
   @Test
   fun getEntitiesCount_inMemory() = runBlockingTest {
     val mockManager = mock<DatabaseManager>()
-    provider.configure(mockManager, schemaHashLookup::get)
+    provider.configure(mockManager)
     doReturn(DUMMY_START).whenever(mockManager).getEntitiesCount(false)
 
     val actual = provider.getEntitiesCount(inMemory = true)
@@ -303,7 +216,7 @@ class DatabaseDriverProviderTest(parameters: ParameterizedBuildFlags) {
   @Test
   fun getEntitiesCount_notInMemory() = runBlockingTest {
     val mockManager = mock<DatabaseManager>()
-    provider.configure(mockManager, schemaHashLookup::get)
+    provider.configure(mockManager)
     doReturn(DUMMY_END).whenever(mockManager).getEntitiesCount(true)
 
     val actual = provider.getEntitiesCount(inMemory = false)
@@ -315,7 +228,7 @@ class DatabaseDriverProviderTest(parameters: ParameterizedBuildFlags) {
   @Test
   fun getStorageSize_inMemory() = runBlockingTest {
     val mockManager = mock<DatabaseManager>()
-    provider.configure(mockManager, schemaHashLookup::get)
+    provider.configure(mockManager)
     doReturn(DUMMY_START).whenever(mockManager).getStorageSize(false)
 
     val actual = provider.getStorageSize(inMemory = true)
@@ -327,7 +240,7 @@ class DatabaseDriverProviderTest(parameters: ParameterizedBuildFlags) {
   @Test
   fun getStorageSize_notInMemory() = runBlockingTest {
     val mockManager = mock<DatabaseManager>()
-    provider.configure(mockManager, schemaHashLookup::get)
+    provider.configure(mockManager)
     doReturn(DUMMY_START).whenever(mockManager).getStorageSize(true)
 
     val actual = provider.getStorageSize(inMemory = false)
@@ -339,7 +252,7 @@ class DatabaseDriverProviderTest(parameters: ParameterizedBuildFlags) {
   @Test
   fun isStorageTooLarge() = runBlockingTest {
     val mockManager = mock<DatabaseManager>()
-    provider.configure(mockManager, schemaHashLookup::get)
+    provider.configure(mockManager)
     doReturn(true).whenever(mockManager).isStorageTooLarge()
 
     val actual = provider.isStorageTooLarge()
@@ -363,9 +276,5 @@ class DatabaseDriverProviderTest(parameters: ParameterizedBuildFlags) {
     private const val DUMMY_START = 10000L
     private const val DUMMY_END = 20000L
     private val DUMMY_ENTITY_TYPE = EntityType(DUMMY_SCHEMA)
-
-    @get:JvmStatic
-    @get:Parameterized.Parameters(name = "{0}")
-    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_KEY_REDUCTION")
   }
 }

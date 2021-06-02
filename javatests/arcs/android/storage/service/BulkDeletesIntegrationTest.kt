@@ -25,7 +25,6 @@ import arcs.core.entity.awaitReady
 import arcs.core.entity.testutil.FixtureEntities
 import arcs.core.entity.testutil.FixtureEntity
 import arcs.core.entity.testutil.FixtureEntitySlice
-import arcs.core.entity.testutil.InnerEntity
 import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -57,8 +56,8 @@ class BulkDeletesIntegrationTest {
   private val time = FakeTime()
   private val scheduler = SimpleSchedulerProvider(EmptyCoroutineContext).invoke("test")
   private val databaseKey = ReferenceModeStorageKey(
-    backingKey = DatabaseStorageKey.Persistent("backing", FixtureEntity.SCHEMA.hash),
-    storageKey = DatabaseStorageKey.Persistent("container", FixtureEntity.SCHEMA.hash)
+    backingKey = DatabaseStorageKey.Persistent("backing"),
+    storageKey = DatabaseStorageKey.Persistent("container")
   )
   private val fixtureEntities = FixtureEntities()
 
@@ -169,7 +168,7 @@ class BulkDeletesIntegrationTest {
   @Test
   fun removeEntitiesHardReferencing() = runBlocking<Unit> {
     val handle = createCollectionHandle()
-    val storageKey = DatabaseStorageKey.Persistent("backing", InnerEntity.SCHEMA.hash)
+    val storageKey = DatabaseStorageKey.Persistent("backing")
     val entity1 = fixtureEntities.generate().mutate(
       hardReferenceField = fixtureEntities.createInnerEntityReference("hardref-1", storageKey)
     )

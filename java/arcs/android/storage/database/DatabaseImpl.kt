@@ -74,7 +74,6 @@ import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import arcs.jvm.util.JvmTime
 import kotlin.coroutines.coroutineContext
-import kotlin.math.roundToLong
 import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.updateAndGet
@@ -2412,11 +2411,7 @@ class DatabaseImpl(
 
   companion object {
     @VisibleForTesting
-    val DB_VERSION get() = when {
-      BuildFlags.STORAGE_KEY_REDUCTION -> 9
-      else -> 8
-    }
-
+    val DB_VERSION = 9
     // Crdt actor used for edits applied by this class.
     const val DATABASE_CRDT_ACTOR = "db"
 
@@ -2907,27 +2902,12 @@ class DatabaseImpl(
        * A unique component to the key. This is required because there may be multiple inline
        * entities stored against a single fieldName (for collections and lists).
        */
-      private val unique: String = if (BuildFlags.STORAGE_KEY_REDUCTION) {
-        Random.nextVersionMapSafeString(10)
-      } else {
-        (Math.random() * Long.MAX_VALUE).roundToLong().toString()
-      }
+      private val unique: String = Random.nextVersionMapSafeString(10)
 
-      override fun toKeyString(): String {
-        return if (BuildFlags.STORAGE_KEY_REDUCTION) {
-          "{${parentKey.embed()}}$unique"
-        } else {
-          "{${parentKey.embed()}}!$unique/$fieldName"
-        }
-      }
+      override fun toKeyString() = "{${parentKey.embed()}}$unique"
 
       override fun newKeyWithComponent(component: String): StorageKey {
-        val newComponent = if (BuildFlags.STORAGE_KEY_REDUCTION) {
-          component
-        } else {
-          "$fieldName/$component"
-        }
-        return InlineStorageKey(parentKey, newComponent)
+        return InlineStorageKey(parentKey, component)
       }
 
       companion object {

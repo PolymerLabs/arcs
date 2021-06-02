@@ -612,13 +612,11 @@ class DatabaseDriverTest {
   companion object {
     private val DEFAULT_STORAGE_KEY = DatabaseStorageKey.Persistent(
       unique = "foo",
-      entitySchemaHash = "a1234",
       dbName = "testdb"
     )
     private val REFMODE_STORAGE_KEY = ReferenceModeStorageKey(
       DatabaseStorageKey.Persistent(
         unique = "backing",
-        entitySchemaHash = "a1234",
         dbName = "testdb"
       ),
       DEFAULT_STORAGE_KEY

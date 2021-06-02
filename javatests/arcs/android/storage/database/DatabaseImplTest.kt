@@ -47,8 +47,6 @@ import arcs.core.util.ArcsDuration
 import arcs.core.util.guardedBy
 import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
-import arcs.flags.testing.BuildFlagsRule
-import arcs.flags.testing.ParameterizedBuildFlags
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -68,18 +66,11 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.ParameterizedRobolectricTestRunner
+import org.robolectric.RobolectricTestRunner
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(ParameterizedRobolectricTestRunner::class)
-class DatabaseImplTest(
-  private val parameters: ParameterizedBuildFlags,
-  private val diffbasedEntityInsertion: Boolean
-
-) {
-
-  @get:Rule
-  val rule = BuildFlagsRule.parameterized(parameters)
+@RunWith(RobolectricTestRunner::class)
+class DatabaseImplTest {
 
   @get:Rule
   val log = AndroidLogRule()
@@ -95,7 +86,7 @@ class DatabaseImplTest(
       ApplicationProvider.getApplicationContext(),
       DummyStorageKeyManager(),
       "test.sqlite3",
-      databaseConfigGetter = { DatabaseConfig(diffbasedEntityInsertion) }
+      databaseConfigGetter = { DatabaseConfig(true) }
     )
     db = database.writableDatabase
     StorageKeyManager.GLOBAL_INSTANCE.addParser(DummyStorageKey)
@@ -4296,20 +4287,6 @@ class DatabaseImplTest(
   }
 
   companion object {
-    @JvmStatic
-    @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-    fun params(): List<Any> {
-      // Produces only two flag combinations out of the four that could be made with the two flags
-      // present ( (true, true) and (false, false) ). Not all combinations are tested because the
-      // tests timeout. These two flags guard independent changes so testing only these flag
-      // combinations is sufficient.
-      val params = ParameterizedBuildFlags.of("STORAGE_KEY_REDUCTION").toList()
-      return params.map { param ->
-        val diffbasedEntityInsertion = param.values.getValue("STORAGE_KEY_REDUCTION")
-        arrayOf(param, diffbasedEntityInsertion)
-      }
-    }
-
     /** The first free Type ID after all primitive types have been assigned. */
     private const val FIRST_ENTITY_TYPE_ID = DatabaseImpl.REFERENCE_TYPE_SENTINEL + 1
 

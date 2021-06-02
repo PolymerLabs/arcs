@@ -15,21 +15,15 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StorageKeyProtocol
-import arcs.flags.testing.BuildFlagsRule
-import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.runners.JUnit4
 
 /** Tests for [VolatileStorageKey]. */
-@RunWith(Parameterized::class)
-class ForeignStorageKeyTest(parameters: ParameterizedBuildFlags) {
-
-  @get:Rule
-  val buildFlagsRule = BuildFlagsRule.parameterized(parameters)
+@RunWith(JUnit4::class)
+class ForeignStorageKeyTest {
 
   @Before
   fun setUp() {
@@ -71,11 +65,5 @@ class ForeignStorageKeyTest(parameters: ParameterizedBuildFlags) {
   fun parse_validUnicodeString_correctly() {
     val key = ForeignStorageKey.parse("Туктамышева")
     assertThat(key.toKeyString()).isEqualTo("Туктамышева")
-  }
-
-  private companion object {
-    @get:JvmStatic
-    @get:Parameterized.Parameters(name = "{0}")
-    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_KEY_REDUCTION")
   }
 }

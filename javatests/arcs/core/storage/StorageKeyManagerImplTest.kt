@@ -1,28 +1,20 @@
 package arcs.core.storage
 
 import arcs.core.storage.testutil.DummyStorageKey
-import arcs.flags.BuildFlags
-import arcs.flags.testing.BuildFlagsRule
-import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.TruthJUnit.assume
 import java.util.concurrent.Executors
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.runners.JUnit4
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(Parameterized::class)
-class StorageKeyManagerImplTest(private val parameters: ParameterizedBuildFlags) {
-
-  @get:Rule
-  val buildFlagsRule = BuildFlagsRule.parameterized(parameters)
+@RunWith(JUnit4::class)
+class StorageKeyManagerImplTest() {
 
   @Test
   fun init_registersParser() {
@@ -57,19 +49,7 @@ class StorageKeyManagerImplTest(private val parameters: ParameterizedBuildFlags)
   }
 
   @Test
-  fun parse_flagOff_shortProtocol_throws() {
-    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isFalse()
-
-    val storageKeyManager = StorageKeyManagerImpl()
-
-    val e = assertFailsWith<IllegalArgumentException> { storageKeyManager.parse("u|abc") }
-    assertThat(e).hasMessageThat().isEqualTo("Invalid key pattern: u|abc")
-  }
-
-  @Test
   fun parse_flagOn_unknownShortProtocol_throws() {
-    assume().that(BuildFlags.STORAGE_KEY_REDUCTION).isTrue()
-
     val storageKeyManager = StorageKeyManagerImpl()
 
     val e = assertFailsWith<IllegalArgumentException> { storageKeyManager.parse("x|abc") }
@@ -129,9 +109,5 @@ class StorageKeyManagerImplTest(private val parameters: ParameterizedBuildFlags)
     // Implemented using getter methods since the representation changes according to build flags.
     private val dummyStorageKey get() = DummyStorageKey("abc")
     private val dummyStorageKeyStr get() = dummyStorageKey.toString()
-
-    @get:JvmStatic
-    @get:Parameterized.Parameters(name = "{0}")
-    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_KEY_REDUCTION")
   }
 }

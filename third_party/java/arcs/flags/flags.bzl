@@ -82,15 +82,6 @@ ARCS_BUILD_FLAGS = [
         ],
     ),
     arcs_build_flag(
-        name = "storage_key_reduction",
-        desc = "Reduce storage size of storage keys",
-        bug_id = "b/179216769",
-        status = "LAUNCHED",
-        stopwords = [
-            "storage.?key.?reduction",
-        ],
-    ),
-    arcs_build_flag(
         name = "transaction_free_reads",
         desc = "Remove transaction from getEntity in DatabaseImpl",
         bug_id = "b/175140645",

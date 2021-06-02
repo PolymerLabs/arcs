@@ -13,21 +13,16 @@ package arcs.core.storage.keys
 import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.embed
-import arcs.flags.testing.BuildFlagsRule
-import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-/** Tests for [JoinStorageKey]. */
-@RunWith(Parameterized::class)
-class JoinStorageKeyTest(parameters: ParameterizedBuildFlags) {
+import org.junit.runners.JUnit4
 
-  @get:Rule
-  val buildFlagsRule = BuildFlagsRule.parameterized(parameters)
+/** Tests for [JoinStorageKey]. */
+@RunWith(JUnit4::class)
+class JoinStorageKeyTest() {
 
   @Before
   fun setUp() {
@@ -178,9 +173,5 @@ class JoinStorageKeyTest(parameters: ParameterizedBuildFlags) {
   private companion object {
     private val joinProtocol get() = StorageKeyProtocol.Join.protocol
     private val ramdiskProtocol get() = StorageKeyProtocol.RamDisk.protocol
-
-    @get:JvmStatic
-    @get:Parameterized.Parameters(name = "{0}")
-    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_KEY_REDUCTION")
   }
 }

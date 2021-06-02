@@ -413,8 +413,7 @@ class DirectStoreMuxerImplTest(parameters: ParameterizedBuildFlags) {
     @get:JvmStatic
     @get:Parameterized.Parameters(name = "{0}")
     val PARAMETERS = ParameterizedBuildFlags.of(
-      "DIRECT_STORE_MUXER_LRU_TTL",
-      "STORAGE_KEY_REDUCTION"
+      "DIRECT_STORE_MUXER_LRU_TTL"
     )
   }
 }

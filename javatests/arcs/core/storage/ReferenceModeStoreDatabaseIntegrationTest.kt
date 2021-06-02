@@ -15,7 +15,6 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
-import arcs.core.data.SchemaRegistry
 import arcs.core.data.testutil.RawEntitySubject.Companion.assertThat
 import arcs.core.storage.driver.DatabaseDriver
 import arcs.core.storage.driver.DatabaseDriverProvider
@@ -39,8 +38,8 @@ import org.junit.runners.JUnit4
 class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
 
   override val TEST_KEY = ReferenceModeStorageKey(
-    DatabaseStorageKey.Persistent("entities", HASH),
-    DatabaseStorageKey.Persistent("set", HASH)
+    DatabaseStorageKey.Persistent("entities"),
+    DatabaseStorageKey.Persistent("set")
   )
   override lateinit var driverFactory: DriverFactory
   private lateinit var databaseFactory: FakeDatabaseManager
@@ -50,7 +49,7 @@ class ReferenceModeStoreDatabaseIntegrationTest : ReferenceModeStoreTestBase() {
     super.setUp()
     StorageKeyManager.GLOBAL_INSTANCE.reset(DatabaseStorageKey.Persistent)
     databaseFactory = FakeDatabaseManager()
-    DatabaseDriverProvider.configure(databaseFactory, SchemaRegistry::getSchema)
+    DatabaseDriverProvider.configure(databaseFactory)
     driverFactory = FixedDriverFactory(DatabaseDriverProvider)
   }
 

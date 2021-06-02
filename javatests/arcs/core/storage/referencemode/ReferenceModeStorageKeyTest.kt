@@ -15,23 +15,16 @@ import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.embed
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
-import arcs.flags.BuildFlags
-import arcs.flags.testing.BuildFlagsRule
-import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.runners.JUnit4
 
 /** Tests for [ReferenceModeStorageKey]. */
-@RunWith(Parameterized::class)
-class ReferenceModeStorageKeyTest(parameters: ParameterizedBuildFlags) {
-
-  @get:Rule
-  val buildFlagsRule = BuildFlagsRule.parameterized(parameters)
+@RunWith(JUnit4::class)
+class ReferenceModeStorageKeyTest {
 
   @Before
   fun setUp() {
@@ -101,14 +94,7 @@ class ReferenceModeStorageKeyTest(parameters: ParameterizedBuildFlags) {
     val backing = RamDiskStorageKey("backing")
     val direct = RamDiskStorageKey("direct")
     val parent = ReferenceModeStorageKey(backing, direct)
-    val expected = if (BuildFlags.STORAGE_KEY_REDUCTION) "child" else "direct/child"
     assertThat(parent.newKeyWithComponent("child"))
-      .isEqualTo(ReferenceModeStorageKey(backing, RamDiskStorageKey(expected)))
-  }
-
-  private companion object {
-    @get:JvmStatic
-    @get:Parameterized.Parameters(name = "{0}")
-    val PARAMETERS = ParameterizedBuildFlags.of("STORAGE_KEY_REDUCTION")
+      .isEqualTo(ReferenceModeStorageKey(backing, RamDiskStorageKey("child")))
   }
 }
