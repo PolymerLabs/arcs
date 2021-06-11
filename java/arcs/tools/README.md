@@ -29,11 +29,14 @@ invoked as follows:
 $ SIGH_CMD=/path/to/sigh bazel run //java/arcs/tools:run_dfa -- manifest.arcs
 ```
 
+
 To interpret input files as manifest proto binaries, use the `-b, --binary` option:
 
 ```
 bazel run //java/arcs/tools:run_dfa -- manifest.binarypb --binary
 ```
+
+![RUN DFA](run_dfa.png)
 
 ## decode_version_map
 
