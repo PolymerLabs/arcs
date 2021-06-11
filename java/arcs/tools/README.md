@@ -29,6 +29,8 @@ invoked as follows:
 $ SIGH_CMD=/path/to/sigh bazel run //java/arcs/tools:run_dfa -- manifest.arcs
 ```
 
+![RUN DFA](run_dfa.png)
+
 ## decode_version_map
 
 Decodes a base64-encoded version map proto (e.g. as stored in the SQLite database). Usage:
