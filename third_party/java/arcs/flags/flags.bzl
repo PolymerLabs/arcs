@@ -38,7 +38,7 @@ ARCS_BUILD_FLAGS = [
         name = "remove_by_query_handle",
         desc = "Enable the removeByQuery methods on Handles.",
         bug_id = "b/169727261",
-        status = "READY",
+        status = "LAUNCHED",
         stopwords = [
             "remove.?by.?query",
             "remove.?query.?collection.?handle",
@@ -48,44 +48,25 @@ ARCS_BUILD_FLAGS = [
         name = "storage_service_ng",
         desc = "Storage service migration to use storage channel",
         bug_id = "b/174199081",
-        status = "READY",
+        status = "LAUNCHED",
         stopwords = [
             "storage.?service.?ng",
-        ],
-    ),
-    arcs_build_flag(
-        name = "storage_string_reduction",
-        desc = "Reduction of size of storage keys/ids",
-        bug_id = "b/179216388",
-        status = "READY",
-        stopwords = [
-            "storage.?string.?reduction",
         ],
     ),
     arcs_build_flag(
         name = "direct_store_muxer_lru_ttl",
         desc = "Expire stores in the muxer cache after a ttl",
         bug_id = "b/179046054",
-        status = "READY",
+        status = "LAUNCHED",
         stopwords = [
             "direct.?store?.muxer.?lru?.ttl",
-        ],
-    ),
-    arcs_build_flag(
-        name = "nullable_value_support",
-        desc = "Support returning nullable values",
-        bug_id = "b/174115805",
-        status = "READY",
-        stopwords = [
-            "nullable.?value.?support",
-            "NullableOf",
         ],
     ),
     arcs_build_flag(
         name = "write_only_storage_stack",
         desc = "Optimized write-only storage stack.",
         bug_id = "b/181723292",
-        status = "READY",
+        status = "LAUNCHED",
         stopwords = [
             "write.?only.?storage.?stack",
             "DatabaseOp",
@@ -95,34 +76,16 @@ ARCS_BUILD_FLAGS = [
         name = "batch_container_store_ops",
         bug_id = "b/182508100",
         desc = "Batch container store ops in ref mode store for improved performance.",
-        status = "READY",
+        status = "LAUNCHED",
         stopwords = [
             "batch.?container.?store.?ops",
-        ],
-    ),
-    arcs_build_flag(
-        name = "reference_mode_store_fixes",
-        desc = "Resolve several reference mode store bugs",
-        bug_id = "b/184008372",
-        status = "READY",
-        stopwords = [
-            "reference.?mode.?store.?fixes",
-        ],
-    ),
-    arcs_build_flag(
-        name = "storage_key_reduction",
-        desc = "Reduce storage size of storage keys",
-        bug_id = "b/179216769",
-        status = "READY",
-        stopwords = [
-            "storage.?key.?reduction",
         ],
     ),
     arcs_build_flag(
         name = "transaction_free_reads",
         desc = "Remove transaction from getEntity in DatabaseImpl",
         bug_id = "b/175140645",
-        status = "READY",
+        status = "NOT_READY",
         stopwords = [
             "transaction.?free.?reads",
         ],

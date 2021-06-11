@@ -12,6 +12,7 @@ arcs_kt_jvm_test_suite(
     name = "integration",
     size = "medium",
     srcs = TEST_SRCS,
+    flaky = True,
     package = "arcs.core.entity.integration",
     deps = [
         ":lib",

@@ -151,8 +151,8 @@ class AnalyticsTest {
 
   companion object {
     val NOOP_ANALYTICS_IMPL = object : Analytics {}
-    val DB_PERSIST_KEY = DatabaseStorageKey.Persistent("unique", "abc123", "myDB")
-    val DB_MEMORY_KEY = DatabaseStorageKey.Memory("unique1", "def456", "myDB")
+    val DB_PERSIST_KEY = DatabaseStorageKey.Persistent("unique", "myDB")
+    val DB_MEMORY_KEY = DatabaseStorageKey.Memory("unique1", "myDB")
     val RAM_DISK_KEY = RamDiskStorageKey("backing")
     val VOLATILE_KEY = VolatileStorageKey("myArc".toArcId(), "unique2")
     val DUMMY_KEY = DummyStorageKey("someKey")

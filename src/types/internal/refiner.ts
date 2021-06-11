@@ -2410,7 +2410,7 @@ export class BigIntTerm {
   static fromKey(key: string): BigIntTerm {
     const data = JSON.parse(key);
     for (const [indeterminate, power] of Object.entries(data)) {
-      data[indeterminate] = BigInt(power);
+      data[indeterminate] = BigInt(power as any);
     }
     return new BigIntTerm(data);
   }

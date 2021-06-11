@@ -13,11 +13,9 @@ package arcs.core.crdt
 
 import arcs.core.util.FORBIDDEN_STRINGS
 import arcs.core.util.SAFE_CHARS
-import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,12 +26,6 @@ import org.junit.runners.JUnit4
 class VersionMapTest {
   @get:Rule
   val buildFlagsRule = BuildFlagsRule.create()
-
-  @Before
-  fun setUp() {
-    // Enable the feature by default.
-    BuildFlags.STORAGE_STRING_REDUCTION = true
-  }
 
   @Test
   fun nonExistentActor_hasDefaultVersion() {

@@ -20,19 +20,14 @@ import arcs.android.common.transaction
 import arcs.android.util.testutil.AndroidLogRule
 import arcs.core.storage.database.DatabaseConfig
 import arcs.core.storage.testutil.DummyStorageKeyManager
-import arcs.flags.testing.BuildFlagsRule
-import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.ParameterizedRobolectricTestRunner
+import org.robolectric.RobolectricTestRunner
 
-@RunWith(ParameterizedRobolectricTestRunner::class)
-class DatabaseDowngradeTest(private val parameters: ParameterizedBuildFlags) {
-
-  @get:Rule
-  val rule = BuildFlagsRule.parameterized(parameters)
+@RunWith(RobolectricTestRunner::class)
+class DatabaseDowngradeTest() {
 
   @get:Rule
   val log = AndroidLogRule()
@@ -143,15 +138,5 @@ class DatabaseDowngradeTest(private val parameters: ParameterizedBuildFlags) {
       assertThat(actualNames).doesNotContain("foos")
       assertThat(actualNames).doesNotContain("bars")
     }
-  }
-
-  private companion object {
-    @JvmStatic
-    @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-    fun params() = ParameterizedBuildFlags.of(
-      "STORAGE_STRING_REDUCTION",
-      "REFERENCE_MODE_STORE_FIXES",
-      "STORAGE_KEY_REDUCTION"
-    ).toList()
   }
 }

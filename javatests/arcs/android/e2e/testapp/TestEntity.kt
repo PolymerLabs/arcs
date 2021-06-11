@@ -67,10 +67,9 @@ class TestEntity(
     val singletonPersistentStorageKey = ReferenceModeStorageKey(
       backingKey = DatabaseStorageKey.Persistent(
         "singleton_reference",
-        schemaHash,
         "arcs_test"
       ),
-      storageKey = DatabaseStorageKey.Persistent("singleton", schemaHash, "arcs_test")
+      storageKey = DatabaseStorageKey.Persistent("singleton", "arcs_test")
     )
 
     val collectionInMemoryStorageKey = ReferenceModeStorageKey(
@@ -81,10 +80,9 @@ class TestEntity(
     val collectionPersistentStorageKey = ReferenceModeStorageKey(
       backingKey = DatabaseStorageKey.Persistent(
         "collection_reference",
-        schemaHash,
         "arcs_test"
       ),
-      storageKey = DatabaseStorageKey.Persistent("collection", schemaHash, "arcs_test")
+      storageKey = DatabaseStorageKey.Persistent("collection", "arcs_test")
     )
 
     const val text = "Test Text"

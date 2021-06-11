@@ -45,6 +45,11 @@ class ManifestProtoDecoderTest {
   }
 
   @Test
+  fun recipeManifestRoundTrip() {
+    assertThat(manifestProto.decodeRecipes().encodeManifest()).isEqualTo(manifestProto)
+  }
+
+  @Test
   fun decodesParticleSpecs() {
     assertThat(manifestProto.decodeParticleSpecs().map { it.name }).containsExactly(
       "FooParticle", "BarParticle"

@@ -95,19 +95,17 @@ class TestEntity(
     val singletonMemoryDatabaseStorageKey = ReferenceModeStorageKey(
       backingKey = DatabaseStorageKey.Memory(
         "singleton_reference",
-        schemaHash,
         "arcs_test"
       ),
-      storageKey = DatabaseStorageKey.Memory("singleton", schemaHash, "arcs_test")
+      storageKey = DatabaseStorageKey.Memory("singleton", "arcs_test")
     )
 
     val singletonPersistentStorageKey = ReferenceModeStorageKey(
       backingKey = DatabaseStorageKey.Persistent(
         "singleton_reference",
-        schemaHash,
         "arcs_test"
       ),
-      storageKey = DatabaseStorageKey.Persistent("singleton", schemaHash, "arcs_test")
+      storageKey = DatabaseStorageKey.Persistent("singleton", "arcs_test")
     )
 
     val collectionInMemoryStorageKey = ReferenceModeStorageKey(
@@ -118,30 +116,26 @@ class TestEntity(
     val collectionMemoryDatabaseStorageKey = ReferenceModeStorageKey(
       backingKey = DatabaseStorageKey.Memory(
         "collection_reference",
-        schemaHash,
         "arcs_test"
       ),
-      storageKey = DatabaseStorageKey.Memory("collection", schemaHash, "arcs_test")
+      storageKey = DatabaseStorageKey.Memory("collection", "arcs_test")
     )
 
     val collectionPersistentStorageKey = ReferenceModeStorageKey(
       backingKey = DatabaseStorageKey.Persistent(
         "collection_reference",
-        schemaHash,
         "arcs_test"
       ),
-      storageKey = DatabaseStorageKey.Persistent("collection", schemaHash, "arcs_test")
+      storageKey = DatabaseStorageKey.Persistent("collection", "arcs_test")
     )
 
     val clearEntitiesMemoryDatabaseStorageKey = ReferenceModeStorageKey(
       backingKey = DatabaseStorageKey.Memory(
         "cleared_entities_backing",
-        schemaHash,
         "arcs_test"
       ),
       storageKey = DatabaseStorageKey.Memory(
         "cleared_entities_container",
-        schemaHash,
         "arcs_test"
       )
     )
@@ -149,12 +143,10 @@ class TestEntity(
     val clearEntitiesPersistentStorageKey = ReferenceModeStorageKey(
       backingKey = DatabaseStorageKey.Persistent(
         "cleared_entities_backing",
-        schemaHash,
         "arcs_test"
       ),
       storageKey = DatabaseStorageKey.Persistent(
         "cleared_entities_container",
-        schemaHash,
         "arcs_test"
       )
     )

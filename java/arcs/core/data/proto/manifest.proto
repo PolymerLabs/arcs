@@ -89,6 +89,10 @@ message HandleConnectionSpecProto {
     READS = 1;
     WRITES = 2;
     READS_WRITES = 3;
+    QUERY = 4;
+    READS_QUERY = 5;
+    WRITES_QUERY = 6;
+    READS_WRITES_QUERY = 7;
   }
   // Identifies a connection in a particle spec.
   string name = 1;

@@ -23,10 +23,10 @@ import arcs.core.storage.database.DatabasePerformanceStatistics.Snapshot
 import arcs.core.storage.database.runOnAllDatabases
 import arcs.core.storage.database.sumOnAllDatabases
 import arcs.core.util.guardedBy
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * [DatabaseManager] implementation which constructs [DatabaseImpl] instances for use on Android
@@ -62,20 +62,16 @@ class AndroidSqliteDatabaseManager(
     val entry = registry.register(name, persistent)
     return mutex.withLock {
       dbCache[entry.name to entry.isPersistent]
-        ?: DatabaseImpl(context, storageKeyManager, name, persistent, databaseConfig::get)
-          .also {
-            dbCache[entry.name to entry.isPersistent] = it
-          }
+        ?: DatabaseImpl(context, storageKeyManager, name, persistent, databaseConfig::get).also {
+          dbCache[entry.name to entry.isPersistent] = it
+        }
     }
   }
 
-  override suspend fun snapshotStatistics(): Map<DatabaseIdentifier, Snapshot> = mutex.withLock {
-    dbCache.mapValues { it.value.snapshotStatistics() }
-  }
+  override suspend fun snapshotStatistics(): Map<DatabaseIdentifier, Snapshot> =
+    mutex.withLock { dbCache.mapValues { it.value.snapshotStatistics() } }
 
-  override suspend fun resetAll() = runOnAllDatabases { _, db ->
-    db.reset()
-  }
+  override suspend fun resetAll() = runOnAllDatabases { _, db -> db.reset() }
 
   override suspend fun removeExpiredEntities() = runOnAllDatabases { _, db ->
     if (databaseSizeTooLarge(db)) {
@@ -86,14 +82,10 @@ class AndroidSqliteDatabaseManager(
     }
   }
 
-  override suspend fun removeAllEntities() = runOnAllDatabases { _, db ->
-    db.removeAllEntities()
-  }
+  override suspend fun removeAllEntities() = runOnAllDatabases { _, db -> db.removeAllEntities() }
 
-  override suspend fun removeEntitiesCreatedBetween(
-    startTimeMillis: Long,
-    endTimeMillis: Long
-  ) = runOnAllDatabases { _, db ->
+  override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
+      runOnAllDatabases { _, db ->
     db.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
   }
 
@@ -130,6 +122,11 @@ class AndroidSqliteDatabaseManager(
       .fetchAll()
       .filter { databaseSizeTooLarge(getDatabase(it.name, it.isPersistent)) }
       .any()
+  }
+
+  fun getAllDatabaseNames(): List<String> {
+    return mutableListOf(AndroidSqliteDatabaseRegistry.MANIFEST_DATABASE_NAME) +
+      registry.fetchAll().map { it.name }
   }
 
   private suspend fun databaseSizeTooLarge(db: Database): Boolean {

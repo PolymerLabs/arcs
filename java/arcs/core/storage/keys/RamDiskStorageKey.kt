@@ -17,16 +17,12 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyFactory
 import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.StorageKeySpec
-import arcs.flags.BuildFlags
 
 /** Storage key for a piece of data managed by the ramdisk driver. */
 data class RamDiskStorageKey(private val unique: String) : StorageKey(protocol) {
   override fun toKeyString(): String = unique
 
-  override fun newKeyWithComponent(component: String): StorageKey {
-    val newComponent = if (BuildFlags.STORAGE_KEY_REDUCTION) component else "$unique/$component"
-    return RamDiskStorageKey(newComponent)
-  }
+  override fun newKeyWithComponent(component: String) = RamDiskStorageKey(component)
 
   override fun toString(): String = super.toString()
 

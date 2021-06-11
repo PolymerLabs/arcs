@@ -12,7 +12,6 @@
 package arcs.core.storage.api
 
 import arcs.core.data.CreatableStorageKey
-import arcs.core.data.SchemaRegistry
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.DriverProvider
@@ -45,7 +44,7 @@ object DriverAndKeyConfigurator {
     )
     // Only register the database driver provider if a database manager was provided.
     databaseManager?.let {
-      driverProviders += DatabaseDriverProvider.configure(it, SchemaRegistry::getSchema)
+      driverProviders += DatabaseDriverProvider.configure(it)
     }
 
     DefaultDriverFactory.update(driverProviders)

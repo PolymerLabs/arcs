@@ -385,9 +385,7 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
   }
 
   @Test
-  fun createHandle_handleName_withActor_flagFlipped() = runTest {
-    assume().that(BuildFlags.STORAGE_STRING_REDUCTION).isTrue()
-
+  fun createHandle_handleName_withActor() = runTest {
     val handle = managerImpl.createHandle(
       spec = HandleSpec(
         WRITE_ONLY_HANDLE,
@@ -399,23 +397,6 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
       actor = "b"
     )
     assertThat(handle.name).isEqualTo("b")
-  }
-
-  @Test
-  fun createHandle_handleName_withActor() = runTest {
-    assume().that(BuildFlags.STORAGE_STRING_REDUCTION).isFalse()
-
-    val handle = managerImpl.createHandle(
-      spec = HandleSpec(
-        WRITE_ONLY_HANDLE,
-        HandleMode.Write,
-        SINGLETON_TYPE,
-        Person
-      ),
-      storageKey = STORAGE_KEY,
-      actor = "b"
-    )
-    assertThat(handle.name.toId().idTree).contains(WRITE_ONLY_HANDLE + "1")
   }
 
   @Test
@@ -434,8 +415,6 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
 
   @Test
   fun createHandle_handleName_withPipeInActor_Fails() = runTest {
-    assume().that(BuildFlags.STORAGE_STRING_REDUCTION).isTrue()
-
     val e = assertFailsWith<IllegalArgumentException> {
       managerImpl.createHandle(
         spec = HandleSpec(
@@ -455,8 +434,6 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
 
   @Test
   fun createHandle_handleName_withSemiColonInActor_Fails() = runTest {
-    assume().that(BuildFlags.STORAGE_STRING_REDUCTION).isTrue()
-
     val e = assertFailsWith<IllegalArgumentException> {
       managerImpl.createHandle(
         spec = HandleSpec(
@@ -503,7 +480,6 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
     @get:JvmStatic
     @get:Parameterized.Parameters(name = "{0}")
     val PARAMETERS = ParameterizedBuildFlags.of(
-      "STORAGE_STRING_REDUCTION",
       "WRITE_ONLY_STORAGE_STACK"
     )
 

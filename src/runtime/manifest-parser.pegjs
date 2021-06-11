@@ -1692,9 +1692,6 @@ SchemaType
     const schema = toAstNode<AstNode.SchemaType>({...type, refinement, annotations: annotations || []});
 
     if (!!isNullable) {
-      if (!Flags.supportNullables) {
-        error('nullable types are unsupported (see Flags.supportNullables)');
-      }
       return toAstNode<AstNode.SchemaNullableType>({
         kind: AstNode.SchemaFieldKind.Nullable,
         schema,

@@ -21,3 +21,12 @@ fun ManifestProto.decodeRecipes(): List<Recipe> {
 
 /** Extracts [ParticleSpec]s from the [ManifestProto]. */
 fun ManifestProto.decodeParticleSpecs() = particleSpecsList.map { it.decode() }
+
+/** Convert a series of [Recipe]s into a [ManifestProto]. */
+fun Collection<Recipe>.encodeManifest(): ManifestProto = ManifestProto.newBuilder()
+  .addAllParticleSpecs(
+    this.flatMap { it.particles.map { particle -> particle.spec } }
+      .map { it.encode() }
+  )
+  .addAllRecipes(this.map { it.encode() })
+  .build()

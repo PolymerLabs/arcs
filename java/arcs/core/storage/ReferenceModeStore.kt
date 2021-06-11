@@ -29,7 +29,6 @@ import arcs.core.data.RawEntity
 import arcs.core.data.ReferenceType
 import arcs.core.data.SingletonType
 import arcs.core.data.util.ReferencableList
-import arcs.core.storage.referencemode.BridgingOperation
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
@@ -48,7 +47,6 @@ import arcs.core.util.Result
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
 import arcs.core.util.computeNotNull
-import arcs.core.util.nextSafeRandomLong
 import arcs.core.util.nextVersionMapSafeString
 import arcs.flags.BuildFlags
 import kotlin.properties.Delegates
@@ -145,11 +143,7 @@ class ReferenceModeStore private constructor(
    * needs to synthesize updates. This key is used as the unique write key and
    * [arcs.core.crdt.internal.Actor] for those updates.
    */
-  /* internal */ val crdtKey = if (!BuildFlags.STORAGE_STRING_REDUCTION) {
-    Random.nextSafeRandomLong().toString()
-  } else {
-    Random.nextVersionMapSafeString(10)
-  }
+  /* internal */ val crdtKey = Random.nextVersionMapSafeString(10)
 
   /**
    * The [versions] map transitively tracks the maximum write version for each contained entity's
@@ -253,14 +247,8 @@ class ReferenceModeStore private constructor(
     log.verbose { "handleProxyMessage: $proxyMessage" }
     suspend fun itemVersionGetter(item: RawEntity): VersionMap {
       val localBackingVersion = getLocalData(item.id).versionMap
-      if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
-        check(localBackingVersion.isNotEmpty()) { "Local backing version map is empty." }
-        return localBackingVersion
-      } else {
-        if (localBackingVersion.isNotEmpty()) return localBackingVersion
-        updateBackingStore(item)
-        return requireNotNull(getLocalData(item.id)).versionMap
-      }
+      check(localBackingVersion.isNotEmpty()) { "Local backing version map is empty." }
+      return localBackingVersion
     }
 
     when (proxyMessage) {
@@ -268,46 +256,18 @@ class ReferenceModeStore private constructor(
         val containerOps = mutableListOf<CrdtOperation>()
         val upstreamOps = mutableListOf<RefModeStoreOp>()
 
-        // Update the backing store (if REFERENCE_MODE_STORE_FIXES flag is on).
-        if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
-          proxyMessage.operations.forEach { op ->
-            handleOpForBackingStore(op)
-          }
+        // Update the backing store
+        proxyMessage.operations.forEach { op ->
+          handleOpForBackingStore(op)
         }
 
         // Create bridging operations.
-        val ops = if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
-          proxyMessage.operations.toBridgingOps(
-            backingStore.storageKey,
-            ::itemVersionGetter
-          )
-        } else {
-          proxyMessage.operations.toBridgingOps(
-            backingStore.storageKey
-          )
-        }
+        val ops = proxyMessage.operations.toBridgingOps(
+          backingStore.storageKey,
+          ::itemVersionGetter
+        )
 
         ops.forEach { op ->
-          // Update the backing store (if REFERENCE_MODE_STORE_FIXES flag is off).
-          if (!BuildFlags.REFERENCE_MODE_STORE_FIXES) {
-            when (op) {
-              is BridgingOperation.UpdateSingleton,
-              is BridgingOperation.ClearSingleton -> {
-                // Free up the memory used by the previous instance (for a Singleton,
-                // there would be only one instance).
-                backingStore.clearStoresCache()
-                op.entityValue?.let { updateBackingStore(it) }
-              }
-
-              is BridgingOperation.AddToSet ->
-                op.entityValue?.let { updateBackingStore(it) }
-
-              is BridgingOperation.RemoveFromSet -> clearEntityInBackingStore(op.referenceId)
-
-              is BridgingOperation.ClearSet -> clearAllEntitiesInBackingStore()
-            }
-          }
-
           // Update container store and other clients.
           if (BuildFlags.BATCH_CONTAINER_STORE_OPS) {
             containerOps.add(op.containerOp)
@@ -340,10 +300,8 @@ class ReferenceModeStore private constructor(
         }
       }
       is ProxyMessage.ModelUpdate -> {
-        // Update the backing store (if REFERENCE_MODE_STORE_FIXES flag is on).
-        if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
-          handleModelForBackingStore(proxyMessage.model)
-        }
+        // Update the backing store
+        handleModelForBackingStore(proxyMessage.model)
 
         // Create bridging data.
         val newModelsResult = proxyMessage.model.toBridgingData(
@@ -353,11 +311,6 @@ class ReferenceModeStore private constructor(
 
         when (newModelsResult) {
           is Result.Ok -> {
-            // Update the backing store (if REFERENCE_MODE_STORE_FIXES flag is off).
-            if (!BuildFlags.REFERENCE_MODE_STORE_FIXES) {
-              newModelsResult.value.backingModels.forEach { updateBackingStore(it) }
-            }
-
             // Update container store and other clients.
             containerStore.onProxyMessage(
               ProxyMessage.ModelUpdate(
@@ -667,18 +620,10 @@ class ReferenceModeStore private constructor(
 
         val backingModel = getLocalData(refId)
 
-        if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
-          // if the backing store version is not newer than the version that was requested, consider
-          // it pending.
-          if (backingModel.versionMap doesNotDominate version) {
-            pendingIds += RawReference(refId, backingStore.storageKey, version)
-          }
-        } else {
-          // If the version that was requested is newer than what the backing store has,
-          // consider it pending.
-          if (version dominates backingModel.versionMap) {
-            pendingIds += RawReference(refId, backingStore.storageKey, version)
-          }
+        // if the backing store version is not newer than the version that was requested, consider
+        // it pending.
+        if (backingModel.versionMap doesNotDominate version) {
+          pendingIds += RawReference(refId, backingStore.storageKey, version)
         }
       }
     }

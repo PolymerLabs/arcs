@@ -17,6 +17,7 @@ arcs_kt_jvm_test_suite(
         ["*.kt"],
         exclude = PERFORMANCE_SRCS,
     ),
+    flaky = True,
     package = "arcs.core.util",
     deps = [
         "//java/arcs/core/testutil",

@@ -1,7 +1,5 @@
 package arcs.core.storage
 
-import arcs.flags.BuildFlags
-
 /** Implementation of [StorageKeyManager] that allows adding new parsers and resetting. */
 open class StorageKeyManagerImpl(
   vararg initialSet: StorageKeyParser<*>
@@ -11,10 +9,8 @@ open class StorageKeyManagerImpl(
 
   override fun parse(rawKeyString: String): StorageKey {
     var match: MatchResult? = null
-    if (BuildFlags.STORAGE_KEY_REDUCTION) {
-      // Try matching the short-form protocol first.
-      match = SHORT_PROTOCOL_PATTERN.matchEntire(rawKeyString)
-    }
+    // Try matching the short-form protocol first.
+    match = SHORT_PROTOCOL_PATTERN.matchEntire(rawKeyString)
     if (match == null) {
       // Fall back to the long-form protocol.
       match = requireNotNull(LONG_PROTOCOL_PATTERN.matchEntire(rawKeyString)) {

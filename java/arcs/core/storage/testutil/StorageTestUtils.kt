@@ -18,6 +18,7 @@ import arcs.core.entity.Handle
 import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -29,11 +30,15 @@ import kotlinx.coroutines.withContext
  * Returns when the given storage key has been updated in storage.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-suspend fun waitForKey(storageKey: StorageKey, type: EntityType) {
+suspend fun waitForKey(
+  storageKey: StorageKey,
+  type: EntityType,
+  dataClass: KClass<*> = CrdtEntity.Data::class
+) {
   // Data could be already there (or not) by the time we register the receiver, registerReceiver
   // will call back with the data in any case.
   withContext(CoroutineScope(Dispatchers.Default).coroutineContext) {
-    val driver = DefaultDriverFactory.get().getDriver(storageKey, CrdtEntity.Data::class, type)!!
+    val driver = DefaultDriverFactory.get().getDriver(storageKey, dataClass, type)!!
     suspendCancellableCoroutine<Unit> { continuation ->
       launch {
         driver.registerReceiver { _, _ ->
@@ -60,5 +65,5 @@ suspend fun waitForEntity(handle: Handle, entity: Entity, type: EntityType) {
     (handle.getProxy().storageKey as ReferenceModeStorageKey).backingKey.newKeyWithComponent(
       entityId
     )
-  waitForKey(entityKey, type)
+  waitForKey(entityKey, type, CrdtEntity.Data::class)
 }

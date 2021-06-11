@@ -289,8 +289,8 @@ class CapabilitiesResolverTest {
     ) {
       override fun create(options: StorageKeyOptions): StorageKey {
         return if (options is StorageKeyFactory.ContainerStorageKeyOptions) {
-          DatabaseStorageKey.Persistent(options.location, options.entitySchema.hash)
-        } else DatabaseStorageKey.Memory(options.location, options.entitySchema.hash)
+          DatabaseStorageKey.Persistent(options.location)
+        } else DatabaseStorageKey.Memory(options.location)
       }
     }
   }

@@ -15,7 +15,6 @@ arcs_kt_jvm_test_suite(
     name = "host",
     size = "large",
     srcs = glob(["*Test.kt"]),
-    # TODO(b/157513871): Deflake this test suite.
     flaky = True,
     package = "arcs.core.host",
     deps = [

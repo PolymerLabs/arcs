@@ -38,15 +38,13 @@ import org.junit.runners.Parameterized
 @RunWith(Parameterized::class)
 class ReferenceModeStoreTest(
   private val parameters: ParameterizedBuildFlags
-) : ReferenceModeStoreTestBase(parameters) {
+) : ReferenceModeStoreTestBase() {
 
   companion object {
     @get:JvmStatic
     @get:Parameterized.Parameters(name = "{0}")
     val PARAMETERS = ParameterizedBuildFlags.of(
-      "STORAGE_STRING_REDUCTION",
-      "BATCH_CONTAINER_STORE_OPS",
-      "REFERENCE_MODE_STORE_FIXES"
+      "BATCH_CONTAINER_STORE_OPS"
     )
   }
 

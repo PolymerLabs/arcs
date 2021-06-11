@@ -32,7 +32,7 @@ class HandlesTest(val param: Params) : CoreHandlesTestBase(param.baseParams) {
 
   protected override fun createStorageKey(unique: String, hash: String): StorageKey {
     return if (param.isDatabase) {
-      DatabaseStorageKey.Persistent(unique, hash)
+      DatabaseStorageKey.Persistent(unique)
     } else super.createStorageKey(unique, hash)
   }
 
@@ -44,7 +44,7 @@ class HandlesTest(val param: Params) : CoreHandlesTestBase(param.baseParams) {
     app = ApplicationProvider.getApplicationContext()
 
     val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-    DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
+    DatabaseDriverProvider.configure(dbFactory)
 
     // Initialize WorkManager for instrumentation tests.
     WorkManagerTestInitHelper.initializeTestWorkManager(app)

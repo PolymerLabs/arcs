@@ -176,8 +176,8 @@ class UtilsTest(private val params: Params) {
     Plan.Handle(
       if (!db) RamDiskStorageKey(key)
       else ReferenceModeStorageKey(
-        backingKey = DatabaseStorageKey.Persistent("backing$key", "1234a", dbName = "test"),
-        storageKey = DatabaseStorageKey.Persistent("entity$key", "1234a", dbName = "test")
+        backingKey = DatabaseStorageKey.Persistent("backing$key", dbName = "test"),
+        storageKey = DatabaseStorageKey.Persistent("entity$key", dbName = "test")
       ),
       type,
       emptyList()

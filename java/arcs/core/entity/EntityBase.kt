@@ -30,7 +30,6 @@ import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
 import arcs.core.util.Time
-import arcs.flags.BuildFlags
 import kotlin.reflect.KProperty
 
 /**
@@ -351,11 +350,7 @@ open class EntityBase(
   }
 
   private fun getEntityId(idGenerator: Id.Generator, handleName: String): String =
-    if (BuildFlags.STORAGE_STRING_REDUCTION) {
-      idGenerator.newMinimizedId()
-    } else {
-      idGenerator.newChildId(Id.fromString(handleName)).toString()
-    }
+    idGenerator.newMinimizedId()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

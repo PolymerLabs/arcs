@@ -22,7 +22,6 @@ import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
-import arcs.core.data.SchemaRegistry
 import arcs.core.entity.testutil.FixtureEntities
 import arcs.core.entity.testutil.FixtureEntity
 import arcs.core.storage.ActiveStore
@@ -80,7 +79,7 @@ class WriteOnlyStoreDatabaseImplIntegrationTest {
     BuildFlags.WRITE_ONLY_STORAGE_STACK = true
     StorageKeyManager.GLOBAL_INSTANCE.reset(DatabaseStorageKey.Persistent)
     databaseManager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-    DatabaseDriverProvider.configure(databaseManager, SchemaRegistry::getSchema)
+    DatabaseDriverProvider.configure(databaseManager)
     driverFactory = FixedDriverFactory(DatabaseDriverProvider)
   }
 
@@ -200,12 +199,12 @@ class WriteOnlyStoreDatabaseImplIntegrationTest {
     private const val ID = "ID"
     private val HASH = FixtureEntity.SCHEMA.hash
     private val TEST_KEY = ReferenceModeStorageKey(
-      DatabaseStorageKey.Persistent("entities", HASH),
-      DatabaseStorageKey.Persistent("set", HASH)
+      DatabaseStorageKey.Persistent("entities"),
+      DatabaseStorageKey.Persistent("set")
     )
     private val TEST_KEY_2 = ReferenceModeStorageKey(
-      DatabaseStorageKey.Persistent("entities2", HASH),
-      DatabaseStorageKey.Persistent("set2", HASH)
+      DatabaseStorageKey.Persistent("entities2"),
+      DatabaseStorageKey.Persistent("set2")
     )
   }
 }

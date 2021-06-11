@@ -1080,7 +1080,6 @@ class StorageCore(val context: Context) {
   private inner class StorageKeyGenerator(val settings: Settings) {
     val key: ReferenceModeStorageKey
       get() = keys.next()
-    private val entitySchemaHash = "arcsscra"
     private val seqNo = atomic(0)
     private val keys = sequence {
       while (true) {
@@ -1095,12 +1094,10 @@ class StorageCore(val context: Context) {
                     ReferenceModeStorageKey(
                       backingKey = DatabaseStorageKey.Persistent(
                         "singleton${id}_reference",
-                        entitySchemaHash,
                         "arcs_test"
                       ),
                       storageKey = DatabaseStorageKey.Persistent(
                         "singleton$id",
-                        entitySchemaHash,
                         "arcs_test"
                       )
                     )
@@ -1121,12 +1118,10 @@ class StorageCore(val context: Context) {
                     ReferenceModeStorageKey(
                       backingKey = DatabaseStorageKey.Persistent(
                         "collection${id}_reference",
-                        entitySchemaHash,
                         "arcs_test"
                       ),
                       storageKey = DatabaseStorageKey.Persistent(
                         "collection$id",
-                        entitySchemaHash,
                         "arcs_test"
                       )
                     )

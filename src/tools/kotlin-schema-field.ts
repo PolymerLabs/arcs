@@ -8,9 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {SchemaNode} from './schema2graph.js';
 import {Dictionary} from '../utils/lib-utils.js';
-import {Flags} from '../runtime/flags.js';
+import {SchemaNode} from './schema2graph';
 
 /** Generates KotlinSchemaFields for a given SchemaNode */
 export function generateFields(node: SchemaNode): KotlinSchemaField[] {
@@ -170,12 +169,9 @@ class NullableType extends TypeContainer {
 
   constructor(innerType: SchemaFieldType) {
     super(innerType);
-    if (!Flags.supportNullables) {
-      throw new Error(`nullable types are unsupported (see Flags.supportNullables)`);
-    }
   }
 
-  getKotlinType(_contained: boolean) {
+  getKotlinType(contained: boolean) {
     return `${this.innerKotlinType}?`;
   }
 
@@ -233,7 +229,6 @@ class InlineSchema extends SchemaType {
 
 /* An primitive type, e.g. Number, Char, Boolean, URL, BigInt */
 class PrimitiveType extends SchemaFieldType {
-
   constructor(readonly _arcsTypeName: string) {
     super();
     if (!primitiveTypeMap[this.arcsTypeName]) throw new Error(`Invalid Primitive Type "${this.arcsTypeName}".`);

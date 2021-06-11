@@ -59,8 +59,8 @@ class StoreWriteBackTest {
 
   private var hash = "123456abcdef"
   private var testKey = ReferenceModeStorageKey(
-    Persistent("entities", hash),
-    Persistent("set", hash)
+    Persistent("entities"),
+    Persistent("set")
   )
   private var schema = Schema(
     setOf(SchemaName("person")),
@@ -84,7 +84,7 @@ class StoreWriteBackTest {
   @Before
   fun setUp() {
     databaseFactory = FakeDatabaseManager()
-    DatabaseDriverProvider.configure(databaseFactory) { schema }
+    DatabaseDriverProvider.configure(databaseFactory)
     random = Random(System.currentTimeMillis())
 
     writeBack = StoreWriteBack(
