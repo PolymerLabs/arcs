@@ -26,15 +26,12 @@ java_binary(
     runtime_deps = [":decode_version_map_lib"],
 )
 
-# We use `java_test` and not `java_binary` as `run_dfa` requires testonly targets.
-# This would still create a java binary.
 java_binary(
     name = "run_dfa",
     testonly = True,
     main_class = "arcs.tools.RunDFAMainKt",
     runtime_deps = [
         ":run_dfa_main_lib",
-        "//java/arcs/flags:unit_test_build_flags",
     ],
 )
 
