@@ -1,7 +1,6 @@
 load(
     "//third_party/java/arcs/build_defs:native.oss.bzl",
     "java_binary",
-    "java_test",
 )
 load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
 
@@ -29,10 +28,14 @@ java_binary(
 
 # We use `java_test` and not `java_binary` as `run_dfa` requires testonly targets.
 # This would still create a java binary.
-java_test(
+java_binary(
     name = "run_dfa",
+    testonly = True,
     main_class = "arcs.tools.RunDFAMainKt",
-    runtime_deps = [":run_dfa_main_lib"],
+    runtime_deps = [
+        ":run_dfa_main_lib",
+        "//java/arcs/flags:unit_test_build_flags",
+    ],
 )
 
 kt_jvm_library(
@@ -45,6 +48,7 @@ kt_jvm_library(
         "//java/arcs/core/data/proto:manifest_java_proto",
         "//java/arcs/core/data/proto:proto_for_test",
         "//third_party/java/arcs/deps:protobuf_java",
+        "//third_party/kotlin/clikt",
     ],
 )
 
