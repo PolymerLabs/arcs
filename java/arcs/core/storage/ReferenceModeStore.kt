@@ -48,7 +48,6 @@ import arcs.core.util.TaggedLog
 import arcs.core.util.Time
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextVersionMapSafeString
-import arcs.flags.BuildFlags
 import kotlin.properties.Delegates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -269,33 +268,17 @@ class ReferenceModeStore private constructor(
 
         ops.forEach { op ->
           // Update container store and other clients.
-          if (BuildFlags.BATCH_CONTAINER_STORE_OPS) {
-            containerOps.add(op.containerOp)
-            upstreamOps.add(op.refModeOp)
-          } else {
-            containerStore.onProxyMessage(
-              ProxyMessage.Operations(listOf(op.containerOp), containerStoreId)
-            )
-            sendQueue.enqueue {
-              val upstream = listOf(op.refModeOp)
-              callbacks.allCallbacksExcept(proxyMessage.id).forEach { callback ->
-                callback(
-                  ProxyMessage.Operations(upstream, id = proxyMessage.id)
-                )
-              }
-            }
-          }
+          containerOps.add(op.containerOp)
+          upstreamOps.add(op.refModeOp)
         }
-        if (BuildFlags.BATCH_CONTAINER_STORE_OPS) {
-          containerStore.onProxyMessage(
-            ProxyMessage.Operations(containerOps, containerStoreId)
-          )
-          sendQueue.enqueue {
-            callbacks.allCallbacksExcept(proxyMessage.id).forEach { callback ->
-              callback(
-                ProxyMessage.Operations(upstreamOps, id = proxyMessage.id)
-              )
-            }
+        containerStore.onProxyMessage(
+          ProxyMessage.Operations(containerOps, containerStoreId)
+        )
+        sendQueue.enqueue {
+          callbacks.allCallbacksExcept(proxyMessage.id).forEach { callback ->
+            callback(
+              ProxyMessage.Operations(upstreamOps, id = proxyMessage.id)
+            )
           }
         }
       }

@@ -73,15 +73,6 @@ ARCS_BUILD_FLAGS = [
         ],
     ),
     arcs_build_flag(
-        name = "batch_container_store_ops",
-        bug_id = "b/182508100",
-        desc = "Batch container store ops in ref mode store for improved performance.",
-        status = "LAUNCHED",
-        stopwords = [
-            "batch.?container.?store.?ops",
-        ],
-    ),
-    arcs_build_flag(
         name = "transaction_free_reads",
         desc = "Remove transaction from getEntity in DatabaseImpl",
         bug_id = "b/175140645",

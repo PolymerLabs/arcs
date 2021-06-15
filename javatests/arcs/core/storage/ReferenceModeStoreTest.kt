@@ -15,14 +15,12 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
-import arcs.core.data.testutil.RawEntitySubject.Companion.assertThat
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.FakeDriver
 import arcs.core.storage.testutil.FakeDriverVendor
 import arcs.core.storage.testutil.ReferenceModeStoreTestBase
 import arcs.core.storage.testutil.getStoredDataForTesting
-import arcs.flags.testing.ParameterizedBuildFlags
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -30,23 +28,13 @@ import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.runners.JUnit4
 
 /** Tests for the [ReferenceModeStore]. */
 @Suppress("UNCHECKED_CAST")
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(Parameterized::class)
-class ReferenceModeStoreTest(
-  private val parameters: ParameterizedBuildFlags
-) : ReferenceModeStoreTestBase() {
-
-  companion object {
-    @get:JvmStatic
-    @get:Parameterized.Parameters(name = "{0}")
-    val PARAMETERS = ParameterizedBuildFlags.of(
-      "BATCH_CONTAINER_STORE_OPS"
-    )
-  }
+@RunWith(JUnit4::class)
+class ReferenceModeStoreTest : ReferenceModeStoreTestBase() {
 
   override val TEST_KEY = ReferenceModeStorageKey(
     MockHierarchicalStorageKey(),
