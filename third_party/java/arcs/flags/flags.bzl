@@ -54,15 +54,6 @@ ARCS_BUILD_FLAGS = [
         ],
     ),
     arcs_build_flag(
-        name = "direct_store_muxer_lru_ttl",
-        desc = "Expire stores in the muxer cache after a ttl",
-        bug_id = "b/179046054",
-        status = "LAUNCHED",
-        stopwords = [
-            "direct.?store?.muxer.?lru?.ttl",
-        ],
-    ),
-    arcs_build_flag(
         name = "write_only_storage_stack",
         desc = "Optimized write-only storage stack.",
         bug_id = "b/181723292",

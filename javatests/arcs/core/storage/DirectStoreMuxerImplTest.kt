@@ -28,9 +28,6 @@ import arcs.core.storage.testutil.MockDriverProvider
 import arcs.core.storage.testutil.testDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.Time
-import arcs.flags.BuildFlags
-import arcs.flags.testing.BuildFlagsRule
-import arcs.flags.testing.ParameterizedBuildFlags
 import arcs.jvm.util.JvmTime
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
@@ -42,19 +39,16 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.runners.JUnit4
 
-@RunWith(Parameterized::class)
+@RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-class DirectStoreMuxerImplTest(parameters: ParameterizedBuildFlags) {
+class DirectStoreMuxerImplTest() {
 
   private val entityCrdtA = createPersonEntityCrdt("bob", 42)
   private val entityCrdtB = createPersonEntityCrdt("alice", 10)
-
-  @get:Rule val rule = BuildFlagsRule.parameterized(parameters)
 
   @Before
   fun setup() = runBlockingTest {
@@ -228,15 +222,9 @@ class DirectStoreMuxerImplTest(parameters: ParameterizedBuildFlags) {
     // Force a cache fetch.
     directStoreMuxer.getStore(MUX_ID_A, callbackToken1).store
 
-    if (BuildFlags.DIRECT_STORE_MUXER_LRU_TTL) {
-      // Check that the stores have successfully closed.
-      assertThat(storeA.closed).isTrue()
-      assertThat(storeB.closed).isTrue()
-    } else {
-      // Old behavior, will still be open.
-      assertThat(storeA.closed).isFalse()
-      assertThat(storeB.closed).isFalse()
-    }
+    // Check that the stores have successfully closed.
+    assertThat(storeA.closed).isTrue()
+    assertThat(storeB.closed).isTrue()
   }
 
   @Test
@@ -409,11 +397,5 @@ class DirectStoreMuxerImplTest(parameters: ParameterizedBuildFlags) {
     )
     private const val MUX_ID_A = "a"
     private const val MUX_ID_B = "b"
-
-    @get:JvmStatic
-    @get:Parameterized.Parameters(name = "{0}")
-    val PARAMETERS = ParameterizedBuildFlags.of(
-      "DIRECT_STORE_MUXER_LRU_TTL"
-    )
   }
 }

@@ -10,7 +10,6 @@ import arcs.core.util.MutableBiMap
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
-import arcs.flags.BuildFlags
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -43,17 +42,9 @@ class DirectStoreMuxerImpl<Data : CrdtData, Op : CrdtOperation, T>(
     Random
   )
 
-  private fun ttlConfig(): TtlConfig {
-    return if (BuildFlags.DIRECT_STORE_MUXER_LRU_TTL) {
-      TtlConfig(ttlMilliseconds = DEFAULT_LRU_TTL_MILLIS, time::currentTimeMillis)
-    } else {
-      TtlConfig()
-    }
-  }
-
   override val stores = LruCacheMap<String, DirectStoreMuxer.StoreRecord<Data, Op, T>>(
     50,
-    ttlConfig = ttlConfig(),
+    ttlConfig = TtlConfig(ttlMilliseconds = DEFAULT_LRU_TTL_MILLIS, time::currentTimeMillis),
     livenessPredicate = { _, sr -> !sr.store.closed }
   ) { muxId, sr -> closeStore(muxId, sr) }
 
