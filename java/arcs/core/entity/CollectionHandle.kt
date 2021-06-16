@@ -14,8 +14,6 @@ import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSet
 import arcs.core.data.RawEntity
 import arcs.core.storage.StorageProxy
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 import kotlinx.coroutines.Job
 
 typealias CollectionProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
@@ -86,9 +84,6 @@ class CollectionHandle<E : I, I : Storable, R : Referencable>(
 
   // region implement RemoveQueryCollectionHandle<I, Any>
   override fun removeByQuery(args: Any): Job {
-    if (!BuildFlags.REMOVE_BY_QUERY_HANDLE) {
-      throw BuildFlagDisabledError("REMOVE_BY_QUERY_HANDLE")
-    }
     return checkPreconditions {
       val ops = queryResults(args).map { removeOp(it.id) }
       storageProxy.applyOps(ops)

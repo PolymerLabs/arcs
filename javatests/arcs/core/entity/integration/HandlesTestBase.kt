@@ -66,8 +66,6 @@ import arcs.core.testutil.handles.dispatchSize
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.ArcsStrictMode
 import arcs.core.util.testutil.LogRule
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
@@ -186,8 +184,6 @@ open class HandlesTestBase(val params: Params) {
     fakeTime = FakeTime(-1)
     DriverAndKeyConfigurator.configure(null)
     RamDisk.clear()
-    // Enable removeByQuery by default.
-    BuildFlags.REMOVE_BY_QUERY_HANDLE = true
   }
 
   protected open fun initStorageEndpointManager(): StorageEndpointManager {
@@ -695,14 +691,6 @@ open class HandlesTestBase(val params: Params) {
     handle.dispatchRemoveByQuery("two")
 
     assertThat(handle.dispatchFetchAll()).isEmpty()
-  }
-
-  @Test
-  fun removeByQueryDisabled_throwsException() = testRunner {
-    BuildFlags.REMOVE_BY_QUERY_HANDLE = false
-    val handle = writeHandleManagerImpl.createCollectionHandle(entitySpec = TestParticle_Entities)
-
-    assertFailsWith<BuildFlagDisabledError> { handle.dispatchRemoveByQuery("two") }
   }
 
   @Test

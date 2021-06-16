@@ -24,8 +24,6 @@ import arcs.core.storage.StorageProxy.CallbackIdentifier
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
@@ -378,17 +376,7 @@ class CollectionHandleTest {
   }
 
   @Test
-  fun removeByQuery_disabledByFlag_throwsException() {
-    BuildFlags.REMOVE_BY_QUERY_HANDLE = false
-    val handle = createHandle<RawEntity>()
-    handle.close()
-
-    assertFailsWith<BuildFlagDisabledError> { handle.removeByQuery("test") }
-  }
-
-  @Test
   fun removeByQuery_closed_throwsException() {
-    BuildFlags.REMOVE_BY_QUERY_HANDLE = true
     val handle = createHandle<RawEntity>()
     handle.close()
 
@@ -397,7 +385,6 @@ class CollectionHandleTest {
 
   @Test
   fun removeByQuery_noCorrespondingEntities_applyEmptyOps() {
-    BuildFlags.REMOVE_BY_QUERY_HANDLE = true
     val proxy = mockCollectionStorageProxy()
     whenever(proxy.getParticleViewUnsafe()).thenReturn(
       setOf(
@@ -417,7 +404,6 @@ class CollectionHandleTest {
 
   @Test
   fun removeByQuery_success_storageProxyApplyOps() {
-    BuildFlags.REMOVE_BY_QUERY_HANDLE = true
     val proxy = mockCollectionStorageProxy()
     whenever(proxy.getParticleViewUnsafe()).thenReturn(
       setOf(

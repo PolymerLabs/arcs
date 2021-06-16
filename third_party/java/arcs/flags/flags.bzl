@@ -35,16 +35,6 @@ ARCS_BUILD_FLAGS = [
         ],
     ),
     arcs_build_flag(
-        name = "remove_by_query_handle",
-        desc = "Enable the removeByQuery methods on Handles.",
-        bug_id = "b/169727261",
-        status = "LAUNCHED",
-        stopwords = [
-            "remove.?by.?query",
-            "remove.?query.?collection.?handle",
-        ],
-    ),
-    arcs_build_flag(
         name = "storage_service_ng",
         desc = "Storage service migration to use storage channel",
         bug_id = "b/174199081",
