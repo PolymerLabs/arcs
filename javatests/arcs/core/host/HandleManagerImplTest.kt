@@ -55,13 +55,9 @@ import arcs.core.testutil.runTest
 import arcs.core.type.Type
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
-import arcs.flags.BuildFlags
-import arcs.flags.testing.BuildFlagsRule
-import arcs.flags.testing.ParameterizedBuildFlags
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.ReadWriteCollectionHandle
 import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.TruthJUnit.assume
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -71,14 +67,12 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.runners.JUnit4
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Suppress("UNCHECKED_CAST")
-@RunWith(Parameterized::class)
-class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
-
-  @get:Rule val rule = BuildFlagsRule.parameterized(parameters)
+@RunWith(JUnit4::class)
+class HandleManagerImplTest() {
 
   @get:Rule
   val log = LogRule()
@@ -144,7 +138,6 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
 
   @Test
   fun singletonHandle_withWriteOnlyStack_throwsIfRead() = runTest {
-    assume().that(BuildFlags.WRITE_ONLY_STORAGE_STACK).isTrue()
     assertFailsWith<IllegalArgumentException> {
       managerImpl.createHandle(
         HandleSpec(
@@ -174,7 +167,6 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
 
   @Test
   fun collectionHandle_withWriteOnlyStack_throwsIfRead() = runTest {
-    assume().that(BuildFlags.WRITE_ONLY_STORAGE_STACK).isTrue()
     assertFailsWith<IllegalArgumentException> {
       managerImpl.createHandle(
         HandleSpec(
@@ -269,7 +261,6 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
 
   @Test
   fun collectionHandle_canCreateWriteOnlyStorageProxy() = runTest {
-    assume().that(BuildFlags.WRITE_ONLY_STORAGE_STACK).isTrue()
 
     val fakeEndpointManager = object : StorageEndpointManager {
       override suspend fun <Data : CrdtData, Op : CrdtOperation, T> get(
@@ -477,12 +468,6 @@ class HandleManagerImplTest(private val parameters: ParameterizedBuildFlags) {
   }
 
   private companion object {
-    @get:JvmStatic
-    @get:Parameterized.Parameters(name = "{0}")
-    val PARAMETERS = ParameterizedBuildFlags.of(
-      "WRITE_ONLY_STORAGE_STACK"
-    )
-
     private const val READ_ONLY_HANDLE = "readOnlyHandle"
     private const val WRITE_ONLY_HANDLE = "writeOnlyHandle"
 

@@ -24,7 +24,6 @@ import arcs.core.storage.database.DatabaseConfig
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.DummyStorageKeyManager
 import arcs.core.testutil.runFuzzTest
-import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import org.junit.After
 import org.junit.Before
@@ -45,7 +44,6 @@ class DatabaseImplFuzzTest {
 
   @Before
   fun setUp() {
-    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
     database = DatabaseImpl(
       ApplicationProvider.getApplicationContext(),
       DummyStorageKeyManager(),

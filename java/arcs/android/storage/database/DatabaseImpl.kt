@@ -70,7 +70,6 @@ import arcs.core.util.nextVersionMapSafeString
 import arcs.core.util.performance.Counters
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
-import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import arcs.jvm.util.JvmTime
 import kotlin.coroutines.coroutineContext
@@ -619,9 +618,6 @@ class DatabaseImpl(
     op: DatabaseOp.AddToCollection,
     counters: Counters
   ) = writableDatabase.transaction {
-    if (!BuildFlags.WRITE_ONLY_STORAGE_STACK) {
-      throw BuildFlagDisabledError("WRITE_ONLY_STORAGE_STACK")
-    }
     // Retrieve existing metadata for this storage key if it exists, otherwise create an empty
     // collection.
     val metadata = getOrCreateCollectionMetadata(
@@ -667,9 +663,6 @@ class DatabaseImpl(
    * collection. If the collection does not exist or is empty, this is a no-op.
    */
   private suspend fun clearCollection(storageKey: StorageKey, clientId: Int?) {
-    if (!BuildFlags.WRITE_ONLY_STORAGE_STACK) {
-      throw BuildFlagDisabledError("WRITE_ONLY_STORAGE_STACK")
-    }
     writableDatabase.transaction {
       // Load collection id. If the collection cannot be found, return.
       val collectionId =
@@ -705,9 +698,6 @@ class DatabaseImpl(
    * this is a no-op.
    */
   private suspend fun removeFromCollection(storageKey: StorageKey, id: String, clientId: Int?) {
-    if (!BuildFlags.WRITE_ONLY_STORAGE_STACK) {
-      throw BuildFlagDisabledError("WRITE_ONLY_STORAGE_STACK")
-    }
     writableDatabase.transaction {
       // Load collection id. If the collection cannot be found, return.
       val collectionId =
@@ -750,9 +740,6 @@ class DatabaseImpl(
   }
 
   override suspend fun applyOp(storageKey: StorageKey, op: DatabaseOp, originatingClientId: Int?) {
-    if (!BuildFlags.WRITE_ONLY_STORAGE_STACK) {
-      throw BuildFlagDisabledError("WRITE_ONLY_STORAGE_STACK")
-    }
     stats.insertUpdate.timeSuspending { counters ->
       // Use an assignment to make the when-expression required to be exhaustive.
       @Suppress("UNUSED_VARIABLE")

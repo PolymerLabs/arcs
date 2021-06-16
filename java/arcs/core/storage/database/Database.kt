@@ -17,8 +17,6 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 import kotlin.reflect.KClass
 
 /**
@@ -157,12 +155,6 @@ sealed class DatabaseData(
  * write_only_storage_stack flag is enabled.
  */
 sealed class DatabaseOp(open val schema: Schema) {
-  init {
-    if (!BuildFlags.WRITE_ONLY_STORAGE_STACK) {
-      throw BuildFlagDisabledError("WRITE_ONLY_STORAGE_STACK")
-    }
-  }
-
   // Add the given element to the collection. If it is already in the collection, this is a no-op.
   data class AddToCollection(
     val value: RawReference,

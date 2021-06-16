@@ -24,7 +24,6 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Tag
-import arcs.flags.BuildFlags
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineDispatcher
 
@@ -157,7 +156,6 @@ object NoOpArcHostParticle : Particle {
  * that cannot read, and is database backed (as opposed to volatile or ramdisk) key.
  */
 fun isWriteOnlyStorageKey(partition: Plan.Partition, key: StorageKey): Boolean =
-  BuildFlags.WRITE_ONLY_STORAGE_STACK &&
     partition.particles.flatMap { it.handles.values }.filter { it.storageKey == key }.all {
       !it.mode.canRead && it.type.tag == Tag.Collection && isDatabaseKey(it.storageKey)
     }

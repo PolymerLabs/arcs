@@ -15,7 +15,6 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Time
-import arcs.flags.BuildFlags
 import kotlinx.coroutines.CoroutineScope
 
 /**
@@ -34,7 +33,7 @@ suspend fun <Data : CrdtData, Op : CrdtOperation, T> ActiveStore(
   time: Time,
   analytics: Analytics = Analytics.defaultAnalytics
 ): ActiveStore<Data, Op, T> {
-  if (BuildFlags.WRITE_ONLY_STORAGE_STACK && options.writeOnly) {
+  if (options.writeOnly) {
     return WriteOnlyDirectStore.create(
       options,
       scope,

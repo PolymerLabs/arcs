@@ -34,8 +34,6 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.toReference
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 import kotlin.reflect.KClass
 
 /** [Driver] implementation capable of managing data stored in a SQL database. */
@@ -96,9 +94,6 @@ class DatabaseDriver<Data : Any>(
   }
 
   override suspend fun applyOps(ops: List<CrdtOperation>) {
-    if (!BuildFlags.WRITE_ONLY_STORAGE_STACK) {
-      throw BuildFlagDisabledError("WRITE_ONLY_STORAGE_STACK")
-    }
     ops.forEach {
       val op = requireNotNull(it as? CrdtSet.IOperation<*>) {
         "Only CrdtSet operations are supported, got $it."

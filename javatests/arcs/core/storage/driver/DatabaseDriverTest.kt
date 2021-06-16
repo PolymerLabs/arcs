@@ -38,8 +38,6 @@ import arcs.core.storage.toReference
 import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.util.testutil.LogRule
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import arcs.jvm.storage.database.testutil.FakeDatabase
 import com.google.common.truth.Truth.assertThat
@@ -68,7 +66,6 @@ class DatabaseDriverTest {
 
   @Before
   fun setUp() {
-    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
     database = FakeDatabase()
   }
 
@@ -514,17 +511,6 @@ class DatabaseDriverTest {
       driver.applyOps(listOf(op))
     }.also {
       assertThat(it).hasMessageThat().startsWith("Unsupported operation FastForward")
-    }
-  }
-
-  @Test
-  fun applyOps_flagDisabled_throwsException() = runBlockingTest {
-    BuildFlags.WRITE_ONLY_STORAGE_STACK = false
-    val driver = buildDriver<CrdtSet.DataImpl<RawEntity>>(database)
-    val op = CrdtSingleton.Operation.Clear<RawEntity>("", VersionMap())
-
-    assertFailsWith<BuildFlagDisabledError> {
-      driver.applyOps(listOf(op))
     }
   }
 

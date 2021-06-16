@@ -7,12 +7,10 @@ import arcs.core.entity.testutil.FixtureEntities
 import arcs.core.entity.testutil.FixtureEntity
 import arcs.core.host.toRegistration
 import arcs.core.storage.WriteOnlyStorageProxyImpl
-import arcs.flags.BuildFlags
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -57,11 +55,6 @@ class WriteOnlyStackTest {
     ::Writer.toRegistration()
   )
   private val fixtureEntities = FixtureEntities()
-
-  @Before
-  fun setUp() {
-    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
-  }
 
   @Test
   fun writeOnlyStack_singleEntityRoundtrip() = runBlocking<Unit> {

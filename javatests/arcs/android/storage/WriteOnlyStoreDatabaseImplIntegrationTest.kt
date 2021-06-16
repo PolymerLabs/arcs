@@ -47,7 +47,6 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.testutil.IntInRange
 import arcs.core.testutil.runFuzzTest
-import arcs.flags.BuildFlags
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -76,7 +75,6 @@ class WriteOnlyStoreDatabaseImplIntegrationTest {
 
   @Before
   fun setUp() = runBlockingTest {
-    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
     StorageKeyManager.GLOBAL_INSTANCE.reset(DatabaseStorageKey.Persistent)
     databaseManager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
     DatabaseDriverProvider.configure(databaseManager)

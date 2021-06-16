@@ -33,7 +33,6 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.type.Type
-import arcs.flags.BuildFlags
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.HandleHolderBase
 import arcs.sdk.Particle
@@ -43,7 +42,6 @@ import kotlin.reflect.KClass
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -60,11 +58,6 @@ class UtilsTest(private val params: Params) {
 
   private val singletonType = SingletonType(EntityType(schema))
   private val collectionType = CollectionType(EntityType(schema))
-
-  @Before
-  fun setUp() {
-    BuildFlags.WRITE_ONLY_STORAGE_STACK = false
-  }
 
   @Test
   fun kclass_className() {
@@ -204,8 +197,6 @@ class UtilsTest(private val params: Params) {
 
   @Test
   fun isWriteOnlyStorageKey_withOneParticleAndAllWriteOnlyConnections_isTrue() {
-    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
-
     val handle = generateHandle("foo", collectionType)
     val connection = generateConnection(handle, collectionType, HandleMode.Write)
     val particle = generateParticle("foo", "bar" to connection)
@@ -220,8 +211,6 @@ class UtilsTest(private val params: Params) {
 
   @Test
   fun isWriteOnlyStorageKey_withOneParticleAndAllWriteOnlyRamDiskConnections_isFalse() {
-    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
-
     val handle = generateHandle("foo", collectionType, db = false)
     val connection = generateConnection(handle, collectionType, HandleMode.Write)
     val particle = generateParticle("foo", "bar" to connection)
@@ -236,8 +225,6 @@ class UtilsTest(private val params: Params) {
 
   @Test
   fun isWriteOnlyStorageKey_withOneParticleAndOneSingletonConnection_isFalse() {
-    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
-
     val handle = generateHandle("foo", collectionType)
     val connection = generateConnection(handle, singletonType, HandleMode.Write)
     val connection2 = generateConnection(handle, collectionType, HandleMode.Write)
@@ -253,8 +240,6 @@ class UtilsTest(private val params: Params) {
 
   @Test
   fun isWriteOnlyStorageKey_withOneParticleAndOneReadableConnection_isFalse() {
-    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
-
     val handle = generateHandle("foo", collectionType)
     val connection = generateConnection(handle, collectionType, HandleMode.Write)
     val connection2 = generateConnection(handle, collectionType, HandleMode.ReadWrite)
@@ -270,8 +255,6 @@ class UtilsTest(private val params: Params) {
 
   @Test
   fun isWriteOnlyStorageKey_withTwoParticlesAndAllWriteOnlyConnections_isTrue() {
-    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
-
     val handle = generateHandle("foo", collectionType)
     val connection = generateConnection(handle, collectionType, HandleMode.Write)
     val connection2 = generateConnection(handle, collectionType, HandleMode.Write)

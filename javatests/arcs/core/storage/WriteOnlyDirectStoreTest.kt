@@ -10,7 +10,6 @@ import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.FakeDriver
 import arcs.core.storage.testutil.FakeDriverProvider
 import arcs.core.storage.testutil.TestStoreWriteBack
-import arcs.flags.BuildFlags
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +33,6 @@ class WriteOnlyDirectStoreTest {
 
   @Before
   fun setUp() {
-    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
     testWriteBackProvider = object : WriteBackProvider {
       override fun invoke(protocol: StorageKeyProtocol): WriteBack {
         this@WriteOnlyDirectStoreTest.testStoreWriteBack =

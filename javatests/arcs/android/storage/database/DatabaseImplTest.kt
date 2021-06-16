@@ -45,8 +45,6 @@ import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.testutil.DummyStorageKeyManager
 import arcs.core.util.ArcsDuration
 import arcs.core.util.guardedBy
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -81,7 +79,6 @@ class DatabaseImplTest {
 
   @Before
   fun setUp() {
-    BuildFlags.WRITE_ONLY_STORAGE_STACK = true
     database = DatabaseImpl(
       ApplicationProvider.getApplicationContext(),
       DummyStorageKeyManager(),
@@ -963,18 +960,6 @@ class DatabaseImplTest {
   @Test
   fun get_entity_unknownStorageKey() = runBlockingTest {
     assertThat(database.getEntity(DummyStorageKey("nope"), newSchema("hash"))).isNull()
-  }
-
-  @Test
-  fun applyOp_flagDisabled_throwsException() = runBlockingTest {
-    val collectionKey = DummyStorageKey("collection")
-    val reference = RawReference("ref1", DummyStorageKey("backing"), VersionMap())
-
-    BuildFlags.WRITE_ONLY_STORAGE_STACK = false
-
-    assertFailsWith<BuildFlagDisabledError> {
-      database.applyOp(collectionKey, DatabaseOp.AddToCollection(reference, SINGLE_FIELD_SCHEMA))
-    }
   }
 
   @Test

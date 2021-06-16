@@ -56,8 +56,6 @@ import arcs.core.util.FORBIDDEN_STRINGS
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 import java.lang.IllegalStateException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
@@ -131,12 +129,8 @@ class HandleManagerImpl(
       }
     }
 
-    if (writeOnly && !BuildFlags.WRITE_ONLY_STORAGE_STACK) {
-      throw BuildFlagDisabledError("WRITE_ONLY_STORAGE_STACK")
-    } else {
-      if (writeOnly && spec.mode.canRead) {
-        throw IllegalArgumentException("Readable handle cannot use write only mode.")
-      }
+    if (writeOnly && spec.mode.canRead) {
+      throw IllegalArgumentException("Readable handle cannot use write only mode.")
     }
 
     val storageAdapter = when (spec.dataType) {
