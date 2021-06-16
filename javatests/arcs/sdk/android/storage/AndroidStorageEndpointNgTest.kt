@@ -10,8 +10,6 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.eq
@@ -24,7 +22,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runBlockingTest
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.stubbing.OngoingStubbing
@@ -33,20 +30,6 @@ import org.mockito.stubbing.OngoingStubbing
 @RunWith(AndroidJUnit4::class)
 class AndroidStorageEndpointNgTest {
   private val mockService = mock<IStorageChannel>()
-
-  @Before
-  fun setUp() {
-    // Enable the new storage service by default.
-    BuildFlags.STORAGE_SERVICE_NG = true
-  }
-
-  @Test
-  fun featureDisabled_throwsException() {
-    BuildFlags.STORAGE_SERVICE_NG = false
-    assertFailsWith<BuildFlagDisabledError> {
-      AndroidStorageEndpointNg<CrdtData, CrdtOperation, String>(mockService, {})
-    }
-  }
 
   @Test
   fun onProxyMessage_forwardsToService() = runBlockingTest {

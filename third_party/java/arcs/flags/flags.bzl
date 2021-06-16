@@ -35,15 +35,6 @@ ARCS_BUILD_FLAGS = [
         ],
     ),
     arcs_build_flag(
-        name = "storage_service_ng",
-        desc = "Storage service migration to use storage channel",
-        bug_id = "b/174199081",
-        status = "LAUNCHED",
-        stopwords = [
-            "storage.?service.?ng",
-        ],
-    ),
-    arcs_build_flag(
         name = "transaction_free_reads",
         desc = "Remove transaction from getEntity in DatabaseImpl",
         bug_id = "b/175140645",

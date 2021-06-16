@@ -20,8 +20,6 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.UntypedActiveStore
 import arcs.core.storage.UntypedProxyMessage
 import arcs.core.util.statistics.TransactionStatisticsSink
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 import kotlinx.coroutines.CoroutineScope
 
 /** Implementation of [IStorageChannel] for communicating with an [UntypedActiveStore]. */
@@ -33,12 +31,6 @@ class StorageChannelImpl(
   /** Callback to trigger when a proxy message has been received and sent to the store. */
   private val onProxyMessageCallback: suspend (StorageKey, UntypedProxyMessage) -> Unit
 ) : BaseStorageChannel(scope, statisticsSink) {
-
-  init {
-    if (!BuildFlags.STORAGE_SERVICE_NG) {
-      throw BuildFlagDisabledError("STORAGE_SERVICE_NG")
-    }
-  }
   override val tag = "StorageChannel"
 
   /**

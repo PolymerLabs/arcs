@@ -28,8 +28,6 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.testutil.MockDriverProvider
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.statistics.TransactionStatisticsImpl
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
@@ -63,8 +61,6 @@ class StorageServiceNgImplTest {
 
   @Before
   fun setUp() {
-    BuildFlags.STORAGE_SERVICE_NG = true
-
     StorageKeyManager.GLOBAL_INSTANCE.addParser(RamDiskStorageKey)
     stores = ReferencedStores(
       { scope },
@@ -84,19 +80,6 @@ class StorageServiceNgImplTest {
   @After
   fun tearDown() {
     scope.cleanupTestCoroutines()
-  }
-
-  @Test
-  fun requiresBuildFlag() = runBlockingTest {
-    BuildFlags.STORAGE_SERVICE_NG = false
-    assertFailsWith<BuildFlagDisabledError> {
-      StorageServiceNgImpl(
-        scope,
-        TransactionStatisticsImpl(JvmTime),
-        onProxyMessageCallback,
-        stores
-      )
-    }
   }
 
   @Test

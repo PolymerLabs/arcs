@@ -23,17 +23,13 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import androidx.work.Worker
 import arcs.android.common.resurrection.ResurrectorService
-import arcs.android.crdt.toParcelableType
-import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
-import arcs.android.storage.service.BindingContext
 import arcs.android.storage.service.DevToolsProxyImpl
 import arcs.android.storage.service.DevToolsStorageManager
 import arcs.android.storage.service.MuxedStorageServiceImpl
 import arcs.android.storage.service.ReferencedStores
 import arcs.android.storage.service.StorageServiceManager
 import arcs.android.storage.service.StorageServiceNgImpl
-import arcs.android.storage.toParcelable
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
 import arcs.core.analytics.Analytics
@@ -56,7 +52,6 @@ import arcs.core.util.performance.MemoryStats
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.statistics.TransactionCounter
 import arcs.core.util.statistics.TransactionStatisticsImpl
-import arcs.flags.BuildFlagDisabledError
 import arcs.flags.BuildFlags
 import arcs.jvm.util.JvmTime
 import java.io.FileDescriptor
@@ -72,6 +67,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -204,17 +200,6 @@ open class StorageService : ResurrectorService() {
   override fun onBind(intent: Intent): IBinder? {
     log.debug { "onBind: $intent" }
 
-    if (BuildFlags.STORAGE_SERVICE_NG) {
-      if (intent.action == STORAGE_SERVICE_NG_ACTION) {
-        return StorageServiceNgImpl(
-          storesScope,
-          stats,
-          ::onStorageProxyMessage,
-          stores
-        )
-      }
-    }
-
     if (BuildFlags.ENTITY_HANDLE_API) {
       if (intent.action == MUXED_STORAGE_SERVICE_ACTION) {
         return MuxedStorageServiceImpl(
@@ -229,6 +214,14 @@ open class StorageService : ResurrectorService() {
     }
 
     when (intent.action) {
+      STORAGE_SERVICE_NG_ACTION -> {
+        return StorageServiceNgImpl(
+          storesScope,
+          stats,
+          ::onStorageProxyMessage,
+          stores
+        )
+      }
       MANAGER_ACTION -> {
         return StorageServiceManager(
           storesScope,
@@ -247,22 +240,10 @@ open class StorageService : ResurrectorService() {
         }
         return DevToolsStorageManager(stores, devToolsProxy)
       }
+      else -> {
+        throw IllegalArgumentException("Unrecognised intent action: ${intent.action}")
+      }
     }
-
-    // If we got this far, assume we want to bind IStorageService.
-
-    val parcelableOptions = requireNotNull(
-      intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
-    ) { "No StoreOptions found in Intent" }
-
-    val options = parcelableOptions.actual
-    return BindingContext(
-      { getStore(options) },
-      storesScope,
-      stats,
-      devToolsProxy,
-      ::onStorageProxyMessage
-    )
   }
 
   private suspend fun onStorageProxyMessage(storageKey: StorageKey, message: UntypedProxyMessage) {
@@ -275,13 +256,11 @@ open class StorageService : ResurrectorService() {
 
   override fun onUnbind(intent: Intent?): Boolean {
     log.debug { "onUnbind: $intent" }
-    val parcelableOptions = intent?.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
-      ?: return super.onUnbind(intent)
-
-    val options = parcelableOptions.actual
-
-    stores.remove(options)
-
+    if (intent?.action == STORAGE_SERVICE_NG_ACTION) {
+      storesScope.launch {
+        stores.clear()
+      }
+    }
     return super.onUnbind(intent)
   }
 
@@ -457,11 +436,7 @@ open class StorageService : ResurrectorService() {
     // TODO(b/178332056): Rename after storage service migration.
     val STORAGE_SERVICE_NG_ACTION: String
       get() {
-        if (BuildFlags.STORAGE_SERVICE_NG) {
-          return "arcs.sdk.android.storage.service.STORAGE_SERVICE_NG"
-        } else {
-          throw BuildFlagDisabledError("STORAGE_SERVICE_NG")
-        }
+        return "arcs.sdk.android.storage.service.STORAGE_SERVICE_NG"
       }
 
     // Can be used to cancel all periodic jobs when the service is not running.
@@ -476,27 +451,6 @@ open class StorageService : ResurrectorService() {
 }
 
 object StorageServiceIntentHelpers {
-  /**
-   * A helper to create the [Intent] needed to bind to the storage service for a particular
-   * set of [StoreOptions].
-   *
-   * @param context an Android [Context] that will be used to create the [Intent]
-   * @param storeOptions the [StoreOptions] identifying the [ActiveStore] we want to talk to
-   * @param storageServiceClass an optional implementation class that can be provided if your
-   *  application is using a subclass of [StorageService].
-   */
-  fun storageServiceIntent(
-    context: Context,
-    storeOptions: StoreOptions,
-    storageServiceClass: Class<*> = StorageService::class.java
-  ): Intent = Intent(context, storageServiceClass).apply {
-    action = storeOptions.storageKey.toString()
-    putExtra(
-      StorageService.EXTRA_OPTIONS,
-      storeOptions.toParcelable(storeOptions.type.toParcelableType())
-    )
-  }
-
   /**
    * A helper to create the [Intent] needed to bind to the manager interface of a [StorageService].
    *
@@ -523,9 +477,6 @@ object StorageServiceIntentHelpers {
     context: Context,
     storageServiceClass: Class<*> = StorageService::class.java
   ): Intent {
-    if (!BuildFlags.STORAGE_SERVICE_NG) {
-      throw BuildFlagDisabledError("STORAGE_SERVICE_NG")
-    }
     return Intent(context, storageServiceClass).apply {
       action = StorageService.STORAGE_SERVICE_NG_ACTION
     }

@@ -20,11 +20,16 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.common.resurrection.ResurrectionRequest
+import arcs.android.crdt.toParcelableType
+import arcs.android.storage.StorageServiceMessageProto
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
-import arcs.android.storage.service.BindingContext
-import arcs.android.storage.service.IStorageService
+import arcs.android.storage.service.IStorageChannel
+import arcs.android.storage.service.IStorageServiceNg
 import arcs.android.storage.service.StorageServiceNgImpl
 import arcs.android.storage.service.suspendForResultCallback
+import arcs.android.storage.service.testing.FakeMessageCallback
+import arcs.android.storage.service.testing.FakeStorageChannelCallback
+import arcs.android.storage.toParcelByteArray
 import arcs.android.storage.toProto
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.testutil.AndroidLogRule
@@ -35,10 +40,7 @@ import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.RamDiskStorageKey
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 import com.google.common.truth.Truth.assertThat
-import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -70,44 +72,10 @@ class StorageServiceTest {
       RamDiskStorageKey("count"),
       CountType()
     )
-    BuildFlags.STORAGE_SERVICE_NG = false
-  }
-
-  @Test
-  fun bindingWithStorageServiceIntent_createsBindingContext() = runBlocking {
-    val intent = StorageServiceIntentHelpers.storageServiceIntent(
-      app,
-      storeOptions
-    )
-
-    val deferredBinder = CompletableDeferred<IBinder?>()
-
-    Robolectric.buildService(StorageService::class.java, intent)
-      .create()
-      .bind()
-      .also {
-        deferredBinder.complete(it.get().onBind(intent))
-      }
-
-    val binder = deferredBinder.await()
-    assertThat(binder).isInstanceOf(BindingContext::class.java)
-  }
-
-  @Test
-  fun storageServiceNgIntent_requiresBuildFlag(): Unit = runBlocking {
-    BuildFlags.STORAGE_SERVICE_NG = false
-
-    assertFailsWith<BuildFlagDisabledError> {
-      StorageServiceIntentHelpers.storageServiceNgIntent(
-        app
-      )
-    }
-    Unit
   }
 
   @Test
   fun bindingWithStorageServiceNgIntent_createsStorageServiceNgService() = runBlocking {
-    BuildFlags.STORAGE_SERVICE_NG = true
     val intent = StorageServiceIntentHelpers.storageServiceNgIntent(
       app
     )
@@ -126,7 +94,7 @@ class StorageServiceTest {
   }
 
   @Test
-  fun sendingProxyMessage_resultsInResurrection() = lifecycle(storeOptions) { service, context ->
+  fun sendingProxyMessage_resultsInResurrection() = lifecycle(storeOptions) { service, channel ->
     // Setup:
     // Add a resurrection request to the storage service.
     val resurrectionRequestIntent = Intent(app, StorageService::class.java).apply {
@@ -149,12 +117,18 @@ class StorageServiceTest {
         listOf(op), id = 1
       )
 
-      suspendForResultCallback {
-        context.sendProxyMessage(proxyMessage.toProto().toByteArray(), it)
+      suspendForResultCallback { resultCallback ->
+        channel.sendMessage(
+          StorageServiceMessageProto.newBuilder()
+            .setProxyMessage(proxyMessage.toProto())
+            .build()
+            .toByteArray(),
+          resultCallback
+        )
       }
 
       suspendForResultCallback {
-        context.idle(10000, it)
+        channel.idle(10000, it)
       }
 
       true
@@ -176,9 +150,8 @@ class StorageServiceTest {
 
   @Test
   fun storageService_unbind_closesStores() = runBlocking<Unit> {
-    val intent = StorageServiceIntentHelpers.storageServiceIntent(
-      app,
-      storeOptions
+    val intent = StorageServiceIntentHelpers.storageServiceNgIntent(
+      app
     )
 
     val storeOptions2 = StoreOptions(
@@ -186,27 +159,36 @@ class StorageServiceTest {
       CountType()
     )
 
-    val intent2 = StorageServiceIntentHelpers.storageServiceIntent(
-      app,
-      storeOptions2
-    )
-
     Robolectric.buildService(StorageService::class.java, intent)
       .create()
       .bind()
       .also {
-        val binder1 = it.get().onBind(intent) as IStorageService
-        // Perform some action to trigger store creation
-        suspendForResultCallback { callback -> binder1.idle(1L, callback) }
+        val storageServiceNg = it.get().onBind(intent) as IStorageServiceNg
+        // Creating a channel triggers store creation.
+        val channelCallback1 = FakeStorageChannelCallback()
+        storageServiceNg.openStorageChannel(
+          storeOptions.toParcelByteArray(storeOptions.type.toParcelableType()),
+          channelCallback1,
+          FakeMessageCallback()
+        )
+        channelCallback1.waitForOnCreate()
+
         assertThat(it.get().storeCount()).isEqualTo(1)
-        it.get().onBind(intent2)
-        val binder2 = it.get().onBind(intent2) as IStorageService
-        // Perform some action to trigger store creation
-        suspendForResultCallback { callback -> binder2.idle(1L, callback) }
+
+        // Create another channel to trigger store creation.
+        val channelCallback2 = FakeStorageChannelCallback()
+        storageServiceNg.openStorageChannel(
+          storeOptions2.toParcelByteArray(storeOptions2.type.toParcelableType()),
+          channelCallback2,
+          FakeMessageCallback()
+        )
+        channelCallback2.waitForOnCreate()
         assertThat(it.get().storeCount()).isEqualTo(2)
+
         it.get().onUnbind(intent)
-        assertThat(it.get().storeCount()).isEqualTo(1)
-        it.get().onUnbind(intent2)
+
+        Thread.sleep(50)
+
         assertThat(it.get().storeCount()).isEqualTo(0)
       }
       .destroy()
@@ -349,18 +331,32 @@ class StorageServiceTest {
 
   private fun lifecycle(
     storeOptions: StoreOptions,
-    block: (StorageService, BindingContext) -> Unit
+    block: (StorageService, IStorageChannel) -> Unit
   ) {
-    val intent = StorageServiceIntentHelpers.storageServiceIntent(
-      app,
-      storeOptions
+    val intent = StorageServiceIntentHelpers.storageServiceNgIntent(
+      app
     )
+
     Robolectric.buildService(StorageService::class.java, intent)
       .create()
       .bind()
       .also {
-        val context = it.get().onBind(intent)
-        block(it.get(), context as BindingContext)
+        val storageServiceNg = it.get().onBind(intent) as IStorageServiceNg
+
+        // Open a channel for store
+        val channelCallback = FakeStorageChannelCallback()
+        storageServiceNg.openStorageChannel(
+        storeOptions.toParcelByteArray(storeOptions.type.toParcelableType()),
+          channelCallback,
+          FakeMessageCallback()
+        )
+        val channel = runBlocking { channelCallback.waitForOnCreate() }
+
+        // Run the code block.
+        block(it.get(), channel)
+
+        // Close channel and unbind service.
+        runBlocking { suspendForResultCallback { channel.close(it) } }
         it.get().onUnbind(intent)
       }
       .destroy()

@@ -69,19 +69,6 @@ class ReferencedStores(
     ReleasableStore(referencedStore)
   }
 
-  /**
-   * Removes a [ReferencedStore] identified by the given [StorageKey] from the stores map and closes
-   * the corresponding [ActiveStore].
-   *
-   * TODO(b/178332056): remove this method once storage service migration is complete.
-   */
-  fun remove(options: StoreOptions) {
-    while (!mutex.tryLock()) { /** wait */ }
-    val storeToClose = stores.remove(StoreKey(options))?.store
-    mutex.unlock()
-    checkNotNull(storeToClose) { "No store with storage key $options.storageKey" }.close()
-  }
-
   /** Remove and close all [ActiveStore]s in the map. */
   suspend fun clear() {
     val storesCopy: Map<StoreKey, ReferencedStore>

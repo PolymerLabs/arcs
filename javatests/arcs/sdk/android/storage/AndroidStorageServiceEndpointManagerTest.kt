@@ -2,6 +2,7 @@ package arcs.sdk.android.storage
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
@@ -16,8 +17,6 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.testutil.LogRule
-import arcs.flags.testing.BuildFlagsRule
-import arcs.flags.testing.ParameterizedBuildFlags
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import com.google.common.truth.Truth.assertThat
@@ -31,17 +30,13 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.ParameterizedRobolectricTestRunner
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(ParameterizedRobolectricTestRunner::class)
-class AndroidStorageServiceEndpointManagerTest(private val parameters: ParameterizedBuildFlags) {
+@RunWith(AndroidJUnit4::class)
+class AndroidStorageServiceEndpointManagerTest {
 
   @get:Rule
   val logRule = LogRule()
-
-  @get:Rule
-  val rule = BuildFlagsRule.parameterized(parameters)
 
   private lateinit var app: Application
 
@@ -158,10 +153,4 @@ class AndroidStorageServiceEndpointManagerTest(private val parameters: Parameter
 
   // Used for testing correct binding behavior for non-default classes
   class AnotherServiceClass : StorageService()
-
-  companion object {
-    @JvmStatic
-    @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-    fun params() = ParameterizedBuildFlags.of("STORAGE_SERVICE_NG").toList()
-  }
 }

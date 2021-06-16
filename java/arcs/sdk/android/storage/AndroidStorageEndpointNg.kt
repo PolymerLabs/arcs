@@ -22,8 +22,6 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageEndpoint
 import arcs.core.util.TaggedLog
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -32,8 +30,6 @@ import kotlinx.coroutines.flow.first
  * An implementation of [StorageEndpoint] that communicates with its [ActiveStore] via an
  * [IStorageChannel].
  *
- * This is not currently in use but it is intended to replace [AndroidStorageEndpoint]. These will
- * be provided by [AndroidStorageServiceEndpointManager].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AndroidStorageEndpointNg<Data : CrdtData, Op : CrdtOperation, T> constructor(
@@ -45,12 +41,6 @@ class AndroidStorageEndpointNg<Data : CrdtData, Op : CrdtOperation, T> construct
   private val log = TaggedLog { "AndroidStorageEndpointNg" }
 
   private val closed = atomic(false)
-
-  init {
-    if (!BuildFlags.STORAGE_SERVICE_NG) {
-      throw BuildFlagDisabledError("STORAGE_SERVICE_NG")
-    }
-  }
 
   override suspend fun idle() {
     check(!closed.value) { "Can not call idle after close" }

@@ -3,8 +3,6 @@ package arcs.android.storage.service
 import android.os.IBinder
 import arcs.android.crdt.CrdtExceptionProto
 import arcs.android.crdt.decode
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -137,12 +135,6 @@ class ContinuationResultCallback(
 class ContinuationStorageChannelCallback(
   private val continuation: CancellableContinuation<IStorageChannel>
 ) : IStorageChannelCallback.Stub() {
-
-  init {
-    if (!BuildFlags.STORAGE_SERVICE_NG) {
-      throw BuildFlagDisabledError("STORAGE_SERVICE_NG")
-    }
-  }
 
   // If the process on the other side of this binder dies, we want to make sure to signal to the
   // caller via the continuation. This creates a [ContinuationDeathRecipient], registers it for

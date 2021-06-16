@@ -16,8 +16,6 @@ import arcs.core.storage.ActiveStore
 import arcs.core.storage.StorageKey
 import arcs.core.storage.UntypedProxyMessage
 import arcs.core.util.statistics.TransactionStatisticsImpl
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 import kotlinx.coroutines.CoroutineScope
 
 /**
@@ -32,12 +30,6 @@ class StorageServiceNgImpl(
   /** Cache of active [ActiveStore]s. */
   private val stores: ReferencedStores
 ) : IStorageServiceNg.Stub() {
-
-  init {
-    if (!BuildFlags.STORAGE_SERVICE_NG) {
-      throw BuildFlagDisabledError("STORAGE_SERVICE_NG")
-    }
-  }
 
   private val actionLauncher = SequencedActionLauncher(scope)
 

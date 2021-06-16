@@ -29,15 +29,12 @@ import arcs.core.storage.testutil.MockDriverProvider
 import arcs.core.storage.testutil.NoopActiveStore
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.statistics.TransactionStatisticsImpl
-import arcs.flags.BuildFlagDisabledError
-import arcs.flags.BuildFlags
 import arcs.flags.testing.BuildFlagsRule
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
-import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.test.TestCoroutineScope
@@ -63,8 +60,6 @@ class StorageChannelImplTest {
 
   @Before
   fun setUp() {
-    BuildFlags.STORAGE_SERVICE_NG = true
-
     messageCallback = mock {}
     resultCallback = FakeResultCallback()
 
@@ -80,13 +75,6 @@ class StorageChannelImplTest {
   @After
   fun tearDown() {
     scope.cleanupTestCoroutines()
-  }
-
-  @Test
-  fun requiresBuildFlag() = runBlockingTest {
-    BuildFlags.STORAGE_SERVICE_NG = false
-
-    assertFailsWith<BuildFlagDisabledError> { createChannel() }
   }
 
   @Test
