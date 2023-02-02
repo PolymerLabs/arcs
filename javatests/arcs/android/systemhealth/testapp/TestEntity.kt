@@ -17,26 +17,35 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SchemaRegistry
-import arcs.core.storage.Reference
+import arcs.core.entity.SingletonProperty
+import arcs.core.storage.RawReference
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.sdk.Entity
 import arcs.sdk.EntityBase
 import arcs.sdk.EntitySpec
+
+interface TestEntitySlice : Entity {
+  var text: String
+  var number: Double
+  var boolean: Boolean
+  var inlineEntity: InlineTestEntity
+}
 
 class TestEntity(
   text: String = "",
   number: Double = 0.0,
   boolean: Boolean = false,
   inlineText: String = "",
-  var reference: Reference? = null,
+  var rawReference: RawReference? = null,
   val id: String? = null
-) : EntityBase("TestEntity", SCHEMA, id) {
+) : EntityBase("TestEntity", SCHEMA, id), TestEntitySlice {
 
-  var text: String by SingletonProperty()
-  var number: Double by SingletonProperty()
-  var boolean: Boolean by SingletonProperty()
-  var inlineEntity: InlineTestEntity by SingletonProperty()
+  override var text: String by SingletonProperty(this)
+  override var number: Double by SingletonProperty(this)
+  override var boolean: Boolean by SingletonProperty(this)
+  override var inlineEntity: InlineTestEntity by SingletonProperty(this)
 
   init {
     this.text = text
@@ -86,19 +95,17 @@ class TestEntity(
     val singletonMemoryDatabaseStorageKey = ReferenceModeStorageKey(
       backingKey = DatabaseStorageKey.Memory(
         "singleton_reference",
-        schemaHash,
         "arcs_test"
       ),
-      storageKey = DatabaseStorageKey.Memory("singleton", schemaHash, "arcs_test")
+      storageKey = DatabaseStorageKey.Memory("singleton", "arcs_test")
     )
 
     val singletonPersistentStorageKey = ReferenceModeStorageKey(
       backingKey = DatabaseStorageKey.Persistent(
         "singleton_reference",
-        schemaHash,
         "arcs_test"
       ),
-      storageKey = DatabaseStorageKey.Persistent("singleton", schemaHash, "arcs_test")
+      storageKey = DatabaseStorageKey.Persistent("singleton", "arcs_test")
     )
 
     val collectionInMemoryStorageKey = ReferenceModeStorageKey(
@@ -109,30 +116,26 @@ class TestEntity(
     val collectionMemoryDatabaseStorageKey = ReferenceModeStorageKey(
       backingKey = DatabaseStorageKey.Memory(
         "collection_reference",
-        schemaHash,
         "arcs_test"
       ),
-      storageKey = DatabaseStorageKey.Memory("collection", schemaHash, "arcs_test")
+      storageKey = DatabaseStorageKey.Memory("collection", "arcs_test")
     )
 
     val collectionPersistentStorageKey = ReferenceModeStorageKey(
       backingKey = DatabaseStorageKey.Persistent(
         "collection_reference",
-        schemaHash,
         "arcs_test"
       ),
-      storageKey = DatabaseStorageKey.Persistent("collection", schemaHash, "arcs_test")
+      storageKey = DatabaseStorageKey.Persistent("collection", "arcs_test")
     )
 
     val clearEntitiesMemoryDatabaseStorageKey = ReferenceModeStorageKey(
       backingKey = DatabaseStorageKey.Memory(
         "cleared_entities_backing",
-        schemaHash,
         "arcs_test"
       ),
       storageKey = DatabaseStorageKey.Memory(
         "cleared_entities_container",
-        schemaHash,
         "arcs_test"
       )
     )
@@ -140,12 +143,10 @@ class TestEntity(
     val clearEntitiesPersistentStorageKey = ReferenceModeStorageKey(
       backingKey = DatabaseStorageKey.Persistent(
         "cleared_entities_backing",
-        schemaHash,
         "arcs_test"
       ),
       storageKey = DatabaseStorageKey.Persistent(
         "cleared_entities_container",
-        schemaHash,
         "arcs_test"
       )
     )
@@ -163,7 +164,7 @@ class TestEntity(
 class InlineTestEntity(
   text: String = ""
 ) : EntityBase(ENTITY_CLASS_NAME, SCHEMA, isInlineEntity = true) {
-  var text: String? by SingletonProperty()
+  var text: String? by SingletonProperty(this)
 
   init {
     this.text = text

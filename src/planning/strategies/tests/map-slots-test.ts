@@ -10,7 +10,6 @@
 
 
 import {assert} from '../../../platform/chai-web.js';
-import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
@@ -36,7 +35,7 @@ ${particlesSpec}
 
 ${recipeManifest}
     `));
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arc = await StrategyTestHelper.createTestArcInfo(manifest);
     const recipe = await runMapSlotsAndResolveRecipe(arc, manifest.recipes[0]);
 
     if (expectedSlots >= 0) {
@@ -109,8 +108,8 @@ ${recipeManifest}
         A
     `));
 
-    const arc = StrategyTestHelper.createTestArc(manifest);
-    await StrategyTestHelper.onlyResult(arc, ResolveRecipe, manifest.recipes[0]);
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(manifest);
+    await StrategyTestHelper.onlyResult(arcInfo, ResolveRecipe, manifest.recipes[0]);
   });
 
   it('allows to bind by name to any available slot', async () => {
@@ -134,13 +133,13 @@ ${recipeManifest}
         C
     `));
     const generated = [{result: manifest.recipes[0], score: 1}];
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(manifest);
 
-    const strategy = new MapSlots(arc);
+    const strategy = new MapSlots(arcInfo);
     let results = await strategy.generateFrom(generated);
     assert.lengthOf(results, 2);
 
-    results = await new ResolveRecipe(arc).generateFrom(
+    results = await new ResolveRecipe(arcInfo).generateFrom(
       results.map(r => ({
         result: r.result,
         score: 1
@@ -158,7 +157,7 @@ ${recipeManifest}
   it.skip('prefers local slots if available', async () => {
     // Arc has both a 'root' and an 'action' slot.
     const runtime = new Runtime({loader: new Loader(), context: new Manifest({id: ArcId.newForTest('test')})});
-    const arc = runtime.newArc('test-plan-arc');
+    const arc = await runtime.allocator.startArc({arcName: 'test-plan-arc'});
 
     const particles = `
       particle A in 'A.js'

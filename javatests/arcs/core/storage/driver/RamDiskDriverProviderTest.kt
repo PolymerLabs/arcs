@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -14,6 +14,7 @@ package arcs.core.storage.driver
 import arcs.core.common.ArcId
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.type.Tag
@@ -55,9 +56,9 @@ class RamDiskDriverProviderTest {
   @Test
   fun willSupport_returnsFalse_whenNotRamDiskKey() {
     val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
-    val other = object : StorageKey("outofnowhere") {
+    val other = object : StorageKey(StorageKeyProtocol.Dummy) {
       override fun toKeyString(): String = "something"
-      override fun childKeyWithComponent(component: String): StorageKey = this
+      override fun newKeyWithComponent(component: String): StorageKey = this
     }
 
     assertThat(provider.willSupport(volatile)).isFalse()
@@ -131,7 +132,6 @@ class RamDiskDriverProviderTest {
   companion object {
     object DummyType : Type {
       override val tag = Tag.Count
-      override fun toLiteral() = throw UnsupportedOperationException("")
     }
   }
 }

@@ -12,7 +12,7 @@
 package arcs.android.storage
 
 import arcs.core.data.TypeVariable
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.testutil.DummyStorageKey
 import com.google.common.truth.Truth.assertThat
@@ -25,7 +25,7 @@ import org.junit.runners.JUnit4
 class StoreOptionsProtoTest {
   @Before
   fun setUp() {
-    StorageKeyParser.addParser(DummyStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.addParser(DummyStorageKey)
   }
 
   @Test
@@ -49,11 +49,23 @@ class StoreOptionsProtoTest {
   }
 
   @Test
+  fun roundTrip_withWriteOnly() {
+    val options = StoreOptions(
+      storageKey = DummyStorageKey("abc"),
+      type = TypeVariable("a"),
+      versionToken = "v12",
+      writeOnly = true
+    )
+    assertThat(options.toProto().decode()).isEqualTo(options)
+  }
+
+  @Test
   fun decodeStoreOptions() {
     val options = StoreOptions(
       storageKey = DummyStorageKey("abc"),
       type = TypeVariable("a"),
-      versionToken = "v12"
+      versionToken = "v12",
+      writeOnly = true
     )
 
     assertThat(options.toProto().toByteArray().decodeStoreOptions()).isEqualTo(options)

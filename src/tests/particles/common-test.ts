@@ -16,13 +16,10 @@ import {Loader} from '../../platform/loader.js';
 import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js';
 import {RamDiskStorageDriverProvider} from '../../runtime/storage/drivers/ramdisk.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
-import {ActiveCollectionEntityStore, handleForActiveStore} from '../../runtime/storage/storage.js';
-import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
+import {CollectionEntityType} from '../../runtime/storage/storage.js';
+import {StoreInfo} from '../../runtime/storage/store-info.js';
 
 describe('common particles test', () => {
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
   it('resolves after cloning', async () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     const manifest = await Manifest.parse(`
@@ -76,26 +73,22 @@ describe('common particles test', () => {
 
 
   it('copy handle test', async () => {
-    const loader = new Loader();
-    const memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
-    const context =  await Manifest.load('./src/tests/particles/artifacts/copy-collection-test.recipes', loader, {memoryProvider});
-    const runtime = new Runtime({loader, context, memoryProvider});
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+    const runtime = new Runtime();
+    runtime.context = await runtime.parseFile('./src/tests/particles/artifacts/copy-collection-test.recipes');
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
 
-    const suggestions = await StrategyTestHelper.planForArc(arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
     assert.lengthOf(suggestions, 1);
     const suggestion = suggestions[0];
     assert.equal(suggestion.descriptionText, 'Copy all things!');
 
-    assert.isEmpty(arc.stores);
+    assert.isEmpty(arcInfo.stores);
 
-    await suggestion.instantiate(arc);
-    await arc.idle;
+    await runtime.allocator.runPlanInArc(arcInfo, suggestion.plan);
+    await runtime.getArcById(arcInfo.id).idle;
 
-    const endpointProvider = await arc.getActiveStore(
-        arc.findStoreById(arc.stores[2].id))  as ActiveCollectionEntityStore;
-    const handle = handleForActiveStore(endpointProvider, arc);
+    const storeInfo = arcInfo.findStoreById(arcInfo.stores[2].id) as StoreInfo<CollectionEntityType>;
+    const handle = await runtime.host.handleForStoreInfo(storeInfo, arcInfo);
     assert.strictEqual((await handle.toList()).length, 5);
   });
 });

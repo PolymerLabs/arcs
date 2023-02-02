@@ -12,15 +12,14 @@ import arcs.core.data.expression.*
 import arcs.core.data.expression.Expression.*
 import arcs.core.data.expression.Expression.BinaryOp.*
 import arcs.core.data.Plan.*
-import arcs.core.storage.StorageKeyParser
-import arcs.core.entity.toPrimitiveValue
+import arcs.core.storage.StorageKeyManager
 import arcs.core.util.ArcsInstant
 import arcs.core.util.ArcsDuration
 import arcs.core.util.BigInt
 
 val IngestionOnly_Handle0 by lazy {
     Handle(
-        StorageKeyParser.parse(
+        StorageKeyManager.GLOBAL_INSTANCE.parse(
             "reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"
         ),
         arcs.core.data.SingletonType(
@@ -68,7 +67,7 @@ val IngestionOnlyPlan by lazy {
 }
 val Ingestion_Handle0 by lazy {
     Handle(
-        StorageKeyParser.parse(
+        StorageKeyManager.GLOBAL_INSTANCE.parse(
             "reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingArcId/handle/my-handle-id}"
         ),
         arcs.core.data.SingletonType(
@@ -131,7 +130,7 @@ val IngestionPlan by lazy {
 }
 val Consumption_Handle0 by lazy {
     Handle(
-        StorageKeyParser.parse(
+        StorageKeyManager.GLOBAL_INSTANCE.parse(
             "reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingArcId/handle/my-handle-id}"
         ),
         arcs.core.data.SingletonType(
@@ -173,7 +172,7 @@ val ConsumptionPlan by lazy {
 }
 val EphemeralWriting_Handle0 by lazy {
     Handle(
-        StorageKeyParser.parse("create://my-ephemeral-handle-id"),
+        StorageKeyManager.GLOBAL_INSTANCE.parse("create://my-ephemeral-handle-id"),
         arcs.core.data.SingletonType(
             arcs.core.data.EntityType(
                 arcs.core.data.Schema(
@@ -219,7 +218,7 @@ val EphemeralWritingPlan by lazy {
 }
 val EphemeralReading_Handle0 by lazy {
     Handle(
-        StorageKeyParser.parse(
+        StorageKeyManager.GLOBAL_INSTANCE.parse(
             "reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"
         ),
         arcs.core.data.SingletonType(
@@ -261,7 +260,7 @@ val EphemeralReadingPlan by lazy {
 }
 val ReferencesRecipe_Handle0 by lazy {
     Handle(
-        StorageKeyParser.parse(
+        StorageKeyManager.GLOBAL_INSTANCE.parse(
             "db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:referencesArcId/handle/my-refs-id"
         ),
         arcs.core.data.CollectionType(
@@ -288,7 +287,7 @@ val ReferencesRecipe_Handle0 by lazy {
 }
 val ReferencesRecipe_Handle1 by lazy {
     Handle(
-        StorageKeyParser.parse(
+        StorageKeyManager.GLOBAL_INSTANCE.parse(
             "memdb://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:referencesArcId/handle/my-ref-id"
         ),
         arcs.core.data.SingletonType(

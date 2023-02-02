@@ -17,22 +17,24 @@ import {Runtime} from '../../runtime/runtime.js';
 import {SingletonType} from '../../types/lib-types.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {Entity} from '../../runtime/entity.js';
-import {ActiveSingletonEntityStore, handleForStoreInfo} from '../../runtime/storage/storage.js';
+import {ActiveSingletonEntityStore} from '../../runtime/storage/storage.js';
+import {deleteFieldRecursively} from '../../utils/lib-utils.js';
 
 describe('ArcStoresFetcher', () => {
-  before(() => DevtoolsForTests.ensureStub());
-  after(() => DevtoolsForTests.reset());
+  beforeEach(() => DevtoolsForTests.ensureStub());
+  afterEach(() => DevtoolsForTests.reset());
 
   it('allows fetching a list of arc stores', async () => {
     const context = await Manifest.parse(`
       schema Foo
         value: Text`);
     const runtime = new Runtime({context});
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), inspectorFactory: devtoolsArcInspectorFactory});
 
-    const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
-    const fooStore = await arc.createStore(new SingletonType(foo.type), 'fooStoreName', 'fooStoreId', ['awesome', 'arcs']);
-    const fooHandle = await handleForStoreInfo(fooStore, arc);
+    const foo = Entity.createEntityClass(arcInfo.context.findSchemaByName('Foo'), null);
+    const fooStore = await arcInfo.createStoreInfo(
+      new SingletonType(foo.type), {name: 'fooStoreName', id: 'fooStoreId', tags: ['awesome', 'arcs']});
+    const fooHandle = await runtime.host.handleForStoreInfo(fooStore, arcInfo);
     const fooEntity = new foo({value: 'persistence is useful'});
     await fooHandle.set(fooEntity);
 
@@ -40,7 +42,7 @@ describe('ArcStoresFetcher', () => {
         m => m.messageType === 'fetch-stores-result'));
 
     await DevtoolsForTests.channel.receive({
-      arcId: arc.id.toString(),
+      arcId: arcInfo.id.toString(),
       messageType: 'fetch-stores'
     });
 
@@ -50,9 +52,9 @@ describe('ArcStoresFetcher', () => {
 
     // Location in the schema file is stored in the type and used by some tools.
     // We don't assert on it in this test.
-    delete results[0].messageBody.arcStores[0].type.innerType.entitySchema.fields.value.location;
+    deleteFieldRecursively(results, 'location');
 
-    const sessionId = arc.idGenerator.currentSessionIdForTesting;
+    const sessionId = arcInfo.idGenerator.currentSessionIdForTesting;
     const entityId = '!' + sessionId + ':fooStoreId:2';
     const creationTimestamp = Entity.creationTimestamp(fooEntity);
 
@@ -107,31 +109,31 @@ describe('ArcStoresFetcher', () => {
         value: Text
       particle P in 'p.js'
         foo: reads writes Foo
-      recipe
+      recipe DemoRecipe
         foo: create *
         P
           foo: foo`);
     const runtime = new Runtime({loader, context});
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {
+    const arcInfo = await runtime.allocator.startArc({
+      arcName: 'demo',
+      planName: 'DemoRecipe',
+      storageKeyPrefix: storageKeyPrefixForTest(),
       inspectorFactory: devtoolsArcInspectorFactory
     });
-
-    const recipe = arc.context.recipes[0];
-    recipe.normalize();
-    await arc.instantiate(recipe);
 
     assert.isEmpty(DevtoolsForTests.channel.messages.filter(
         m => m.messageType === 'store-value-changed'));
 
+    const arc = runtime.getArcById(arcInfo.id);
     await arc.idle;
 
     const results = DevtoolsForTests.channel.messages.filter(
         m => m.messageType === 'store-value-changed');
     assert.lengthOf(results, 1);
 
-    const sessionId = arc.idGenerator.currentSessionIdForTesting;
-    const storeInfo = arc.findStoreById(arc.activeRecipe.handles[0].id);
-    const store = await arc.getActiveStore(storeInfo) as ActiveSingletonEntityStore;
+    const sessionId = arcInfo.idGenerator.currentSessionIdForTesting;
+    const storeInfo = arcInfo.findStoreById(arcInfo.activeRecipe.handles[0].id);
+    const store = await runtime.storageService.getActiveStore(storeInfo) as ActiveSingletonEntityStore;
     // TODO(mmandlis): there should be a better way!
     const creationTimestamp = Object.values((await store.serializeContents()).values)[0]['value']['creationTimestamp'];
     assert.deepEqual(results[0].messageBody, {

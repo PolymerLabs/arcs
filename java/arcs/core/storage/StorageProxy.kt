@@ -2,7 +2,7 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
-import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.VersionMap
 import arcs.core.util.Scheduler
 import kotlinx.coroutines.CoroutineDispatcher
@@ -12,7 +12,7 @@ import kotlinx.coroutines.Deferred
  * [StorageProxy] is an intermediary between a [Handle] and [ActiveStore]. It provides up-to-date CRDT
  * state to readers, and ensures write operations apply cleanly before forwarding to the store.
  */
-interface StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> {
+interface StorageProxy<Data : CrdtData, Op : CrdtOperation, T> {
   /** The [StorageKey] that identifies the [ActiveStore] this proxy communicates with. */
   val storageKey: StorageKey
 
@@ -44,6 +44,17 @@ interface StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> {
    * to the [ParticleContext], which manages the [Particle] lifecycle API.
    */
   fun registerForStorageEvents(id: CallbackIdentifier, notify: (StorageEvent) -> Unit)
+
+  /**
+   * [AbstractArcHost] calls this to catch errors in handle lifecycle events.
+   *
+   * TODO(b/164914008): Because the handle lifecycle methods are executed via callback in the
+   * StorageProxy's scheduler scope, it's difficult to propagate exceptions to the Arc host, and
+   * also difficult to prevent continued execution of the notify events when a handle method fails
+   * (i.e. if the first buildCallbackTasks in [StorageProxyImpl.notifyReady] contains a failure,
+   * we want the second buildCallbackTasks not to fire). The lifecycle refactor should address this.
+   */
+  fun setErrorCallbackForHandleEvents(callback: (Exception) -> Unit)
 
   /**
    * Add a [Handle] `onReady` action associated with a [Handle] name.
@@ -107,13 +118,7 @@ interface StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T> {
   fun getVersionMap(): VersionMap
 
   /**
-   * Return the current local version of the model. Suspends until it has a synchronized view of
-   * the data.
-   */
-  suspend fun getParticleView(): T
-
-  /**
-   * Similar to [getParticleView], but requires the current proxy to have been synced at least
+   * Return the current local version of the model. Requires the proxy to have been synced at least
    * once, and also requires the caller to be running within the [Scheduler]'s thread.
    */
   fun getParticleViewUnsafe(): T

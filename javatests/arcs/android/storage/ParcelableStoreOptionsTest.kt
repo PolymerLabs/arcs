@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -15,7 +15,7 @@ import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.core.data.CountType
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -29,7 +29,7 @@ import org.junit.runner.RunWith
 class ParcelableStoreOptionsTest {
   @Before
   fun setup() {
-    StorageKeyParser.reset(
+    StorageKeyManager.GLOBAL_INSTANCE.reset(
       ReferenceModeStorageKey,
       RamDiskStorageKey
     )
@@ -40,7 +40,31 @@ class ParcelableStoreOptionsTest {
     val storeOptions = StoreOptions(
       RamDiskStorageKey("test"),
       CountType(),
-      versionToken = "Foo"
+      versionToken = "Foo",
+      writeOnly = false
+    )
+
+    val marshalled = with(Parcel.obtain()) {
+      writeStoreOptions(storeOptions, ParcelableCrdtType.Count, 0)
+      marshall()
+    }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readStoreOptions()
+    }
+
+    assertThat(unmarshalled).isEqualTo(storeOptions)
+  }
+
+  @Test
+  fun parcelableRoundtrip_works_writeOnly() {
+    val storeOptions = StoreOptions(
+      RamDiskStorageKey("test"),
+      CountType(),
+      versionToken = "Foo",
+      writeOnly = true
     )
 
     val marshalled = with(Parcel.obtain()) {

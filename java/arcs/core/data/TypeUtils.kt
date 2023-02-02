@@ -53,11 +53,18 @@ private fun mapFieldTypeToInferredType(fieldName: String, fieldType: FieldType):
     is FieldType.InlineEntity -> mapSchemaToInferredType(
       SchemaRegistry.getSchema(fieldType.schemaHash)
     )
+    is FieldType.NullableOf -> mapNullableTypeToInferredType(fieldName, fieldType)
   }
 }
 
 private fun mapListTypeToInferredType(fieldName: String, fieldType: FieldType.ListOf) =
   InferredType.SeqType(mapFieldTypeToInferredType(fieldName, fieldType.primitiveType))
+
+private fun mapNullableTypeToInferredType(fieldName: String, fieldType: FieldType.NullableOf) =
+  InferredType.UnionType(setOf(
+    mapFieldTypeToInferredType(fieldName, fieldType.innerType),
+    InferredType.Primitive.NullType
+  ))
 
 private fun mapSchemaToInferredType(schema: Schema): InferredType {
   val allFields = schema.fields.singletons.entries + schema.fields.collections.entries
@@ -129,3 +136,17 @@ fun typeCheck(
 /** Throw if any errors occur during type checking of a paxel expression. */
 class PaxelTypeException(msg: String, val errors: List<String>) :
   Exception("$msg ${errors.joinToString(prefix = "\n  ", separator = "\n  ")}")
+
+/**
+ * If this Type represents a [SingletonType], [CollectionType], or [EntityType], return the
+ * [Schema] used by the underlying [Entity] that this type represents.
+ */
+fun Type.toSchema(): Schema {
+  val maybeSchema = when (this) {
+    is EntitySchemaProviderType -> entitySchema
+    else -> null
+  }
+  return requireNotNull(maybeSchema) {
+    "Type $this has no schema"
+  }
+}

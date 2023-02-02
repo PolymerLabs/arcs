@@ -16,6 +16,8 @@ import arcs.core.host.api.Particle
 import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.withContext
 
 /** Maximum number of times a particle may fail to be started before giving up. */
@@ -24,22 +26,33 @@ const val MAX_CONSECUTIVE_FAILURES = 5
 /**
  * Holds per-[Particle] context state needed by [ArcHost] to implement [Particle] lifecycle.
  *
- * @property particle currently instantiated [Particle] class
  * @property planParticle the [Plan.Particle] used to instantiate [particle]
- * @property dispatcher used when invoking the particle lifecycle methods
  * @property particleState the current state the particle lifecycle is in
  * @property consecutiveFailureCount how many times this particle failed to start in a row; used
  *           to detect infinite-crash loop particles
  */
 class ParticleContext(
-  val particle: Particle,
   val planParticle: Plan.Particle,
-  val scheduler: Scheduler,
   var particleState: ParticleState = ParticleState.Instantiated,
   var consecutiveFailureCount: Int = 0
 ) {
   private val log = TaggedLog {
     "ParticleContext(${planParticle.particleName}, state=$particleState)"
+  }
+
+  private lateinit var _particle: Particle
+  /** Currently instantiated [Particle] class. */
+  val particle: Particle
+    get() = if (this::_particle.isInitialized) _particle else NoOpArcHostParticle
+
+  /** Construct a [ParticleContext] with an initial [Particle] instance. */
+  constructor(
+    particle: Particle,
+    planParticle: Plan.Particle,
+    particleState: ParticleState = ParticleState.Instantiated,
+    consecutiveFailureCount: Int = 0
+  ) : this(planParticle, particleState, consecutiveFailureCount) {
+    _particle = particle
   }
 
   // Indicates whether the particle has any readable handles or not.
@@ -51,10 +64,9 @@ class ParticleContext(
   // The set of handles that are currently desynchronized from storage.
   private val desyncedHandles: MutableSet<Handle> = mutableSetOf()
 
-  // One-shot callback used to notify the arc host that the particle is in the Running state.
-  private var notifyReady: ((Particle) -> Unit)? = null
-
-  private val dispatcher = scheduler.asCoroutineDispatcher()
+  // A list of deferreds that should be completed when the particle moves to the ready state.
+  // Calling [runParticle] will add to this. The list is completed and cleared in [moveToReady].
+  private var pendingReadyDeferred: CompletableDeferred<Unit>? = null
 
   override fun toString() = "ParticleContext(particle=$particle, particleState=$particleState, " +
     "consecutiveFailureCount=$consecutiveFailureCount, isWriteOnly=$isWriteOnly, " +
@@ -64,7 +76,6 @@ class ParticleContext(
   fun copyWith(newParticle: Particle) = ParticleContext(
     newParticle,
     planParticle,
-    scheduler,
     particleState,
     consecutiveFailureCount
   )
@@ -72,7 +83,9 @@ class ParticleContext(
   /**
    * Sets up [StorageEvent] handling for [particle].
    */
-  fun registerHandle(handle: Handle) {
+  fun registerHandle(handle: Handle, onError: (Exception) -> Unit = {}) {
+    log.debug { "registerHandle $handle" }
+
     // TODO(b/159257058): write-only handles still need to sync
     val canRead = handle.mode.canRead // left here to preserve mock ordering in tests
     isWriteOnly = false
@@ -88,7 +101,7 @@ class ParticleContext(
     handle.registerForStorageEvents {
       // TODO(b/159257058): for write-only handles, only allow 'ready' events
       if (canRead || it == StorageEvent.READY) {
-        notify(it, handle)
+        notify(it, handle, onError)
       }
     }
   }
@@ -96,16 +109,12 @@ class ParticleContext(
   /**
    * Performs the startup lifecycle on [particle].
    */
-  suspend fun initParticle() {
-    withContext(requireNotNull(dispatcher)) {
-      check(
-        particleState in arrayOf(
-          ParticleState.Instantiated, ParticleState.Stopped,
-          ParticleState.Failed, ParticleState.Failed_NeverStarted
-        )
-      ) {
-        "${planParticle.particleName}: initParticle should not be called on a particle " +
-          "in state $particleState"
+  suspend fun initParticle(scheduler: Scheduler) {
+    withContext(scheduler.asCoroutineDispatcher()) {
+      log.debug { "initParticle started" }
+
+      check(particleState in ALLOWED_STATES_FOR_INIT) {
+        "initParticle should not be called on a particle in state $particleState"
       }
       if (!particleState.hasBeenStarted) {
         try {
@@ -121,6 +130,8 @@ class ParticleContext(
       } catch (e: Exception) {
         throw markParticleAsFailed(e, "onStart")
       }
+
+      log.debug { "initParticle finished" }
     }
   }
 
@@ -131,58 +142,66 @@ class ParticleContext(
    * For particles with readable handles, triggers their underlying [StorageProxy] sync requests.
    * As each proxy is synced, [notify] will receive a [StorageEvent.READY] event; once all have
    * been received the particle is made ready as above.
+   *
+   * Returns a [Deferred] that will complete when the particle reaches [onReady], or throw an
+   * exception if an exception occurs during execution of the [onReady] method for the particle.
    */
-  suspend fun runParticle(notifyReady: (Particle) -> Unit) {
-    withContext(requireNotNull(dispatcher)) {
+  suspend fun runParticleAsync(scheduler: Scheduler): Deferred<Unit> {
+    val deferred = CompletableDeferred<Unit>()
+    withContext(scheduler.asCoroutineDispatcher()) {
+      log.debug { "runParticleAsync started" }
+
       when (particleState) {
         ParticleState.Running -> {
+          log.debug { "runParticleAsync called for already running particle" }
+
           // If multiple particles read from the same StorageProxy, it is possible that
           // the proxy syncs and notifies READY before all the calls to runParticle are
           // invoked. In this case, the remaining particles may already be running.
           check(awaitingReady.isEmpty()) {
-            "${planParticle.particleName}: runParticle called on an already running " +
-              "particle; awaitingReady should be empty but still has " +
-              "${awaitingReady.size} handles"
+            "runParticleAsync called on an already running particle; awaitingReady should be " +
+              "empty but still has ${awaitingReady.size} handles"
           }
-          notifyReady(particle)
-          return@withContext
+          deferred.complete(Unit)
+          return@withContext deferred
         }
-        ParticleState.Waiting -> Unit
-        else -> throw IllegalStateException(
-          "${planParticle.particleName}: runParticle " +
-            "should not be called on a particle in state $particleState"
-        )
+        ParticleState.Waiting ->
+          Unit
+        else ->
+          throw IllegalStateException(
+            "runParticleAsync should not be called on a particle in state $particleState"
+          )
       }
 
-      this@ParticleContext.notifyReady = notifyReady
+      check(pendingReadyDeferred == null) {
+        "runParticleAsync called more than once on a waiting particle"
+      }
+      pendingReadyDeferred = deferred
 
       if (isWriteOnly) {
-        // Particles with only write-only handles won't receive any storage
-        // events and thus need to have onReady invoked directly.
-        try {
-          moveToReady()
-        } catch (e: Exception) {
-          throw markParticleAsFailed(e, "onReady")
-        }
+        moveToReady()
       } else {
         // Trigger the StorageProxy sync request for each readable handle. Once
         // the StorageEvent.READY notifications have all, been received, we can
         // call particle.onReady (handled by notify below).
-        awaitingReady.forEach { it.maybeInitiateSync() }
+        awaitingReady.toSet().forEach { it.maybeInitiateSync() }
       }
+
+      log.debug { "runParticleAsync finished" }
     }
+    return deferred
   }
 
   /**
    * Performs the shutdown lifecycle on [particle] and resets its handles.
    * This records exceptions from `onShutdown` but does not re-throw them.
    */
-  suspend fun stopParticle() {
+  suspend fun stopParticle(scheduler: Scheduler) {
     // Detach handle callbacks.
     // We want onShutdown to have access to the handles,
     // But this particle should never receive another `onUpdate`
     // callback from this point on.
-    withContext(requireNotNull(dispatcher)) {
+    withContext(scheduler.asCoroutineDispatcher()) {
       particle.handles.detach()
     }
 
@@ -193,7 +212,7 @@ class ParticleContext(
     // get processed. This guarantees that it will be safe to call handles.reset()
     // in this block without worrying about any latent storage events attempting to run
     // and access the now-null handle.
-    withContext(requireNotNull(dispatcher)) {
+    withContext(scheduler.asCoroutineDispatcher()) {
       try {
         particle.onShutdown()
         particleState = ParticleState.Stopped
@@ -212,51 +231,65 @@ class ParticleContext(
    * Write-only particles should not receive any of these events.
    *
    * This will be executed in the context of the StorageProxy's scheduler.
-   * TODO(b/158790341): error handling in event methods
    */
-  fun notify(event: StorageEvent, handle: Handle) {
-    check(
-      particleState in arrayOf(
-        ParticleState.Waiting, ParticleState.Running, ParticleState.Desynced
-      )
-    ) {
-      "${planParticle.particleName}: storage events should not be received " +
-        "in state $particleState"
+  fun notify(event: StorageEvent, handle: Handle, onError: (Exception) -> Unit = {}) {
+    log.debug { "received StorageEvent.$event for handle $handle" }
+
+    check(particleState in ALLOWED_STATES_FOR_NOTIFY) {
+      "storage events should not be received in state $particleState"
     }
 
-    when (event) {
-      StorageEvent.READY -> {
-        if (awaitingReady.remove(handle) && awaitingReady.isEmpty()) {
-          moveToReady()
+    try {
+      when (event) {
+        StorageEvent.READY -> {
+          if (awaitingReady.remove(handle) && awaitingReady.isEmpty()) {
+            moveToReady()
+          }
+        }
+        StorageEvent.UPDATE -> {
+          // On update event, only notify the particle about the update if there are no handles
+          // awaiting ready.
+          if (awaitingReady.isEmpty()) {
+            particle.onUpdate()
+          }
+        }
+        StorageEvent.DESYNC -> {
+          // On desync event, only notify the particle about the desync if it's the first desync'd
+          // handle.
+          if (desyncedHandles.isEmpty()) {
+            particleState = ParticleState.Desynced
+            particle.onDesync()
+          }
+          desyncedHandles.add(handle)
+        }
+        StorageEvent.RESYNC -> {
+          // On resync event, always notify the particle.. even if the particle wasn't yet aware of
+          // a desync state.
+          desyncedHandles.remove(handle)
+          if (desyncedHandles.isEmpty()) {
+            particle.onResync()
+            particleState = ParticleState.Running
+          }
         }
       }
-      StorageEvent.UPDATE -> {
-        if (awaitingReady.isEmpty()) {
-          particle.onUpdate()
-        }
-      }
-      StorageEvent.DESYNC -> {
-        if (desyncedHandles.isEmpty()) {
-          particleState = ParticleState.Desynced
-          particle.onDesync()
-        }
-        desyncedHandles.add(handle)
-      }
-      StorageEvent.RESYNC -> {
-        desyncedHandles.remove(handle)
-        if (desyncedHandles.isEmpty()) {
-          particle.onResync()
-          particleState = ParticleState.Running
-        }
-      }
+    } catch (error: Exception) {
+      particleState = ParticleState.failedWith(error)
+      onError(error)
     }
   }
 
   private fun moveToReady() {
-    particle.onReady()
-    particleState = ParticleState.Running
-    notifyReady?.invoke(particle)
-    notifyReady = null
+    log.debug { "moving to ready state" }
+    try {
+      particle.onReady()
+      particleState = ParticleState.Running
+      pendingReadyDeferred?.complete(Unit)
+    } catch (e: Exception) {
+      markParticleAsFailed(e, "onReady")
+      pendingReadyDeferred?.completeExceptionally(e)
+    } finally {
+      pendingReadyDeferred = null
+    }
   }
 
   private fun markParticleAsFailed(error: Exception, eventName: String): Exception {
@@ -274,5 +307,20 @@ class ParticleContext(
       }
     }
     return error
+  }
+
+  companion object {
+    private val ALLOWED_STATES_FOR_INIT = arrayOf(
+      ParticleState.Instantiated,
+      ParticleState.Stopped,
+      ParticleState.Failed,
+      ParticleState.Failed_NeverStarted
+    )
+
+    private val ALLOWED_STATES_FOR_NOTIFY = arrayOf(
+      ParticleState.Waiting,
+      ParticleState.Running,
+      ParticleState.Desynced
+    )
   }
 }

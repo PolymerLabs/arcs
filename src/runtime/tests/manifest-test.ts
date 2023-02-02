@@ -12,7 +12,7 @@ import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {fs} from '../../platform/fs-web.js';
 import {path} from '../../platform/path-web.js';
-import {Manifest, ManifestParseOptions, ErrorSeverity} from '../manifest.js';
+import {Manifest, ErrorSeverity} from '../manifest.js';
 import {checkDefined, checkNotNull} from '../testing/preconditions.js';
 import {Loader} from '../../platform/loader.js';
 import {Dictionary} from '../../utils/lib-utils.js';
@@ -22,20 +22,18 @@ import {ClaimType} from '../arcs-types/enums.js';
 import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore, CheckImplication} from '../arcs-types/check.js';
 import {ProvideSlotConnectionSpec, ParticleDataflowType} from '../arcs-types/particle-spec.js';
 import {Entity} from '../entity.js';
-import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storage/drivers/ramdisk.js';
+import {RamDiskStorageKey} from '../storage/drivers/ramdisk.js';
 import {digest} from '../../platform/digest-web.js';
-import {DriverFactory} from '../storage/drivers/driver-factory.js';
-import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {FirebaseStorageDriverProvider} from '../storage/drivers/firebase.js';
 import {Runtime} from '../runtime.js';
 import {mockFirebaseStorageKeyOptions} from '../storage/testing/mock-firebase.js';
 import {Flags} from '../flags.js';
 import {TupleType, CollectionType, EntityType, TypeVariable, Schema, BinaryExpression,
         FieldNamePrimitive, NumberPrimitive, PrimitiveField} from '../../types/lib-types.js';
-import {ActiveCollectionEntityStore, handleForStoreInfo, CollectionEntityType} from '../storage/storage.js';
+import {CollectionEntityType} from '../storage/storage.js';
 import {Ttl} from '../capabilities.js';
 import {StoreInfo} from '../storage/store-info.js';
-import {StorageServiceImpl} from '../storage/storage-service.js';
+import {deleteFieldRecursively} from '../../utils/lib-utils.js';
 
 function verifyPrimitiveType(field, type) {
   assert(field instanceof PrimitiveField, `Got ${field.constructor.name}, but expected a primitive field.`);
@@ -46,25 +44,18 @@ function verifyPrimitiveType(field, type) {
 
 describe('manifest', async () => {
 
-  let memoryProvider;
+  let runtime;
   let storageService;
   beforeEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-    memoryProvider = new TestVolatileMemoryProvider();
-    storageService = new StorageServiceImpl();
-    RamDiskStorageDriverProvider.register(memoryProvider);
+    runtime = new Runtime();
+    storageService = runtime.storageService;
   });
 
   afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
   });
 
-  const parseManifest = async (content: string, options: ManifestParseOptions = {memoryProvider}): Promise<Manifest> => {
-    return Manifest.parse(content, options);
-  };
-
   it('can parse a manifest containing a recipe', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema S
         t: Text
 
@@ -112,7 +103,7 @@ describe('manifest', async () => {
     const type = manifest.recipes[0].handleConnections[0].type;
     assert.strictEqual('one-s', type.toPrettyString());
     assert.strictEqual('many-ses', type.collectionOf().toPrettyString());
-    verify(await parseManifest(manifest.toString()));
+    verify(await runtime.parse(manifest.toString()));
   });
   it('can parse a manifest containing a particle specification', async () => {
     const schemaStr = `
@@ -120,7 +111,7 @@ schema Product
 schema Person
     `;
     const particleStr0 =
-`particle TestParticle in 'testParticle.js'
+`particle TestParticle in './testParticle.js'
   list: reads [Product {}]
   person: writes Person {}
   modality dom
@@ -136,9 +127,9 @@ schema Person
     list \`my special list\``;
 
     const particleStr1 =
-`particle NoArgsParticle in 'noArgsParticle.js'
+`particle NoArgsParticle in './noArgsParticle.js'
   modality dom`;
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
 ${schemaStr}
 ${particleStr0}
 ${particleStr1}
@@ -149,7 +140,7 @@ ${particleStr1}
       assert.strictEqual(particleStr1, manifest.particles[1].toString());
     };
     verify(manifest);
-    verify(await parseManifest(manifest.toString()));
+    verify(await runtime.parse(manifest.toString()));
   });
   it('SLANDLES can parse a manifest containing a particle specification', async () => {
     const schemaStr = `
@@ -157,7 +148,7 @@ schema Product
 schema Person
     `;
     const particleStr0 =
-`particle TestParticle in 'testParticle.js'
+`particle TestParticle in './testParticle.js'
   list: reads [Product {}]
   person: writes Person {}
   root: \`consumes Slot {formFactor:big} #master #main
@@ -173,9 +164,9 @@ schema Person
     list \`my special list\``;
 
     const particleStr1 =
-`particle NoArgsParticle in 'noArgsParticle.js'
+`particle NoArgsParticle in './noArgsParticle.js'
   modality dom`;
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
 ${schemaStr}
 ${particleStr0}
 ${particleStr1}
@@ -186,11 +177,11 @@ ${particleStr1}
       assert.strictEqual(particleStr1, manifest.particles[1].toString());
     };
     verify(manifest);
-    verify(await parseManifest(manifest.toString()));
+    verify(await runtime.parse(manifest.toString()));
   });
   it('can parse a manifest containing a particle with an argument list', async () => {
-    const manifest = await parseManifest(`
-    particle TestParticle in 'a.js'
+    const manifest = await runtime.parse(`
+    particle TestParticle in './a.js'
       list: reads [Product {}]
       person: writes Person {}
       thing: consumes
@@ -200,8 +191,8 @@ ${particleStr1}
     assert.lengthOf(manifest.particles[0].handleConnections, 2);
   });
   it('SLANDLES can parse a manifest containing a particle with an argument list', async () => {
-    const manifest = await parseManifest(`
-    particle TestParticle in 'a.js'
+    const manifest = await runtime.parse(`
+    particle TestParticle in './a.js'
       list: reads [Product {}]
       person: writes Person {}
       thing: \`consumes Slot
@@ -211,8 +202,8 @@ ${particleStr1}
     assert.lengthOf(manifest.particles[0].handleConnections, 4);
   });
   it('can parse a manifest with dependent handles', async () => {
-    const manifest = await parseManifest(`
-    particle TestParticle in 'a.js'
+    const manifest = await runtime.parse(`
+    particle TestParticle in './a.js'
       input: reads [Product {}]
         output: writes [Product {}]
       thing: consumes
@@ -222,8 +213,8 @@ ${particleStr1}
     assert.lengthOf(manifest.particles[0].handleConnections, 2);
   });
   it('SLANDLES can parse a manifest with dependent handles', async () => {
-    const manifest = await parseManifest(`
-    particle TestParticle in 'a.js'
+    const manifest = await runtime.parse(`
+    particle TestParticle in './a.js'
       input: reads [Product {}]
         output: writes [Product {}]
       thing: \`consumes Slot
@@ -233,58 +224,58 @@ ${particleStr1}
     assert.lengthOf(manifest.particles[0].handleConnections, 4);
   });
   it('can round-trip particles with dependent handles', async () => {
-    const manifestString = `particle TestParticle in 'a.js'
+    const manifestString = `particle TestParticle in './a.js'
   input: reads [Product {}]
     output: writes [Product {}]
   modality dom
   thing: consumes Slot
     otherThing: provides? Slot`;
 
-    const manifest = await parseManifest(manifestString);
+    const manifest = await runtime.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
     assert.strictEqual(manifestString, manifest.particles[0].toString());
   });
   it('SLANDLES can round-trip particles with dependent handles', async () => {
-    const manifestString = `particle TestParticle in 'a.js'
+    const manifestString = `particle TestParticle in './a.js'
   input: reads [Product {}]
     output: writes [Product {}]
   thing: \`consumes? Slot
     otherThing: \`provides? Slot
   modality dom`;
 
-    const manifest = await parseManifest(manifestString);
+    const manifest = await runtime.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
     assert.strictEqual(manifestString, manifest.particles[0].toString());
   });
   it('can parse a manifest containing a schema', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Bar
         value: Text`);
     const verify = (manifest: Manifest) => verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
     verify(manifest);
-    verify(await parseManifest(manifest.toString()));
+    verify(await runtime.parse(manifest.toString()));
   });
   it('can parse a manifest containing an extended schema', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Foo
         value: Text
       schema Bar extends Foo`);
     const verify = (manifest: Manifest) => verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
     verify(manifest);
-    verify(await parseManifest(manifest.toString()));
+    verify(await runtime.parse(manifest.toString()));
   });
   it('can parse a manifest containing an inline schema', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Foo
         value: Text
       particle Fooer
         foo: reads Foo {value}`);
     const verify = (manifest: Manifest) => verifyPrimitiveType(manifest.schemas.Foo.fields.value, 'Text');
     verify(manifest);
-    verify(await parseManifest(manifest.toString()));
+    verify(await runtime.parse(manifest.toString()));
   });
   it('can parse a manifest containing an inline schema with line breaks and a trailing comma', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       particle Fooer
         foo: reads Foo {
           // Comments can go here
@@ -299,7 +290,7 @@ ${particleStr1}
       verifyPrimitiveType(connectionEntity.fields.other, 'Number');
     };
     verify(manifest);
-    verify(await parseManifest(manifest.toString()));
+    verify(await runtime.parse(manifest.toString()));
   });
   it('two manifests with stores with the same filename, store name and data have the same ids', async () => {
     const manifestText = `
@@ -314,10 +305,8 @@ ${particleStr1}
         "locations": {}
       }
     `;
-    const manifestA = await parseManifest(manifestText, {fileName: 'the.manifest', memoryProvider});
-
-    const manifestB = await parseManifest(manifestText, {fileName: 'the.manifest', memoryProvider});
-
+    const manifestA = await runtime.parse(manifestText, {fileName: 'test.arcs'});
+    const manifestB = await runtime.parse(manifestText, {fileName: 'test.arcs'});
     assert.strictEqual(manifestA.stores[0].id.toString(), manifestB.stores[0].id.toString());
   });
   it('two manifests with stores with the same filename and store name but different data have different ids', async () => {
@@ -333,14 +322,12 @@ ${particleStr1}
         "locations": {}
       }
     `;
-    const manifestA = await parseManifest(manifestText(12345), {fileName: 'the.manifest', memoryProvider});
-
-    const manifestB = await parseManifest(manifestText(67890), {fileName: 'the.manifest', memoryProvider});
-
+    const manifestA = await runtime.parse(manifestText(12345));
+    const manifestB = await runtime.parse(manifestText(67890));
     assert.notStrictEqual(manifestA.stores[0].id.toString(), manifestB.stores[0].id.toString());
   });
   it('can parse a recipe with a synthetic join handle', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       recipe
         people: map #folks
         other: map #products
@@ -361,11 +348,11 @@ ${particleStr1}
       assert.include(pairs.joinedHandles, places);
     };
     verify(manifest);
-    verify(await parseManifest(manifest.toString()));
+    verify(await runtime.parse(manifest.toString()));
   });
   it('fails to parse a recipe with an invalid synthetic join handle', async () => {
     try {
-      await parseManifest(`
+      await runtime.parse(`
         recipe
           people: map #folks
           things: map #products
@@ -376,7 +363,7 @@ ${particleStr1}
     }
   });
   it('can resolve a recipe with a synthetic join handle', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       particle JoinReader
         data: reads [(
           Person {name: Text},
@@ -392,17 +379,17 @@ ${particleStr1}
     assert.isTrue(recipe.normalize());
 
     const peopleHandle = recipe.handles.find(h => h.id === 'people');
-    peopleHandle.type.maybeEnsureResolved();
+    peopleHandle.type.maybeResolve();
     assert.equal(peopleHandle.type.resolvedType().toString(), '[Person {name: Text}]');
 
     const placesHandle = recipe.handles.find(h => h.id === 'places');
-    placesHandle.type.maybeEnsureResolved();
+    placesHandle.type.maybeResolve();
     assert.equal(placesHandle.type.resolvedType().toString(), '[Place {address: Text}]');
 
     assert.isTrue(recipe.isResolved());
   });
   it('can resolve a recipe with a synthetic join handle and multiple readers', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       particle PeopleReader
         people: reads [Person {age: Number, name: Text}]
       particle PlaceReader
@@ -431,19 +418,19 @@ ${particleStr1}
     assert.isTrue(recipe.normalize());
 
     const peopleHandle = recipe.handles.find(h => h.id === 'people');
-    peopleHandle.type.maybeEnsureResolved();
+    peopleHandle.type.maybeResolve();
     assert.equal(peopleHandle.type.resolvedType().toString(),
         '[Person {age: Number, name: Text, phoneNumber: Text}]');
 
     const placesHandle = recipe.handles.find(h => h.id === 'places');
-    placesHandle.type.maybeEnsureResolved();
+    placesHandle.type.maybeResolve();
     assert.equal(placesHandle.type.resolvedType().toString(),
         '[Place {address: Text, latitude: Number, longitude: Number}]');
 
     assert.isTrue(recipe.isResolved());
   });
   it('does not allow writing to a synthetic join handle', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       particle JoinReader
         data: writes [(
           Person {name: Text},
@@ -462,7 +449,7 @@ ${particleStr1}
     assert.sameMembers(errors, [`Invalid fate 'join' for handle 'pairs: join (people, places)'; it is used for 'writes' JoinReader::data connection`]);
   });
   it('supports recipes with constraints', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema S
       particle A
         a: reads S
@@ -482,10 +469,10 @@ ${particleStr1}
       assert.strictEqual(constraint.to.connection, 'b');
     };
     verify(manifest);
-    verify(await parseManifest(manifest.toString()));
+    verify(await runtime.parse(manifest.toString()));
   });
   it('supports recipes with constraints that reference handles', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       particle A
         a: writes S {}
 
@@ -502,10 +489,10 @@ ${particleStr1}
       assert.strictEqual(constraint.to.handle.localName, 'localThing');
     };
     verify(manifest);
-    verify(await parseManifest(manifest.toString()));
+    verify(await runtime.parse(manifest.toString()));
   });
   it('supports recipes with local names', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema S
       particle P1
         x: writes S
@@ -520,11 +507,11 @@ ${particleStr1}
           x: writes thingHandle
         P2
           x: writes thingHandle`);
-    const deserializedManifest = (await parseManifest(manifest.toString()));
+    const deserializedManifest = (await runtime.parse(manifest.toString()));
   });
   // TODO: move these tests to new-recipe tests.
   it('can normalize simple recipes', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema S
       particle P1
         x: writes S
@@ -549,10 +536,10 @@ ${particleStr1}
     assert.deepEqual(recipe1.toString(), recipe2.toString());
     assert.strictEqual(await recipe1.digest(), await recipe2.digest());
 
-    const deserializedManifest = await parseManifest(manifest.toString());
+    const deserializedManifest = await runtime.parse(manifest.toString());
   });
   it('can normalize recipes with interdependent ordering of handles and particles', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema S
       particle P1
         x: writes S
@@ -578,33 +565,33 @@ ${particleStr1}
     assert.deepEqual(recipe1.toString(), recipe2.toString());
   });
   it('can resolve recipe particles defined in the same manifest', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Something
       schema Someother
-      particle Thing in 'thing.js'
+      particle Thing in './thing.js'
         someThings: reads [Something]
         someOthers: writes [Someother]
       recipe
         Thing`);
     const verify = (manifest: Manifest) => assert(manifest.recipes[0].particles[0].spec);
     verify(manifest);
-    verify(await parseManifest(manifest.toString()));
+    verify(await runtime.parse(manifest.toString()));
   });
   it('treats a failed import as non-fatal', async () => { // TODO(cypher1): Review this.
     const loader = new Loader(null, {
       './a': `import 'b'`,
       './b': `lol what is this`,
     });
-    const cc = await ConCap.capture(() => Manifest.load('./a', loader, {memoryProvider}));
+    const cc = await ConCap.capture(() => runtime.parseFile('./a', {loader}));
     assert.lengthOf(cc.warn, 2);
     assert.match(cc.warn[0][0], /Parse error in '\.\/b' line 1/);
     assert.match(cc.warn[1][0], /Error importing '\.\/b'/);
   });
   it('throws an error when a particle has invalid description', async () => {
     try {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         schema Foo
-        particle Thing in 'thing.js'
+        particle Thing in './thing.js'
           foo: reads Foo
           description \`Does thing\`
             bar \`my-bar\``);
@@ -615,20 +602,20 @@ ${particleStr1}
   });
   it('can load a manifest via a loader', async () => {
     const registry: Dictionary<Promise<Manifest>> = {};
-
     const loader = new Loader(null, {
-      '*': 'recipe'});
-    const manifest = await Manifest.load('some-path', loader, {registry, memoryProvider});
+      '*': 'recipe'
+    });
+    const manifest = await runtime.parseFile('some-path', {loader, registry});
     assert(manifest.recipes[0]);
     assert.strictEqual(manifest, await registry['some-path']);
   });
   it('can load a manifest with imports', async () => {
     const registry: Dictionary<Promise<Manifest>> = {};
     const loader = new Loader(null, {
-      './a': `import 'b'`,
+      './a': `import './b'`,
       './b': `recipe`,
     });
-    const manifest = await Manifest.load('./a', loader, {registry, memoryProvider});
+    const manifest = await runtime.parseFile('./a', {loader, registry});
     assert.strictEqual(await registry['./a'], manifest);
     assert.strictEqual(manifest.imports[0], await registry['./b']);
   });
@@ -641,12 +628,15 @@ ${particleStr1}
           ParticleB`,
       './b': `
         schema Thing
-        particle ParticleB in 'b.js'
+        particle ParticleB in './b.js'
           thing: reads Thing`
     });
-    const manifest = await Manifest.load('./a', loader, {registry, memoryProvider});
-    assert.isTrue(manifest.recipes[0].particles[0].spec.equals(
-      (await registry['./b']).findParticleByName('ParticleB'))
+    const manifest = await runtime.parseFile('./a', {loader, registry});
+    const particleLit = (await registry['./b']).findParticleByName('ParticleB').toLiteral();
+    deleteFieldRecursively(particleLit, 'location');
+    assert.deepEqual(
+      manifest.recipes[0].particles[0].spec.toLiteral(),
+      particleLit
     );
   });
   it('can parse a schema extending a schema in another manifest', async () => {
@@ -659,7 +649,7 @@ ${particleStr1}
             value: Text`
     });
     const registry = {};
-    const manifest = await Manifest.load('./a', loader, {registry, memoryProvider});
+    const manifest = await runtime.parseFile('./a', {loader, registry});
     verifyPrimitiveType(manifest.schemas.Bar.fields.value, 'Text');
   });
   it('can find all imported recipes', async () => {
@@ -673,11 +663,11 @@ ${particleStr1}
           recipe`,
       './c': `recipe`,
     });
-    const manifest = await Manifest.load('./a', loader, {memoryProvider});
+    const manifest = await runtime.parseFile('./a', {loader});
     assert.lengthOf(manifest.allRecipes, 3);
   });
   it('can parse a schema with union typing', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Foo
         u: (Text or URL)
         test: Text
@@ -693,14 +683,14 @@ ${particleStr1}
       verifyPrimitiveType(opt.t.getFieldTypes()[2], 'Boolean');
     };
     verify(manifest);
-    verify(await parseManifest(manifest.toString()));
+    verify(await runtime.parse(manifest.toString()));
   });
   it('generates helpful type errors in recipes', async () => {
-    const manifest = await parseManifest(`
-      particle P in 'a.js'
+    const manifest = await runtime.parse(`
+      particle P in './a.js'
         outV: writes * {name: Text, age: Number}
 
-      particle Q in 'a.js'
+      particle Q in './a.js'
         inV: reads * {first_name: Text, age: Number}
 
       recipe
@@ -717,10 +707,10 @@ ${particleStr1}
       assert.sameMembers(errors, [`Type validations failed for handle 'val: create': could not guarantee variable ~ meets read requirements * {first_name: Text, age: Number} with write guarantees * {name: Text, age: Number}`], 'expected type error');
     };
     verify(manifest);
-    verify(await parseManifest(manifest.toString()));
+    verify(await runtime.parse(manifest.toString()));
   });
   it('parses meta namespace section', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       meta
         name: 'Awesome Arc'
         namespace: com.some.namespace
@@ -730,11 +720,11 @@ ${particleStr1}
     assert.equal(manifest.meta.namespace, 'com.some.namespace');
   });
   it('parses and type checks a recipe with nested schemas', async () => {
-    const manifest = await parseManifest(`
-      particle P in 'a.js'
+    const manifest = await runtime.parse(`
+      particle P in './a.js'
         writer: writes * {inner: inline {x: Text, y: List<Number>}, z: Text}
 
-      particle Q in 'b.js'
+      particle Q in './b.js'
         reader: reads * {inner: inline {y: List<Number>}, z: Text}
 
       recipe
@@ -749,7 +739,7 @@ ${particleStr1}
   });
   describe('refinement types', async () => {
     it('can construct manifest containing schema with refinement types', Flags.withFieldRefinementsAllowed(async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         schema Foo
           num: Number [num < 5]`);
       const verify = (manifest: Manifest) => {
@@ -762,17 +752,17 @@ ${particleStr1}
         assert.strictEqual(binaryExpression.operator.op, '<');
       };
       verify(manifest);
-      verify(await parseManifest(manifest.toString()));
+      verify(await runtime.parse(manifest.toString()));
     }));
     it('can construct manifest with particles using already defined schema (with refinements)', Flags.withFieldRefinementsAllowed(async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
       schema Person
         name: Text
         id: Text
         age: Number [age > 0]
       schema Ordered
         index: Number [index >= 0]
-      particle OrderPeople in 'OrderPeople.js'
+      particle OrderPeople in './OrderPeople.js'
         orderedPeople: writes [Ordered Person {name, id, index}]`);
       const verify = (manifest: Manifest) => {
         const entity = manifest.particles[0].handleConnectionMap.get('orderedPeople').type['collectionType'];
@@ -793,7 +783,7 @@ ${particleStr1}
       verify(manifest);
     }));
     it('can construct manifest with particles using already defined schema (with refinements and double quotes)', Flags.withFieldRefinementsAllowed(async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
       schema Person
         name: Text
         id: Text
@@ -821,7 +811,7 @@ ${particleStr1}
       verify(manifest);
     }));
     it('can construct manifest containing a particle with refinement types', Flags.withFieldRefinementsAllowed(async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
       particle Foo
         input: reads Something {value: Number [value > 0], price: Number [price > 0]} [value > 10 and price < 2]`);
       const verify = (manifest: Manifest) => {
@@ -843,7 +833,7 @@ ${particleStr1}
         assert.strictEqual(ref.expression.rightExpr.rightExpr.value, 2);
       };
       verify(manifest);
-      verify(await parseManifest(manifest.toString()));
+      verify(await runtime.parse(manifest.toString()));
     }));
 
     describe('refinement type checking', async () => {
@@ -860,7 +850,7 @@ ${particleStr1}
 
       it('checks refinement expressions with out of scope variables', Flags.withFieldRefinementsAllowed(async () => {
         assertThrowsAsync(async () => {
-          await parseManifest(`
+          await runtime.parse(`
             particle Writer
               output: writes Something {num: Number [ foo > 5 ] }
             particle Reader
@@ -875,7 +865,7 @@ ${particleStr1}
       }));
       it('checks refinement expressions with out of scope field names', Flags.withFieldRefinementsAllowed(async () => {
         assertThrowsAsync(async () => {
-          await parseManifest(`
+          await runtime.parse(`
             particle Writer
               output: writes Something {num: Number [ other_num > 5 ], other_num: Number }
             particle Reader
@@ -889,7 +879,7 @@ ${particleStr1}
         }, 'Unresolved field name \'other_num\' in the refinement expression.');
       }));
       it('checks refinement expressions', Flags.withFieldRefinementsAllowed(async () => {
-        const manifest = await parseManifest(`
+        const manifest = await runtime.parse(`
           particle Writer
             output: writes Something {num: Number [ num > 5 ] }
           particle Reader
@@ -903,7 +893,7 @@ ${particleStr1}
         verify(manifest, true, []);
       }));
       it('checks for unsafe refinement expressions', Flags.withFieldRefinementsAllowed(async () => {
-        const manifest = await parseManifest(`
+        const manifest = await runtime.parse(`
           particle BadWriter
             output: writes Something {num: Number [ num > 3 ] }
           particle Reader
@@ -917,8 +907,8 @@ ${particleStr1}
         const refinementError = `Type validations failed for handle 'data: create': could not guarantee variable ~ meets read requirements Something {num: Number[(num > 5)]} with write guarantees Something {num: Number[(num > 3)]}`;
         verify(manifest, false, [refinementError]);
       }));
-      it('ignores impossible refinement expressions', Flags.withFieldRefinementsAllowed(async () => {
-        const manifest = await parseManifest(`
+      it('ignores impossible refinement expressions', Flags.withFlags({fieldRefinementsAllowed: true, warnOnUnsafeRefinement: true}, async () => {
+        const manifest = await runtime.parse(`
           particle Impossible
             output: writes Something {num: Number [ (num < 3) and (num > 3) ] }
           particle Reader
@@ -933,8 +923,8 @@ ${particleStr1}
         verify(manifest, true, []);
       }));
 
-      it('ignores dynamic query refinement expressions on fields', Flags.withFieldRefinementsAllowed(async () => {
-        const manifest = await parseManifest(`
+      it('ignores dynamic query refinement expressions on fields', Flags.withFlags({fieldRefinementsAllowed: true, warnOnUnsafeRefinement: true}, async () => {
+        const manifest = await runtime.parse(`
           particle Impossible
             output: writes Something {num: Number [ (num > 3) ] }
           particle Reader
@@ -946,13 +936,33 @@ ${particleStr1}
               input: reads data
         `);
         const cc = await ConCap.capture(() => verify(manifest, true, []));
+        for (const warn of cc.warn) {
+          assert.match(warn, /Unable to ascertain if .* is at least as specific as .*/);
+        }
         assert.lengthOf(cc.warn, 2);
-        assert.match(cc.warn[0], /Unable to ascertain if .* is at least as specific as .*/);
-        assert.match(cc.warn[1], /Unable to ascertain if .* is at least as specific as .*/);
       }));
 
-      it('ignores dynamic query refinement expressions', async () => {
-        const manifest = await parseManifest(`
+      it('ignores dynamic query refinement expressions on fields (and warns when wall turned on', Flags.withFlags({fieldRefinementsAllowed: true, warnOnUnsafeRefinement: true}, async () => {
+        const manifest = await runtime.parse(`
+          particle Impossible
+            output: writes Something {num: Number [ (num > 3) ] }
+          particle Reader
+            input: reads Something {num: Number [ (num > ?) ] }
+          recipe Foo
+            Impossible
+              output: writes data
+            Reader
+              input: reads data
+        `);
+        const cc = await ConCap.capture(() => verify(manifest, true, []));
+        for (const warn of cc.warn) {
+          assert.match(warn, /Unable to ascertain if .* is at least as specific as .*/);
+        }
+        assert.lengthOf(cc.warn, 2);
+      }));
+
+      it('ignores dynamic query refinement expressions', Flags.withFlags({warnOnUnsafeRefinement: true}, async () => {
+        const manifest = await runtime.parse(`
           particle Impossible
             output: writes Something {num: Number} [ (num > 3) ]
           particle Reader
@@ -967,10 +977,10 @@ ${particleStr1}
         assert.lengthOf(cc.warn, 2);
         assert.match(cc.warn[0], /Unable to ascertain if .* is at least as specific as .*/);
         assert.match(cc.warn[1], /Unable to ascertain if .* is at least as specific as .*/);
-      });
+      }));
 
       it('applies refinements', Flags.withFieldRefinementsAllowed(async () => {
-        const manifest = await parseManifest(`
+        const manifest = await runtime.parse(`
           particle Impossible
             output: writes Something {num: Number [ (num > 3) ] }
           particle Reader
@@ -983,8 +993,8 @@ ${particleStr1}
         `);
         verify(manifest, false, ['Type validations failed for handle \'data: create\': could not guarantee variable ~ meets read requirements Something {num: Number[(num > 5)]} with write guarantees Something {num: Number[(num > 3)]}']);
       }));
-      it('ignores dynamic query refinement expressions and-ed with refinements', Flags.withFieldRefinementsAllowed(async () => {
-        const manifest = await parseManifest(`
+      it('ignores dynamic query refinement expressions and-ed with refinements', Flags.withFlags({fieldRefinementsAllowed: true, warnOnUnsafeRefinement: true}, async () => {
+        const manifest = await runtime.parse(`
           particle Impossible
             output: writes Something {num: Number [ (num > 5) ] }
           particle Reader
@@ -1001,8 +1011,8 @@ ${particleStr1}
         assert.match(cc.warn[0], /Unable to ascertain if .* is at least as specific as .*/);
         assert.match(cc.warn[1], /Unable to ascertain if .* is at least as specific as .*/);
       }));
-      it('ignores refinements or-ed with dynamic query refinement expressions', Flags.withFieldRefinementsAllowed(async () => {
-        const manifest = await parseManifest(`
+      it('ignores refinements or-ed with dynamic query refinement expressions', Flags.withFlags({fieldRefinementsAllowed: true, warnOnUnsafeRefinement: true}, async () => {
+        const manifest = await runtime.parse(`
           particle Impossible
             output: writes Something {num: Number }
           particle Reader
@@ -1014,12 +1024,14 @@ ${particleStr1}
               input: reads data
         `);
         const cc = await ConCap.capture(() => verify(manifest, true, []));
+        for (const warn of cc.warn) {
+          assert.match(warn, /Unable to ascertain if .* is at least as specific as .*/);
+        }
         assert.lengthOf(cc.warn, 1);
         assert.lengthOf(cc.log, 0);
-        assert.match(cc.warn[0], /Unable to ascertain if .* is at least as specific as .*/);
       }));
       it('catches unsafe schema level refinements', Flags.withFieldRefinementsAllowed(async () => {
-        const manifest = await parseManifest(`
+        const manifest = await runtime.parse(`
           particle Impossible
             output: writes Something {num: Number } [num > 0]
           particle Reader
@@ -1033,7 +1045,7 @@ ${particleStr1}
         verify(manifest, false, ['Type validations failed for handle \'data: create\': could not guarantee variable ~ meets read requirements Something {num: Number[(num > 3)]} with write guarantees Something {num: Number[(num > 0)]}']);
       }));
       it('allows safe schema level refinements', async () => {
-        const manifest = await parseManifest(`
+        const manifest = await runtime.parse(`
           particle Impossible
             output: writes Something {num: Number } [num > 5]
           particle Reader
@@ -1051,7 +1063,7 @@ ${particleStr1}
 
   describe('relaxed reads and writes', async () => {
     it('can parse a manifest containing relaxed reads', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         schema Thing
         schema NotAThing
 
@@ -1112,15 +1124,15 @@ recipe SomeRecipe
     foo: writes myFoo
   PC as particle2
     foo: reads someof myFoo`;
-      const manifest = await parseManifest(manifestStr);
+      const manifest = await runtime.parse(manifestStr);
       assert.strictEqual(manifest.toString(), manifestStr, 'round trip failed');
     });
   });
 
   it('can parse a manifest containing a recipe with slots', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Thing
-      particle SomeParticle in 'some-particle.js'
+      particle SomeParticle in './some-particle.js'
         someParam: reads Thing
         mySlot: consumes Slot {formFactor: big}
           otherSlot: provides Slot {handle: someParam}
@@ -1162,12 +1174,12 @@ recipe SomeRecipe
       assert.strictEqual(mySlot.providedSlots['oneMoreSlot'], recipe.particles[0].getSlotConnectionByName('oneMoreSlot').targetSlot);
     };
     verify(manifest);
-    verify(await parseManifest(manifest.toString()));
+    verify(await runtime.parse(manifest.toString()));
   });
   it('SLANDLES can parse a manifest containing a recipe with slots', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Thing
-      particle SomeParticle in 'some-particle.js'
+      particle SomeParticle in './some-particle.js'
         someParam: reads Thing
         mySlot: \`consumes Slot {formFactor: big}
           otherSlot: \`provides Slot {handle: someParam}
@@ -1204,13 +1216,13 @@ recipe SomeRecipe
       assert.strictEqual(mySlot.connections[0], recipe.particles[0].connections['mySlot']);
     };
     verify(manifest);
-    verify(await parseManifest(manifest.toString()));
+    verify(await runtime.parse(manifest.toString()));
   });
   it('unnamed consume slots', async () => {
-    const manifest = await parseManifest(`
-      particle SomeParticle &work in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle SomeParticle &work in './some-particle.js'
         slotA: consumes
-      particle SomeParticle1 &rest in 'some-particle.js'
+      particle SomeParticle1 &rest in './some-particle.js'
         slotC: consumes
 
       recipe
@@ -1224,10 +1236,10 @@ recipe SomeRecipe
     assert.isEmpty(recipe.slots);
   });
   it('unnamed consume set slots', async () => {
-    const manifest = await parseManifest(`
-      particle SomeParticle &work in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle SomeParticle &work in './some-particle.js'
         slotA: consumes [Slot]
-      particle SomeParticle1 &rest in 'some-particle.js'
+      particle SomeParticle1 &rest in './some-particle.js'
         slotC: consumes [Slot]
 
       recipe
@@ -1241,10 +1253,10 @@ recipe SomeRecipe
     assert.isEmpty(recipe.slots);
   });
   it('unnamed consume set slots', async () => {
-    const manifest = await parseManifest(`
-      particle SomeParticle &work in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle SomeParticle &work in './some-particle.js'
         slotA: consumes [Slot]
-      particle SomeParticle1 &rest in 'some-particle.js'
+      particle SomeParticle1 &rest in './some-particle.js'
         slotC: consumes [Slot]
 
       recipe
@@ -1258,10 +1270,10 @@ recipe SomeRecipe
     assert.isEmpty(recipe.slots);
   });
   it('SLANDLES unnamed consume slots', async () => {
-    const manifest = await parseManifest(`
-      particle SomeParticle &work in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle SomeParticle &work in './some-particle.js'
         slotA: \`consumes Slot
-      particle SomeParticle1 &rest in 'some-particle.js'
+      particle SomeParticle1 &rest in './some-particle.js'
         slotC: \`consumes Slot
 
       recipe
@@ -1275,10 +1287,10 @@ recipe SomeRecipe
     assert.isEmpty(recipe.handles);
   });
   it('SLANDLES unnamed consume set slots', async () => {
-    const manifest = await parseManifest(`
-      particle SomeParticle &work in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle SomeParticle &work in './some-particle.js'
         slotA: \`consumes [Slot]
-      particle SomeParticle1 &rest in 'some-particle.js'
+      particle SomeParticle1 &rest in './some-particle.js'
         slotC: \`consumes [Slot]
 
       recipe
@@ -1292,10 +1304,10 @@ recipe SomeRecipe
     assert.isEmpty(recipe.handles);
   });
   it('SLANDLES unnamed consume set slots', async () => {
-    const manifest = await parseManifest(`
-      particle SomeParticle &work in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle SomeParticle &work in './some-particle.js'
         slotA: \`consumes [Slot]
-      particle SomeParticle1 &rest in 'some-particle.js'
+      particle SomeParticle1 &rest in './some-particle.js'
         slotC: \`consumes [Slot]
 
       recipe
@@ -1310,8 +1322,8 @@ recipe SomeRecipe
   });
   it('resolves in context with multiple consumed slots', async () => {
     const parseRecipe = async (arg: {label: string, isRequiredSlotA: boolean, isRequiredSlotB: boolean, expectedIsResolved: boolean}) => {
-      const recipe = (await parseManifest(`
-        particle SomeParticle in 'some-particle.js'
+      const recipe = (await runtime.parse(`
+        particle SomeParticle in './some-particle.js'
           slotA: consumes${arg.isRequiredSlotA ? '' : '?'} Slot
           slotB: consumes${arg.isRequiredSlotB ? '' : '?'} Slot
 
@@ -1331,8 +1343,8 @@ recipe SomeRecipe
   });
   it('SLANDLES resolves in context with multiple consumed slots', async () => {
     const parseRecipe = async (arg: {label: string, isRequiredSlotA: boolean, isRequiredSlotB: boolean, expectedIsResolved: boolean}) => {
-      const recipe = (await parseManifest(`
-        particle SomeParticle in 'some-particle.js'
+      const recipe = (await runtime.parse(`
+        particle SomeParticle in './some-particle.js'
           slotA: \`consumes${arg.isRequiredSlotA ? '' : '?'} Slot
           slotB: \`consumes${arg.isRequiredSlotB ? '' : '?'} Slot
 
@@ -1352,8 +1364,8 @@ recipe SomeRecipe
   });
   it('SLANDLES resolves & consumes in context with multiple set slots', async () => {
     const parseRecipe = async (arg: {label: string, isRequiredSlotA: boolean, isRequiredSlotB: boolean, expectedIsResolved: boolean}) => {
-      const recipe = (await parseManifest(`
-        particle SomeParticle in 'some-particle.js'
+      const recipe = (await runtime.parse(`
+        particle SomeParticle in './some-particle.js'
           slotA: \`consumes${arg.isRequiredSlotA ? '' : '?'} [Slot]
           slotB: \`consumes${arg.isRequiredSlotB ? '' : '?'} [Slot]
 
@@ -1373,12 +1385,12 @@ recipe SomeRecipe
   });
 
   it('SLANDLES resolves with dependent slandles', async () => {
-    const manifest = await parseManifest(`
-      particle Parent in 'parent.js'
+    const manifest = await runtime.parse(`
+      particle Parent in './parent.js'
         root: \`consumes Slot
           mySlot: \`provides Slot
 
-      particle Child in 'child.js'
+      particle Child in './child.js'
         childSlot: \`consumes Slot
 
       recipe SlandleRenderSlotsRecipe
@@ -1398,12 +1410,12 @@ recipe SomeRecipe
   });
 
   it('SLANDLES doesn\'t resolve mismatching dependencies dependent slandles', async () => {
-    const manifest = await parseManifest(`
-      particle Parent in 'parent.js'
+    const manifest = await runtime.parse(`
+      particle Parent in './parent.js'
         root: \`consumes Slot
           mySlot: \`provides Slot
 
-      particle Child in 'child.js'
+      particle Child in './child.js'
         childSlot: \`consumes Slot
 
       recipe SlandleRenderSlotsRecipe
@@ -1422,8 +1434,8 @@ recipe SomeRecipe
   });
 
   it('recipe slots with tags', async () => {
-    const manifest = await parseManifest(`
-      particle SomeParticle in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle SomeParticle in './some-particle.js'
         slotA: consumes #aaa
           slotB: provides #bbb
       recipe
@@ -1455,8 +1467,8 @@ recipe SomeRecipe
     assert.lengthOf(Object.keys(slotConn.providedSlots), 1);
   });
   it('SLANDLES recipe slots with tags', async () => {
-    const manifest = await parseManifest(`
-      particle SomeParticle in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle SomeParticle in './some-particle.js'
         slotA: \`consumes Slot #aaa
           slotB: \`provides Slot #bbb
       recipe
@@ -1486,10 +1498,10 @@ recipe SomeRecipe
     assert.deepEqual(['aa', 'hello'], slotConn.tags);
   });
   it('recipe slots with different names', async () => {
-    const manifest = await parseManifest(`
-      particle ParticleA in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle ParticleA in './some-particle.js'
         slotA: consumes
-      particle ParticleB in 'some-particle.js'
+      particle ParticleB in './some-particle.js'
         slotB1: consumes
           slotB2: provides
       recipe
@@ -1510,10 +1522,10 @@ recipe SomeRecipe
     assert.isTrue(recipe.isResolved());
   });
   it('SLANDLES recipe slots with different names', async () => {
-    const manifest = await parseManifest(`
-      particle ParticleA in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle ParticleA in './some-particle.js'
         slotA: \`consumes Slot
-      particle ParticleB in 'some-particle.js'
+      particle ParticleB in './some-particle.js'
         slotB1: \`consumes Slot
           slotB2: \`provides Slot
       recipe
@@ -1537,10 +1549,10 @@ recipe SomeRecipe
     assert.isTrue(recipe.isResolved(options), `Expected recipe to be resolved.\n\t ${JSON.stringify([...options.errors])}`);
   });
   it('SLANDLES recipe set slots with different names (passing a single slot to a set slot)', async () => {
-    const manifest = await parseManifest(`
-      particle ParticleA in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle ParticleA in './some-particle.js'
         slotA: \`consumes [Slot]
-      particle ParticleB in 'some-particle.js'
+      particle ParticleB in './some-particle.js'
         slotB1: \`consumes Slot
           slotB2: \`provides Slot
       recipe
@@ -1561,10 +1573,10 @@ recipe SomeRecipe
     assert.isFalse(recipe.normalize(), 'does not normalize');
   });
   it('SLANDLES recipe set slots with different names (passing a slot as a set slot)', async () => {
-    const manifest = await parseManifest(`
-      particle ParticleA in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle ParticleA in './some-particle.js'
         slotA: \`consumes [Slot]
-      particle ParticleB in 'some-particle.js'
+      particle ParticleB in './some-particle.js'
         slotB1: \`consumes Slot
           slotB2: \`provides [Slot]
       recipe
@@ -1588,10 +1600,10 @@ recipe SomeRecipe
     assert.isTrue(recipe.isResolved(options), `Expected recipe to be resolved.\n\t ${JSON.stringify([...options.errors])}`);
   });
   it('SLANDLES recipe set slots with different names (passing set slots)', async () => {
-    const manifest = await parseManifest(`
-      particle ParticleA in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle ParticleA in './some-particle.js'
         slotA: \`consumes [Slot]
-      particle ParticleB in 'some-particle.js'
+      particle ParticleB in './some-particle.js'
         slotB1: \`consumes [Slot]
           slotB2: \`provides [Slot]
       recipe
@@ -1615,10 +1627,10 @@ recipe SomeRecipe
     assert.isTrue(recipe.isResolved(options), `Expected recipe to be resolved.\n\t ${JSON.stringify([...options.errors])}`);
   });
   it('SLANDLES recipe set slots with different names (passing a single slot to a set slot)', async () => {
-    const manifest = await parseManifest(`
-      particle ParticleA in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle ParticleA in './some-particle.js'
         slotA: \`consumes [Slot]
-      particle ParticleB in 'some-particle.js'
+      particle ParticleB in './some-particle.js'
         slotB1: \`consumes Slot
           slotB2: \`provides Slot
       recipe
@@ -1639,10 +1651,10 @@ recipe SomeRecipe
     assert.isFalse(recipe.normalize(), 'does not normalize');
   });
   it('SLANDLES recipe set slots with different names (passing a slot as a set slot)', async () => {
-    const manifest = await parseManifest(`
-      particle ParticleA in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle ParticleA in './some-particle.js'
         slotA: \`consumes [Slot]
-      particle ParticleB in 'some-particle.js'
+      particle ParticleB in './some-particle.js'
         slotB1: \`consumes Slot
           slotB2: \`provides [Slot]
       recipe
@@ -1666,10 +1678,10 @@ recipe SomeRecipe
     assert.isTrue(recipe.isResolved(options), `Expected recipe to be resolved.\n\t ${JSON.stringify([...options.errors])}`);
   });
   it('SLANDLES recipe set slots with different names (passing set slots)', async () => {
-    const manifest = await parseManifest(`
-      particle ParticleA in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle ParticleA in './some-particle.js'
         slotA: \`consumes [Slot]
-      particle ParticleB in 'some-particle.js'
+      particle ParticleB in './some-particle.js'
         slotB1: \`consumes [Slot]
           slotB2: \`provides [Slot]
       recipe
@@ -1693,8 +1705,8 @@ recipe SomeRecipe
     assert.isTrue(recipe.isResolved(options), `Expected recipe to be resolved.\n\t ${JSON.stringify([...options.errors])}`);
   });
   it('recipe provided slot with no local name', async () => {
-    const manifest = await parseManifest(`
-      particle ParticleA in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle ParticleA in './some-particle.js'
         slotA1: consumes
           slotA2: provides
       recipe
@@ -1712,8 +1724,8 @@ recipe SomeRecipe
     assert.isFalse(recipe.isResolved());
   });
   it('SLANDLES recipe provided slot with no local name', async () => {
-    const manifest = await parseManifest(`
-      particle ParticleA in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle ParticleA in './some-particle.js'
         slotA1: \`consumes Slot
           slotA2: \`provides Slot
       recipe
@@ -1742,8 +1754,8 @@ recipe SomeRecipe
     assert.isFalse(recipe.isResolved());
   });
   it('SLANDLES recipe provided set slots with no local name', async () => {
-    const manifest = await parseManifest(`
-      particle ParticleA in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle ParticleA in './some-particle.js'
         slotA1: \`consumes [Slot]
           slotA2: \`provides [Slot]
       recipe
@@ -1772,8 +1784,8 @@ recipe SomeRecipe
     assert.isFalse(recipe.isResolved());
   });
   it('SLANDLES recipe provided set slots with no local name', async () => {
-    const manifest = await parseManifest(`
-      particle ParticleA in 'some-particle.js'
+    const manifest = await runtime.parse(`
+      particle ParticleA in './some-particle.js'
         slotA1: \`consumes [Slot]
           slotA2: \`provides [Slot]
       recipe
@@ -1802,11 +1814,11 @@ recipe SomeRecipe
     assert.isFalse(recipe.isResolved());
   });
   it('incomplete aliasing', async () => {
-    const recipe = (await parseManifest(`
-      particle P1 in 'some-particle.js'
+    const recipe = (await runtime.parse(`
+      particle P1 in './some-particle.js'
         slotA: consumes
           slotB: provides
-      particle P2 in 'some-particle.js'
+      particle P2 in './some-particle.js'
         slotB: consumes
       recipe
         P1
@@ -1830,11 +1842,11 @@ recipe SomeRecipe
     assert.strictEqual(slotB.sourceConnection, slotConnA);
   });
   it('SLANDLES incomplete aliasing', async () => {
-    const recipe = (await parseManifest(`
-      particle P1 in 'some-particle.js'
+    const recipe = (await runtime.parse(`
+      particle P1 in './some-particle.js'
         slotA: \`consumes Slot
           slotB: \`provides Slot
-      particle P2 in 'some-particle.js'
+      particle P2 in './some-particle.js'
         slotB: \`consumes Slot
       recipe
         P1
@@ -1862,11 +1874,11 @@ recipe SomeRecipe
     assert.include(directions, '`consumes');
   });
   it('parses local slots with IDs', async () => {
-    const recipe = (await parseManifest(`
-      particle P1 in 'some-particle.js'
+    const recipe = (await runtime.parse(`
+      particle P1 in './some-particle.js'
         slotA: consumes
           slotB: provides
-      particle P2 in 'some-particle.js'
+      particle P2 in './some-particle.js'
         slotB: consumes
       recipe
         slot0: slot 'rootslot-0'
@@ -1881,11 +1893,11 @@ recipe SomeRecipe
     assert.lengthOf(recipe.slots, 2);
   });
   it('SLANDLES parses local slots with IDs', async () => {
-    const recipe = (await parseManifest(`
-      particle P1 in 'some-particle.js'
+    const recipe = (await runtime.parse(`
+      particle P1 in './some-particle.js'
         slotA: \`consumes Slot
           slotB: \`provides Slot
-      particle P2 in 'some-particle.js'
+      particle P2 in './some-particle.js'
         slotB: \`consumes Slot
       recipe
         slot0: \`slot 'rootslot-0'
@@ -1916,7 +1928,7 @@ recipe SomeRecipe
       }
     }();
 
-    await Manifest.load('./somewhere/a', loader, {registry, memoryProvider});
+    await runtime.parseFile('./somewhere/a', {loader, registry});
     assert(registry['./somewhere/a path/b']);
   });
   it('parses all particles manifests', async () => {
@@ -1959,7 +1971,7 @@ recipe SomeRecipe
     const manifestSource = `
         schema Thing
           someProp: Text
-        store Store0 of [Thing] in 'entities.json'`;
+        store Store0 of [Thing] in './entities.json'`;
     const entitySource = JSON.stringify(
       {root: {values:
         {
@@ -1971,10 +1983,11 @@ recipe SomeRecipe
       './the.manifest': manifestSource,
       './entities.json': entitySource
     });
-    const manifest = await Manifest.load('./the.manifest', loader, {memoryProvider});
+    const manifest = await runtime.parseFile('./the.manifest', {loader});
     const storageStub = manifest.findStoreByName('Store0') as StoreInfo<CollectionEntityType>;
     assert(storageStub);
-    const handle = await handleForStoreInfo(storageStub, {...manifest, storageService});
+    await runtime.storageService.getActiveStore(storageStub);
+    const handle = await runtime.storageService.handleForStoreInfo(storageStub, manifest.generateID(), manifest.idGenerator);
 
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [
       {
@@ -1987,20 +2000,19 @@ recipe SomeRecipe
         rawData: {someProp: 'someValue2'},
       }
     ]);
-    DriverFactory.clearRegistrationsForTesting();
   });
   it('throws an error when a store has invalid json', async () => {
     try {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
       schema Thing
       resource EntityList
         start
         this is not json?
 
-      store Store0 of [Thing] in EntityList`);
+      store Store0 of [Thing] in EntityList`, {fileName: 'foo.arcs'});
       assert(false);
     } catch (e) {
-      assert.deepEqual(e.message, `Post-parse processing error caused by 'undefined' line 7.
+      assert.deepEqual(e.message, `Post-parse processing error caused by 'foo.arcs' line 7.
 Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         store Store0 of [Thing] in EntityList
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^`);
@@ -2009,7 +2021,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
   it('loads entities from a resource section', async () => {
     const now = new Date().getTime();
     const later = new Date(now + 1000).getTime();
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Thing
         someProp: Text
 
@@ -2027,10 +2039,10 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         }
 
       store Store0 of [Thing] in EntityList
-    `, {fileName: 'the.manifest', memoryProvider});
+    `);
     const storeInfo = manifest.findStoreByName('Store0') as StoreInfo<CollectionEntityType>;
     assert(storeInfo);
-    const handle = await handleForStoreInfo(storeInfo, {...manifest, storageService});
+    const handle = await runtime.storageService.handleForStoreInfo(storeInfo, manifest.generateID(), manifest.idGenerator);
 
     // TODO(shans): address as part of storage refactor
     assert.deepEqual((await handle.toList()).map(Entity.serialize), [
@@ -2044,18 +2056,17 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         rawData: {someProp: 'someValue2'},
       }
     ]);
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('loads inline entities with primitive and reference fields', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       store X of [{n: Number, t: Text, u: URL, f: Boolean, b: Bytes, r: &{z: Text}}] with {
         {n: 0, t: '', u: '', f: false, b: ||, r: <'i1', 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}'>},
         {n: 4.5, t: 'abc', u: 'site', f: true, b: |5a, 7, d|, r: <'i2', 'reference-mode://{volatile://!3:test/backing2@}{volatile://!4:test/container2@}'>},
       }
-    `, {fileName: 'the.manifest', memoryProvider});
+    `);
     const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, {...manifest, storageService});
+    const handle = await runtime.storageService.handleForStoreInfo(store, manifest.generateID(), manifest.idGenerator);
     const entities = (await handle.toList()).map(Entity.serialize);
     assert.lengthOf(entities, 2);
 
@@ -2069,11 +2080,10 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       n: 4.5, t: 'abc', u: 'site', f: true, b: new Uint8Array([0x5a, 0x07, 0x0d]),
       r: {id: 'i2', entityStorageKey: 'reference-mode://{volatile://!3:test/backing2@}{volatile://!4:test/container2@}', creationTimestamp: null, expirationTimestamp: null}
     });
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('loads inline entities with collection fields', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       store X of [{
         n: [Number], t: [Text], u: [URL], f: [Boolean], b: [Bytes], r: [&{z: Text}]
       }] with {
@@ -2087,9 +2097,9 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
             r: [<'i1', 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}'>],
         }
       }
-    `, {fileName: 'the.manifest', memoryProvider});
+    `);
     const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, {...manifest, storageService});
+    const handle = await runtime.storageService.handleForStoreInfo(store, manifest.generateID(), manifest.idGenerator);
     const entities = (await handle.toList()).map(Entity.serialize);
     assert.lengthOf(entities, 2);
 
@@ -2106,11 +2116,10 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       b: [new Uint8Array([0x17, 0xb0]), new Uint8Array()],
       r: [{id: 'i1', entityStorageKey: 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}', creationTimestamp: null, expirationTimestamp: null}],
     });
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('loads inline entities with tuple fields', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       store X of [{
         a: (Number, Number, Bytes, URL),
         b: (Boolean, Text)
@@ -2124,9 +2133,9 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
           b: (true, 'xyz'),
         },
       }
-    `, {fileName: 'the.manifest', memoryProvider});
+    `);
     const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, {...manifest, storageService});
+    const handle = await runtime.storageService.handleForStoreInfo(store, manifest.generateID(), manifest.idGenerator);
     const entities = (await handle.toList()).map(Entity.serialize);
     assert.lengthOf(entities, 2);
 
@@ -2140,20 +2149,19 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       a: [6.5, -2, new Uint8Array([0x5e, 0x06]), 'link'],
       b: [true, 'xyz'],
     });
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('loads inline entities with union fields', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       store X of [{u: (Text or Number or Boolean or Bytes)}] with {
         {u: 'str'},
         {u: 52},
         {u: true},
         {u: |1e, e7|},
       }
-    `, {fileName: 'the.manifest', memoryProvider});
+    `);
     const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, {...manifest, storageService});
+    const handle = await runtime.storageService.handleForStoreInfo(store, manifest.generateID(), manifest.idGenerator);
     const entities = (await handle.toList()).map(e => Entity.serialize(e).rawData);
 
     assert.deepStrictEqual(entities, [
@@ -2162,14 +2170,13 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       {u: true},
       {u: new Uint8Array([0x1e, 0xe7])},
     ]);
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('throws an error when inline entities do not match the store schema', async () => {
     const check = async (manifestStr, msg) => {
-      const manifest = await parseManifest(manifestStr, {fileName: 'the.manifest', memoryProvider});
+      const manifest = await runtime.parse(manifestStr);
       const store = manifest.findStoreByName('X') as StoreInfo<CollectionEntityType>;
-      const handle = await handleForStoreInfo(store, {...manifest, storageService});
+      const handle = await runtime.storageService.handleForStoreInfo(store, manifest.generateID(), manifest.idGenerator);
       await assertThrowsAsync(async () => handle.toList(), msg);
     };
 
@@ -2190,14 +2197,12 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
 
     // Incorrect field name
     await check(`store X of [{a: Text}] with { {b: 'abc'} }`, `Can't set field b; not in schema`);
-
-    DriverFactory.clearRegistrationsForTesting();
   });
 
   it('resolves store names to ids', async () => {
     const manifestSource = `
         schema Thing
-        store Store0 of [Thing] in 'entities.json'
+        store Store0 of [Thing] in './entities.json'
         recipe
           myStore: map Store0`;
     const entitySource = JSON.stringify({root: {}, locations: {}});
@@ -2205,27 +2210,25 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       './the.manifest': manifestSource,
       './entities.json': entitySource,
     });
-    const manifest = await Manifest.load('./the.manifest', loader, {memoryProvider});
+    const manifest = await runtime.parseFile('./the.manifest', {loader});
     const recipe = manifest.recipes[0];
     assert.deepEqual(recipe.toString(), `recipe\n  myStore: map '!manifest:./the.manifest:store0:${await digest(entitySource)}'`);
   });
 
   it('has prettyish syntax errors', async () => {
     try {
-      await parseManifest('recipe ?', {fileName: 'bad-file', memoryProvider});
+      await runtime.parse('recipe ?', {fileName: 'bad-file'});
       assert(false);
     } catch (e) {
-      assert.deepEqual(e.message, `Parse error in 'bad-file' line 1.
-Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found.
-  recipe ?
-         ^`);
+      const expected = 'Parse error in \'bad-file\' line 1.\nExpected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found.\n  recipe ?\n         ^';
+      assert.deepEqual(e.message, expected);
     }
   });
 
   it('errors when the manifest connects a particle incorrectly', async () => {
     const manifest = `
         schema Thing
-        particle TestParticle in 'tp.js'
+        particle TestParticle in './tp.js'
           iny: reads Thing
           outy: writes Thing
           inouty: reads writes Thing
@@ -2236,7 +2239,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
             outy: writes x
             inouty: writes x`;
     try {
-      await parseManifest(manifest);
+      await runtime.parse(manifest);
       assert.fail();
     } catch (e) {
       assert.match(e.message, /'writes' not compatible with 'reads' param of 'TestParticle'/);
@@ -2246,7 +2249,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
   it('errors when the manifest references a missing particle param', async () => {
     const manifest = `
         schema Thing
-        particle TestParticle in 'tp.js'
+        particle TestParticle in './tp.js'
           a: reads Thing
         recipe
           x: create
@@ -2254,7 +2257,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
             a: reads x
             b: reads x`;
     try {
-      await parseManifest(manifest);
+      await runtime.parse(manifest);
       assert.fail();
     } catch (e) {
       assert.match(e.message, /param 'b' is not defined by 'TestParticle'/);
@@ -2263,13 +2266,13 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
 
   it('errors when the manifest references a missing consumed slot', async () => {
     const manifest = `
-        particle TestParticle in 'tp.js'
+        particle TestParticle in './tp.js'
           root: consumes
         recipe
           TestParticle
             other: consumes`;
     try {
-      await parseManifest(manifest);
+      await runtime.parse(manifest);
       assert.fail();
     } catch (e) {
       assert.match(e.message, /Consumed slot 'other' is not defined by 'TestParticle'/);
@@ -2277,13 +2280,13 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
   });
   it('SLANDLES errors when the manifest references a missing consumed slot', async () => {
     const manifest = `
-        particle TestParticle in 'tp.js'
+        particle TestParticle in './tp.js'
           root: \`consumes Slot
         recipe
           TestParticle
             other: \`consumes`;
     try {
-      await parseManifest(manifest);
+      await runtime.parse(manifest);
       assert.fail();
     } catch (e) {
       assert.match(e.message, /param 'other' is not defined by 'TestParticle'/);
@@ -2292,7 +2295,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
 
   it('errors when the manifest references a missing provided slot', async () => {
     const manifest = `
-        particle TestParticle in 'tp.js'
+        particle TestParticle in './tp.js'
           root: consumes Slot
             action: provides Slot
         recipe
@@ -2300,7 +2303,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
             root: consumes
               noAction: provides`;
     try {
-      await parseManifest(manifest);
+      await runtime.parse(manifest);
       assert.fail('did not throw');
     } catch (e) {
       assert.match(e.message, /Provided slot 'noAction' is not defined by 'TestParticle'/);
@@ -2308,7 +2311,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
   });
   it('SLANDLES errors when the manifest references a missing provided slot', async () => {
     const manifest = `
-        particle TestParticle in 'tp.js'
+        particle TestParticle in './tp.js'
           root: \`consumes Slot
             action: \`provides Slot
         recipe
@@ -2316,7 +2319,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
             root: \`consumes
             noAction: \`provides`;
     try {
-      await parseManifest(manifest);
+      await runtime.parse(manifest);
       assert.fail();
     } catch (e) {
       assert.match(e.message, /param 'noAction' is not defined by 'TestParticle'/);
@@ -2329,7 +2332,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
         recipe
           NoParticle.paramA: writes OtherParticle.paramB`;
     try {
-      await parseManifest(manifestFrom);
+      await runtime.parse(manifestFrom);
       assert.fail();
     } catch (e) {
       assert.match(e.message, /could not find particle 'NoParticle'/);
@@ -2341,7 +2344,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
         recipe
           ParticleA.paramA: writes OtherParticle.paramB`;
     try {
-      await parseManifest(manifestTo);
+      await runtime.parse(manifestTo);
       assert.fail();
     } catch (e) {
       assert.match(e.message, /could not find particle 'OtherParticle'/);
@@ -2353,7 +2356,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
         recipe
           ParticleA.paramA: writes ParticleB.paramB`;
     try {
-      await parseManifest(manifestFromParam);
+      await runtime.parse(manifestFromParam);
       assert.fail();
     } catch (e) {
       assert.match(e.message, /'paramA' is not defined by 'ParticleA'/);
@@ -2367,7 +2370,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
         recipe
           ParticleA.paramA: writes ParticleB.paramB`;
     try {
-      await parseManifest(manifestToParam);
+      await runtime.parse(manifestToParam);
       assert.fail();
     } catch (e) {
       assert.match(e.message, /'paramB' is not defined by 'ParticleB'/);
@@ -2379,7 +2382,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
     const manifestSource = `
       recipe
         search \`Hello dear world\``;
-    let recipe = (await parseManifest(manifestSource)).recipes[0];
+    let recipe = (await runtime.parse(manifestSource)).recipes[0];
     assert.isNotNull(recipe.search);
     let search = checkNotNull(recipe.search);
     assert.strictEqual('Hello dear world', search.phrase);
@@ -2395,7 +2398,7 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
   search \`Hello dear world\`
     tokens \`dear\` \`hello\` \`world\` // unresolved search tokens`);
 
-    recipe = (await parseManifest(manifestSource)).recipes[0];
+    recipe = (await runtime.parse(manifestSource)).recipes[0];
     // resolve some tokens.
     search = checkNotNull(recipe.search);
     search.resolveToken('hello');
@@ -2423,9 +2426,9 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
   });
 
   it('merge recipes with search strings', async () => {
-    const recipe1 = (await parseManifest(`recipe
+    const recipe1 = (await runtime.parse(`recipe
   search \`Hello world\``)).recipes[0];
-    const recipe2 = (await parseManifest(`recipe
+    const recipe2 = (await runtime.parse(`recipe
   search \`good morning\`
     tokens \`morning\` // \`good\``)).recipes[0];
 
@@ -2439,10 +2442,10 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
     const loader = new Loader(null, {
       '*': '{"root": {}, "locations": {}}'
     });
-    const parseOptions = {loader, memoryProvider};
-    const manifest = await parseManifest(`
+    const parseOptions = {loader};
+    const manifest = await runtime.parse(`
   schema Product
-  store ClairesWishlist of [Product] #wishlist in 'wishlist.json'
+  store ClairesWishlist of [Product] #wishlist in './wishlist.json'
     description \`Claire's wishlist\``, parseOptions);
     const verify = (manifest: Manifest) => {
       assert.lengthOf(manifest.stores, 1);
@@ -2450,11 +2453,11 @@ Expected a verb (e.g. &Verb) or an uppercase identifier (e.g. Foo) but "?" found
     };
     verify(manifest);
     assert.strictEqual(manifest.stores[0].toManifestString(),
-                 (await parseManifest(manifest.stores[0].toManifestString(), parseOptions)).toString());
-    verify(await parseManifest(manifest.toString(), parseOptions));
+                 (await runtime.parse(manifest.stores[0].toManifestString(), parseOptions)).toString());
+    verify(await runtime.parse(manifest.toString(), parseOptions));
   });
   it('can parse a manifest containing resources', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
 resource SomeName
   start
   {'foo': 'bar'}
@@ -2463,7 +2466,7 @@ resource SomeName
     assert.deepEqual(manifest.resources['SomeName'], `{'foo': 'bar'}\nhello\n`);
   });
   it('can parse a manifest containing incomplete interfaces', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Foo
       interface FullInterface
         foo: reads Foo
@@ -2492,7 +2495,7 @@ resource SomeName
     assert(manifest.findInterfaceByName('FullInterface'));
   });
   it('can parse a manifest containing interfaces', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Foo
       interface Bar
         foo: reads Foo
@@ -2506,7 +2509,7 @@ resource SomeName
     assert(manifest.recipes[0].normalize());
   });
   it('can parse a manifest containing a warning', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Foo
         value: Text
       particle Particle
@@ -2515,7 +2518,7 @@ resource SomeName
     assert.lengthOf(manifest.allParticles, 1);
   });
   it('can parse interfaces using new-style body syntax', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Foo
       interface Bar
         foo: reads Foo
@@ -2530,9 +2533,9 @@ resource SomeName
     assert(manifest.recipes[0].normalize());
   });
   it('can resolve optional handles', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Something
-      particle Thing in 'thing.js'
+      particle Thing in './thing.js'
         inThing: reads [Something]
         maybeOutThings: writes? [Something]
       recipe
@@ -2548,10 +2551,10 @@ resource SomeName
       assert.isTrue(recipe.isResolved());
     };
     verify(manifest);
-    verify(await parseManifest(manifest.toString()));
+    verify(await runtime.parse(manifest.toString()));
   });
   it('can resolve an immediate handle specified by a particle target', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema S
       interface HostedInterface
         foo: reads S
@@ -2571,7 +2574,7 @@ resource SomeName
     assert(recipe.isResolved());
   });
   it('can resolve a particle with an inline schema', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       particle P
         foo: reads * {value: Text}
       recipe
@@ -2584,7 +2587,7 @@ resource SomeName
     assert(recipe.isResolved());
   });
   it('can resolve a particle with a schema reference', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Foo
         far: Text
       particle P
@@ -2608,7 +2611,7 @@ resource SomeName
   modality dom`);
   });
   it('can resolve a particle with an inline schema reference', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Foo
       particle P
         bar: reads Bar {foo: &Foo {far: Text}}
@@ -2631,7 +2634,7 @@ resource SomeName
   modality dom`);
   });
   it('can resolve a particle with a collection of schema references', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Foo
         far: Text
       particle P
@@ -2655,7 +2658,7 @@ resource SomeName
   modality dom`);
   });
   it('can resolve a particle with a collection of inline schema references', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       particle P
         bar: reads Bar {foo: [&Foo {far: Text}]}
       recipe
@@ -2677,7 +2680,7 @@ resource SomeName
   modality dom`);
   });
   it('can resolve inline schemas against out of line schemas', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema T
         value: Text
       particle P
@@ -2697,7 +2700,7 @@ resource SomeName
     assert(validRecipe.isResolved());
   });
   it('can resolve handle types from inline schemas', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       particle P
         foo: reads * {value: Text}
       particle P2
@@ -2745,7 +2748,7 @@ resource SomeName
   });
 
   it('can infer field types of inline schemas from external schemas', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Thing
         value: Text
       particle P
@@ -2766,7 +2769,7 @@ resource SomeName
   });
 
   it('supports inline schemas with multiple names', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Thing1
         value1: Text
       schema Thing2
@@ -2792,10 +2795,8 @@ resource SomeName
   });
 
   it('can parse a manifest with storage key handle definitions', async () => {
-    FirebaseStorageDriverProvider.register(
-        Runtime.getRuntime().getCacheService(),
-        mockFirebaseStorageKeyOptions);
-    const manifest = await parseManifest(`
+    FirebaseStorageDriverProvider.register(runtime, runtime.getCacheService(), mockFirebaseStorageKeyOptions);
+    const manifest = await runtime.parse(`
       schema Bar
         value: Text
 
@@ -2813,12 +2814,11 @@ resource SomeName
     assert.isTrue(validRecipe.normalize());
     assert.isTrue(validRecipe.isResolved());
     assert.strictEqual(manifest.stores[0].toManifestString(),
-                 (await parseManifest(manifest.stores[0].toManifestString())).toString());
-    DriverFactory.clearRegistrationsForTesting();
+                 (await runtime.parse(manifest.stores[0].toManifestString())).toString());
   });
 
   it('can process a schema alias', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       alias schema This That as SchemaAlias
       alias schema * extends SchemaAlias as Extended
     `);
@@ -2827,12 +2827,12 @@ resource SomeName
   });
 
   it('expands schema aliases', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       alias schema Name1 as Thing1
         field1: Text
       alias schema Name2 as Thing2
         field2: Text
-      particle P in 'p.js'
+      particle P in './p.js'
         param: reads Thing1 Thing2 Name3 {field1: Text, field3: Text}
     `);
     const paramSchema = checkNotNull(manifest.findParticleByName('P').inputs[0].type.getEntitySchema());
@@ -2842,12 +2842,12 @@ resource SomeName
 
   it('fails when expanding conflicting schema aliases', async () => {
     try {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         alias schema Name1 as Thing1
           field1: Text
         alias schema Name2 as Thing2
           field1: Number
-        particle P in 'p.js'
+        particle P in './p.js'
           param: reads Thing1 Thing2 {}
       `);
       assert.fail();
@@ -2858,10 +2858,10 @@ resource SomeName
 
   it('fails when inline schema specifies a field type that does not match alias expansion', async () => {
     try {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         alias schema Name1 as Thing1
           field1: Text
-        particle P in 'p.js'
+        particle P in './p.js'
           param: reads Thing1 {field1: Number}
       `);
       assert.fail();
@@ -2872,7 +2872,7 @@ resource SomeName
 
   it('can relate inline schemas to generic connections', async () => {
     const data = '{"root": {}, "locations": {}}';
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Thing
         value: Text
         num: Number
@@ -2900,7 +2900,7 @@ resource SomeName
   });
 
   it('can parse a recipe with slot constraints on verbs', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       recipe
         &verb
           consumeSlot: consumes
@@ -2918,7 +2918,7 @@ resource SomeName
   });
 
   it('SLANDLES can parse a recipe with slot constraints on verbs', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       recipe
         provideSlot: \`slot
         &verb
@@ -2939,11 +2939,11 @@ resource SomeName
   });
 
   it('can parse particle arguments with tags', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       schema Dog
       schema Sled
       schema DogSled
-      particle DogSledMaker in 'thing.js'
+      particle DogSledMaker in './thing.js'
         leader: reads Dog #leader
         team: reads [Dog]
         sled: reads Sled #dogsled
@@ -2968,7 +2968,7 @@ resource SomeName
   });
 
   it('can parse a particle with tuples', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       particle P
         foo: reads [(
           &Bar {photo: URL},
@@ -2987,32 +2987,32 @@ resource SomeName
   });
 
   it('can round-trip particles with tags', async () => {
-    const manifestString = `particle TestParticle in 'a.js'
+    const manifestString = `particle TestParticle in './a.js'
   input: reads [Product {}]
     output: writes [Product {}]
   modality dom
   thing: consumes Slot #main #tagname
     otherThing: provides Slot #testtag`;
 
-    const manifest = await parseManifest(manifestString);
+    const manifest = await runtime.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
     assert.strictEqual(manifestString, manifest.particles[0].toString());
   });
 
   it('SLANDLES can round-trip particles with tags', async () => {
-    const manifestString = `particle TestParticle in 'a.js'
+    const manifestString = `particle TestParticle in './a.js'
   input: reads [Product {}]
     output: writes [Product {}]
   thing: \`consumes Slot {formFactor:big} #main #tagname
     otherThing: \`provides Slot {handle:thingy} #testtag
   modality dom`;
 
-    const manifest = await parseManifest(manifestString);
+    const manifest = await runtime.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
     assert.strictEqual(manifestString, manifest.particles[0].toString());
   });
   it('SLANDLES can round-trip particles with fields', async () => {
-    const manifestString = `particle TestParticle in 'a.js'
+    const manifestString = `particle TestParticle in './a.js'
   input: reads [Product {}]
     output: writes [Product {}]
   thingy: reads ~a
@@ -3020,13 +3020,13 @@ resource SomeName
     otherThing: \`provides Slot {handle:thingy} #testtag
   modality dom`;
 
-    const manifest = await parseManifest(manifestString);
+    const manifest = await runtime.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
     assert.strictEqual(manifestString, manifest.particles[0].toString());
   });
 
   it('can parse recipes with an implicit create handle', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       particle A
         a: writes S {}
       particle B
@@ -3043,8 +3043,16 @@ resource SomeName
     assert.strictEqual(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
   });
 
+  it('can parse particles with handle connections with dependent slot connections', async () => {
+    const manifest = await runtime.parse(`
+      particle P2
+        b: reads S {}
+          details: consumes
+    `);
+  });
+
   it('can parse recipes with a require section', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       particle P1
         a: writes S {}
         root: consumes
@@ -3071,7 +3079,7 @@ resource SomeName
   });
 
   it('recipe resolution checks the require sections', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
 
       particle A
         input: reads S {}
@@ -3090,7 +3098,7 @@ resource SomeName
 
   describe('trust claims and checks', () => {
     it('supports multiple claim statements', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           output1: writes T {}
           output2: writes T {}
@@ -3112,7 +3120,7 @@ resource SomeName
     });
 
     it('supports field-level claim statements', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           output1: writes T {aaa: Text, bbb: Number}
           output2: writes T {ccc: Text, ddd: &Foo {eee: Number}}
@@ -3151,7 +3159,7 @@ resource SomeName
     });
 
     it('supports field-level claim statements involving collections', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           output1: writes [T {aaa: Text, bbb: [Number]}]
           output2: writes [T {ccc: [&Foo {ddd: [Number]}]}]
@@ -3185,19 +3193,19 @@ resource SomeName
     });
 
     it('rejects invalid fields in field-level claims', async () => {
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           output: writes T {foo: Text}
           claim output.bar is something
       `), `Schema 'T {foo: Text}' does not contain field 'bar'.`);
 
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           output: writes T {foo: &Bar {bar: Number}}
           claim output.foo.baz is something
       `), `Schema 'Bar {bar: Number}' does not contain field 'baz'.`);
 
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           output: writes [T {foo: [&Bar {bar: Number}]}]
           claim output.foo.bar.baz is something
@@ -3205,7 +3213,7 @@ resource SomeName
     });
 
     it('supports claim statement with multiple tags', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           output1: writes T {}
           claim output1 is property1 and is property2
@@ -3221,7 +3229,7 @@ resource SomeName
     });
 
     it('supports "is not" tag claims', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           output1: writes T {}
           output2: writes T {}
@@ -3239,7 +3247,7 @@ resource SomeName
      });
 
     it('supports "derives from" claims with multiple parents', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           input1: reads T {}
           input2: reads T {}
@@ -3257,7 +3265,7 @@ resource SomeName
     });
 
     it('supports field-level "derives from" claims', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           input: reads T {foo: Text}
           output: writes T {bar: Text}
@@ -3278,7 +3286,7 @@ resource SomeName
     });
 
     it('rejects invalid fields in field-level "derives from" claims', async () => {
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           input: writes T {foo: Text}
           output: writes T {foo: Text}
@@ -3287,7 +3295,7 @@ resource SomeName
     });
 
     it('supports mixed claims with multiple tags, not tags, and "derives from"', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           input1: reads T {}
           input2: reads T {}
@@ -3313,7 +3321,7 @@ resource SomeName
     });
 
     it('supports multiple check statements', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           input1: reads T {}
           input2: reads T {}
@@ -3339,7 +3347,7 @@ resource SomeName
     });
 
     it('supports checks and claims with labels starting with "not"', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           input1: reads T {}
           input2: reads T {}
@@ -3372,7 +3380,7 @@ resource SomeName
     });
 
     it('supports field-level check statements', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           input1: reads T {aaa: Text, bbb: Number}
           input2: reads T {ccc: Text, ddd: &Foo {eee: Number}}
@@ -3415,19 +3423,19 @@ resource SomeName
     });
 
     it('rejects invalid fields in field-level checks', async () => {
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           input: reads T {foo: Text}
           check input.bar is something
       `), `Schema 'T {foo: Text}' does not contain field 'bar'.`);
 
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           input: reads T {foo: &Bar {bar: Number}}
           check input.foo.baz is something
       `), `Schema 'Bar {bar: Number}' does not contain field 'baz'.`);
 
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           input: reads [T {foo: [&Bar {bar: Number}]}]
           check input.foo.bar.baz is something
@@ -3435,7 +3443,7 @@ resource SomeName
     });
 
     it(`supports 'is from store' checks`, async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           input1: reads T {}
           input2: reads T {}
@@ -3459,7 +3467,7 @@ resource SomeName
     });
 
     it(`supports 'is from output' checks`, async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           input1: reads T {}
           input2: reads T {}
@@ -3484,7 +3492,7 @@ resource SomeName
     });
 
     it('supports checks on provided slots', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           root: consumes
             mySlot: provides
@@ -3504,7 +3512,7 @@ resource SomeName
     });
 
     it(`supports checks with the 'or' operation`, async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           input: reads T {}
           check input is property1 or is not property2 or is property3
@@ -3525,7 +3533,7 @@ resource SomeName
     });
 
     it(`supports checks with the 'and' operation`, async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           input: reads T {}
           check input is property1 and is not property2 and is property3
@@ -3546,7 +3554,7 @@ resource SomeName
     });
 
     it(`supports arbitrary nesting of 'and' and 'or' operations and conditions`, async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           input: reads T {}
           check input (is property1 and ((is not property2))) or ((is property2) or is not property3)
@@ -3574,7 +3582,7 @@ resource SomeName
     });
 
     it(`supports checks with the implication operator`, async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           input: reads T {}
           check input (is property1 => is property2)
@@ -3596,7 +3604,7 @@ resource SomeName
     });
 
     it(`supports checks with complex nesting of implications`, async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           input: reads T {}
           check input ((is property1 and is not property2) => (is property3 => (is not property4 or is property5))) or is property6
@@ -3631,7 +3639,7 @@ resource SomeName
     });
 
     it('supports field-level checks and claims with type variables', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle A
           input: reads [~a with {foo: Number}]
           output: writes [~a]
@@ -3653,7 +3661,7 @@ resource SomeName
     });
 
     it('parses max type variables into the appropriate data structure', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle Foo
           data: reads ~a with {age: Number, *}
 
@@ -3683,7 +3691,7 @@ resource SomeName
     });
 
     it('supports field-level checks and claims with resolved type variables', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle OrderIngestion in '.OrderIngestion'
           data: writes [Product {sku: Text, name: Text, price: Number}]
 
@@ -3733,19 +3741,19 @@ resource SomeName
     });
 
     it('rejects unknown fields in type variables', async () => {
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           input: reads ~a
           check input.foo is trusted
       `), `Type variable ~a does not contain field 'foo'`);
 
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           output: writes ~a
           claim output.foo is trusted
       `), `Type variable ~a does not contain field 'foo'`);
 
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           input: reads ~a
           output: writes Result {foo: Text}
@@ -3754,26 +3762,26 @@ resource SomeName
     });
 
     it('fails to parse concrete types with inline schema field of `*`', async () => {
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
           particle Foo
             data: reads {*}
-      `), `\
-Post-parse processing error caused by 'undefined' line 3.
+      `, {fileName: 'test.arcs'}), `\
+Post-parse processing error caused by 'test.arcs' line 3.
 Only type variables may have '*' fields.
               data: reads {*}
                           ^^^`);
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
           particle Foo
             data: reads {name: Text, *}
-      `), `\
-Post-parse processing error caused by 'undefined' line 3.
+      `, {fileName: 'test.arcs'}), `\
+Post-parse processing error caused by 'test.arcs' line 3.
 Only type variables may have '*' fields.
               data: reads {name: Text, *}
                           ^^^^^^^^^^^^^^^`);
     });
 
     it('warns about using multiple `*` in a single variable constraint', async () => {
-      const cc = await ConCap.capture(() => parseManifest(`
+      const cc = await ConCap.capture(() => runtime.parse(`
           particle Foo
             data: reads ~a with {*, *}
       `));
@@ -3784,7 +3792,7 @@ Only type variables may have '*' fields.
     });
 
     it('supports field-level checks and claims with max type variables', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         particle SkuRedactor in '.SkuRedactor'
           input: reads [~a with {sku: Text, *}]
           output: writes [~a]
@@ -3805,7 +3813,7 @@ Only type variables may have '*' fields.
     it('data stores can make claims', async () => {
       const data = '{"root": {}, "locations": {}}';
 
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         store NobId of NobIdStore {nobId: Text} in NobIdJson
           claim is property1 and is property2
         resource NobIdJson
@@ -3826,7 +3834,7 @@ Only type variables may have '*' fields.
     it('data stores can make field-level claims', async () => {
       const data = '{"root": {}, "locations": {}}';
 
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         store NobId of NobIdStore {nobId: Text, someRef: [&Foo {foo: [Text]}]} in NobIdJson
           claim field nobId is property1 and is property2
           claim field someRef.foo is property3
@@ -3854,7 +3862,7 @@ Only type variables may have '*' fields.
     it('rejects invalid fields in field-level claims on stores', async () => {
       const data = '{"root": {}, "locations": {}}';
 
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         store NobId of NobIdStore {nobId: Text} in NobIdJson
           claim field foo is property1 and is property2
         resource NobIdJson
@@ -3862,7 +3870,7 @@ Only type variables may have '*' fields.
           ${data}
       `), `Schema 'NobIdStore {nobId: Text}' does not contain field 'foo'.`);
 
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         store NobId of NobIdStore {nobId: Text, someRef: [&Foo {foo: [Text]}]} in NobIdJson
           claim field someRef.bar is property1 and is property2
         resource NobIdJson
@@ -3872,7 +3880,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow mixing 'and' and 'or' operations without nesting`, async () => {
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           input: reads T {}
           check input is property1 or is property2 and is property3
@@ -3880,7 +3888,7 @@ Only type variables may have '*' fields.
     });
 
     it('SLANDLES can round-trip particles with checks and claims', async () => {
-      const manifestString = `particle TestParticle in 'a.js'
+      const manifestString = `particle TestParticle in './a.js'
   input1: reads T {}
   input2: reads T {}
   input3: reads T {}
@@ -3908,11 +3916,11 @@ Only type variables may have '*' fields.
   check childSlot is not somewhatTrusted
   modality dom`;
 
-      const manifest = await parseManifest(manifestString);
+      const manifest = await runtime.parse(manifestString);
       assert.strictEqual(manifest.toString(), manifestString);
     });
     it('can round-trip particles with checks and claims', async () => {
-      const manifestString = `particle TestParticle in 'a.js'
+      const manifestString = `particle TestParticle in './a.js'
   input1: reads T {}
   input2: reads T {}
   input3: reads T {}
@@ -3940,18 +3948,18 @@ Only type variables may have '*' fields.
   parentSlot: consumes Slot
     childSlot: provides Slot`;
 
-      const manifest = await parseManifest(manifestString);
+      const manifest = await runtime.parse(manifestString);
       assert.strictEqual(manifest.toString(), manifestString);
    });
 
     it('fails for unknown handle names', async () => {
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           output: writes T {}
           claim oops is trusted
       `), `Can't make a claim on unknown handle oops`);
 
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           input: reads T {}
           check oops is trusted
@@ -3959,7 +3967,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow claims on inputs`, async () => {
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           foo: reads T {}
           claim foo is trusted
@@ -3967,7 +3975,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow checks on outputs`, async () => {
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           foo: writes T {}
           check foo is trusted
@@ -3975,7 +3983,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow multiple different claims for the same handle`, async () => {
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           foo: writes T {}
           claim foo is trusted
@@ -3984,7 +3992,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow multiple different claims for the same field`, async () => {
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           foo: writes T {bar: Text}
           claim foo.bar is trusted
@@ -3993,7 +4001,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow multiple different checks for the same handle`, async () => {
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           foo: reads T {}
           check foo is trusted
@@ -4002,7 +4010,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow multiple different checks for the same field`, async () => {
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           foo: reads T {bar: Text}
           check foo.bar is trusted
@@ -4011,7 +4019,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow checks on consumed slots`, async () => {
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           someOtherSlot: consumes
             mySlot: provides
@@ -4020,7 +4028,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow checks on unknown slots`, async () => {
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           someOtherSlot: consumes
             mySlot: provides
@@ -4029,7 +4037,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow multiple provided slots with the same name`, async () => {
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           firstSlot: consumes
             mySlot: provides
@@ -4039,7 +4047,7 @@ Only type variables may have '*' fields.
     });
 
     it(`doesn't allow checks on fields in slots`, async () => {
-      await assertThrowsAsync(async () => parseManifest(`
+      await assertThrowsAsync(async () => runtime.parse(`
         particle A
           someOtherSlot: consumes
             mySlot: provides
@@ -4051,12 +4059,12 @@ Only type variables may have '*' fields.
   describe('all schemas', () => {
     describe('handles manifests with no schemas', () => {
       it('handles an empty manifest', async () => {
-        const emptyManifest = await parseManifest(``);
+        const emptyManifest = await runtime.parse(``);
         const emptyResult = emptyManifest.allSchemas;
         assert.isEmpty(emptyResult);
       });
       it('handles a non-empty manifest', async () => {
-        const manifest = await parseManifest(`
+        const manifest = await runtime.parse(`
           particle A
           recipe Foo
             A
@@ -4067,7 +4075,7 @@ Only type variables may have '*' fields.
     });
     describe('handles manifests with simple schemas', () => {
       it('handles a schema with no fields', async () => {
-        const manifest = await parseManifest(`
+        const manifest = await runtime.parse(`
           schema Foo
           particle Bar
             recipe Food
@@ -4081,7 +4089,7 @@ Only type variables may have '*' fields.
 
       });
       it('handles a schema with fields', async () => {
-        const manifest = await parseManifest(`
+        const manifest = await runtime.parse(`
         schema Foo
           a: Text
           b: Number
@@ -4099,7 +4107,7 @@ Only type variables may have '*' fields.
         assert.deepEqual(result[0].names, ['Foo']);
       });
       it('handles schemas with no fields', async () => {
-        const manifest = await parseManifest(`
+        const manifest = await runtime.parse(`
           schema Foo
           schema Boo
           schema Roo
@@ -4114,7 +4122,7 @@ Only type variables may have '*' fields.
         assert.isEmpty(result[2].fields);
       });
       it('handles multiple schemas with fields', async () => {
-        const manifest = await parseManifest(`
+        const manifest = await runtime.parse(`
         schema Foo
           a: Text
         schema Boo
@@ -4155,7 +4163,7 @@ Only type variables may have '*' fields.
         assert.isDefined(result[3].fields.f);
       });
       it('handles out of order schemas declarations', async () => {
-        const manifest = await parseManifest(`
+        const manifest = await runtime.parse(`
           schema Baz
             t: Text
           schema Foo
@@ -4200,7 +4208,7 @@ Only type variables may have '*' fields.
           './a': manifestStr,
           './b': jsonStr,
         });
-        const manifest = await Manifest.load('./a', loader, {memoryProvider});
+        const manifest = await runtime.parseFile('./a', {loader});
         const result = manifest.allSchemas;
         assert.lengthOf(result, 1);
         assert.lengthOf(result[0].names, 1);
@@ -4274,7 +4282,7 @@ Only type variables may have '*' fields.
           './a': manifestStr,
           './b': jsonStr,
         });
-        const manifest = await Manifest.load('./a', loader, {memoryProvider});
+        const manifest = await runtime.parseFile('./a', {loader});
         const result = manifest.allSchemas;
         assert.equal(result.length, 2);
 
@@ -4294,7 +4302,7 @@ Only type variables may have '*' fields.
       });
     });
     it('handles out of order schemas declarations', async () => {
-      const manifest = await parseManifest(`
+      const manifest = await runtime.parse(`
         schema Baz
           t: Text
         schema Foo
@@ -4311,8 +4319,9 @@ Only type variables may have '*' fields.
       const bazReference = foo.fields['baz'].getEntityType().getEntitySchema();
       assert.equal(bazReference.fields['t'].getType(), 'Text');
     });
-    it('handles recursive schemas declarations', async () => {
-      const manifest = await parseManifest(`
+    it('catches unsupported recursive schemas declarations', Flags.withFlags({recursiveSchemasAllowed: false}, async () => {
+      assertThrowsAsync(async () => {
+      const manifest = await runtime.parse(`
         schema Baz
           t: Text
           bar: &Bar
@@ -4330,10 +4339,31 @@ Only type variables may have '*' fields.
 
       const bazReference = foo.fields['baz'].getEntityType().getEntitySchema();
       assert.equal(bazReference.fields['t'].getType(), 'Text');
-    });
+      });
+    }));
+    it('handles recursive schemas declarations', Flags.withFlags({recursiveSchemasAllowed: true}, async () => {
+      const manifest = await runtime.parse(`
+        schema Baz
+          t: Text
+          bar: &Bar
+        schema Foo
+          bar: &Bar
+          baz: &Baz
+        schema Bar
+          n: Number
+          baz: &Baz
+      `);
+      const foo = manifest.schemas['Foo'];
+
+      const barReference = foo.fields['bar'].getEntityType().getEntitySchema();
+      assert.equal(barReference.fields['n'].getType(), 'Number');
+
+      const bazReference = foo.fields['baz'].getEntityType().getEntitySchema();
+      assert.equal(bazReference.fields['t'].getType(), 'Text');
+    }));
 });
   it('warns about using external schemas', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
 schema Thing
   value: Text
 
@@ -4343,28 +4373,15 @@ particle A
     assert.lengthOf(manifest.errors, 1);
     assert.equal(manifest.errors[0].key, 'externalSchemas');
   });
-
-  it('can round-trip external particles', async () => {
-    const manifestString = `external particle TestParticle
-  input: reads [Product {}]
-  modality dom`;
-
-    const manifest = await parseManifest(manifestString);
-    assert.lengthOf(manifest.particles, 1);
-    const particle = manifest.particles[0];
-    assert.isTrue(particle.external);
-    assert.isNull(particle.implFile);
-    assert.strictEqual(manifestString, particle.toString());
-  });
   it('parses JVM class path', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       particle Particle in 'com.wow.Particle'
     `);
 
     assert.equal(manifest.particles[0].implFile, 'com.wow.Particle');
   });
   it('derives JVM class path from namespace', async () => {
-    const manifest = await parseManifest(`
+    const manifest = await runtime.parse(`
       meta
         namespace: com.wow
       particle Particle in '.Particle'
@@ -4377,7 +4394,7 @@ particle A
     ]);
   });
   it('derives JVM implFile from namespace across imports', async () => {
-    const manifest = await Manifest.load('/c.arcs', new Loader(null, {
+    const staticFiles = {
       '/a.arcs': `
         meta
           namespace: com.wow
@@ -4393,11 +4410,10 @@ particle A
           namespace: com.abc
         import './a.arcs'
         import './b.arcs'
-
         particle Boom in '.Boom'
-      `,
-    }));
-
+      `
+    };
+    const manifest = await runtime.parseFile('/c.arcs', {loader: new Loader(null, staticFiles)});
     assert.sameMembers(manifest.allParticles.map(p => p.implFile), [
       'com.abc.Boom',
       'com.wow.Wow',
@@ -4407,11 +4423,9 @@ particle A
 });
 
 describe('Manifest storage migration', () => {
-  let memoryProvider;
-  beforeEach(() => { memoryProvider = new TestVolatileMemoryProvider(); });
 
   it('inflates into RamDisk', async () => {
-    const manifest = await Manifest.parse(`
+    const manifest = await new Runtime().parse(`
 store NobId of NobIdStore {nobId: Text} in NobIdJson
 resource NobIdJson
   start
@@ -4424,7 +4438,7 @@ resource NobIdJson
     },
     "locations": {}
   }
-`, {memoryProvider});
+`);
     assert.lengthOf(manifest.stores, 1);
     const store = manifest.stores[0];
 
@@ -4436,19 +4450,13 @@ resource NobIdJson
   });
 });
 describe('annotations', async () => {
-  let memoryProvider;
   const loader = new Loader(null, {
     '*': '{"root": {}, "locations": {}}'
   });
+  let runtime;
   beforeEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-    memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
+    runtime = new Runtime({loader});
   });
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
   it('parses annotations', async () => {
     const annotationsStr = `
 annotation noParam
@@ -4479,7 +4487,7 @@ recipe One
 recipe Two
 @goodForAll
 recipe Three`;
-    const manifest = await Manifest.parse(manifestStr);
+    const manifest = await runtime.parse(manifestStr);
     assert.equal(Object.keys(manifest.annotations).length, 4);
     assert.sameMembers(Object.keys(manifest.annotations), ['noParam', 'oneParam', 'multiParam', 'goodForAll']);
     const noParam = manifest.annotations['noParam'];
@@ -4521,7 +4529,7 @@ recipe Three`;
     `), `annotation not found: 'nonexistent'`);
   });
   it('throws when wrong annotation target', async () => {
-    await assertThrowsAsync(async () => Manifest.parse(`
+    await assertThrowsAsync(async () => runtime.parse(`
         annotation noParam
           retention: Source
           targets: [Particle]
@@ -4536,24 +4544,24 @@ annotation oneParam(foo: Text)
   retention: Source
   doc: 'doc'`;
   it('throws when wrong annotation param', async () => {
-    await assertThrowsAsync(async () => Manifest.parse(`
+    await assertThrowsAsync(async () => runtime.parse(`
 ${oneParamAnnotation}
 @oneParam(wrong: 'hello')
 recipe
     `), `unexpected annotation param: 'wrong'`);
-    await assertThrowsAsync(async () => Manifest.parse(`
+    await assertThrowsAsync(async () => runtime.parse(`
 ${oneParamAnnotation}
 @oneParam(foo: 'hello', wrong: 'world')
 recipe
     `), `unexpected annotation param: 'wrong'`);
   });
   it('throws when annotation param value of incorrect type', async () => {
-    await assertThrowsAsync(async () => Manifest.parse(`
+    await assertThrowsAsync(async () => runtime.parse(`
 ${oneParamAnnotation}
 @oneParam(foo: 5)
 recipe
     `), `expected 'Text' for param 'foo', instead got 5`);
-    await assertThrowsAsync(async () => Manifest.parse(`
+    await assertThrowsAsync(async () => runtime.parse(`
 ${oneParamAnnotation}
 @oneParam(foo: false)
 recipe
@@ -4578,7 +4586,7 @@ recipe
 ${oneParamAnnotation}
 @oneParam(foo: 'hello')
 recipe`;
-    const manifest = await Manifest.parse(manifestStr);
+    const manifest = await runtime.parse(manifestStr);
     const recipe = manifest.recipes[0];
     assert.lengthOf(recipe.annotations, 1);
     assert.equal(recipe.annotations[0].name, 'oneParam');
@@ -4592,7 +4600,7 @@ recipe`;
 ${oneParamAnnotation}
 @oneParam
 recipe`;
-    const manifest = await Manifest.parse(manifestStr);
+    const manifest = await runtime.parse(manifestStr);
     const recipe = manifest.recipes[0];
     assert.lengthOf(recipe.annotations, 1);
     assert.equal(recipe.annotations[0].name, 'oneParam');
@@ -4616,7 +4624,7 @@ particle Fooer
   foos4: writes [Foo {value: Text}]
   modality dom
 `;
-    const manifest = await Manifest.parse(manifestStr);
+    const manifest = await runtime.parse(manifestStr);
     const particle = manifest.particles[0];
     assert.lengthOf(particle.handleConnections, 4);
     assert.lengthOf(particle.getConnectionByName('foos1').annotations, 1);
@@ -4630,7 +4638,7 @@ particle Fooer
     assert.equal(manifest.toString(), manifestStr.trim());
   });
   it('fails schema annotations with wrong target', async () => {
-    await assertThrowsAsync(async () => Manifest.parse(`
+    await assertThrowsAsync(async () => runtime.parse(`
       annotation foo(bar: Text)
         targets: [Handle, HandleConnection]
         retention: Source
@@ -4650,7 +4658,7 @@ annotation foo(bar: Text, baz: Number)
 schema Foo
   value: Text
     `;
-    const manifest = await Manifest.parse(manifestStr);
+    const manifest = await runtime.parse(manifestStr);
     const schema = manifest.schemas['Foo'];
     assert.lengthOf(schema.annotations, 1);
     assert.isUndefined(schema.annotations[0].params['bar']);
@@ -4669,9 +4677,9 @@ annotation baz(qux: Number)
   doc: 'a'
 @foo(bar: 'hello')
 @baz(qux: 123)
-store Store0 of [Thing {blah: Text}] 'my-things' in 'Things.json'
+store Store0 of [Thing {blah: Text}] 'my-things' in './Things.json'
     `;
-    const manifest = await Manifest.parse(manifestStr, {loader, memoryProvider});
+    const manifest = await runtime.parse(manifestStr, {loader});
     const annotations = manifest.stores[0].annotations;
     assert.lengthOf(annotations, 2);
     assert.equal(annotations.find(a => a.name === 'foo').params['bar'], 'hello');
@@ -4679,7 +4687,7 @@ store Store0 of [Thing {blah: Text}] 'my-things' in 'Things.json'
     assert.equal(manifest.toString(), manifestStr.trim());
   });
   it('parses recipe handle annotations', async () => {
-    const manifest = await Manifest.parse(`
+    const manifest = await runtime.parse(`
 annotation hello(world: Text)
   targets: [Handle, Store]
   retention: Source
@@ -4694,7 +4702,7 @@ recipe
     assert.lengthOf(quzHandle.annotations, 3);
   });
   it('parses annotation with single param and simple value', async () => {
-    const connection = (await Manifest.parse(`
+    const connection = (await runtime.parse(`
       annotation hello(txt: Text)
         targets: [Handle, HandleConnection]
         retention: Source
@@ -4710,7 +4718,7 @@ recipe
     assert.equal(connection.getAnnotation('world').params['txt'], 'bye');
   });
   it('fails parsing annotation simple value when multiple params', async () => {
-    await assertThrowsAsync(async () => Manifest.parse(`
+    await assertThrowsAsync(async () => runtime.parse(`
       annotation hello(txt1: Text, txt2: Text)
         targets: [Handle, HandleConnection]
         retention: Source
@@ -4719,7 +4727,7 @@ recipe
         foo: reads [* {bar: Text}] @hello('hi')`), `annotation 'hello' has unexpected unnamed param 'hi'`);
   });
   it('fails parsing annotation simple value when wrong type', async () => {
-    await assertThrowsAsync(async () => Manifest.parse(`
+    await assertThrowsAsync(async () => runtime.parse(`
       annotation hello(txt: Text)
         targets: [Handle, HandleConnection]
         retention: Source
@@ -4728,21 +4736,21 @@ recipe
         foo: reads [* {bar: Text}] @hello(5)`), `expected 'Text' for param 'txt', instead got 5`);
   });
   it('fails parsing invalid canonical annotation ttl', async () => {
-    await assertThrowsAsync(async () => Manifest.parse(`
+    await assertThrowsAsync(async () => runtime.parse(`
       recipe
         foo: create @persistent @ttl('300')
     `), `Invalid ttl: 300`);
-    await assertThrowsAsync(async () => Manifest.parse(`
+    await assertThrowsAsync(async () => runtime.parse(`
       recipe
         foo: create @persistent @ttl(300)
     `), `expected 'Text' for param 'value', instead got 300`);
-    await assertThrowsAsync(async () => Manifest.parse(`
+    await assertThrowsAsync(async () => runtime.parse(`
       recipe
         foo: create @persistent @ttl('day')
     `), `Invalid ttl: day`);
   });
   it('parses canonical annotations', async () => {
-    const manifest = (await Manifest.parse(`
+    const manifest = (await runtime.parse(`
       @arcId('myFavoriteArc')
       recipe
         foo: create @persistent @ttl('3d')
@@ -4786,7 +4794,7 @@ recipe
   });
 
   it('parses @policy annotation', async () => {
-    const manifest = (await Manifest.parse(`
+    const manifest = (await runtime.parse(`
       policy MyPolicy {}
 
       @policy('MyPolicy')
@@ -4805,7 +4813,7 @@ recipe
   });
 
   it('fails when the @policy annotation mentions an unknown policy name', async () => {
-    const manifest = await ConCap.silence(() => Manifest.parse(`
+    const manifest = await ConCap.silence(() => runtime.parse(`
       @policy('ThisPolicyDoesNotExist')
       recipe
         foo: create
@@ -4819,7 +4827,7 @@ recipe
   });
 
   it('fails when the @policy annotation is missing its argument', async () => {
-    assertThrowsAsync(async () => Manifest.parse(`
+    assertThrowsAsync(async () => runtime.parse(`
       @policy
       recipe
         foo: create
@@ -4827,7 +4835,7 @@ recipe
   });
 
   it('supports importing policies from another file', async () => {
-    const loader = new Loader(null, {
+    const staticFiles = {
       '/policy.arcs': `
         policy MyPolicy {}
       `,
@@ -4838,15 +4846,16 @@ recipe
         recipe
           foo: create
       `,
-    });
-    const manifest = await Manifest.load('/recipe.arcs', loader);
+    };
+    const runtime = new Runtime({loader: new Loader(null, staticFiles)});
+    const manifest = await runtime.parseFile('/recipe.arcs');
     const recipe = manifest.recipes[0];
     assert.strictEqual(recipe.policy.name, 'MyPolicy');
   });
 
   describe('isolated, ingress and egress particles', () => {
     it('particles are ingress and egress by default', async () => {
-      const manifest = await Manifest.parse(`
+      const manifest = await runtime.parse(`
         particle P
       `);
       assert.deepEqual(manifest.particles[0].dataflowType, ParticleDataflowType.INGRESS_AND_EGRESS);
@@ -4854,7 +4863,7 @@ recipe
     });
 
     it('egress annotation works', async () => {
-      const manifest = await Manifest.parse(`
+      const manifest = await runtime.parse(`
         @egress
         particle P
       `);
@@ -4863,7 +4872,7 @@ recipe
     });
 
     it('combination of egress and ingress annotations works', async () => {
-      const manifest = await Manifest.parse(`
+      const manifest = await runtime.parse(`
         @egress
         @ingress
         particle P
@@ -4873,7 +4882,7 @@ recipe
     });
 
     it('egress annotation with type works', async () => {
-      const manifest = await Manifest.parse(`
+      const manifest = await runtime.parse(`
         @egress('MyEgressType')
         particle P
       `);
@@ -4882,7 +4891,7 @@ recipe
     });
 
     it('isolated annotation works', async () => {
-      const manifest = await Manifest.parse(`
+      const manifest = await runtime.parse(`
         @isolated
         particle P
       `);
@@ -4891,7 +4900,7 @@ recipe
     });
 
     it('throws if both isolated and egress annotations are applied', async () => {
-      const manifest = await Manifest.parse(`
+      const manifest = await runtime.parse(`
         @egress
         @isolated
         particle P
@@ -4902,7 +4911,7 @@ recipe
     });
 
     it('throws if both isolated and ingress annotations are applied', async () => {
-      const manifest = await Manifest.parse(`
+      const manifest = await runtime.parse(`
         @ingress
         @isolated
         particle P
@@ -5112,7 +5121,7 @@ describe('validateUniqueDefinitions', () => {
         import './b.arcs'
       `,
     });
-    return Manifest.load('/c.arcs', loader, {memoryProvider: new TestVolatileMemoryProvider()});
+    return new Runtime().parseFile('/c.arcs', {loader});
   }
 
   it('rejects duplicate particle names', async () => {
@@ -5208,7 +5217,7 @@ describe('validateUniqueDefinitions', () => {
 describe('expressions', () => {
   it('does not allow mixing implementation and result expressions', async () => {
     try {
-      const manifest = await Manifest.parse(`
+      const manifest = await new Runtime().parse(`
         particle Converter in 'converter.js'
           foo: reads Foo {x: Number}
           bar: writes Bar {y: Number} =
@@ -5222,7 +5231,7 @@ A particle with implementation cannot use result expressions.
     }
   });
   it('saves result expressions on handle connection specs', async () => {
-    const manifest = await Manifest.parse(`
+    const manifest = await new Runtime().parse(`
       particle Converter
         foo: reads Foo {x: Number}
         bar: writes Bar {y: Number} =

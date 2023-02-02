@@ -184,23 +184,23 @@ class InterfaceInfoImpl extends InterfaceInfo {
     return new InterfaceInfoImpl(this.name, handleConnections, slots);
   }
 
-  canEnsureResolved() : boolean {
+  canResolve() : boolean {
     for (const typeVar of this.typeVars) {
-      if (!typeVar.object[typeVar.field].canEnsureResolved()) {
+      if (!typeVar.object[typeVar.field].canResolve()) {
         return false;
       }
     }
     return true;
   }
 
-  maybeEnsureResolved() : boolean {
+  maybeResolve() : boolean {
     for (const typeVar of this.typeVars) {
       let variable = typeVar.object[typeVar.field];
       variable = variable.clone(new Map());
-      if (!variable.maybeEnsureResolved()) return false;
+      if (!variable.maybeResolve()) return false;
     }
     for (const typeVar of this.typeVars) {
-      typeVar.object[typeVar.field].maybeEnsureResolved();
+      typeVar.object[typeVar.field].maybeResolve();
     }
     return true;
   }

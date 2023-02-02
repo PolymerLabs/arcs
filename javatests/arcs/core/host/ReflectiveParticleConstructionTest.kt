@@ -1,3 +1,13 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 package arcs.core.host
 
 import arcs.core.allocator.Allocator
@@ -17,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.withTimeout
 import org.junit.Rule
 import org.junit.Test
@@ -24,24 +35,26 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class ReflectiveParticleConstructionTest {
   @get:Rule
   val log = LogRule()
 
+  private val testScope = TestCoroutineScope()
+
   class JvmProdHost(
-    schedulerProvider: SchedulerProvider,
+    handleManagerFactory: HandleManagerFactory,
     vararg particles: ParticleRegistration
   ) : AbstractArcHost(
     coroutineContext = Dispatchers.Default,
-    updateArcHostContextCoroutineContext = Dispatchers.Default,
-    schedulerProvider = schedulerProvider,
-    storageEndpointManager = testStorageEndpointManager(),
-    initialParticles = *particles
+    handleManagerFactory = handleManagerFactory,
+    arcHostContextSerializer = StoreBasedArcHostContextSerializer(
+      Dispatchers.Default,
+      handleManagerFactory
+    ),
+    initialParticles = particles
   ),
-    ProdHost {
-    override val platformTime = JvmTime
-  }
+    ProdHost
 
   class AssertingReflectiveParticle(spec: Plan.Particle?) : TestReflectiveParticle(spec) {
     private val log = TaggedLog { "AssertingReflectiveParticle" }
@@ -67,22 +80,28 @@ class ReflectiveParticleConstructionTest {
 
     val hostRegistry = ExplicitHostRegistry()
     val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
+    val handleManagerFactory = HandleManagerFactory(
+      schedulerProvider = schedulerProvider,
+      storageEndpointManager = testStorageEndpointManager(),
+      platformTime = JvmTime
+    )
 
     val fakeRegistration = Pair(
       TestReflectiveParticle::class.toParticleIdentifier(),
       ::AssertingReflectiveParticle.toRegistration().second
     )
 
-    hostRegistry.registerHost(JvmProdHost(schedulerProvider, fakeRegistration))
+    hostRegistry.registerHost(JvmProdHost(handleManagerFactory, fakeRegistration))
 
     val allocator = Allocator.create(
       hostRegistry,
-      EntityHandleManager(
+      HandleManagerImpl(
         time = FakeTime(),
         scheduler = schedulerProvider("allocator"),
         storageEndpointManager = testStorageEndpointManager(),
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
-      )
+      ),
+      testScope
     )
 
     val arcId = allocator.startArcForPlan(TestReflectiveRecipePlan).waitForStart().id

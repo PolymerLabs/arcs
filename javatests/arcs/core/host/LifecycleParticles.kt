@@ -1,5 +1,7 @@
 package arcs.core.host
 
+import kotlinx.atomicfu.atomic
+
 class SingleReadHandleParticle : AbstractSingleReadHandleParticle() {
   val events = mutableListOf<String>()
 
@@ -289,4 +291,77 @@ class UpdateDeltasParticle : AbstractUpdateDeltasParticle() {
   }
 
   private fun Set<Data>.extract() = map(Data::num).toSortedSet()
+}
+
+// -----------------------------------------------------------------------------
+
+class FailingTestControl {
+  companion object {
+    private val _failIn = atomic("")
+    var failIn: String
+      get() = _failIn.value
+      set(value) { _failIn.value = value }
+  }
+}
+
+class FailingReadParticle : AbstractFailingReadParticle() {
+  override fun onFirstStart() {
+    failFor("read.onFirstStart")
+  }
+
+  override fun onStart() {
+    failFor("read.onStart")
+    handles.data.onReady { failFor("data.onReady") }
+    handles.data.onUpdate { failFor("data.onUpdate") }
+  }
+
+  override fun onReady() {
+    failFor("read.onReady")
+  }
+
+  override fun onUpdate() {
+    failFor("read.onUpdate")
+  }
+
+  override fun onShutdown() {
+    failFor("read.onShutdown")
+  }
+
+  fun failFor(method: String) {
+    if (method == FailingTestControl.failIn) {
+      throw RuntimeException("read particle failed in $method")
+    }
+  }
+}
+
+class FailingWriteParticle : AbstractFailingWriteParticle() {
+  override fun onFirstStart() {
+    failFor("write.onFirstStart")
+  }
+
+  override fun onStart() {
+    failFor("write.onStart")
+  }
+
+  override fun onReady() {
+    failFor("write.onReady")
+  }
+
+  override fun onShutdown() {
+    failFor("write.onShutdown")
+  }
+
+  fun failFor(method: String) {
+    if (method == FailingTestControl.failIn) {
+      throw RuntimeException("write particle failed in $method")
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+
+class StartupTimeoutParticle : AbstractStartupTimeoutParticle() {
+  override fun onReady() {
+    while (true) { /* no return! */ }
+  }
 }

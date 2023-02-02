@@ -39,7 +39,7 @@ export async function bundle(entryPoints: string[], bundleName: string, verbose:
     listing.forEach(f => console.log(f.filePath));
   }
 
-  return new Promise(resolve => {
+  return new Promise<void>(resolve => {
     const dirname = path.dirname(bundleName);
     if (!fs.existsSync(dirname)) {
       fs.mkdirSync(dirname, {recursive: true});

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -50,7 +50,7 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
     }
   }
 
-  /** [Parcelable] variant of [arcs.core.data.CollectionType]. */
+  /** [Parcelable] variant of [arcs.core.data.CountType]. */
   data class CountType(
     override val actual: arcs.core.data.CountType = arcs.core.data.CountType()
   ) : ParcelableType(actual) {

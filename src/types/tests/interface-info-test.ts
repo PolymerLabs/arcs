@@ -137,14 +137,14 @@ describe('interface', () => {
 
   it('Cannot ensure resolved an unresolved type variable', () => {
     const iface = InterfaceInfo.make('Test', [{type: TypeVariable.make('a')}], []);
-    assert.isFalse(iface.canEnsureResolved());
+    assert.isFalse(iface.canResolve());
   });
 
   it('Can ensure resolved a schema type', () => {
     const type = EntityType.make(['Thing'], {});
     const iface = InterfaceInfo.make('Test', [{type, name: 'foo'}, {type, direction: 'reads'}, {type}], []);
-    assert.isTrue(iface.canEnsureResolved());
-    assert.isTrue(iface.maybeEnsureResolved());
+    assert.isTrue(iface.canResolve());
+    assert.isTrue(iface.maybeResolve());
   });
 
   it('Maybe ensure resolved does not mutate on failure', () => {
@@ -160,18 +160,18 @@ describe('interface', () => {
     const allTypesIface = InterfaceInfo.make('Test',
       [{type: constrainedType1}, {type: unconstrainedType}, {type: constrainedType2}], []);
     assert.isTrue(allTypes.every(t => !t.isResolved()));
-    assert.isFalse(allTypesIface.canEnsureResolved());
+    assert.isFalse(allTypesIface.canResolve());
     assert.isTrue(allTypes.every(t => !t.isResolved()));
-    assert.isFalse(allTypesIface.maybeEnsureResolved());
+    assert.isFalse(allTypesIface.maybeResolve());
     assert.isTrue(allTypes.every(t => !t.isResolved()),
-        'Types should not have been modified by a failed maybeEnsureResolved()');
+        'Types should not have been modified by a failed maybeResolve()');
 
     const constrainedOnlyIface = InterfaceInfo.make('Test',
       [{type: constrainedType1}, {type: constrainedType2}], []);
     assert.isTrue(allTypes.every(t => !t.isResolved()));
-    assert.isTrue(constrainedOnlyIface.canEnsureResolved());
+    assert.isTrue(constrainedOnlyIface.canResolve());
     assert.isTrue(allTypes.every(t => !t.isResolved()));
-    assert.isTrue(constrainedOnlyIface.maybeEnsureResolved());
+    assert.isTrue(constrainedOnlyIface.maybeResolve());
     assert.isTrue(constrainedType1.isResolved());
     assert.isTrue(constrainedType2.isResolved());
   });
@@ -216,7 +216,7 @@ describe('interface', () => {
       const collectionType = (handle.type as CollectionType<Type>).collectionType;
       const resolved = collectionType.resolvedType();
       assert.isTrue(resolved instanceof TypeVariable);
-      assert.isFalse(resolved.canEnsureResolved());
+      assert.isFalse(resolved.canResolve());
     }
 
     const hostedParticleType = multiplexer.spec.getConnectionByName('hostedParticle').type as InterfaceType;
@@ -228,7 +228,7 @@ describe('interface', () => {
       const collectionType = (handle.type as CollectionType<Type>).collectionType;
       const resolved = collectionType.resolvedType();
       assert.isTrue(collectionType instanceof TypeVariable);
-      assert.isTrue(resolved.canEnsureResolved());
+      assert.isTrue(resolved.canResolve());
       const canWriteSuperset = resolved.canWriteSuperset as EntityType;
       assert.isTrue(canWriteSuperset instanceof EntityType);
       assert.strictEqual(canWriteSuperset.entitySchema.name, 'Burrito');

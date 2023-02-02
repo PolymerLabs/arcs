@@ -20,8 +20,8 @@ import android.view.View
 import android.widget.Button
 import android.widget.RadioButton
 import android.widget.TextView
-import arcs.android.devtools.DevToolsService
-import arcs.android.host.AndroidManifestHostRegistry
+import arcs.android.devtools.DevToolsStarter
+import arcs.android.labs.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
 import arcs.core.common.ArcId
 import arcs.core.data.CollectionType
@@ -31,7 +31,7 @@ import arcs.core.data.SingletonType
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.awaitReady
 import arcs.core.entity.ForeignReferenceCheckerImpl
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
@@ -48,7 +48,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 /** Entry UI to launch Arcs Test. */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class TestActivity : AppCompatActivity() {
 
   private lateinit var resultView1: TextView
@@ -62,8 +62,8 @@ class TestActivity : AppCompatActivity() {
   private var storageMode = TestEntity.StorageMode.IN_MEMORY
   private var isCollection = false
   private var setFromRemoteService = false
-  private var singletonHandle: ReadWriteSingletonHandle<TestEntity>? = null
-  private var collectionHandle: ReadWriteCollectionHandle<TestEntity>? = null
+  private var singletonHandle: ReadWriteSingletonHandle<TestEntity, TestEntitySlice>? = null
+  private var collectionHandle: ReadWriteCollectionHandle<TestEntity, TestEntitySlice>? = null
 
   private var allocator: Allocator? = null
   private var resurrectionArcId: ArcId? = null
@@ -127,9 +127,7 @@ class TestActivity : AppCompatActivity() {
         runPersistentPersonRecipe()
       }
     }
-
-    val devToolsIntent = Intent(this, DevToolsService::class.java)
-    startForegroundService(devToolsIntent)
+    DevToolsStarter(this).start()
   }
 
   override fun onNewIntent(intent: Intent?) {
@@ -157,12 +155,13 @@ class TestActivity : AppCompatActivity() {
     appendResultText(getString(R.string.waiting_for_result))
     allocator = Allocator.create(
       AndroidManifestHostRegistry.create(this@TestActivity),
-      EntityHandleManager(
+      HandleManagerImpl(
         time = JvmTime,
         scheduler = schedulerProvider("readWriteArc"),
         storageEndpointManager = storageEndpointManager,
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
-      )
+      ),
+      scope
     )
     allocator?.startArcForPlan(PersonRecipePlan)
       ?.also { allocator?.stopArc(it.id) }
@@ -172,12 +171,13 @@ class TestActivity : AppCompatActivity() {
     appendResultText(getString(R.string.waiting_for_result))
     allocator = Allocator.create(
       AndroidManifestHostRegistry.create(this@TestActivity),
-      EntityHandleManager(
+      HandleManagerImpl(
         time = JvmTime,
         scheduler = schedulerProvider("resurrectionArc"),
         storageEndpointManager = storageEndpointManager,
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
-      )
+      ),
+      scope
     )
     resurrectionArcId = allocator?.startArcForPlan(AnimalRecipePlan)?.id
   }
@@ -207,12 +207,13 @@ class TestActivity : AppCompatActivity() {
 
     val allocator = Allocator.create(
       AndroidManifestHostRegistry.create(this@TestActivity),
-      EntityHandleManager(
+      HandleManagerImpl(
         time = JvmTime,
         scheduler = schedulerProvider("allocator"),
         storageEndpointManager = storageEndpointManager,
         foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
-      )
+      ),
+      scope
     )
     val arcId = allocator.startArcForPlan(PersonRecipePlan).id
     allocator.stopArc(arcId)
@@ -241,7 +242,7 @@ class TestActivity : AppCompatActivity() {
 
     appendResultText(getString(R.string.waiting_for_result))
 
-    val handleManager = EntityHandleManager(
+    val handleManager = HandleManagerImpl(
       time = JvmTime,
       scheduler = schedulerProvider("handle"),
       storageEndpointManager = storageEndpointManager,
@@ -260,7 +261,7 @@ class TestActivity : AppCompatActivity() {
           TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
           else -> TestEntity.collectionInMemoryStorageKey
         }
-      ).awaitReady() as ReadWriteCollectionHandle<TestEntity>
+      ).awaitReady() as ReadWriteCollectionHandle<TestEntity, TestEntitySlice>
 
       collectionHandle?.dispatcher?.let {
         withContext(it) {
@@ -302,7 +303,7 @@ class TestActivity : AppCompatActivity() {
           TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
           else -> TestEntity.singletonInMemoryStorageKey
         }
-      ).awaitReady() as ReadWriteSingletonHandle<TestEntity>
+      ).awaitReady() as ReadWriteSingletonHandle<TestEntity, TestEntitySlice>
 
       singletonHandle?.dispatcher?.let {
         withContext(it) {

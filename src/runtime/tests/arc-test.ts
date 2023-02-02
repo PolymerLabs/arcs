@@ -32,9 +32,8 @@ import {Entity} from '../entity.js';
 import {RamDiskStorageDriverProvider} from '../storage/drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from '../storage/reference-mode-storage-key.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
-import {handleForStoreInfo, SingletonEntityType, CollectionEntityType} from '../storage/storage.js';
+import {SingletonEntityType, CollectionEntityType} from '../storage/storage.js';
 import {Capabilities, Ttl, Queryable, Persistence} from '../capabilities.js';
-import {StorageServiceImpl} from '../storage/storage-service.js';
 import {StoreInfo} from '../storage/store-info.js';
 
 async function setup(storageKeyPrefix:  (arcId: ArcId) => StorageKey) {
@@ -51,10 +50,10 @@ async function setup(storageKeyPrefix:  (arcId: ArcId) => StorageKey) {
         bar: writes handle1
   `, {loader, memoryProvider, fileName: process.cwd() + '/input.manifest'});
   const runtime = new Runtime({loader, context: manifest, memoryProvider});
-  const arc = runtime.newArc('test', storageKeyPrefix);
-
+  const arcInfo = await runtime.allocator.startArc({arcName: 'test', storageKeyPrefix});
   return {
-    arc,
+    runtime,
+    arcInfo,
     context: manifest,
     recipe: manifest.recipes[0],
     Foo: Entity.createEntityClass(manifest.findSchemaByName('Foo'), null),
@@ -64,18 +63,11 @@ async function setup(storageKeyPrefix:  (arcId: ArcId) => StorageKey) {
 }
 
 describe('Arc new storage', () => {
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
   it('preserves data when round-tripping through serialization', async () => {
-    DriverFactory.clearRegistrationsForTesting();
     // TODO(shans): deserialization currently uses a RamDisk store to deserialize into because we don't differentiate
     // between parsing a manifest for public consumption (e.g. with RamDisk resources in it) and parsing a serialized
     // arc (with an @activeRecipe). We'll fix this by adding a 'private' keyword to store serializations which will
     // be used when serializing arcs. Once that is working then the following registration should be removed.
-    const memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
     const loader = new Loader(null, {
       './manifest': `
         schema Data
@@ -100,21 +92,22 @@ describe('Arc new storage', () => {
         defineParticle(({Particle}) => class Noop extends Particle {});
       `
     });
-    const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
-    const dataClass = Entity.createEntityClass(manifest.findSchemaByName('Data'), null);
-    const id = ArcId.fromString('test');
-    const storageKey = new VolatileStorageKey(id, 'unique');
-    const arc = new Arc({id, storageKey, loader, context: manifest, storageService: new StorageServiceImpl()});
+    const runtime = new Runtime({loader});
+    runtime.context = await runtime.parseFile('./manifest');
 
-    const varStore = await arc.createStore(new SingletonType(dataClass.type), undefined, 'test:0');
-    const colStore = await arc.createStore(dataClass.type.collectionOf(), undefined, 'test:1');
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test'});
+    const arc = runtime.getArcById(arcInfo.id);
 
-    const refVarKey  = new ReferenceModeStorageKey(new VolatileStorageKey(id, 'colVar'), new VolatileStorageKey(id, 'refVar'));
-    const refVarStore = await arc.createStore(new SingletonType(dataClass.type), undefined, 'test:2', [], refVarKey);
+    const dataClass = Entity.createEntityClass(runtime.context.findSchemaByName('Data'), null);
+    const varStore = await arcInfo.createStoreInfo(new SingletonType(dataClass.type), {id: 'test:0'});
+    const colStore = await arcInfo.createStoreInfo(dataClass.type.collectionOf(), {id: 'test:1'});
 
-    const varHandle = await handleForStoreInfo(varStore, arc);
-    const colHandle = await handleForStoreInfo(colStore, arc);
-    const refVarHandle = await handleForStoreInfo(refVarStore, arc);
+    const refVarKey = new ReferenceModeStorageKey(new VolatileStorageKey(arcInfo.id, 'colVar'), new VolatileStorageKey(arcInfo.id, 'refVar'));
+    const refVarStore = await arcInfo.createStoreInfo(new SingletonType(dataClass.type), {id: 'test:2', storageKey: refVarKey});
+
+    const varHandle = await runtime.host.handleForStoreInfo(varStore, arcInfo);
+    const colHandle = await runtime.host.handleForStoreInfo(colStore, arcInfo);
+    const refVarHandle = await runtime.host.handleForStoreInfo(refVarStore, arcInfo);
 
     // Populate the stores, run the arc and get its serialization.
     const d1 = new dataClass({value: 'v1'});
@@ -126,125 +119,120 @@ describe('Arc new storage', () => {
     await colHandle.add(d3);
     await refVarHandle.set(d4);
 
-    const recipe = manifest.recipes[0];
+    const recipe = runtime.context.recipes[0];
     recipe.handles[0].mapToStorage(varStore);
     recipe.handles[1].mapToStorage(colStore);
     recipe.handles[2].mapToStorage(refVarStore);
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+
+    await runtime.allocator.runPlanInArc(arcInfo, recipe);
 
     const serialization = await arc.serialize();
-    arc.dispose();
+    runtime.allocator.stopArc(arcInfo.id);
 
     await varHandle.clear();
     await colHandle.clear();
     await refVarHandle.clear();
 
-    const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageService: new StorageServiceImpl()});
+    const arc2 = await runtime.allocator.deserialize({serialization, fileName: ''});
     const varStore2 = arc2.findStoreById(varStore.id) as StoreInfo<SingletonEntityType>;
     const colStore2 = arc2.findStoreById(colStore.id) as StoreInfo<CollectionEntityType>;
     const refVarStore2 = arc2.findStoreById(refVarStore.id) as StoreInfo<SingletonEntityType>;
 
-    const varHandle2 = await handleForStoreInfo(varStore2, arc2);
+    const varHandle2 = await runtime.host.handleForStoreInfo(varStore2, arc2);
     const varData = await varHandle2.fetch();
     assert.deepEqual(varData, d1);
 
-    const colHandle2 = await handleForStoreInfo(colStore2, arc2);
+    const colHandle2 = await runtime.host.handleForStoreInfo(colStore2, arc2);
     const colData = await colHandle2.toList();
     assert.deepEqual(colData, [d2, d3]);
 
-    const refVarHandle2 = await handleForStoreInfo(refVarStore2, arc2);
+    const refVarHandle2 = await runtime.host.handleForStoreInfo(refVarStore2, arc2);
     const refVarData = await refVarHandle2.fetch();
     assert.deepEqual(refVarData, d4);
   });
 
   it('supports capabilities - storage protocol', Flags.withDefaultReferenceMode(async () => {
-    DriverFactory.clearRegistrationsForTesting();
     const loader = new Loader(null, {
       '*': `
         defineParticle(({Particle}) => {
           return class extends Particle {}
         });
     `});
-    const memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
-    const manifest = await Manifest.parse(`
+    const runtime = new Runtime({loader});
+    const manifestText = `
       schema Thing
       particle MyParticle in 'MyParticle.js'
         thing: writes Thing
-      recipe
+      recipe TestPlan
         handle0: create @tiedToArc
         MyParticle
           thing: handle0
-      `, {loader, memoryProvider, fileName: process.cwd() + '/input.manifest'});
-    const recipe = manifest.recipes[0];
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
-    const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', ramDiskStorageKeyPrefixForTest());
-    await arc.instantiate(recipe);
+    `;
+    const manifest = await runtime.parse(manifestText, {fileName: process.cwd() + '/input.manifest'});
+    runtime.context = manifest;
+    const arcInfo = await runtime.allocator.startArc({
+      arcName: 'test',
+      storageKeyPrefix: ramDiskStorageKeyPrefixForTest(),
+      planName: 'TestPlan'
+    });
+    const arc = runtime.getArcById(arcInfo.id);
     await arc.idle;
 
     // Reference mode store and its backing and container stores.
-    assert.lengthOf(arc.activeRecipe.handles, 3);
-    const key = arc.activeRecipe.particles[0].connections['thing'].handle.storageKey;
+    assert.lengthOf(arcInfo.activeRecipe.handles, 3);
+    const key = arcInfo.activeRecipe.particles[0].connections['thing'].handle.storageKey;
     assert.instanceOf(key, ReferenceModeStorageKey);
     const refKey = key as ReferenceModeStorageKey;
     assert.instanceOf(refKey.backingKey, VolatileStorageKey);
     assert.instanceOf(refKey.storageKey, VolatileStorageKey);
-    assert.isTrue(key.toString().includes(arc.id.toString()));
+    assert.isTrue(key.toString().includes(arcInfo.id.toString()));
   }));
 });
 
 const doSetup = async () => setup(arcId => new VolatileStorageKey(arcId, ''));
 
 describe('Arc', () => {
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
   it('idle can safely be called multiple times ', async () => {
-    const runtime = Runtime.newForNodeTesting();
-    const arc = runtime.newArc('test');
+    const runtime = new Runtime();
+    const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'test'})).id);
     const f = async () => { await arc.idle; };
     await Promise.all([f(), f()]);
   });
 
   it('applies existing stores to a particle', async () => {
-    const {arc, recipe, Foo, Bar} = await doSetup();
-    const fooStore = await arc.createStore(new SingletonType(Foo.type), undefined, 'test:1');
-    const barStore = await arc.createStore(new SingletonType(Bar.type), undefined, 'test:2');
-    const fooHandle = await handleForStoreInfo(fooStore, arc);
-    const barHandle = await handleForStoreInfo(barStore, arc);
+    const {runtime, arcInfo, recipe, Foo, Bar} = await doSetup();
+    const fooStore = await arcInfo.createStoreInfo(new SingletonType(Foo.type), {id: 'test:1'});
+    const barStore = await arcInfo.createStoreInfo(new SingletonType(Bar.type), {id: 'test:2'});
+    const fooHandle = await runtime.host.handleForStoreInfo(fooStore, arcInfo);
+    const barHandle = await runtime.host.handleForStoreInfo(barStore, arcInfo);
 
     await fooHandle.set(new Foo({value: 'a Foo'}));
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(barStore);
-    assert(recipe.normalize());
-    await arc.instantiate(recipe);
-    await arc.idle;
+    await runtime.allocator.runPlanInArc(arcInfo, recipe);
+    await runtime.getArcById(arcInfo.id).idle;
     assert.deepStrictEqual(await barHandle.fetch() as {}, {value: 'a Foo1'});
   });
 
   it('applies new stores to a particle ', async () => {
-    const {arc, recipe, Foo, Bar} = await doSetup();
-    const fooStore = await arc.createStore(new SingletonType(Foo.type), undefined, 'test:1');
-    const barStore = await arc.createStore(new SingletonType(Bar.type), undefined, 'test:2');
-    const fooHandle = await handleForStoreInfo(fooStore, arc);
-    const barHandle = await handleForStoreInfo(barStore, arc);
+    const {runtime, arcInfo, recipe, Foo, Bar} = await doSetup();
+    const fooStore = await arcInfo.createStoreInfo(new SingletonType(Foo.type), {id: 'test:1'});
+    const barStore = await arcInfo.createStoreInfo(new SingletonType(Bar.type), {id: 'test:2'});
+    const fooHandle = await runtime.host.handleForStoreInfo(fooStore, arcInfo);
+    const barHandle = await runtime.host.handleForStoreInfo(barStore, arcInfo);
 
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(barStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arcInfo, recipe);
+
     await fooHandle.set(new Foo({value: 'a Foo'}));
-    await arc.idle;
+    await runtime.getArcById(arcInfo.id).idle;
     assert.deepStrictEqual(await barHandle.fetch() as {}, {value: 'a Foo1'});
   });
 
   it('optional provided handles do not resolve without parent', async () => {
-    const loader = new Loader();
-    const manifest = await Manifest.parse(`
+    const runtime = new Runtime();
+    const manifest = await runtime.parse(`
       schema Thing
         value: Text
 
@@ -263,44 +251,45 @@ describe('Arc', () => {
         TestParticle
           a: reads thingA
           b: writes thingB
-    `, {loader, fileName: process.cwd() + '/input.manifest'});
+    `, {fileName: process.cwd() + '/input.manifest'});
 
-    const id = ArcId.newForTest('test');
-    const storageKey = new VolatileStorageKey(id, '');
-    const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageService: new StorageServiceImpl()});
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test'});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
-    const aStore = await arc.createStore(new SingletonType(thingClass.type), 'aStore', 'test:1');
-    const bStore = await arc.createStore(new SingletonType(thingClass.type), 'bStore', 'test:2');
-    const cStore = await arc.createStore(new SingletonType(thingClass.type), 'cStore', 'test:3');
-    const dStore = await arc.createStore(new SingletonType(thingClass.type), 'dStore', 'test:4');
-    const aHandle = await handleForStoreInfo(aStore, arc);
-    const bHandle = await handleForStoreInfo(bStore, arc);
-    const cHandle = await handleForStoreInfo(cStore, arc);
-    const dHandle = await handleForStoreInfo(dStore, arc);
+    const aStore = await arcInfo.createStoreInfo(new SingletonType(thingClass.type), {name: 'aStore', id: 'test:1'});
+    const bStore = await arcInfo.createStoreInfo(new SingletonType(thingClass.type), {name: 'bStore', id: 'test:2'});
+    const cStore = await arcInfo.createStoreInfo(new SingletonType(thingClass.type), {name: 'cStore', id: 'test:3'});
+    const dStore = await arcInfo.createStoreInfo(new SingletonType(thingClass.type), {name: 'dStore', id: 'test:4'});
+    const aHandle = await runtime.host.handleForStoreInfo(aStore, arcInfo);
+    const bHandle = await runtime.host.handleForStoreInfo(bStore, arcInfo);
+    const cHandle = await runtime.host.handleForStoreInfo(cStore, arcInfo);
+    const dHandle = await runtime.host.handleForStoreInfo(dStore, arcInfo);
 
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(aStore);
     recipe.handles[1].mapToStorage(bStore);
     recipe.handles[2].mapToStorage(cStore); // These might not be needed?
     recipe.handles[3].mapToStorage(dStore); // These might not be needed?
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arcInfo, recipe);
 
     await aHandle.set(new thingClass({value: 'from_a'}));
     await cHandle.set(new thingClass({value: 'from_c'}));
-    await arc.idle;
+    await runtime.getArcById(arcInfo.id).idle;
     assert.deepStrictEqual(await bHandle.fetch() as {}, {value: 'from_a1'});
     assert.isNull(await dHandle.fetch());
   });
 
   it('instantiates recipes only if fate is correct', async () => {
+    const loader = new Loader(null, {
+      './a.js': `
+        defineParticle(({Particle}) => class Noop extends Particle {});
+      `
+    });
+    const runtime = new Runtime({loader});
+
     const data = '{"root": {"values": {}, "version": {}}, "locations": {}}';
     const type = '![Thing]';
-    const memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
-
-    const manifest = await Manifest.parse(`
+    const manifest = await runtime.parse(`
       schema Thing
       particle A in 'a.js'
         thing: reads Thing
@@ -325,44 +314,34 @@ describe('Arc', () => {
         ${data}
 
       store ThingStore of ${type} 'storeInContext' in MyThing
-    `, {memoryProvider});
-    assert.isTrue(manifest.recipes.every(r => r.normalize()));
-    assert.isTrue(manifest.recipes[0].isResolved());
-    assert.isTrue(manifest.recipes[1].isResolved());
-
-    const loader = new Loader(null, {
-      'a.js': `
-        defineParticle(({Particle}) => class Noop extends Particle {});
-      `
-    });
-    const runtime = new Runtime({loader, context: manifest, memoryProvider});
-
+    `);
     // Successfully instantiates a recipe with 'copy' handle for store in a context.
-    await runtime.newArc('test0').instantiate(manifest.recipes[0]);
+    runtime.context = manifest;
+    await runtime.allocator.startArc({arcName: 'test0', planName: 'CopyStoreFromContext'});
 
     // Fails instantiating a recipe with 'use' handle for store in a context.
     try {
-      await runtime.newArc('test1').instantiate(manifest.recipes[1]);
+      await runtime.allocator.startArc({arcName: 'test1', planName: 'UseStoreFromContext'});
       assert.fail();
     } catch (e) {
       assert.isTrue(e.toString().includes('store \'storeInContext\'')); // with "use" fate was not found'));
     }
 
-    const arc = await runtime.newArc('test2');
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test2'});
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
-    await arc.createStore(new SingletonType(thingClass.type), 'name', 'storeInArc');
-    const resolver = new RecipeResolver(arc);
+    await arcInfo.createStoreInfo(new SingletonType(thingClass.type), {name: 'name', id: 'storeInArc'});
+    const resolver = new RecipeResolver(arcInfo);
 
     // Fails resolving a recipe with 'copy' handle for store in the arc (not in context).
     assert.isNull(await resolver.resolve(manifest.recipes[2]));
     const recipe3 = await resolver.resolve(manifest.recipes[3]);
     // Successfully instantiates a recipe with 'use' handle for store in an arc.
-    await arc.instantiate(recipe3);
+    await runtime.allocator.runPlanInArc(arcInfo, recipe3);
   });
 
   it('required provided handles do not resolve without parent', async () => {
-    const loader = new Loader();
-    const manifest = await Manifest.parse(`
+    const runtime = new Runtime();
+    const manifest = await runtime.parse(`
       schema Thing
         value: Text
 
@@ -381,41 +360,38 @@ describe('Arc', () => {
         TestParticle
           a: reads thingA
           b: writes thingB
-    `, {loader, fileName: process.cwd() + '/input.manifest'});
+    `, {fileName: process.cwd() + '/input.manifest'});
 
-    const id = ArcId.newForTest('test');
-    const storageKey = new VolatileStorageKey(id, '');
-    const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageService: new StorageServiceImpl()});
+    const arc = await runtime.allocator.startArc({arcName: 'test'});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
-    const aStore = await arc.createStore(new SingletonType(thingClass.type), 'aStore', 'test:1');
-    const bStore = await arc.createStore(new SingletonType(thingClass.type), 'bStore', 'test:2');
-    const cStore = await arc.createStore(new SingletonType(thingClass.type), 'cStore', 'test:3');
-    const dStore = await arc.createStore(new SingletonType(thingClass.type), 'dStore', 'test:4');
-    const aHandle = await handleForStoreInfo(aStore, arc);
-    const bHandle = await handleForStoreInfo(bStore, arc);
-    const cHandle = await handleForStoreInfo(cStore, arc);
-    const dHandle = await handleForStoreInfo(dStore, arc);
+    const aStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'aStore', id: 'test:1'});
+    const bStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'bStore', id: 'test:2'});
+    const cStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'cStore', id: 'test:3'});
+    const dStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'dStore', id: 'test:4'});
+    const aHandle = await runtime.host.handleForStoreInfo(aStore, arc);
+    const bHandle = await runtime.host.handleForStoreInfo(bStore, arc);
+    const cHandle = await runtime.host.handleForStoreInfo(cStore, arc);
+    const dHandle = await runtime.host.handleForStoreInfo(dStore, arc);
 
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(aStore);
     recipe.handles[1].mapToStorage(bStore);
     recipe.handles[2].mapToStorage(cStore); // These might not be needed?
     recipe.handles[3].mapToStorage(dStore); // These might not be needed?
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc, recipe);
 
     await aHandle.set(new thingClass({value: 'from_a'}));
     await cHandle.set(new thingClass({value: 'from_c'}));
-    await arc.idle;
+    await runtime.getArcById(arc.id).idle;
     assert.deepStrictEqual(await bHandle.fetch() as {}, {value: 'from_a1'});
     assert.isNull(await dHandle.fetch());
   });
 
   it('optional provided handles cannot resolve without parent', async () => {
     await assertThrowsAsync(async () => {
-      const loader = new Loader();
-      const manifest = await Manifest.parse(`
+      const runtime = new Runtime();
+      const manifest = await runtime.parse(`
         schema Thing
           value: Text
 
@@ -435,32 +411,29 @@ describe('Arc', () => {
             a: reads thingA
             b: writes thingB
             d: writes maybeThingD
-      `, {loader, fileName: process.cwd() + '/input.manifest'});
-      const id = ArcId.newForTest('test');
-      const storageKey = new VolatileStorageKey(id, '');
-      const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageService: new StorageServiceImpl()});
+      `, {fileName: process.cwd() + '/input.manifest'});
+      const arc = await runtime.allocator.startArc({arcName: 'test'});
 
       const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
-      const aStore = await arc.createStore(new SingletonType(thingClass.type), 'aStore', 'test:1');
-      const bStore = await arc.createStore(new SingletonType(thingClass.type), 'bStore', 'test:2');
-      const cStore = await arc.createStore(new SingletonType(thingClass.type), 'cStore', 'test:3');
-      const dStore = await arc.createStore(new SingletonType(thingClass.type), 'dStore', 'test:4');
+      const aStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'aStore', id: 'test:1'});
+      const bStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'bStore', id: 'test:2'});
+      const cStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'cStore', id: 'test:3'});
+      const dStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'dStore', id: 'test:4'});
 
       const recipe = manifest.recipes[0];
       recipe.handles[0].mapToStorage(aStore);
       recipe.handles[1].mapToStorage(bStore);
       recipe.handles[2].mapToStorage(cStore); // These might not be needed?
       recipe.handles[3].mapToStorage(dStore); // These might not be needed?
-      recipe.normalize();
-      await arc.instantiate(recipe);
+      await runtime.allocator.runPlanInArc(arc, recipe);
     },
     /.*unresolved handle-connection: parent connection 'c' missing/);
   });
 
   it('required provided handles cannot resolve without parent', async () => {
     await assertThrowsAsync(async () => {
-      const loader = new Loader();
-      const manifest = await Manifest.parse(`
+      const runtime = new Runtime();
+      const context = await runtime.parse(`
         schema Thing
           value: Text
 
@@ -480,32 +453,29 @@ describe('Arc', () => {
             a: reads thingA
             b: writes thingB
             d: writes maybeThingD
-      `, {loader, fileName: process.cwd() + '/input.manifest'});
+      `, {fileName: process.cwd() + '/input.manifest'});
 
-      const id = ArcId.newForTest('test');
-      const storageKey = new VolatileStorageKey(id, '');
-      const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageService: new StorageServiceImpl()});
+      const arc = await runtime.allocator.startArc({arcName: 'test'});
 
-      const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
-      const aStore = await arc.createStore(new SingletonType(thingClass.type), 'aStore', 'test:1');
-      const bStore = await arc.createStore(new SingletonType(thingClass.type), 'bStore', 'test:2');
-      const cStore = await arc.createStore(new SingletonType(thingClass.type), 'cStore', 'test:3');
-      const dStore = await arc.createStore(new SingletonType(thingClass.type), 'dStore', 'test:4');
+      const thingClass = Entity.createEntityClass(context.findSchemaByName('Thing'), null);
+      const aStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'aStore', id: 'test:1'});
+      const bStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'bStore', id: 'test:2'});
+      const cStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'cStore', id: 'test:3'});
+      const dStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'dStore', id: 'test:4'});
 
-      const recipe = manifest.recipes[0];
+      const recipe = context.recipes[0];
       recipe.handles[0].mapToStorage(aStore);
       recipe.handles[1].mapToStorage(bStore);
       recipe.handles[2].mapToStorage(cStore); // These might not be needed?
       recipe.handles[3].mapToStorage(dStore); // These might not be needed?
-      recipe.normalize();
-      await arc.instantiate(recipe);
+      await runtime.allocator.runPlanInArc(arc, recipe);
     },
     /.*unresolved handle-connection: parent connection 'c' missing/);
   });
 
   it('optional provided handles are not required to resolve with dependencies', async () => {
-    const loader = new Loader();
-    const manifest = await Manifest.parse(`
+    const runtime = new Runtime();
+    const manifest = await runtime.parse(`
       schema Thing
         value: Text
 
@@ -525,42 +495,40 @@ describe('Arc', () => {
           a: reads thingA
           b: writes thingB
           c: reads maybeThingC
-    `, {loader, fileName: process.cwd() + '/input.manifest'});
-    const id = ArcId.newForTest('test');
-    const storageKey = new VolatileStorageKey(id, '');
-    const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageService: new StorageServiceImpl()});
+    `, {fileName: process.cwd() + '/input.manifest'});
+    const arc = await runtime.allocator.startArc({arcName: 'test'});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
-    const aStore = await arc.createStore(new SingletonType(thingClass.type), 'aStore', 'test:1');
-    const bStore = await arc.createStore(new SingletonType(thingClass.type), 'bStore', 'test:2');
-    const cStore = await arc.createStore(new SingletonType(thingClass.type), 'cStore', 'test:3');
-    const dStore = await arc.createStore(new SingletonType(thingClass.type), 'dStore', 'test:4');
-    const aHandle = await handleForStoreInfo(aStore, arc);
-    const bHandle = await handleForStoreInfo(bStore, arc);
-    const cHandle = await handleForStoreInfo(cStore, arc);
-    const dHandle = await handleForStoreInfo(dStore, arc);
+    const aStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'aStore', id: 'test:1'});
+    const bStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'bStore', id: 'test:2'});
+    const cStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'cStore', id: 'test:3'});
+    const dStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'dStore', id: 'test:4'});
+
+    const aHandle = await runtime.host.handleForStoreInfo(aStore, arc);
+    const bHandle = await runtime.host.handleForStoreInfo(bStore, arc);
+    const cHandle = await runtime.host.handleForStoreInfo(cStore, arc);
+    const dHandle = await runtime.host.handleForStoreInfo(dStore, arc);
 
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(aStore);
     recipe.handles[1].mapToStorage(bStore);
     recipe.handles[2].mapToStorage(cStore); // These might not be needed?
     recipe.handles[3].mapToStorage(dStore); // These might not be needed?
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc, recipe);
 
     await aHandle.set(new thingClass({value: 'from_a'}));
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc, recipe);
     await cHandle.set(new thingClass({value: 'from_c'}));
-    await arc.instantiate(recipe);
-    await arc.idle;
+    await runtime.allocator.runPlanInArc(arc, recipe);
+    await runtime.getArcById(arc.id).idle;
     assert.deepStrictEqual(await bHandle.fetch() as {}, {value: 'from_a1'});
     assert.isNull(await dHandle.fetch());
   });
 
   it('required provided handles must resolve with dependencies', async () => {
     await assertThrowsAsync(async () => {
-      const loader = new Loader();
-      const manifest = await Manifest.parse(`
+      const runtime = new Runtime();
+      const manifest = await runtime.parse(`
         schema Thing
           value: Text
 
@@ -580,31 +548,29 @@ describe('Arc', () => {
             a: reads thingA
             b: writes thingB
             c: reads maybeThingC
-      `, {loader, fileName: process.cwd() + '/input.manifest'});
-      const id = ArcId.newForTest('test');
-      const storageKey = new VolatileStorageKey(id, '');
-      const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageService: new StorageServiceImpl()});
+      `, {fileName: process.cwd() + '/input.manifest'});
+      const arc = await runtime.allocator.startArc({arcName: 'test'});
 
       const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
-      const aStore = await arc.createStore(new SingletonType(thingClass.type), 'aStore', 'test:1');
-      const bStore = await arc.createStore(new SingletonType(thingClass.type), 'bStore', 'test:2');
-      const cStore = await arc.createStore(new SingletonType(thingClass.type), 'cStore', 'test:3');
-      const dStore = await arc.createStore(new SingletonType(thingClass.type), 'dStore', 'test:4');
+
+      const aStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'aStore', id: 'test:1'});
+      const bStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'bStore', id: 'test:2'});
+      const cStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'cStore', id: 'test:3'});
+      const dStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'dStore', id: 'test:4'});
 
       const recipe = manifest.recipes[0];
       recipe.handles[0].mapToStorage(aStore);
       recipe.handles[1].mapToStorage(bStore);
       recipe.handles[2].mapToStorage(cStore); // These might not be needed?
       recipe.handles[3].mapToStorage(dStore); // These might not be needed?
-      recipe.normalize();
-      await arc.instantiate(recipe);
+      await runtime.allocator.runPlanInArc(arc, recipe);
     },
     /.*unresolved particle: unresolved connections/);
   });
 
   it('optional provided handles can resolve with parent 1', async () => {
-    const loader = new Loader();
-    const manifest = await Manifest.parse(`
+    const runtime = new Runtime();
+    const manifest = await runtime.parse(`
       schema Thing
         value: Text
 
@@ -625,39 +591,36 @@ describe('Arc', () => {
           b: writes thingB
           c: reads maybeThingC
           d: writes maybeThingD
-    `, {loader, fileName: process.cwd() + '/input.manifest'});
-    const id = ArcId.newForTest('test');
-    const storageKey = new VolatileStorageKey(id, '');
-    const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageService: new StorageServiceImpl()});
+    `, {fileName: process.cwd() + '/input.manifest'});
+    const arc = await runtime.allocator.startArc({arcName: 'test'});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
-    const aStore = await arc.createStore(new SingletonType(thingClass.type), 'aStore', 'test:1');
-    const bStore = await arc.createStore(new SingletonType(thingClass.type), 'bStore', 'test:2');
-    const cStore = await arc.createStore(new SingletonType(thingClass.type), 'cStore', 'test:3');
-    const dStore = await arc.createStore(new SingletonType(thingClass.type), 'dStore', 'test:4');
-    const aHandle = await handleForStoreInfo(aStore, arc);
-    const bHandle = await handleForStoreInfo(bStore, arc);
-    const cHandle = await handleForStoreInfo(cStore, arc);
-    const dHandle = await handleForStoreInfo(dStore, arc);
+    const aStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'aStore', id: 'test:1'});
+    const bStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'bStore', id: 'test:2'});
+    const cStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'cStore', id: 'test:3'});
+    const dStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'dStore', id: 'test:4'});
+    const aHandle = await runtime.host.handleForStoreInfo(aStore, arc);
+    const bHandle = await runtime.host.handleForStoreInfo(bStore, arc);
+    const cHandle = await runtime.host.handleForStoreInfo(cStore, arc);
+    const dHandle = await runtime.host.handleForStoreInfo(dStore, arc);
 
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(aStore);
     recipe.handles[1].mapToStorage(bStore);
     recipe.handles[2].mapToStorage(cStore); // These might not be needed?
     recipe.handles[3].mapToStorage(dStore); // These might not be needed?
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc, recipe);
 
     await aHandle.set(new thingClass({value: 'from_a'}));
     await cHandle.set(new thingClass({value: 'from_c'}));
-    await arc.idle;
+    await runtime.getArcById(arc.id).idle;
     assert.deepStrictEqual(await bHandle.fetch() as {}, {value: 'from_a1'});
     assert.deepStrictEqual(await dHandle.fetch() as {}, {value: 'from_c1'});
   });
 
   it('required provided handles can resolve with parent 2', async () => {
-    const loader = new Loader();
-    const manifest = await Manifest.parse(`
+    const runtime = new Runtime();
+    const manifest = await runtime.parse(`
       schema Thing
         value: Text
 
@@ -678,129 +641,82 @@ describe('Arc', () => {
           b: writes thingB
           c: reads maybeThingC
           d: writes maybeThingD
-    `, {loader, fileName: process.cwd() + '/input.manifest'});
-    const id = ArcId.newForTest('test');
-    const storageKey = new VolatileStorageKey(id, '');
-    const arc = new Arc({slotComposer: new SlotComposer(), loader, context: manifest, id, storageKey, storageService: new StorageServiceImpl()});
+    `, {fileName: process.cwd() + '/input.manifest'});
+    const arc = await runtime.allocator.startArc({arcName: 'test'});
 
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
-    const aStore = await arc.createStore(new SingletonType(thingClass.type), 'aStore', 'test:1');
-    const bStore = await arc.createStore(new SingletonType(thingClass.type), 'bStore', 'test:2');
-    const cStore = await arc.createStore(new SingletonType(thingClass.type), 'cStore', 'test:3');
-    const dStore = await arc.createStore(new SingletonType(thingClass.type), 'dStore', 'test:4');
-    const aHandle = await handleForStoreInfo(aStore, arc);
-    const bHandle = await handleForStoreInfo(bStore, arc);
-    const cHandle = await handleForStoreInfo(cStore, arc);
-    const dHandle = await handleForStoreInfo(dStore, arc);
+    const aStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'aStore', id: 'test:1'});
+    const bStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'bStore', id: 'test:2'});
+    const cStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'cStore', id: 'test:3'});
+    const dStore = await arc.createStoreInfo(new SingletonType(thingClass.type), {name: 'dStore', id: 'test:4'});
+    const aHandle = await runtime.host.handleForStoreInfo(aStore, arc);
+    const bHandle = await runtime.host.handleForStoreInfo(bStore, arc);
+    const cHandle = await runtime.host.handleForStoreInfo(cStore, arc);
+    const dHandle = await runtime.host.handleForStoreInfo(dStore, arc);
 
     const recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(aStore);
     recipe.handles[1].mapToStorage(bStore);
     recipe.handles[2].mapToStorage(cStore); // These might not be needed?
     recipe.handles[3].mapToStorage(dStore); // These might not be needed?
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc, recipe);
 
     await aHandle.set(new thingClass({value: 'from_a'}));
     await cHandle.set(new thingClass({value: 'from_c'}));
-    await arc.idle;
+    await runtime.getArcById(arc.id).idle;
     assert.deepStrictEqual(await bHandle.fetch() as {}, {value: 'from_a1'});
     assert.deepStrictEqual(await dHandle.fetch() as {}, {value: 'from_c1'});
   });
 
   it('deserializing a serialized empty arc produces an empty arc', async () => {
-    const slotComposer = new SlotComposer();
-    const loader = new Loader();
-    const id = Id.fromString('test');
-    const storageKey = new VolatileStorageKey(id, '');
-    const context = new Manifest({id});
-    const arc = new Arc({slotComposer, loader, id, storageKey, context, storageService: new StorageServiceImpl()});
+    const runtime = new Runtime();
+    const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'test'})).id);
     await arc.idle;
 
     const serialization = await arc.serialize();
-    arc.dispose();
+    runtime.allocator.stopArc(arc.id);
 
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context, fileName: 'foo.manifest', storageService: new StorageServiceImpl()});
+    const newArcInfo = await runtime.allocator.deserialize({serialization, fileName: 'foo.manifest'});
+    const newArc = runtime.getArcById(newArcInfo.id);
     await newArc.idle;
-    assert.strictEqual(newArc.stores.length, 0);
-    assert.strictEqual(newArc.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);
-    assert.strictEqual(newArc.id.idTreeAsString(), 'test');
-    newArc.dispose();
+    assert.strictEqual(newArcInfo.stores.length, 0);
+    // Note: when empty arc is deserialized @active annotation isn't set on
+    // the Arc's activeRecipe because `host.start` is never actually called
+    // with an empty partition, and `arc.instantiate` isn't executed.
+    assert.strictEqual(newArcInfo.activeRecipe.toString(),
+                      `${arc.activeRecipe.toString()}`);
+    assert.strictEqual(newArcInfo.id.idTreeAsString(), 'test');
+    runtime.allocator.stopArc(newArcInfo.id);
   });
 
   it('deserializing a simple serialized arc produces that arc', async () => {
-    const {arc, context, recipe, Foo, Bar, loader} = await  doSetup();
-    let fooStore = await arc.createStore(new SingletonType(Foo.type), undefined, 'test:1');
-    const fooHandle = await handleForStoreInfo(fooStore, arc);
+    const {runtime, arcInfo, context, recipe, Foo, Bar, loader} = await doSetup();
+    const arc = runtime.getArcById(arcInfo.id);
+    let fooStore = await arcInfo.createStoreInfo(new SingletonType(Foo.type), {id: 'test:1'});
+    const fooHandle = await runtime.host.handleForStoreInfo(fooStore, arcInfo);
     const fooStoreCallbacks = CallbackTracker.create(await arc.getActiveStore(fooStore), 1);
     await fooHandle.set(new Foo({value: 'a Foo'}));
 
-    let barStore = await arc.createStore(new SingletonType(Bar.type), undefined, 'test:2', ['tag1', 'tag2']);
-    const barHandle = await handleForStoreInfo(barStore, arc);
+    let barStore = await arcInfo.createStoreInfo(new SingletonType(Bar.type), {id: 'test:2', tags: ['tag1', 'tag2']});
+    const barHandle = await runtime.host.handleForStoreInfo(barStore, arcInfo);
 
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(barStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arcInfo, recipe);
     await arc.idle;
 
     assert.deepStrictEqual(await barHandle.fetch() as {}, {value: 'a Foo1'});
     fooStoreCallbacks.verify();
     const serialization = await arc.serialize();
-    arc.dispose();
+    runtime.allocator.stopArc(arcInfo.id);
 
-    const newArc = await Arc.deserialize({serialization, loader, fileName: '', slotComposer: new SlotComposer(), context, storageService: new StorageServiceImpl()});
-    await newArc.idle;
-    fooStore = newArc.findStoreById(fooStore.id) as StoreInfo<SingletonEntityType>;
-    barStore = newArc.findStoreById(barStore.id) as StoreInfo<SingletonEntityType>;
+    const newArcInfo = await runtime.allocator.deserialize({serialization, fileName: '', slotComposer: new SlotComposer()});
+    await runtime.getArcById(newArcInfo.id).idle;
+    fooStore = newArcInfo.findStoreById(fooStore.id) as StoreInfo<SingletonEntityType>;
+    barStore = newArcInfo.findStoreById(barStore.id) as StoreInfo<SingletonEntityType>;
     assert(fooStore);
     assert(barStore);
-    assert.lengthOf(newArc.findStoresByType(new SingletonType(Bar.type), {tags: ['tag1']}), 1);
-  });
-
-  it('deserializing a serialized arc with a Transformation produces that arc', async () => {
-    const loader = new Loader();
-    const manifest = await Manifest.parse(`
-      import 'src/runtime/tests/artifacts/Common/Multiplexer.manifest'
-      import 'src/runtime/tests/artifacts/test-particles.manifest'
-
-      recipe
-        slot0: slot 'rootslotid-slotid'
-        handle0: use *
-        Multiplexer
-          hostedParticle: ConsumerParticle
-          annotation: consumes slot0
-          list: reads handle0
-
-    `, {loader, fileName: ''});
-
-    const recipe = manifest.recipes[0];
-    const slotComposer = new SlotComposer();
-    const id = Id.fromString('test2');
-    const storageKey = new VolatileStorageKey(id, '');
-    const arc = new Arc({id, storageKey, context: manifest, slotComposer, loader: new Loader(), storageService: new StorageServiceImpl()});
-
-    const barType = manifest.findTypeByName('Bar') as EntityType;
-    let store = await arc.createStore(barType.collectionOf(), undefined, 'test:1');
-    recipe.handles[0].mapToStorage(store);
-
-    assert(recipe.normalize());
-    assert(recipe.isResolved());
-
-    await arc.instantiate(recipe);
-    await arc.idle;
-
-    const serialization = await arc.serialize();
-    arc.dispose();
-
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest', context: manifest, storageService: new StorageServiceImpl()});
-    await newArc.idle;
-    store = newArc.findStoreById(store.id) as StoreInfo<CollectionEntityType>;
-    const handle = await handleForStoreInfo(store, newArc);
-    await handle.add(new handle.entityClass({value: 'one'}));
-    await newArc.idle;
-
-    //assert.strictEqual(slotComposer.slotsCreated, 1);
+    assert.lengthOf(newArcInfo.findStoresByType(new SingletonType(Bar.type), {tags: ['tag1']}), 1);
   });
 
   it('serializes immediate value handles correctly', async () => {
@@ -822,15 +738,13 @@ describe('Arc', () => {
       '*': 'defineParticle(({Particle}) => class extends Particle {});',
     });
 
-    const manifest = await Manifest.load('./manifest', loader);
-    const id = Id.fromString('test');
-    const storageKey = new VolatileStorageKey(id, '');
-    const arc = new Arc({id, storageKey, loader, context: manifest, storageService: new StorageServiceImpl()});
+    const runtime = new Runtime({loader});
+    const manifest = await runtime.parseFile('./manifest');
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test'});
+    const arc = runtime.getArcById(arcInfo.id);
     const recipe = manifest.recipes[0];
-    assert(recipe.normalize());
-    assert(recipe.isResolved());
 
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arcInfo, recipe);
     await arc.idle;
 
     const serialization = await Manifest.parse(await arc.serialize());
@@ -849,148 +763,22 @@ describe('Arc', () => {
     assert.strictEqual('B', connection.handle.immediateValue.name);
   });
 
-  // Particle A creates an inner arc with a hosted slot and instantiates B connected to that slot.
-  // Whatever template is rendered into the hosted slot gets 'A' prepended and is rendered by A.
-  //
-  // B performs the same thing, but puts C in its inner arc. C puts D etc. The whole affair stops
-  // with Z, which just renders 'Z'.
-  //
-  // As aresult we get 26 arcs in total, the first one is an outer arc and each next is an inner arc
-  // of a preceding one. A ends up rendering 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.
-  it('handles recursive inner arcs', async () => {
-    const sources = {};
-    // 'A', 'B', 'C', ..., 'Y'
-    for (let current = 'A'; current < 'Z';) {
-      const next = String.fromCharCode(current.charCodeAt(0) + 1);
-      sources[`${current}.js`] = `defineParticle(({UiParticle}) => {
-        return class extends UiParticle {
-          async setHandles(handles) {
-            super.setHandles(handles);
-
-            const innerArc = await this.constructInnerArc();
-            const hostedSlotId = await innerArc.createSlot(this, 'root');
-
-            await innerArc.loadRecipe(\`
-              particle ${next} in '${next}.js'
-                root: consumes Slot
-
-              recipe
-                hosted: slot '\` + hostedSlotId + \`'
-                ${next}
-                  root: consumes hosted
-            \`);
-          }
-
-          renderHostedSlot(slotName, hostedSlotId, content) {
-            this.setState(content);
-          }
-
-          shouldRender() {
-            return Boolean(this.state.template);
-          }
-
-          getTemplate() {
-            return '${current}' + this.state.template;
-          }
-        };
-      });`;
-      current = next;
-    }
-
-    const slotComposer = new SlotComposer();
-    const loader = new Loader(null, {
-      ...sources,
-      'Z.js': `defineParticle(({UiParticle}) => {
-        return class extends UiParticle {
-          getTemplate() { return 'Z'; }
-        };
-      });`,
-    });
-    const context = await Manifest.parse(`
-      particle A in 'A.js'
-        root: consumes Slot
-
-      recipe
-        root: slot 'rootslotid-root'
-        A
-          root: consumes root
-    `);
-    const id = IdGenerator.newSession().newArcId('arcid');
-    const arc = new Arc({id, loader, slotComposer, context, storageService: new StorageServiceImpl()});
-
-    const [recipe] = arc.context.recipes;
-    recipe.normalize();
-    await arc.instantiate(recipe);
-  });
-
-  it('handles serialization/deserialization of empty arcs handles', async () => {
-    const id = ArcId.newForTest('test');
-    const loader = new Loader();
-
-    const manifest = await Manifest.parse(`
-        schema FavoriteFood
-          food: Text
-
-        particle FavoriteFoodPicker in 'particles/Profile/source/FavoriteFoodPicker.js'
-          foods: reads writes [FavoriteFood]
-          description \`select favorite foods\`
-            foods \`favorite foods\`
-
-        recipe FavoriteFood
-          foods: create #favoriteFoods
-          FavoriteFoodPicker
-            foods: foods
-        `, {loader, fileName: process.cwd() + '/input.manifest'});
-
-    const storageKey = new VolatileStorageKey(id, '');
-    const arc = new Arc({id, storageKey, loader: new Loader(), context: manifest, storageService: new StorageServiceImpl()});
-    assert.isNotNull(arc);
-
-    const favoriteFoodClass = Entity.createEntityClass(manifest.findSchemaByName('FavoriteFood'), null);
-    assert.isNotNull(favoriteFoodClass);
-
-    const recipe = manifest.recipes[0];
-    assert.isNotNull(recipe);
-
-    const favoriteFoodType = manifest.findTypeByName('FavoriteFood');
-    assert.isNotNull(favoriteFoodType, 'FavoriteFood type is found');
-
-    const options = {errors: new Map()};
-    const normalized = recipe.normalize(options);
-    assert(normalized, 'not normalized ' + options.errors);
-    assert(recipe.isResolved());
-    await arc.instantiate(recipe);
-
-    const serialization = await arc.serialize();
-
-    const slotComposer = new SlotComposer();
-
-    const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: manifest, fileName: 'foo.manifest', storageService: new StorageServiceImpl()});
-    assert.strictEqual(newArc.stores.length, 1);
-    assert.strictEqual(newArc.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);
-    assert.strictEqual(newArc.id.idTreeAsString(), 'test');
-  });
-
   it('registers and deregisters its own volatile storage', async () => {
-    const id1 = ArcId.newForTest('test1');
-    const id2 = ArcId.newForTest('test2');
-    const storageKey1 = new VolatileStorageKey(id1, '');
-    const storageKey2 = new VolatileStorageKey(id2, '');
+    // runtime creates a default RamDisk with SimpleVolatileMemoryProvider
+    const runtime = new Runtime();
+    assert.equal(runtime.driverFactory.providers.size, 1);
 
-    DriverFactory.clearRegistrationsForTesting();
-    assert.isEmpty(DriverFactory.providers);
+    const arc1 = runtime.getArcById((await runtime.allocator.startArc({arcName: 'test1'})).id);
+    assert.strictEqual(runtime.driverFactory.providers.size, 2);
 
-    const arc1 = new Arc({id: id1, storageKey: storageKey1, loader: new Loader(), context: new Manifest({id: id1}), storageService: new StorageServiceImpl()});
-    assert.strictEqual(DriverFactory.providers.size, 1);
-
-    const arc2 = new Arc({id: id2, storageKey: storageKey2, loader: new Loader(), context: new Manifest({id: id2}), storageService: new StorageServiceImpl()});
-    assert.strictEqual(DriverFactory.providers.size, 2);
+    const arc2 = runtime.getArcById((await runtime.allocator.startArc({arcName: 'test2'})).id);
+    assert.strictEqual(runtime.driverFactory.providers.size, 3);
 
     arc1.dispose();
-    assert.strictEqual(DriverFactory.providers.size, 1);
+    assert.strictEqual(runtime.driverFactory.providers.size, 2);
 
     arc2.dispose();
-    assert.isEmpty(DriverFactory.providers);
+    assert.equal(runtime.driverFactory.providers.size, 1);
   });
 
   it('preserves create handle ids if specified', Flags.withDefaultReferenceMode(async () => {
@@ -1005,19 +793,14 @@ describe('Arc', () => {
         schema Thing
         particle MyParticle in 'a.js'
           thing: writes Thing
-        recipe
+        recipe TestPlan
           h0: create 'mything'
           MyParticle
             thing: writes h0
         `, {memoryProvider});
 
-    const recipe = manifest.recipes[0];
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test0');
-    await arc.instantiate(manifest.recipes[0]);
+    const arc = await runtime.allocator.startArc({arcName: 'test0', planName: 'TestPlan'});
     assert.lengthOf(arc.activeRecipe.handles, 3);
     const myThingHandle = arc.activeRecipe.handles.find(h => h.id === 'mything');
     assert.isNotNull(myThingHandle);
@@ -1031,15 +814,11 @@ describe('Arc', () => {
 });
 
 describe('Arc storage migration', () => {
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
   it('supports new StorageKey type', Flags.withDefaultReferenceMode(async () => {
-    const {arc, Foo} = await setup(arcId => new VolatileStorageKey(arcId, ''));
-    const fooStore = await arc.createStore(new SingletonType(Foo.type), undefined, 'test:1');
+    const {runtime, arcInfo, Foo} = await setup(arcId => new VolatileStorageKey(arcId, ''));
+    const fooStore = await arcInfo.createStoreInfo(new SingletonType(Foo.type), {id: 'test:1'});
     assert.instanceOf(fooStore, StoreInfo);
-    const activeStore = await arc.getActiveStore(fooStore);
+    const activeStore = await runtime.getArcById(arcInfo.id).getActiveStore(fooStore);
     assert.instanceOf(activeStore, ReferenceModeStore);
     assert.instanceOf(activeStore['backingStore'], DirectStoreMuxer);
     const backingStore = activeStore['containerStore'] as DirectStore<CRDTTypeRecord>;
@@ -1082,7 +861,7 @@ describe('Arc storage migration', () => {
           things0: reads writes [Thing]
           things1: reads writes [Thing]
           things2: reads writes Thing
-        recipe
+        recipe TestPlan
           h0: create @ttl('3m')
           h1: create @ttl('23h')
           h2: create @ttl('2d')
@@ -1091,17 +870,17 @@ describe('Arc storage migration', () => {
             things1: h1
             things2: h2
         `);
-    const recipe = manifest.recipes[0];
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
-
-    const runtime = new Runtime({loader, context: manifest});
     const volatileFactory = new class extends VolatileStorageKeyFactory {
       capabilities(): Capabilities {
         return Capabilities.create([Persistence.inMemory(), Ttl.any(), Queryable.any()]);
       }
     }();
-    const arc = runtime.newArc('test', volatileStorageKeyPrefixForTest(), {storargeKeyFactories: [volatileFactory]});
-    await arc.instantiate(recipe);
+    const runtime = new Runtime({loader, context: manifest, storageKeyFactories: [volatileFactory]});
+    const arc = runtime.getArcById((await runtime.allocator.startArc({
+      arcName: 'test',
+      storageKeyPrefix: volatileStorageKeyPrefixForTest(),
+      planName: 'TestPlan'
+    })).id);
     await arc.idle;
 
     const getStoreByConnectionName = async (connectionName) => {

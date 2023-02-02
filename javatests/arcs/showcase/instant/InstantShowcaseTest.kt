@@ -12,11 +12,11 @@
 package arcs.showcase.instant
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.integration.IntegrationEnvironment
 import arcs.core.host.toRegistration
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.sdk.ArcsDuration
 import arcs.sdk.ArcsInstant
-import arcs.showcase.ShowcaseEnvironment
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -24,12 +24,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class InstantShowcaseTest {
 
   @get:Rule
-  val env = ShowcaseEnvironment(
+  val env = IntegrationEnvironment(
     ::Calendar.toRegistration(),
     ::EventsToday.toRegistration()
   )
@@ -39,7 +39,7 @@ class InstantShowcaseTest {
     val arc = env.startArc(ShowEventsTodayPlan)
     arc.waitForStart()
 
-    env.arcHost.waitForArcIdle(arc.id.toString())
+    env.waitForArcIdle(arc.id.toString())
 
     val calendarParticle: Calendar = env.getParticle<Calendar>(arc)
     val allEvents = calendarParticle.handles.events.dispatchFetchAll()

@@ -3,8 +3,6 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSet.IOperation
 import arcs.core.crdt.VersionMap
-import arcs.core.data.CollectionType
-import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -18,7 +16,7 @@ import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOp.SetAdd
 import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.storage.testutil.testWriteBackProvider
+import arcs.core.storage.testutil.collectionTestStore
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.CountDownLatch
@@ -39,7 +37,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @Suppress("UNCHECKED_CAST")
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class BulkReferenceModeStoreTest {
   @get:Rule
@@ -191,7 +189,7 @@ class BulkReferenceModeStoreTest {
       SlowRamDiskDriverProvider { op: MemoryOp, key: StorageKey? ->
         if (op == MemoryOp.Update) {
           log("Heard update for $key")
-          if (key == BACKING_KEY.childKeyWithComponent("1")) {
+          if (key == BACKING_KEY.newKeyWithComponent("1")) {
             delay(1000)
           }
           log("Finishing update for $key")
@@ -265,8 +263,12 @@ class BulkReferenceModeStoreTest {
   }
 
   private suspend fun createStore(driverFactory: DriverFactory): ReferenceModeStore {
-    val options = StoreOptions(STORAGE_KEY, STORE_TYPE)
-    return ReferenceModeStore.create(options, scope, driverFactory, ::testWriteBackProvider, null)
+    return ReferenceModeStore.collectionTestStore(
+      storageKey = STORAGE_KEY,
+      schema = SCHEMA,
+      driverFactory = driverFactory,
+      scope = scope
+    )
   }
 
   private fun createEntity(id: String): RawEntity {
@@ -288,16 +290,11 @@ class BulkReferenceModeStoreTest {
     private val BACKING_KEY = RamDiskStorageKey("backing")
     private val CONTAINER_KEY = RamDiskStorageKey("container")
     private val STORAGE_KEY = ReferenceModeStorageKey(BACKING_KEY, CONTAINER_KEY)
-    private val STORE_TYPE =
-      CollectionType(
-        EntityType(
-          Schema(
-            emptySet(),
-            SchemaFields(mapOf("foo" to FieldType.Text), emptyMap()),
-            "abc123"
-          )
-        )
-      )
+    private val SCHEMA = Schema(
+      emptySet(),
+      SchemaFields(mapOf("foo" to FieldType.Text), emptyMap()),
+      "abc123"
+    )
   }
 }
 

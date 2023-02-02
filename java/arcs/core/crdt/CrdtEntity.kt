@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -21,11 +21,26 @@ import arcs.core.crdt.CrdtSingleton.IOperation as ISingletonOp
 import arcs.core.crdt.CrdtSingleton.Operation as SingletonOp
 import arcs.core.data.FieldName
 import arcs.core.data.RawEntity
+import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
+import java.lang.UnsupportedOperationException
 
 /**
  * A [CrdtModel] capable of managing a complex entity consisting of named [CrdtSingleton]s and named
  * [CrdtSet]s, each of which can manage various types of [Referencable] data.
+ *
+ * The only valid ways to build a [CrdtEntity] are:
+ * 1. Build an empty one. [RawEntity] can describe the singleton and collection fields that
+ *    exist on an entity without having any of those fields set; by using a [RawEntity] thus
+ *    configured and calling [CrdtEntity.newWithEmptyEntity] one can construct an empty
+ *    [CrdtEntity].
+ * 2. From valid [CrdtEntity.Data]. This is currently performed in prod by constructing an empty
+ *    [CrdtEntity] of the appropriate shape, and calling [merge] on it with the valid data.
+ *    However, note that it's also valid to directly construct a [CrdtEntity] from Data.
+ *
+ * There's also [CrdtEntity.newAtVersionForTest] which takes a [VersionMap] and a [RawEntity].
+ * Note that this will give all fields in the constructed [CrdtEntity] the same [VersionMap],
+ * which is generally not what we would expect in production.
  */
 class CrdtEntity(
   private var _data: Data = Data()
@@ -40,14 +55,14 @@ class CrdtEntity(
   /**
    * Builds a [CrdtEntity] from a [RawEntity] with its clock starting at the given [VersionMap].
    */
-  constructor(
+  private constructor(
     versionMap: VersionMap,
     rawEntity: RawEntity,
     /**
      * Function to convert the [Referencable]s within [rawEntity] into [Reference] objects
      * needed by [CrdtEntity].
      */
-    referenceBuilder: (Referencable) -> Reference = Reference.Companion::buildReference
+    referenceBuilder: (Referencable) -> Reference = Reference.Companion::defaultReferenceBuilder
   ) : this(Data(versionMap, rawEntity, referenceBuilder))
 
   override fun merge(other: Data): MergeChanges<Data, Operation> {
@@ -115,7 +130,7 @@ class CrdtEntity(
     val oldVersionMap = _data.versionMap.copy()
     _data.versionMap = _data.versionMap mergeWith other.versionMap
 
-    if (oldVersionMap == _data.versionMap) {
+    if (oldVersionMap == other.versionMap) {
       @Suppress("RemoveExplicitTypeArguments")
       return MergeChanges(
         CrdtChange.Operations(mutableListOf<Operation>()),
@@ -173,6 +188,12 @@ class CrdtEntity(
         CrdtChange.Data(resultData)
       }
 
+      if (oldVersionMap == _data.versionMap) {
+        return MergeChanges(
+          modelChange = CrdtChange.Operations(mutableListOf<Operation>()),
+          otherChange = otherChange
+        )
+      }
       MergeChanges(
         modelChange = CrdtChange.Data(resultData),
         otherChange = otherChange
@@ -208,18 +229,6 @@ class CrdtEntity(
     } ?: throw CrdtException("Invalid op: $op.")
   }
 
-  private fun ISingletonOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
-    is SingletonOp.Update -> Operation.SetSingleton(actor, versionMap, fieldName, value)
-    is SingletonOp.Clear -> Operation.ClearSingleton(actor, versionMap, fieldName)
-    else -> throw CrdtException("Invalid operation")
-  }
-
-  private fun ISetOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
-    is SetOp.Add -> Operation.AddToSet(actor, versionMap, fieldName, added)
-    is SetOp.Remove -> Operation.RemoveFromSet(actor, versionMap, fieldName, removed)
-    else -> throw CrdtException("Cannot convert FastForward or Clear to CrdtEntity Operation")
-  }
-
   /** Defines the type of data managed by [CrdtEntity] for its singletons and collections. */
   interface Reference : Referencable {
     companion object {
@@ -229,6 +238,20 @@ class CrdtEntity(
 
       fun wrapReferencable(referencable: Referencable): Reference =
         WrappedReferencable(referencable)
+
+      fun defaultReferenceBuilder(referencable: Referencable): Reference {
+        return when (referencable) {
+          is ReferencableList<*> -> wrapReferencable(referencable)
+          is ReferencablePrimitive<*> -> buildReference(referencable)
+          is RawEntity -> wrapReferencable(referencable)
+          else -> {
+            throw UnsupportedOperationException(
+              "Can't use entities with ${referencable::class} fields without " +
+                "installing a reference builder that can handle them"
+            )
+          }
+        }
+      }
     }
   }
 
@@ -355,7 +378,7 @@ class CrdtEntity(
   sealed class Operation(
     open val actor: Actor,
     override val versionMap: VersionMap
-  ) : CrdtOperationAtTime {
+  ) : CrdtOperation {
     /**
      * Represents an [actor] having set the value of a member [CrdtSingleton] [field] to the
      * specified [value] at the time denoted by [versionMap].
@@ -426,4 +449,48 @@ class CrdtEntity(
       override val versionMap: VersionMap
     ) : Operation(actor, versionMap)
   }
+
+  companion object {
+    /**
+     * Builds a [CrdtEntity] from a [RawEntity] with its clock starting at the given [VersionMap].
+     *
+     * This is probably not what you want to do in production; all fields end up being given
+     * the version provided by the [VersionMap].
+     */
+    fun newAtVersionForTest(versionMap: VersionMap, rawEntity: RawEntity): CrdtEntity {
+      return CrdtEntity(versionMap, rawEntity)
+    }
+
+    /**
+     * Builds a [CrdtEntity] with no version map information. This is only intended to be used
+     * with [RawEntity]s that have no field values set!
+     */
+    fun newWithEmptyEntity(rawEntity: RawEntity): CrdtEntity {
+      return CrdtEntity(VersionMap(), rawEntity)
+    }
+  }
+}
+
+/** Converts the [RawEntity] into a [CrdtEntity.Data] model, at the given version. */
+fun RawEntity.toCrdtEntityData(
+  versionMap: VersionMap,
+  referenceBuilder: (Referencable) -> CrdtEntity.Reference = { CrdtEntity.ReferenceImpl(it.id) }
+): CrdtEntity.Data = CrdtEntity.Data(versionMap.copy(), this, referenceBuilder)
+
+/** Visible for testing. */
+fun ISingletonOp<CrdtEntity.Reference>.toEntityOp(
+  fieldName: FieldName
+): CrdtEntity.Operation = when (this) {
+  is SingletonOp.Update -> CrdtEntity.Operation.SetSingleton(actor, versionMap, fieldName, value)
+  is SingletonOp.Clear -> CrdtEntity.Operation.ClearSingleton(actor, versionMap, fieldName)
+  else -> throw CrdtException("Invalid operation")
+}
+
+/** Visible for testing. */
+fun ISetOp<CrdtEntity.Reference>.toEntityOp(
+  fieldName: FieldName
+): CrdtEntity.Operation = when (this) {
+  is SetOp.Add -> CrdtEntity.Operation.AddToSet(actor, versionMap, fieldName, added)
+  is SetOp.Remove -> CrdtEntity.Operation.RemoveFromSet(actor, versionMap, fieldName, removed)
+  else -> throw CrdtException("Cannot convert FastForward or Clear to CrdtEntity Operation")
 }

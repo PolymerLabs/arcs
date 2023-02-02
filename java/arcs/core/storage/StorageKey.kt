@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -12,18 +12,21 @@
 package arcs.core.storage
 
 /** Locator for a specific piece of data within the storage layer. */
-abstract class StorageKey(val protocol: String) {
-  val childKeyForArcInfo: StorageKey
-    get() = childKeyWithComponent("arc-info")
+abstract class StorageKey(val protocol: StorageKeyProtocol) {
 
   abstract fun toKeyString(): String
 
-  abstract fun childKeyWithComponent(component: String): StorageKey
+  /**
+   * Creates a new [StorageKey] of the same type, replacing the component with the given one.
+   * Callers must ensure that the component is unique (or sufficiently random) if they want the
+   * returned storage key to be unique. Other, non-component, properties of the [StorageKey] will be
+   * preserved (if any exist for the relevant [StorageKey] subclass).
+   */
+  abstract fun newKeyWithComponent(component: String): StorageKey
 
-  fun childKeyForHandle(handleId: String): StorageKey =
-    childKeyWithComponent("handle/$handleId")
-
-  override fun toString(): String = "$protocol://${toKeyString()}"
+  override fun toString(): String {
+    return "${protocol.protocol}${toKeyString()}"
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

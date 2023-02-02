@@ -190,6 +190,7 @@ private abstract class SchemaGuidedTranslator {
     is FieldType.Primitive -> value
     is FieldType.EntityRef -> TODO("References are not supported")
     is FieldType.Tuple -> TODO("Tuples are not supported")
+    is FieldType.NullableOf -> TODO("Nullables are not supported")
   }
 
   fun translateList(type: FieldType.ListOf, value: Any): List<Any> = when (value) {

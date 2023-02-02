@@ -34,6 +34,10 @@ class ArcsInstant private constructor(
     return platformInstant == other.platformInstant
   }
 
+  override fun hashCode(): Int {
+    return platformInstant.hashCode()
+  }
+
   @Suppress("NewApi") // See b/167491554
   fun plus(time: ArcsDuration): ArcsInstant =
     ArcsInstant(platformInstant.plus(time.toPlatform()))

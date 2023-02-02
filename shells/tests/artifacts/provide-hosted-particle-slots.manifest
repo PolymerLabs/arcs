@@ -1,0 +1,66 @@
+// @license
+// Copyright (c) 2017 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+schema Foo
+  bar: Text
+
+particle ShowFoo in 'source/ShowFoo.js'
+  foo: reads Foo
+  item: consumes Slot #item
+    annotation: provides? Slot
+
+particle ShowFooAnnotation in 'source/ShowFooAnnotation.js'
+  foo: reads Foo
+  annotation: consumes Slot
+
+interface FooInterface
+  reads Foo
+  consumes Slot
+  provides? Slot
+
+interface FooAnnotationInterface
+  reads Foo
+  consumes Slot
+
+particle Fooxer in './Common/source/Multiplexer.js'
+  hostedParticle: hosts FooInterface
+  list: reads [Foo]
+  item: consumes [Slot]
+    annotation: provides? [Slot]
+
+particle FooAnnotationMuxer in './Common/source/Multiplexer.js'
+  hostedParticle: hosts FooAnnotationInterface
+  list: reads [Foo]
+  annotation: consumes [Slot]
+
+particle FooList in './Common/source/List.js'
+  items: reads [Foo]
+  root: consumes Slot
+    item: provides? [Slot]
+    action: provides? [Slot] // unused
+
+recipe
+  myfoos: map 'myfoos'
+  FooList
+    items: reads myfoos
+  Fooxer
+    list: reads myfoos
+    hostedParticle: ShowFoo
+  FooAnnotationMuxer
+    list: reads myfoos
+    hostedParticle: ShowFooAnnotation
+  description `test providing hosted particle slot`
+
+resource MyFoos
+  start
+  [
+    {"bar": "my-foo"},
+    {"bar": "my-other-foo"}
+  ]
+
+store Store0 of [Foo] 'myfoos' in MyFoos

@@ -13,11 +13,8 @@ package arcs.core.storage
 
 import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
-import arcs.core.data.CollectionType
-import arcs.core.data.EntityType
 import arcs.core.data.ReferenceType
-import arcs.core.data.Schema
-import arcs.core.data.SingletonType
+import arcs.core.data.toSchema
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
 
@@ -27,14 +24,14 @@ import arcs.core.type.Type
  */
 class CapabilitiesResolver(
   private val options: Options,
-  private val factories: Map<String, StorageKeyFactory>,
+  private val factories: Map<StorageKeyProtocol, StorageKeyFactory>,
   private val selector: FactorySelector = SimpleCapabilitiesSelector()
 ) {
   constructor(
     options: Options,
     factoriesList: List<StorageKeyFactory> = listOf(),
     selector: FactorySelector = SimpleCapabilitiesSelector()
-  ) : this(options, CapabilitiesResolver.getFactoryMap(factoriesList), selector)
+  ) : this(options, getFactoryMap(factoriesList), selector)
 
   /** Options used to construct [CapabilitiesResolver]. */
   data class Options(val arcId: ArcId)
@@ -56,37 +53,21 @@ class CapabilitiesResolver(
     handleId: String
   ): StorageKey {
     val containerKey = factory.create(
-      StorageKeyFactory.ContainerStorageKeyOptions(options.arcId, toEntitySchema(type))
+      StorageKeyFactory.ContainerStorageKeyOptions(options.arcId, type.toSchema())
     )
-    val containerChildKey = containerKey.childKeyForHandle(handleId)
+    // The ArcId needs to be encoded in the new storage key.
+    val containerChildKey = containerKey.newKeyWithComponent("${options.arcId}/handle/$handleId")
     if (type is ReferenceType<*>) {
       return containerChildKey
     }
     val backingKey = factory.create(
-      StorageKeyFactory.BackingStorageKeyOptions(options.arcId, toEntitySchema(type))
+      StorageKeyFactory.BackingStorageKeyOptions(options.arcId, type.toSchema())
     )
     // ReferenceModeStorageKeys in different drivers can cause problems with garbage collection.
-    require(backingKey.protocol == containerKey.protocol) {
+    check(backingKey.protocol == containerKey.protocol) {
       "Backing and containers keys must use same protocol"
     }
     return ReferenceModeStorageKey(backingKey, containerChildKey)
-  }
-
-  /**
-   * Retrieves [Schema] from the given [Type], if possible.
-   */
-  private fun toEntitySchema(type: Type): Schema {
-    return when {
-      type is SingletonType<*> && type.containedType is EntityType ->
-        (type.containedType as EntityType).entitySchema
-      type is CollectionType<*> && type.collectionType is EntityType ->
-        (type.collectionType as EntityType).entitySchema
-      type is ReferenceType<*> -> type.entitySchema!!
-      type is EntityType -> type.entitySchema
-      else -> throw IllegalArgumentException(
-        "Can't retrieve entitySchema of unknown type $type"
-      )
-    }
   }
 
   /**
@@ -101,8 +82,10 @@ class CapabilitiesResolver(
    * [Capabilities] set.
    */
   class SimpleCapabilitiesSelector(
-    val sortedProtocols: Array<String> = arrayOf("volatile", "ramdisk", "memdb", "db")
+    sortedProtocols: List<StorageKeyProtocol> = DEFAULT_SORTED_PROTOCOLS
   ) : FactorySelector {
+    private val sortedProtocols = sortedProtocols.map { it.id }.toTypedArray()
+
     override fun select(factories: Collection<StorageKeyFactory>): StorageKeyFactory {
       require(factories.isNotEmpty()) { "Cannot select from empty factories list" }
       val compareProtocol = compareBy { protocol: String ->
@@ -113,15 +96,24 @@ class CapabilitiesResolver(
       }
 
       return factories.reduce { acc, factory ->
-        if (minOf(acc.protocol, factory.protocol, compareProtocol) == factory.protocol) {
+        if (minOf(acc.protocol.id, factory.protocol.id, compareProtocol) == factory.protocol.id) {
           factory
-        } else acc
+        } else {
+          acc
+        }
       }
     }
   }
 
   companion object {
-    private val defaultStorageKeyFactories = mutableMapOf<String, StorageKeyFactory>()
+    private val DEFAULT_SORTED_PROTOCOLS = listOf(
+      StorageKeyProtocol.Volatile,
+      StorageKeyProtocol.RamDisk,
+      StorageKeyProtocol.InMemoryDatabase,
+      StorageKeyProtocol.Database
+    )
+
+    private val defaultStorageKeyFactories = mutableMapOf<StorageKeyProtocol, StorageKeyFactory>()
 
     fun registerStorageKeyFactory(factory: StorageKeyFactory) {
       require(defaultStorageKeyFactories[factory.protocol] == null) {
@@ -134,12 +126,15 @@ class CapabilitiesResolver(
       defaultStorageKeyFactories.clear()
     }
 
-    fun getFactoryMap(factoriesList: List<StorageKeyFactory>): Map<String, StorageKeyFactory> {
+    fun getFactoryMap(
+      factoriesList: List<StorageKeyFactory>
+    ): Map<StorageKeyProtocol, StorageKeyFactory> {
       require(factoriesList.distinctBy { it.protocol }.size == factoriesList.size) {
-        "Storage keys protocol must be unique $factoriesList."
+        "Storage keys protocol must be unique, but was: " +
+          "${factoriesList.map { it.protocol }}."
       }
       val factories = factoriesList.associateBy { it.protocol }.toMutableMap()
-      CapabilitiesResolver.defaultStorageKeyFactories.forEach { (protocol, factory) ->
+      defaultStorageKeyFactories.forEach { (protocol, factory) ->
         factories.getOrPut(protocol) { factory }
       }
       return factories

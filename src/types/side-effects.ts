@@ -12,6 +12,4 @@
 // of static methods into various classes. This file imports the necessary
 // internals to do this, and should only be used by platform/loader-base.ts.
 
-import './internal/schema-from-literal.js';
-import './internal/type-from-literal.js';
 import './internal/interface-info-impl.js';

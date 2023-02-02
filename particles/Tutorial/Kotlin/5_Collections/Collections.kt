@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -31,7 +31,7 @@ class Collections : AbstractCollections() {
 
   override fun getTemplate(slotName: String): String {
     return """Hello to everyone:
-        <ul>{{inputData}}</ul>
+        <ul>{{people}}</ul>
 
         <template person>
           <!-- This template is given a model object. It can access the properties on that model via the usual placeholder syntax. -->

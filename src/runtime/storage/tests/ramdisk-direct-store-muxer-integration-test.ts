@@ -9,17 +9,16 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {StorageMode, ProxyMessageType, ProxyMessage} from '../store-interface.js';
-import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
-import {DriverFactory} from '../drivers/driver-factory.js';
+import {ProxyMessageType, ProxyMessage} from '../store-interface.js';
+import {RamDiskStorageKey} from '../drivers/ramdisk.js';
 import {Exists} from '../drivers/driver.js';
-import {Runtime} from '../../runtime.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {EntityType, MuxType} from '../../../types/lib-types.js';
 import {Manifest} from '../../manifest.js';
 import {CRDTMuxEntity} from '../storage.js';
 import {Identified, CRDTEntity, EntityOpTypes, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 import {StoreInfo} from '../store-info.js';
+import {Runtime} from '../../runtime.js';
 
 function assertHasModel(message: ProxyMessage<CRDTMuxEntity>, model: CRDTEntity<Identified, Identified>) {
   if (message.type === ProxyMessageType.ModelUpdate) {
@@ -30,9 +29,8 @@ function assertHasModel(message: ProxyMessage<CRDTMuxEntity>, model: CRDTEntity<
 }
 
 describe('RamDisk + Direct Store Muxer Integration', async () => {
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
+  let runtime: Runtime;
+  beforeEach(() => { runtime = new Runtime(); });
 
   it('will allow storage of a number of objects', async () => {
     const manifest = await Manifest.parse(`
@@ -41,8 +39,6 @@ describe('RamDisk + Direct Store Muxer Integration', async () => {
     `);
     const simpleSchema = manifest.schemas.Simple;
 
-    const runtime = new Runtime();
-    RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new RamDiskStorageKey('unique');
     const type = new MuxType(new EntityType(simpleSchema));
     const storeInfo = new StoreInfo<MuxType<EntityType>>({
@@ -52,6 +48,7 @@ describe('RamDisk + Direct Store Muxer Integration', async () => {
       exists: Exists.ShouldCreate,
       type: new MuxType(new EntityType(simpleSchema)),
       storeInfo,
+      driverFactory: runtime.driverFactory,
     });
 
 

@@ -19,7 +19,8 @@ import {assert} from '../../../platform/chai-web.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {DirectStore} from '../direct-store.js';
 import {StoreInfo} from '../store-info.js';
-import {StorageServiceImpl, StorageService} from '../storage-service.js';
+import {StorageService} from '../storage-service.js';
+import {Runtime} from '../../runtime.js';
 
 /* eslint-disable no-async-promise-executor */
 
@@ -31,9 +32,9 @@ let storageService: StorageService;
 
 describe('Direct Store Muxer', async () => {
   beforeEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-    DriverFactory.register(new MockStorageDriverProvider());
-    storageService = new StorageServiceImpl();
+    const runtime = new Runtime();
+    runtime.driverFactory.register(new MockStorageDriverProvider());
+    storageService = runtime.storageService;
   });
 
   it('can facilitate communication between a direct store and a storage proxy muxer', async () => {

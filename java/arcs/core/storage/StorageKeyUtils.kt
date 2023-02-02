@@ -6,8 +6,6 @@ class StorageKeyUtils {
     /** A util method to extract keys in a given raw string*/
     fun extractKeysFromString(rawValue: String): List<StorageKey> {
       val storageKeys = mutableListOf<StorageKey>()
-      val invalidFormatMessage: () -> String =
-        { "Invalid format for extracting keys: $rawValue" }
       var openCount = 0
       var openIndex = -1
       rawValue.forEachIndexed { i, char ->
@@ -19,22 +17,34 @@ class StorageKeyUtils {
           '}' -> {
             openCount--
             if (openCount == 0) {
-              require(openIndex >= 0, invalidFormatMessage)
               val childComponent = rawValue.substring(openIndex + 1, i).unEmbed()
               storageKeys.add(childComponent)
               // Reset to negative, so we mark openIndex when we see the next '{'
               openIndex = -1
+            } else {
+              require(openCount > 0) {
+                "Invalid format for extracting keys: $rawValue (missing opening curly brace)"
+              }
             }
           }
+          else -> require(openCount > 0) {
+            "Invalid format for extracting keys: $rawValue (missing opening curly brace)"
+          }
         }
+      }
+      require(openCount == 0) {
+        "Invalid format for extracting keys: $rawValue (missing closing curly brace)"
       }
       return storageKeys
     }
   }
 }
 
-/* internal */ fun String.unEmbed(): StorageKey =
-  StorageKeyParser.parse(replace("\\{\\{".toRegex(), "{").replace("\\}\\}".toRegex(), "}"))
+private fun String.unEmbed(): StorageKey {
+  return StorageKeyManager.GLOBAL_INSTANCE.parse(
+    replace("\\{\\{".toRegex(), "{").replace("\\}\\}".toRegex(), "}")
+  )
+}
 
 /* internal */ fun StorageKey.embed() =
   toString().replace("\\{".toRegex(), "{{").replace("\\}".toRegex(), "}}")

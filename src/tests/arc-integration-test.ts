@@ -15,27 +15,22 @@ import {RamDiskStorageDriverProvider} from '../runtime/storage/drivers/ramdisk.j
 import {Loader} from '../platform/loader.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
 import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
-import {DriverFactory} from '../runtime/storage/drivers/driver-factory.js';
 
 describe('Arc integration', () => {
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
   it('copies store tags', async () => {
     const loader = new Loader(null, {
-      'p.js': `defineParticle(({Particle}) => class P extends Particle {
+      './p.js': `defineParticle(({Particle}) => class P extends Particle {
         async setHandles(handles) {
         }
       });`
     });
-    const memoryProvider = new TestVolatileMemoryProvider();
-    const manifest = await Manifest.parse(`
+    const runtime = new Runtime({loader});
+    const manifest = await runtime.parse(`
       schema Thing
         name: Text
-      particle P in 'p.js'
+      particle P in './p.js'
         thing: reads writes Thing
-      recipe
+      recipe ThingPlan
         thingHandle: copy 'mything'
         P
           thing: thingHandle
@@ -45,21 +40,15 @@ describe('Arc integration', () => {
           {"name": "mything"}
         ]
       store ThingStore of Thing 'mything' #best in ThingResource
-    `, {memoryProvider});
-    const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    RamDiskStorageDriverProvider.register(memoryProvider);
+    `);
+    runtime.context = manifest;
 
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
-    assert.lengthOf(arc.stores, 0);
-    assert.isEmpty(Object.keys(arc.storeTagsById));
-
-    const recipe = manifest.recipes[0];
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
-    await arc.instantiate(recipe);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', planName: 'ThingPlan'});
+    const arc = runtime.getArcById(arcInfo.id);
     await arc.idle;
 
-    assert.lengthOf(arc.stores, 1);
+    assert.lengthOf(arcInfo.stores, 1);
     assert.lengthOf(Object.keys(arc.storeTagsById), 1);
-    assert.deepEqual(['best'], [...arc.storeTagsById[arc.stores[0].id]]);
+    assert.deepEqual(['best'], [...arcInfo.storeTagsById[arcInfo.stores[0].id]]);
   });
 });

@@ -7,6 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+import minimist from 'minimist';
 import {EntityGenerator, NodeAndGenerator, Schema2Base} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
@@ -15,9 +16,7 @@ import {HandleConnectionSpec, ParticleSpec} from '../runtime/arcs-types/particle
 import {CollectionType, EntityType, Type, TypeVariable} from '../types/lib-types.js';
 import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
 import {Direction} from '../runtime/arcs-types/enums.js';
-import {KotlinEntityGenerator} from './kotlin-entity-generator.js';
-
-// TODO: use the type lattice to generate interfaces
+import {KotlinEntityGenerator, interfaceName} from './kotlin-entity-generator.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -28,7 +27,7 @@ export class Schema2Kotlin extends Schema2Base {
     return parts.map(part => part[0].toUpperCase() + part.slice(1)).join('') + '.kt';
   }
 
-  fileHeader(_outName: string): string {
+  fileHeader(outName: string): string {
     const imports = [];
 
     if (this.opts.test_harness) {
@@ -53,11 +52,12 @@ export class Schema2Kotlin extends Schema2Base {
         'import arcs.core.data.expression.Expression.*',
         'import arcs.core.data.expression.Expression.BinaryOp.*',
         'import arcs.core.data.util.toReferencable',
-        'import arcs.core.entity.toPrimitiveValue',
         'import arcs.sdk.ArcsDuration',
         'import arcs.sdk.ArcsInstant',
         'import arcs.sdk.BigInt',
+        'import arcs.sdk.Entity',
         'import arcs.sdk.toBigInt',
+        'import javax.annotation.Generated',
       );
     }
     imports.sort();
@@ -80,68 +80,29 @@ ${imports.join('\n')}
     return new KotlinEntityGenerator(node, this.opts);
   }
 
-  /** Returns the container type of the handle, e.g. Singleton or Collection. */
-  private handleContainerType(type: Type): string {
-    return type.isCollectionType() ? 'Collection' : 'Singleton';
+  async generateParticleClass(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]): Promise<string> {
+    const generator = new KotlinParticleGenerator(this, particle, nodeGenerators);
+    return generator.generateParticleClass();
   }
 
-  /**
-   * Returns the type of the thing stored in the handle, e.g. MyEntity,
-   * Reference<MyEntity>, Tuple2<Reference<Entity1>, Reference<Entity2>>.
-   *
-   * @param particleScope whether the generated declaration will be used inside the particle or outside it.
-   */
-  private handleInnerType(connection: HandleConnectionSpec, nodes: SchemaNode[], particleScope: boolean): string {
-    let type = connection.type;
-    if (type.isCollection || type.isSingleton) {
-      // The top level collection / singleton distinction is handled by the flavour of a handle.
-      type = type.getContainedType();
-    }
-
-    function generateInnerType(type: Type): string {
-      if (type.isEntity || type.isVariable) {
-          const node = type.isEntity
-            ? nodes.find(n => n.variableName === null && n.schema.equals(type.getEntitySchema()))
-            : nodes.find(n => n.variableName === (type as TypeVariable).variable.name);
-          return particleScope ? node.humanName(connection) : node.fullName(connection);
-      } else if (type.isReference) {
-        return `arcs.sdk.Reference<${generateInnerType(type.getContainedType())}>`;
-      } else if (type.isTuple) {
-        const innerTypes = type.getContainedTypes();
-        return `arcs.core.entity.Tuple${innerTypes.length}<${innerTypes.map(t => generateInnerType(t)).join(', ')}>`;
-      } else {
-        throw new Error(`Type '${type.tag}' not supported on code generated particle handle connections.`);
-      }
-    }
-
-    return generateInnerType(type);
+  async generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string> {
+    const generator = new KotlinTestHarnessGenerator(this, particle, nodes);
+    return generator.generateTestHarness();
   }
+}
 
-  /** Returns one of Read, Write, ReadWrite. */
-  private handleDirection(direction: Direction): string {
-    switch (direction) {
-      case 'reads writes':
-        return 'ReadWrite';
-      case 'reads':
-        return 'Read';
-      case 'writes':
-        return 'Write';
-      default:
-        throw new Error(`Unsupported handle direction: ${direction}`);
-    }
-  }
+export class GeneratorBase {
+  isEdgeParticle = false;
 
-  private handleMode(connection: HandleConnectionSpec): string {
-    const direction = this.handleDirection(connection.direction);
-    const querySuffix = this.getQueryType(connection) ? 'Query' : '';
-    return `${direction}${querySuffix}`;
-  }
+  constructor(readonly opts: minimist.ParsedArgs, readonly namespace: string) {}
 
   /**
    * Returns the handle interface type, e.g. WriteSingletonHandle,
    * ReadWriteCollectionHandle. Includes generic arguments.
    *
    * @param particleScope whether the generated declaration will be used inside the particle or outside it.
+   *
+   * Visible for testing.
    */
   handleInterfaceType(connection: HandleConnectionSpec, nodes: SchemaNode[], particleScope: boolean) {
     if (connection.direction !== 'reads' && connection.direction !== 'writes' && connection.direction !== 'reads writes') {
@@ -157,16 +118,37 @@ ${imports.join('\n')}
     }
 
     const handleMode = this.handleMode(connection);
-    const innerType = this.handleInnerType(connection, nodes, particleScope);
-    const typeArguments: string[] = [innerType];
+    const typeArguments = this.handleTypeArguments(connection, nodes, particleScope);
     const queryType = this.getQueryType(connection);
     if (queryType) {
       typeArguments.push(queryType);
     }
-    return `arcs.sdk.${handleMode}${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, {startIndent: 4})}>`;
+
+    const edge = this.isEdgeParticle ? 'Edge' : '';
+    return `arcs.sdk.${edge}${handleMode}${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, {startIndent: 4})}>`;
   }
 
-  private async handleSpec(handleName: string, connection: HandleConnectionSpec, nodes: SchemaNode[]): Promise<string> {
+  /**
+   * Similar to [handleInterfaceType], but generates the type for a delegated edge handle. It will not
+   * have the read/write component in the name and will always use the 'reads writes' generic typing.
+   *
+   * For example, if handleInterfaceType returns 'arcs.sdk.EdgeReadSingletonHandle<MyEntity>', this will
+   * return 'arcs.sdk.EdgeSingletonHandle<MyEntity, MyEntitySlice>'.
+   */
+  protected edgeDelegateType(connection: HandleConnectionSpec, nodes: SchemaNode[]) {
+    const direction = connection.direction;
+    connection.direction = 'reads writes';
+    const containerType = this.handleContainerType(connection.type);
+    const typeArguments = this.handleTypeArguments(connection, nodes, /* particleScope = */ true);
+    const queryType = this.getQueryType(connection);
+    if (queryType) {
+      typeArguments.push(queryType);
+    }
+    connection.direction = direction;
+    return `arcs.sdk.Edge${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, {startIndent: 4})}>`;
+  }
+
+  protected async handleSpec(handleName: string, connection: HandleConnectionSpec, nodes: SchemaNode[]): Promise<string> {
     const mode = this.handleMode(connection);
     const type = await generateConnectionSpecType(connection, nodes, {namespace: this.namespace});
     // Using full names of entities, as these are aliases available outside the particle scope.
@@ -178,98 +160,80 @@ ${imports.join('\n')}
     );
   }
 
-  async generateParticleClass(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]): Promise<string> {
-    const {typeAliases, classes, handleClassDecl} = await this.generateParticleClassComponents(particle, nodeGenerators);
-    return `
-${typeAliases.join(`\n`)}
-
-abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' : 'arcs.sdk.BaseParticle'}() {
-    ${this.opts.wasm ? '' : 'override '}val handles: Handles = Handles(${this.opts.wasm ? 'this' : ''})
-
-    ${ktUtils.indentFollowing(classes, 1)}
-
-    ${handleClassDecl}
-}
-`;
-  }
-
-  async generateParticleClassComponents(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]) {
-    const particleName = particle.name;
-    const handleDecls: string[] = [];
-    const specDecls: string[] = [];
-    const classes: string[] = [];
-    const typeAliases: string[] = [];
-
-    for (const nodeGenerator of nodeGenerators) {
-      const kotlinGenerator = <KotlinEntityGenerator>nodeGenerator.generator;
-      classes.push(await kotlinGenerator.generateClasses());
-      typeAliases.push(...kotlinGenerator.generateAliases(particleName));
+  /**
+   * Returns the type(s) required for the handle. Entity handles will use the concrete entity
+   * and/or entity interface depending on the direction of the handle. Reference handles will
+   * only use a reference to the concrete entity class:
+   *
+   *  entity read:          ['MyEntity']
+   *  entity write:         ['MyEntitySlice']
+   *  entity read/write:    ['MyEntity', 'MyEntitySlice']
+   *
+   *  reference read:       ['Reference<MyEntity>']
+   *  reference write:      ['Reference<MyEntity>']
+   *  reference read/write: ['Reference<MyEntity>', 'Reference<MyEntity>']
+   *
+   * @param particleScope whether the generated declaration will be used inside the particle or outside it.
+   */
+  protected handleTypeArguments(connection: HandleConnectionSpec, nodes: SchemaNode[], particleScope: boolean): string[] {
+    let type = connection.type;
+    if (type.isCollection || type.isSingleton) {
+      // The top level collection / singleton distinction is handled by the flavour of a handle.
+      type = type.getContainedType();
     }
 
-    const nodes = nodeGenerators.map(ng => ng.node);
-    for (const connection of particle.connections) {
-      const handleName = connection.name;
-      const handleInterfaceType = this.handleInterfaceType(connection, nodes, /* particleScope= */ true);
-      const entityNames = SchemaNode.topLevelNodes(connection, nodes).map(node => node.humanName(connection));
-      if (this.opts.wasm) {
-        if (entityNames.length !== 1) throw new Error('Wasm does not support handles of tuples');
-        handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityNames[0]})`);
+    function generateInnerType(type: Type, isInterface: boolean): string {
+      if (type.isEntity || type.isVariable) {
+          const node = type.isEntity
+            ? nodes.find(n => n.variableName === null && n.schema.equals(type.getEntitySchema()))
+            : nodes.find(n => n.variableName === (type as TypeVariable).variable.name);
+          const name = particleScope ? node.humanName(connection) : node.fullName(connection);
+          return isInterface ? interfaceName(name) : name;
+      } else if (type.isReference) {
+        return `arcs.sdk.Reference<${generateInnerType(type.getContainedType(), false)}>`;
+      } else if (type.isTuple) {
+        const innerTypes = type.getContainedTypes();
+        const tupleTypes = innerTypes.map(t => generateInnerType(t, isInterface)).join(', ');
+        return `arcs.core.entity.Tuple${innerTypes.length}<${tupleTypes}>`;
       } else {
-        specDecls.push(`"${handleName}" to ${ktUtils.setOf(entityNames)}`);
-        handleDecls.push(`val ${handleName}: ${handleInterfaceType} by handles`);
+        throw new Error(`Type '${type.tag}' not supported on code generated particle handle connections.`);
       }
     }
 
-    const handleClassDecl = this.getHandlesClassDecl(particleName, specDecls, handleDecls);
-
-    return {typeAliases, classes, handleClassDecl};
-  }
-
-  private getHandlesClassDecl(particleName: string, entitySpecs: string[], handleDecls: string[]): string {
-    const header = this.opts.wasm
-      ? `${handleDecls.length ? '' : '@Suppress("UNUSED_PARAMETER")\n    '}class Handles(
-        particle: WasmParticleImpl
-    )`
-      : `class Handles : arcs.sdk.HandleHolderBase(
-        "${particleName}",
-        mapOf(${ktUtils.joinWithIndents(entitySpecs, {startIndent: 4, numberOfIndents: 3})})
-    )`;
-
-    return `${header} {
-        ${ktUtils.indentFollowing(handleDecls, 2)}
-    }`;
-  }
-
-  async generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string> {
-    const particleName = particle.name;
-    const handleDecls: string[] = [];
-    const handleSpecs: string[] = [];
-
-    for (const connection of particle.connections) {
-      const handleName = connection.name;
-
-      // Particle handles are set up with the read/write mode from the manifest.
-      handleSpecs.push(await this.handleSpec(handleName, connection, nodes));
-
-      // The harness has a "copy" of each handle with full read/write access.
-      connection.direction = 'reads writes';
-      const interfaceType = this.handleInterfaceType(connection, nodes, /* particleScope= */ false);
-      handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
+    const res = [];
+    if (connection.direction.includes('reads')) {
+      res.push(generateInnerType(type, false));
     }
-
-    return `
-@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-class ${particleName}TestHarness<P : Particle>(
-    factory : (CoroutineScope) -> P
-) : BaseTestHarness<P>(factory, listOf(
-    ${handleSpecs.join(',\n    ')}
-)) {
-    ${handleDecls.join('\n    ')}
-}
-`;
+    if (connection.direction.includes('writes')) {
+      res.push(generateInnerType(type, true));
+    }
+    return res;
   }
 
-  private getQueryType(connection: HandleConnectionSpec): string {
+  protected handleContainerType(type: Type): string {
+    return type.isCollectionType() ? 'Collection' : 'Singleton';
+  }
+
+  protected handleMode(connection: HandleConnectionSpec): string {
+    const direction = this.handleDirection(connection.direction);
+    const querySuffix = this.getQueryType(connection) ? 'Query' : '';
+    return `${direction}${querySuffix}`;
+  }
+
+  protected handleDirection(direction: Direction): string {
+    switch (direction) {
+      case 'reads writes':
+        return 'ReadWrite';
+      case 'reads':
+        return 'Read';
+      case 'writes':
+        return 'Write';
+      default:
+        throw new Error(`Unsupported handle direction: ${direction}`);
+    }
+  }
+
+  protected getQueryType(connection: HandleConnectionSpec): string {
     if (!(connection.type instanceof CollectionType)) {
       return null;
     }
@@ -286,5 +250,145 @@ class ${particleName}TestHarness<P : Particle>(
       return null;
     }
     return getPrimitiveTypeInfo(type).type;
+  }
+}
+
+export class KotlinParticleGenerator extends GeneratorBase {
+  constructor(parent: Schema2Kotlin, readonly particle: ParticleSpec, readonly nodeGenerators: NodeAndGenerator[]) {
+    super(parent.opts, parent.namespace);
+    this.isEdgeParticle = this.particle.getAnnotation('edge') != null;
+  }
+
+  async generateParticleClass(): Promise<string> {
+    const classHeader = this.generateParticleClassHeader();
+    const {typeAliases, classes, handleClassDecl} = await this.generateParticleClassComponents();
+    return `
+${typeAliases.join(`\n`)}
+
+@Generated("src/tools/schema2kotlin.ts")
+${classHeader}
+
+    ${ktUtils.indentFollowing(classes, 1)}
+
+    ${handleClassDecl}
+}
+`;
+  }
+
+  generateParticleClassHeader() {
+    if (this.opts.wasm) {
+      return `abstract class Abstract${this.particle.name} : WasmParticleImpl() {
+    val handles: Handles = Handles(this)`;
+    } else if (this.isEdgeParticle) {
+      return `class ${this.particle.name} : arcs.sdk.BaseParticle() {
+    private val edgeHandles = mutableMapOf<String, arcs.sdk.EdgeHandle>()
+    override val handles: Handles = Handles(edgeHandles)
+
+    override fun onReady() {
+      edgeHandles.values.forEach { it.moveToReady() }
+    }`;
+    } else {
+      return `abstract class Abstract${this.particle.name} : arcs.sdk.BaseParticle() {
+    override val handles: Handles = Handles()`;
+    }
+  }
+
+  async generateParticleClassComponents() {
+    const handleDecls: string[] = [];
+    const specDecls: string[] = [];
+    const classes: string[] = [];
+    const typeAliases: string[] = [];
+
+    for (const nodeGenerator of this.nodeGenerators) {
+      const kotlinGenerator = nodeGenerator.generator as KotlinEntityGenerator;
+      classes.push(await kotlinGenerator.generateClasses());
+      typeAliases.push(...kotlinGenerator.generateAliases(this.particle.name, this.isEdgeParticle ? '' : 'Abstract'));
+    }
+
+    const nodes = this.nodeGenerators.map(ng => ng.node);
+    for (const connection of this.particle.connections) {
+      const handleName = connection.name;
+      const handleInterfaceType = this.handleInterfaceType(connection, nodes, /* particleScope= */ true);
+      const entityNames = SchemaNode.topLevelNodes(connection, nodes).map(node => node.humanName(connection));
+      if (this.opts.wasm) {
+        if (entityNames.length !== 1) throw new Error('Wasm does not support handles of tuples');
+        handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityNames[0]})`);
+      } else {
+        specDecls.push(`"${handleName}" to ${ktUtils.setOf(entityNames)}`);
+        if (this.isEdgeParticle) {
+          // This can be written as a single initialiser statement, but that hits a compiler bug: https://youtrack.jetbrains.com/issue/KT-45609
+          handleDecls.push(`val ${handleName}: ${handleInterfaceType}
+        init {
+            ${this.edgeDelegateType(connection, nodes)}().let {
+                ${handleName} = object : ${handleInterfaceType} by it {}
+                edgeHandles.set("${handleName}", it)
+            }
+        }
+        `);
+        } else {
+          handleDecls.push(`val ${handleName}: ${handleInterfaceType} by handles`);
+        }
+      }
+    }
+
+    let header: string;
+    let footer = '';
+    if (this.opts.wasm) {
+      header = `${handleDecls.length ? '' : '@Suppress("UNUSED_PARAMETER")\n    '}class Handles(
+        particle: WasmParticleImpl
+    )`;
+    } else {
+      const arg = this.isEdgeParticle ? '(val edgeHandles: MutableMap<String, arcs.sdk.EdgeHandle>)' : '';
+      header = `class Handles${arg} : arcs.sdk.HandleHolderBase(
+        "${this.particle.name}",
+        mapOf(${ktUtils.joinWithIndents(specDecls, {startIndent: 4, numberOfIndents: 3})})
+    )`;
+      if (this.isEdgeParticle) {
+        footer = `
+        override fun setHandle(handleName: String, handle: arcs.sdk.Handle) {
+          super.setHandle(handleName, handle)
+          edgeHandles.get(handleName)!!.handle = handle
+        }`;
+      }
+    }
+    const handleClassDecl = `${header} {
+        ${ktUtils.indentFollowing(handleDecls, 2)}${footer}
+    }`;
+
+    return {typeAliases, classes, handleClassDecl};
+  }
+}
+
+class KotlinTestHarnessGenerator extends GeneratorBase {
+  constructor(parent: Schema2Kotlin, readonly particle: ParticleSpec, readonly nodes: SchemaNode[]) {
+    super(parent.opts, parent.namespace);
+  }
+
+  async generateTestHarness(): Promise<string> {
+    const handleDecls: string[] = [];
+    const handleSpecs: string[] = [];
+
+    for (const connection of this.particle.connections) {
+      const handleName = connection.name;
+
+      // Particle handles are set up with the read/write mode from the manifest.
+      handleSpecs.push(await this.handleSpec(handleName, connection, this.nodes));
+
+      // The harness has a "copy" of each handle with full read/write access.
+      connection.direction = 'reads writes';
+      const interfaceType = this.handleInterfaceType(connection, this.nodes, /* particleScope= */ false);
+      handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
+    }
+
+    return `
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+class ${this.particle.name}TestHarness<P : Particle>(
+    factory : (CoroutineScope) -> P
+) : BaseTestHarness<P>(factory, listOf(
+    ${handleSpecs.join(',\n    ')}
+)) {
+    ${handleDecls.join('\n    ')}
+}
+`;
   }
 }

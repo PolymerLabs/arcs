@@ -1,0 +1,35 @@
+meta
+  namespace: arcs.showcase.nullable
+
+schema Name
+  legal: Text
+  first: Text?
+  middle: Text?
+  last: Text?
+
+schema Guest
+  name: inline Name?
+  employee_id: Int?
+  rsvp: Boolean?
+  //TODO(b/174612477): Later add a refinement to require either name or employee_id
+
+particle Invited in '.Invited'
+  invited: reads writes [Guest {name, employee_id, rsvp}]
+
+particle Attending in '.Attending'
+  invited: reads [Guest {name, employee_id, rsvp}]
+  attending: reads writes [Guest {name, employee_id, rsvp}]
+  no_response: reads writes [Guest {name, employee_id, rsvp}]
+
+@arcId('testArc')
+recipe ShowAttending
+  invited: create 'invited'
+  attending: create 'attending'
+  no_response: create 'no_response'
+  stats: create
+  Invited
+    invited: invited
+  Attending
+    invited: invited
+    attending: attending
+    no_response: no_response

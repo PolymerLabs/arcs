@@ -1,0 +1,25 @@
+meta
+  namespace: arcs.android.integration.writeonlystack
+
+import '../../../../../java/arcs/core/entity/testutil/fixture.arcs'
+
+particle Writer in '.Writer'
+  output: writes [FixtureEntity]
+
+particle Reader in '.Reader'
+  input: reads [FixtureEntity]
+
+@arcId('writeArc')
+recipe WriteRecipe
+  collection: create 'collection' @persistent
+
+  Writer
+    // This handle is write-only and persistent, it will instantiate a write-only stack.
+    output: writes collection
+
+@arcId('readArc')
+recipe ReadRecipe
+  collection: map 'collection' @persistent
+
+  Reader
+    input: reads collection

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -11,7 +11,19 @@
 // String-based enums.
 // TODO: convert to actual enums so that they can be iterated over.
 
-export type Direction = 'reads' | 'writes' | 'reads writes' | 'hosts' | '`consumes' | '`provides' | 'any';
+export const directions = [
+  'reads',
+  'writes',
+  'reads writes',
+  'hosts',
+  '`consumes',
+  '`provides',
+  'any'
+] as const;
+
+// Creates a union of all values in the associated list.
+export type Direction = typeof directions[number];
+
 export type SlotDirection = 'provides' | 'consumes';
 
 /** The different types of trust claims that particles can make. */

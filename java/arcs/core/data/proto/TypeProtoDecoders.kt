@@ -39,6 +39,7 @@ fun PrimitiveTypeProto.decodeAsFieldType(): FieldType.Primitive {
       PrimitiveTypeProto.FLOAT -> PrimitiveType.Float
       PrimitiveTypeProto.DOUBLE -> PrimitiveType.Double
       PrimitiveTypeProto.INSTANT -> PrimitiveType.Instant
+      PrimitiveTypeProto.DURATION -> PrimitiveType.Duration
       PrimitiveTypeProto.UNRECOGNIZED ->
         throw IllegalArgumentException("Unknown PrimitiveTypeProto value.")
     }
@@ -46,11 +47,13 @@ fun PrimitiveTypeProto.decodeAsFieldType(): FieldType.Primitive {
 }
 
 /** Converts a [ReferenceTypeProto] protobuf instance into a Kotlin [FieldType] instance. */
-fun ReferenceTypeProto.decodeAsFieldType(): FieldType.EntityRef {
+fun ReferenceTypeProto.decodeAsFieldType(
+  annotationsList: List<AnnotationProto>
+): FieldType.EntityRef {
   val entitySchema = requireNotNull(decode().entitySchema) {
     "Field that is a reference to an non-entity type is not possible."
   }
-  return FieldType.EntityRef(entitySchema.hash)
+  return FieldType.EntityRef(entitySchema.hash, annotationsList.map { it.decode() })
 }
 
 /** Converts a [TupleTypeProto] protobuf instance into a Kotlin [FieldType] instance. */
@@ -61,6 +64,11 @@ fun TupleTypeProto.decodeAsFieldType(): FieldType.Tuple = FieldType.Tuple(
 /** Converts a [ListTypeProto] to a [FieldType.ListOf] instance. */
 fun ListTypeProto.decodeAsFieldType(): FieldType.ListOf {
   return FieldType.ListOf(elementType.decodeAsFieldType())
+}
+
+/** Converts a [NullableTypeProto] to a [FieldType.NullableOf] instance. */
+fun NullableTypeProto.decodeAsFieldType(): FieldType {
+  return elementType.decodeAsFieldType().nullable()
 }
 
 /**
@@ -77,11 +85,14 @@ fun EntityTypeProto.decodeAsFieldType(): FieldType.InlineEntity {
  *
  * @throws [IllegalArgumentexception] if the type cannot be converted to [FieldType].
  */
-fun TypeProto.decodeAsFieldType(): FieldType = when (dataCase) {
+fun TypeProto.decodeAsFieldType(
+  annotationsList: List<AnnotationProto> = emptyList()
+): FieldType = when (dataCase) {
   TypeProto.DataCase.PRIMITIVE -> primitive.decodeAsFieldType()
-  TypeProto.DataCase.REFERENCE -> reference.decodeAsFieldType()
+  TypeProto.DataCase.REFERENCE -> reference.decodeAsFieldType(annotationsList)
   TypeProto.DataCase.TUPLE -> tuple.decodeAsFieldType()
   TypeProto.DataCase.LIST -> list.decodeAsFieldType()
+  TypeProto.DataCase.NULLABLE -> nullable.decodeAsFieldType()
   TypeProto.DataCase.ENTITY -> entity.decodeAsFieldType()
   TypeProto.DataCase.DATA_NOT_SET, null ->
     throw IllegalArgumentException("Unknown data field in TypeProto.")
@@ -133,7 +144,7 @@ fun TypeProto.decode(): Type = when (dataCase) {
   TypeProto.DataCase.COUNT -> CountType()
   TypeProto.DataCase.TUPLE -> tuple.decode()
   TypeProto.DataCase.VARIABLE -> variable.decode()
-  TypeProto.DataCase.PRIMITIVE, TypeProto.DataCase.LIST ->
+  TypeProto.DataCase.PRIMITIVE, TypeProto.DataCase.LIST, TypeProto.DataCase.NULLABLE ->
     throw IllegalArgumentException("Cannot decode FieldType $dataCase to Type.")
   TypeProto.DataCase.DATA_NOT_SET, null ->
     throw IllegalArgumentException("Unknown data field in TypeProto.")
@@ -185,6 +196,8 @@ fun ReferenceTypeProto.asTypeProto() = TypeProto.newBuilder().setReference(this)
 fun TupleTypeProto.asTypeProto() = TypeProto.newBuilder().setTuple(this).build()
 
 fun ListTypeProto.asTypeProto() = TypeProto.newBuilder().setList(this).build()
+
+fun NullableTypeProto.asTypeProto() = TypeProto.newBuilder().setNullable(this).build()
 
 fun EntityTypeProto.asTypeProto() = TypeProto.newBuilder().setEntity(this).build()
 

@@ -16,11 +16,11 @@ particle Writer in 'Writer'
     name: Text,
     dimensions: [Number],
     reviews: [&Review {
-      authors: List<Text>,
+      authors: List<Text> @hardRef,
       content: Text,
       rating: Number
     }],
-    safeForKids: Boolean
+    safeForKids: Boolean?
   }]
 
 particle Reader in 'Reader'

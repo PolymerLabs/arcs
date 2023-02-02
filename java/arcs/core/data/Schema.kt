@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -12,7 +12,6 @@
 package arcs.core.data
 
 import arcs.core.crdt.CrdtEntity
-import arcs.core.crdt.VersionMap
 import arcs.core.data.Schema.Companion.hashCode
 import arcs.core.data.expression.Expression
 import arcs.core.data.expression.asExpr
@@ -37,6 +36,14 @@ data class Schema(
   val refinementExpression: Expression<Boolean> = true.asExpr(),
   val queryExpression: Expression<Boolean> = true.asExpr()
 ) {
+  private val hashCode by lazy {
+    var result = names.hashCode()
+    result = 31 * result + fields.hashCode()
+    result = 31 * result + hash.hashCode()
+    result = 31 * result + refinementExpression.hashCode()
+    result = 31 * result + queryExpression.hashCode()
+    result
+  }
 
   /** Ensure instance is registered on construction. */
   init {
@@ -60,9 +67,9 @@ data class Schema(
     evalExpression(queryExpression, data.asScope(), "queryArgument" to args)
   }
 
-  fun toLiteral(): Literal = Literal(names, fields, hash)
+  fun toLiteral(): Literal = Literal(names, fields, hash, refinementExpression, queryExpression)
 
-  fun createCrdtEntityModel(): CrdtEntity = CrdtEntity(VersionMap(), emptyRawEntity)
+  fun createCrdtEntityModel(): CrdtEntity = CrdtEntity.newWithEmptyEntity(emptyRawEntity)
 
   override fun toString() = toString(Type.ToStringOptions())
 
@@ -72,10 +79,27 @@ data class Schema(
   fun toString(options: Type.ToStringOptions) =
     names.map { it.name }.plusElement(fields.toString(options)).joinToString(" ")
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is Schema) return false
+
+    if (names != other.names) return false
+    if (fields != other.fields) return false
+    if (hash != other.hash) return false
+    if (refinementExpression != other.refinementExpression) return false
+    if (queryExpression != other.queryExpression) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int = hashCode
+
   data class Literal(
     val names: Set<SchemaName>,
     val fields: SchemaFields,
-    val hash: String
+    val hash: String,
+    val refinementExpression: Expression<Boolean>,
+    val queryExpression: Expression<Boolean>
   ) : arcs.core.common.Literal {
     fun toJson(): String {
       // TODO: Actually use a json serializer when we're ready for it.
@@ -84,8 +108,19 @@ data class Schema(
   }
 
   companion object {
-    fun fromLiteral(@Suppress("UNUSED_PARAMETER") literal: arcs.core.common.Literal): Schema {
-      TODO("Implement me.")
+    /** Hydrates a [Schema] instance from a [Literal]. */
+    fun fromLiteral(literal: arcs.core.common.Literal): Schema {
+      val schemaLiteral = requireNotNull(literal as? Literal) {
+        "Cannot interpret Schema from a non-Schema Literal"
+      }
+
+      return Schema(
+        schemaLiteral.names,
+        schemaLiteral.fields,
+        schemaLiteral.hash,
+        schemaLiteral.refinementExpression,
+        schemaLiteral.queryExpression
+      )
     }
 
     val EMPTY = Schema(

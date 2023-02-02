@@ -69,9 +69,14 @@ export interface Literalizable<T, Lit extends Literal> {
   fromLiteral(literal: Lit): T;
 }
 
-/** A light-weight, parameterized key-value store Type */
+/** A light-weight, parameterized key-value store Type with string keys */
 export interface Dictionary<T> {
   [key: string]: T;
+}
+
+/** A light-weight, parameterized key-value store Type with number keys */
+export interface NumberDictionary<T> {
+  [key: number]: T;
 }
 
 /**

@@ -76,7 +76,7 @@ export class PlanGenerator {
    * a handle both in a list of all plan handles, as well as in individual handle connections.
    */
   async createHandleVariable(handle: Handle): Promise<string> {
-    handle.type.maybeEnsureResolved();
+    handle.type.maybeResolve();
     return ktUtils.property(this.handleVariableName(handle), async ({startIndent}) => {
       return ktUtils.applyFun(`Handle`, [
         await this.createStorageKey(handle),
@@ -136,13 +136,13 @@ export class PlanGenerator {
   /** Generates a Kotlin `StorageKey` from a recipe Handle. */
   async createStorageKey(handle: Handle): Promise<string> {
     if (handle.storageKey) {
-      return ktUtils.applyFun('StorageKeyParser.parse', [quote(handle.storageKey.toString())]);
+      return ktUtils.applyFun('StorageKeyManager.GLOBAL_INSTANCE.parse', [quote(handle.storageKey.toString())]);
     }
     if (handle.fate === 'join') {
       // TODO(piotrs): Implement JoinStorageKey in TypeScript.
       const components = handle.joinedHandles.map(h => h.storageKey);
       const joinSk = `join://${components.length}/${components.map(sk => `{${sk.embedKey()}}`).join('/')}`;
-      return ktUtils.applyFun('StorageKeyParser.parse', [quote(joinSk)]);
+      return ktUtils.applyFun('StorageKeyManager.GLOBAL_INSTANCE.parse', [quote(joinSk)]);
     }
     throw new PlanGeneratorError(`Problematic handle '${handle.id}': Only 'create' Handles can have null 'StorageKey's.`);
   }
@@ -163,8 +163,7 @@ ${tryImport('arcs.core.data.expression.*', this.namespace)}
 ${tryImport('arcs.core.data.expression.Expression.*', this.namespace)}
 ${tryImport('arcs.core.data.expression.Expression.BinaryOp.*', this.namespace)}
 ${tryImport('arcs.core.data.Plan.*', this.namespace)}
-${tryImport('arcs.core.storage.StorageKeyParser', this.namespace)}
-${tryImport('arcs.core.entity.toPrimitiveValue', this.namespace)}
+${tryImport('arcs.core.storage.StorageKeyManager', this.namespace)}
 ${tryImport('arcs.core.util.ArcsInstant', this.namespace)}
 ${tryImport('arcs.core.util.ArcsDuration', this.namespace)}
 ${tryImport('arcs.core.util.BigInt', this.namespace)}

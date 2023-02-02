@@ -24,7 +24,7 @@
         // Matches many variants of Google Inc/LLC, with (c) or without, with ARR or not
         {
           "pattern":  " \\* Copyright (\\(c\\) )?\\d{4} Google (Inc|LLC)\\.( All rights reserved\\.)?",
-          "template": " * Copyright 2019 Google LLC."
+          "template": " * Copyright 2020 Google LLC."
         },
         " * This code may only be used under the BSD style license found at",
         " * http://polymer.github.io/LICENSE.txt",

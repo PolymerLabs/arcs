@@ -10,6 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc} from '../runtime/arc.js';
+import {ArcInfo} from '../runtime/arc-info.js';
 import {AsyncConsumer} from '../utils/lib-utils.js';
 
 export type DevtoolsListener = AsyncConsumer<DevtoolsMessage>;
@@ -58,8 +59,8 @@ export class AbstractDevtoolsChannel {
     listeners.push(listener);
   }
 
-  forArc(arc: Arc): ArcDevtoolsChannel | AbstractDevtoolsChannel {
-    return new ArcDevtoolsChannel(arc, this);
+  forArc(arcInfo: ArcInfo): ArcDevtoolsChannel | AbstractDevtoolsChannel {
+    return new ArcDevtoolsChannel(arcInfo, this);
   }
 
   async _handleMessage(msg: DevtoolsMessage) {
@@ -98,9 +99,9 @@ export class ArcDevtoolsChannel {
   private channel: AbstractDevtoolsChannel;
   private readonly arcId: string;
 
-  constructor(arc: Arc, channel: AbstractDevtoolsChannel) {
+  constructor(arcInfo: ArcInfo, channel: AbstractDevtoolsChannel) {
     this.channel = channel;
-    this.arcId = arc.id.toString();
+    this.arcId = arcInfo.id.toString();
   }
 
   send(message: DevtoolsMessage) {

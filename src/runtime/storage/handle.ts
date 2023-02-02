@@ -17,12 +17,12 @@ import {EntityType, Type, ReferenceType} from '../../types/lib-types.js';
 import {StorageProxy, NoOpStorageProxy} from './storage-proxy.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ParticleSpec} from '../arcs-types/particle-spec.js';
-import {ChannelConstructor} from '../channel-constructor.js';
 import {Producer, Consumer} from '../../utils/lib-utils.js';
 import {CRDTMuxEntity} from './storage.js';
 import {CRDTOperation, CRDTTypeRecord, CollectionOperation, CollectionOpTypes, CRDTCollectionTypeRecord,
         Referenceable, CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, EntityOperation,
         RawEntity, Identified, EntityOpTypes} from '../../crdt/lib-crdt.js';
+import {StorageFrontend} from './storage-frontend.js';
 
 export interface HandleOptions {
   keepSynced: boolean;
@@ -40,7 +40,7 @@ interface Serializer<T, Serialized> {
 // The following must return a Reference, but we are trying to break the cyclic
 // dependency between this file and reference.ts, so we lose a little bit of type safety
 // to do that.
-type ReferenceMaker = (data: {id: string, creationTimestamp?: number | null, expirationTimestamp?: number | null, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor) => ReferenceInt;
+type ReferenceMaker = (data: {id: string, creationTimestamp?: number | null, expirationTimestamp?: number | null, entityStorageKey: string | null}, type: ReferenceType<EntityType>, frontend: StorageFrontend) => ReferenceInt;
 
 /**
  * Base class for Handles.
@@ -71,9 +71,13 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     return this.storageProxy.type;
   }
 
+  get storageFrontend(): StorageFrontend {
+    return this.storageProxy.getStorageFrontend();
+  }
+
   // TODO: after NG migration, this can be renamed to something like "apiChannelId()".
   get _id(): string {
-    return this.storageProxy.apiChannelId;
+    return this.storageProxy.storeInfo.id;
   }
 
   createIdentityFor(entity: Entity) {
@@ -86,11 +90,11 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
 
   get entityClass(): EntityClass {
     if (this.type instanceof EntityType) {
-      return Entity.createEntityClass(this.type.entitySchema, this.storageProxy.getChannelConstructor());
+      return Entity.createEntityClass(this.type.entitySchema, this.storageFrontend);
     }
     const containedType = this.type.getContainedType();
     if (containedType instanceof EntityType) {
-      return Entity.createEntityClass(containedType.entitySchema, this.storageProxy.getChannelConstructor());
+      return Entity.createEntityClass(containedType.entitySchema, this.storageFrontend);
     }
     return null;
   }
@@ -120,11 +124,11 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
     // TODO(shans): Be more principled about how to determine whether this is an
     // immediate mode handle or a standard handle.
     if (this.type instanceof EntityType) {
-      this.serializer = new PreEntityMutationSerializer(this.type, (e) => {this.createIdentityFor(e);}, this.storageProxy.getChannelConstructor());
+      this.serializer = new PreEntityMutationSerializer(this.type, (e) => {this.createIdentityFor(e);}, this.storageFrontend);
     } else if (this.type.getContainedType() instanceof EntityType) {
-      this.serializer = new PreEntityMutationSerializer(this.type.getContainedType(), (e) => {this.createIdentityFor(e);}, this.storageProxy.getChannelConstructor());
+      this.serializer = new PreEntityMutationSerializer(this.type.getContainedType(), (e) => {this.createIdentityFor(e);}, this.storageFrontend);
     } else if (this.type.getContainedType() instanceof ReferenceType) {
-      this.serializer = new ReferenceSerializer(this.type.getContainedType() as ReferenceType<EntityType>, this.storageProxy.getChannelConstructor());
+      this.serializer = new ReferenceSerializer(this.type.getContainedType() as ReferenceType<EntityType>, this.storageFrontend);
     } else {
       this.serializer = new ParticleSpecSerializer(()=>this.idGenerator.newChildId(Id.fromString(this._id)).toString());
     }
@@ -177,9 +181,9 @@ class PreEntityMutationSerializer implements Serializer<Entity, SerializedEntity
   entityClass: EntityClass;
   createIdentityFor: (entity: Entity) => void;
 
-  constructor(type: Type, createIdentityFor: (entity: Entity) => void, context: ChannelConstructor) {
+  constructor(type: Type, createIdentityFor: (entity: Entity) => void, frontend: StorageFrontend) {
     if (type instanceof EntityType) {
-      this.entityClass = Entity.createEntityClass(type.entitySchema, context);
+      this.entityClass = Entity.createEntityClass(type.entitySchema, frontend);
       this.createIdentityFor = createIdentityFor;
      } else {
        throw new Error(`can't construct handle for entity mutation if type is not an entity type`);
@@ -212,14 +216,14 @@ interface ReferenceInt {
 }
 
 class ReferenceSerializer implements Serializer<ReferenceInt, ReferenceSer> {
-  constructor(private readonly type: ReferenceType<EntityType>, private readonly context: ChannelConstructor) {}
+  constructor(private readonly type: ReferenceType<EntityType>, private readonly frontend: StorageFrontend) {}
 
   serialize(reference: ReferenceInt): ReferenceSer {
     return reference.dataClone();
   }
 
   deserialize(value: ReferenceSer): ReferenceInt {
-    return Handle.makeReference(value, this.type, this.context);
+    return Handle.makeReference(value, this.type, this.frontend);
   }
 
   ensureHasId(reference: ReferenceInt) {

@@ -1,5 +1,6 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_jvm_library",
     "arcs_kt_library",
 )
 
@@ -25,11 +26,18 @@ REFERENCE_SRCS = [
     "Reference.kt",
 ]
 
+SERIALIZER_SRCS = [
+    "SchemaSerializer.kt",
+    "platform/js/DefaultSchemaSerializer.kt",
+    "platform/jvm/DefaultSchemaSerializer.kt",
+    "platform/native/DefaultSchemaSerializer.kt",
+]
+
 arcs_kt_library(
     name = "data",
     srcs = glob(
         ["*.kt"],
-        exclude = ENTITY_SRCS + SCHEMA_FIELDS_SRCS + REFERENCE_SRCS + ANNOTATIONS_SRCS,
+        exclude = ENTITY_SRCS + SCHEMA_FIELDS_SRCS + REFERENCE_SRCS + ANNOTATIONS_SRCS + SERIALIZER_SRCS,
     ),
     exports = [
         ":annotations",
@@ -39,7 +47,6 @@ arcs_kt_library(
     deps = [
         ":annotations",
         ":rawentity",
-        ":reference",
         ":schema_fields",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
@@ -48,7 +55,6 @@ arcs_kt_library(
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
-        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
 
@@ -76,6 +82,7 @@ arcs_kt_library(
         ":annotations",
         ":rawentity",
         "//java/arcs/core/type",
+        "//java/arcs/flags",
     ],
 )
 
@@ -84,3 +91,40 @@ arcs_kt_library(
     srcs = ANNOTATIONS_SRCS,
     deps = [],
 )
+
+arcs_kt_jvm_library(
+    name = "schema-serializer",
+    srcs = [
+        "SchemaSerializer.kt",
+        "platform/jvm/DefaultSchemaSerializer.kt",
+    ],
+    deps = [
+        "//java/arcs/core/data",
+        "//java/arcs/core/data/proto",
+        "//java/arcs/core/data/proto:manifest_java_proto_lite",
+        "//java/arcs/core/util",
+    ],
+)
+
+# TODO(b/178144225): Support multiplatform implementations
+#arcs_kt_js_library(
+#    name = "schema-serializer-js",
+#    srcs = [
+#        "SchemaSerializer.kt",
+#        "platform/js/DefaultSchemaSerializer.kt",
+#    ],
+#    deps = [
+#        "//third_party/java_src/arcs/java/arcs/core/data:data-js",
+#    ],
+#)
+#
+#arcs_kt_native_library(
+#    name = "schema-serializer-wasm",
+#    srcs = [
+#        "SchemaSerializer.kt",
+#        "platform/native/DefaultSchemaSerializer.kt",
+#    ],
+#    deps = [
+#        "//third_party/java_src/arcs/java/arcs/core/data:data-wasm",
+#    ],
+#)

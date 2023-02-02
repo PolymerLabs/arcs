@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Arc} from './arc.js';
 import {Action, GenerateParams, WalkerTactic, Continuation} from '../utils/lib-utils.js';
 import {ConsumeSlotConnectionSpec} from './arcs-types/particle-spec.js';
 import {Recipe, Handle, Particle, SlotConnection, IsValidOptions, RecipeWalker, ConnectionConstraint,
@@ -16,14 +15,15 @@ import {Recipe, Handle, Particle, SlotConnection, IsValidOptions, RecipeWalker, 
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 import {StoreInfo} from './storage/store-info.js';
 import {Type} from '../types/lib-types.js';
+import {ArcInfo} from './arc-info.js';
 
 export class ResolveWalker extends RecipeWalker {
   private options: IsValidOptions;
-  private readonly arc: Arc;
+  private readonly arcInfo: ArcInfo;
 
-  constructor(tactic: WalkerTactic, arc: Arc, options?) {
+  constructor(tactic: WalkerTactic, arcInfo: ArcInfo, options?) {
     super(tactic);
-    this.arc = arc;
+    this.arcInfo = arcInfo;
     this.options = options;
   }
 
@@ -40,7 +40,7 @@ export class ResolveWalker extends RecipeWalker {
     if (handle.type.slandleType()) {
       return [];
     }
-    const arc = this.arc;
+    const arcInfo = this.arcInfo;
     if ((handle.connections.length === 0 && !handle.isJoined) ||
         (handle.id && handle.storageKey) || (!handle.type) ||
         (!handle.fate)) {
@@ -53,11 +53,11 @@ export class ResolveWalker extends RecipeWalker {
       const counts = directionCounts(handle);
       switch (handle.fate) {
         case 'use':
-          mappable = arc.findStoresByType(handle.type, {tags: handle.tags});
+          mappable = arcInfo.findStoresByType(handle.type, {tags: handle.tags});
           break;
         case 'map':
         case 'copy':
-          mappable = arc.context.findStoresByType(handle.type, {tags: handle.tags, subtype: true});
+          mappable = arcInfo.context.findStoresByType(handle.type, {tags: handle.tags, subtype: true});
           break;
         case 'create':
         case '?':
@@ -71,11 +71,11 @@ export class ResolveWalker extends RecipeWalker {
       let storeById: StoreInfo<Type>;
       switch (handle.fate) {
         case 'use':
-          storeById = arc.findStoreById(handle.id);
+          storeById = arcInfo.findStoreById(handle.id);
           break;
         case 'map':
         case 'copy':
-          storeById = arc.context.findStoreById(handle.id);
+          storeById = arcInfo.context.findStoreById(handle.id);
           break;
         case 'create':
         case '?':
@@ -121,14 +121,14 @@ export class ResolveWalker extends RecipeWalker {
       }
       return [];
     };
-    const arc = this.arc;
+    const arcInfo = this.arcInfo;
     if (slotConnection.isConnected()) {
       return error('Slot connection is already connected');
     }
 
     const slotSpec = slotConnection.getSlotSpec();
     const particle = slotConnection.particle;
-    const {local, remote} = findAllSlotCandidates(particle, slotSpec, arc);
+    const {local, remote} = findAllSlotCandidates(particle, slotSpec, arcInfo);
 
     const allSlots = [...local, ...remote];
 
@@ -150,8 +150,8 @@ export class ResolveWalker extends RecipeWalker {
       }
       return [];
     };
-    const arc = this.arc;
-    const {local, remote} = findAllSlotCandidates(particle, slotSpec, arc);
+    const arcInfo = this.arcInfo;
+    const {local, remote} = findAllSlotCandidates(particle, slotSpec, arcInfo);
     const allSlots = [...local, ...remote];
 
     if (allSlots.length !== 1) {
@@ -186,7 +186,7 @@ export class ResolveWalker extends RecipeWalker {
 
 export class ResolveRecipeAction extends Action<Recipe> {
   private options: IsValidOptions;
-  constructor(private readonly arc: Arc) {
+  constructor(private readonly arcInfo: ArcInfo) {
     super();
   }
 
@@ -195,15 +195,15 @@ export class ResolveRecipeAction extends Action<Recipe> {
   }
   async generate(inputParams: GenerateParams<Recipe>) {
     return ResolveWalker.walk(this.getResults(inputParams),
-      new ResolveWalker(ResolveWalker.Permuted, this.arc, this.options), this);
+      new ResolveWalker(ResolveWalker.Permuted, this.arcInfo, this.options), this);
   }
 }
 
 // Provides basic recipe resolution for recipes against a particular arc.
 export class RecipeResolver {
   private resolver: ResolveRecipeAction;
-  constructor(arc: Arc) {
-    this.resolver = new ResolveRecipeAction(arc);
+  constructor(arcInfo: ArcInfo) {
+    this.resolver = new ResolveRecipeAction(arcInfo);
   }
 
   // Attempts to run basic resolution on the given recipe. Returns a new

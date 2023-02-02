@@ -11,7 +11,6 @@
 import {Generation} from './planner.js';
 import {Strategizer, Strategy, StrategyParams} from '../planning/strategizer.js';
 import {assert} from '../platform/assert-web.js';
-import {Arc} from '../runtime/arc.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Modality} from '../runtime/arcs-types/modality.js';
 import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec, HandleConnectionSpec} from '../runtime/arcs-types/particle-spec.js';
@@ -26,9 +25,9 @@ import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-
 import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import * as Rulesets from './strategies/rulesets.js';
 import {IdGenerator} from '../runtime/id.js';
-import {StorageServiceImpl} from '../runtime/storage/storage-service.js';
 import {Fate} from '../runtime/arcs-types/enums.js';
 import {SlotType} from '../types/lib-types.js';
+import {ArcInfo} from '../runtime/arc-info.js';
 
 type MatchingHandle = {
   handle?: Handle,
@@ -91,20 +90,18 @@ export class RecipeIndex {
   private _recipes: Recipe[];
   private _isReady = false;
 
-  constructor(arc: Arc) {
+  constructor(arcInfo: ArcInfo) {
     const trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
     const idGenerator = IdGenerator.newSession();
-    const arcStub = new Arc({
+    const arcStub = new ArcInfo({
       id: idGenerator.newArcId('index-stub'),
       context: new Manifest({id: idGenerator.newArcId('empty-context')}),
-      loader: arc.loader,
-      slotComposer: new SlotComposer({noRoot: true}),
-      stub: true,
-      storageService: new StorageServiceImpl()
+      capabilitiesResolver: arcInfo.capabilitiesResolver,
+      slotContainers: arcInfo.slotContainers
     });
     const strategizer = new Strategizer(
       [
-        new RelevantContextRecipes(arc.context, arc.modality),
+        new RelevantContextRecipes(arcInfo.context, arcInfo.modality),
         ...IndexStrategies.map(S => new S(arcStub, {recipeIndex: this}))
       ],
       [],
@@ -130,8 +127,8 @@ export class RecipeIndex {
     })());
   }
 
-  static create(arc: Arc): RecipeIndex {
-    return new RecipeIndex(arc);
+  static create(arcInfo: ArcInfo): RecipeIndex {
+    return new RecipeIndex(arcInfo);
   }
 
   get recipes(): Recipe[] {

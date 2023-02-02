@@ -39,12 +39,10 @@ arcs_kt_android_test_suite(
         ":var_generation",
         "//java/arcs/core/host",
         "//java/arcs/core/testutil",
-        "//java/arcs/core/util/testutil",
-        "//javatests/arcs/showcase",
+        "//javatests/arcs/android/integration",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
-        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )

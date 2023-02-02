@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -104,7 +104,8 @@ export function SystemTrace<T extends Constructor<{}>>(ctor: T) {
       // b) re-entrance is detected.
       if (clientClass &&
           !this.constructor.hasOwnProperty(SYSTEM_TRACED_PROPERTY)) {
-        harnessSystemTracing(this, new clientClass());
+        // tslint:disable-next-line: no-any
+        harnessSystemTracing(this, new (clientClass as any)());
       }
     }
   };
@@ -139,7 +140,7 @@ function harnessSystemTracing(obj: object, client: Client) {
   let boundSymbols: Symbol[] = [];
 
   // Collects all functions at the object's prototype chain.
-  while (obj = Object.getPrototypeOf(obj)) {
+  while ((obj = Object.getPrototypeOf(obj))) {
     // Stops at the root of the prototype chain.
     if (obj.constructor.name === 'Object') {
       break;

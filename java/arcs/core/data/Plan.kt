@@ -14,6 +14,7 @@ import arcs.core.data.Capability.Ttl
 import arcs.core.data.expression.Expression
 import arcs.core.storage.StorageKey
 import arcs.core.type.Type
+import arcs.core.util.FORBIDDEN_STRINGS
 import arcs.core.util.lens
 
 /**
@@ -45,13 +46,13 @@ data class Plan(
 
   /** Add contained [Schema] to the [SchemaRegistry] */
   private fun registerSchema(type: Type?): Unit = when (type) {
-    null -> Unit
     is TypeVariable -> registerSchema(type.constraint)
     is Type.TypeContainer<*> -> registerSchema(type.containedType)
     is EntitySchemaProviderType -> type.entitySchema?.let {
       SchemaRegistry.register(it)
     } ?: Unit
-    else -> registerSchema(type.resolvedType)
+    is TupleType -> type.elementTypes.forEach { registerSchema(it) }
+    else -> Unit
   }
 
   /**
@@ -92,6 +93,15 @@ data class Plan(
     val annotations: List<Annotation> = emptyList(),
     val expression: Expression<*>? = null
   ) {
+    init {
+      val actor = annotations.find { it.name == "actor" }?.getStringParam("name") ?: ""
+      if (actor.findAnyOf(FORBIDDEN_STRINGS) != null) {
+        throw IllegalArgumentException(
+          "Actor annotation $actor contains illegal character in set $FORBIDDEN_STRINGS."
+        )
+      }
+    }
+
     val storageKey: StorageKey
       get() = handle.storageKey
 
@@ -100,6 +110,11 @@ data class Plan(
         return annotations.find { it.name == "ttl" }?.let {
           return Ttl.fromString(it.getStringParam("value"))
         } ?: Ttl.Infinite()
+      }
+
+    val actor: String?
+      get() {
+        return annotations.find { it.name == "actor" }?.getStringParam("name")
       }
 
     companion object {

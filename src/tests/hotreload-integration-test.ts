@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -10,12 +10,7 @@
 
 import {assert} from '../platform/chai-web.js';
 import {Manifest} from '../runtime/manifest.js';
-import {Arc} from '../runtime/arc.js';
-import {ArcId} from '../runtime/id.js';
 import {Loader} from '../platform/loader.js';
-import {SlotComposer} from '../runtime/slot-composer.js';
-import {FakePecFactory} from '../runtime/fake-pec-factory.js';
-import {handleForStoreInfo} from '../runtime/storage/storage.js';
 import {SingletonType, EntityType} from '../types/lib-types.js';
 import {Runtime} from '../runtime/runtime.js';
 
@@ -36,57 +31,6 @@ class StubWasmLoader extends Loader {
 }
 
 describe('Hot Code Reload for JS Particle', async () => {
-  it('updates model and template', async () =>{
-    const context = await Manifest.parse(`
-      particle A in 'A.js'
-        root: consumes Slot
-
-      recipe
-        slot0: slot 'rootslotid-root'
-        A
-          root: consumes slot0`);
-    const loader = new Loader(null, {
-      'A.js': `defineParticle(({UiParticle}) => {
-        return class extends UiParticle {
-          get template() { return 'Hello <span>{{name}}</span>, old age: <span>{{age}}</span>'; }
-
-          render() {
-            return {name: 'Jack', age: '10'};
-          }
-        };
-      });`
-    });
-
-    const runtime = new Runtime({loader, context});
-    const arc = runtime.newArc('HotReload');
-
-    const [recipe] = arc.context.recipes;
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
-    await arc.instantiate(recipe);
-    await arc.idle;
-
-    // TODO(sjmiles): render data no longer captured by slot objects
-    //const slotConsumer = slotComposer.consumers[0] as HeadlessSlotDomConsumer;
-    //assert.deepStrictEqual(slotConsumer.getRendering().model,  {name: 'Jack', age: '10'});
-    //assert.deepStrictEqual(slotConsumer._content.template, `Hello <span>{{name}}</span>, old age: <span>{{age}}</span>`);
-
-    loader.staticMap['A.js'] = `defineParticle(({UiParticle}) => {
-      return class extends UiParticle {
-        get template() { return 'Hello <span>{{name}}</span>, new age: <span>{{age}}</span>'; }
-
-        render() {
-          return {name: 'Jack', age: '15'};
-        }
-      };
-    });`;
-    arc.peh.reload(arc.peh.particles);
-    await arc.idle;
-
-    // TODO(sjmiles): render data no longer captured by slot objects
-    //assert.deepStrictEqual(slotConsumer.getRendering().model,  {name: 'Jack', age: '15'});
-    //assert.deepStrictEqual(slotConsumer._content.template, `Hello <span>{{name}}</span>, new age: <span>{{age}}</span>`);
-  });
-
   it('ensures new handles are working', async () => {
     const context = await Manifest.parse(`
       schema Person
@@ -125,21 +69,21 @@ describe('Hot Code Reload for JS Particle', async () => {
     });
 
     const runtime = new Runtime({context, loader});
-    const arc = runtime.newArc('test');
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test'});
     const personType = context.findTypeByName('Person') as EntityType;
 
-    const personStoreIn = await arc.createStore(new SingletonType(personType));
-    const personStoreOut = await arc.createStore(new SingletonType(personType));
-    const personHandleIn = await handleForStoreInfo(personStoreIn, arc);
-    const personHandleOut = await handleForStoreInfo(personStoreOut, arc);
+    const personStoreIn = await arcInfo.createStoreInfo(new SingletonType(personType));
+    const personStoreOut = await arcInfo.createStoreInfo(new SingletonType(personType));
+    const personHandleIn = await runtime.host.handleForStoreInfo(personStoreIn, arcInfo);
+    const personHandleOut = await runtime.host.handleForStoreInfo(personStoreOut, arcInfo);
     await personHandleIn.setFromData({name: 'Jack', age: 15});
 
     const recipe = context.recipes[0];
     recipe.handles[0].mapToStorage(personStoreIn);
     recipe.handles[1].mapToStorage(personStoreOut);
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
 
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arcInfo, recipe);
+    const arc = runtime.getArcById(arcInfo.id);
     await arc.idle;
     assert.deepStrictEqual(await personHandleOut.fetch() as {}, {name: 'Jack', age: 30});
 
@@ -183,11 +127,7 @@ describe('Hot Code Reload for WASM Particle', async () => {
     const context = await Manifest.load(manifestFile, loader);
 
     const runtime = new Runtime({loader, context});
-    const arc = runtime.newArc('HotReload');
-
-    const recipe = context.recipes.filter(r => r.name === 'HotReloadRecipe')[0];
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
-    await arc.instantiate(recipe);
+    const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'HotReload', planName: 'HotReloadTest'})).id);
     await arc.idle;
 
     // TODO(sjmiles): render data no longer captured by slot objects
@@ -209,21 +149,21 @@ describe('Hot Code Reload for WASM Particle', async () => {
     const context = await Manifest.load(manifestFile, loader);
 
     const runtime = new Runtime({loader, context});
-    const arc = runtime.newArc('test');
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test'});
     const personType = context.findTypeByName('Person') as EntityType;
 
-    const personStoreIn = await arc.createStore(new SingletonType(personType));
-    const personStoreOut = await arc.createStore(new SingletonType(personType));
-    const personHandleIn = await handleForStoreInfo(personStoreIn, arc);
-    const personHandleOut = await handleForStoreInfo(personStoreOut, arc);
+    const personStoreIn = await arcInfo.createStoreInfo(new SingletonType(personType));
+    const personStoreOut = await arcInfo.createStoreInfo(new SingletonType(personType));
+    const personHandleIn = await runtime.host.handleForStoreInfo(personStoreIn, arcInfo);
+    const personHandleOut = await runtime.host.handleForStoreInfo(personStoreOut, arcInfo);
     await personHandleIn.setFromData({name: 'Jack', age: 15});
 
     const recipe = context.recipes.filter(r => r.name === 'ReloadHandleRecipe')[0];
     recipe.handles[0].mapToStorage(personStoreIn);
     recipe.handles[1].mapToStorage(personStoreOut);
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
 
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arcInfo, recipe);
+    const arc = runtime.getArcById(arcInfo.id);
     await arc.idle;
     assert.deepStrictEqual(await personHandleOut.fetch() as {}, {name: 'Jack', age: 30});
 

@@ -1,7 +1,15 @@
+/*
+ * Copyright 2021 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 package arcs.android.crdt
 
-import android.os.Parcel
-import arcs.android.util.readProto
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
@@ -10,12 +18,14 @@ import arcs.core.crdt.CrdtSingleton
 @Suppress("UNCHECKED_CAST")
 fun CrdtEntityProto.Data.toData() = CrdtEntity.Data(
   versionMap = fromProto(versionMap),
-  singletons = singletonsMap.mapValues {
-    CrdtSingleton.createWithData(it.value.toData()) as CrdtSingleton<CrdtEntity.Reference>
-  },
-  collections = collectionsMap.mapValues {
-    CrdtSet.createWithData(it.value.toData()) as CrdtSet<CrdtEntity.Reference>
-  },
+  // We are interning entity field names after deserialization to share strings across instances.
+  singletons = singletonsMap.map { (key, value) ->
+    key.intern() to
+      CrdtSingleton.createWithData(value.toData()) as CrdtSingleton<CrdtEntity.Reference>
+  }.toMap(),
+  collections = collectionsMap.map { (key, value) ->
+    key.intern() to CrdtSet.createWithData(value.toData()) as CrdtSet<CrdtEntity.Reference>
+  }.toMap(),
   creationTimestamp = creationTimestampMs,
   expirationTimestamp = expirationTimestampMs,
   id = id
@@ -122,11 +132,3 @@ fun CrdtEntity.Operation.toProto(): CrdtEntityProto.Operation {
   }
   return proto.build()
 }
-
-/** Reads a [CrdtEntity.Data] out of a [Parcel]. */
-fun Parcel.readCrdtEntityData(): CrdtEntity.Data? =
-  readProto(CrdtEntityProto.Data.getDefaultInstance())?.toData()
-
-/** Reads a [CrdtEntity.Operation] out of a [Parcel]. */
-fun Parcel.readCrdtEntityOperation(): CrdtEntity.Operation? =
-  readProto(CrdtEntityProto.Operation.getDefaultInstance())?.toOperation()

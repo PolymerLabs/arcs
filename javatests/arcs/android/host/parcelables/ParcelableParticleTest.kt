@@ -21,11 +21,12 @@ import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,7 +36,7 @@ import org.junit.runner.RunWith
 class ParcelableParticleTest {
   @Before
   fun setup() {
-    StorageKeyParser.reset(
+    StorageKeyManager.GLOBAL_INSTANCE.reset(
       ReferenceModeStorageKey,
       RamDiskStorageKey,
       VolatileStorageKey
@@ -44,6 +45,73 @@ class ParcelableParticleTest {
 
   @Test
   fun particle_parcelableRoundTrip_works() {
+    val particle = testParticle()
+
+    val marshalled = with(Parcel.obtain()) {
+      writeTypedObject(particle.toParcelable(), 0)
+      marshall()
+    }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      readTypedObject(requireNotNull(ParcelableParticle.CREATOR))
+    }
+
+    assertThat(unmarshalled?.describeContents()).isEqualTo(0)
+    assertThat(unmarshalled?.actual).isEqualTo(particle)
+  }
+
+  @Test
+  fun array_parcelableRoundTrip_works() {
+    val particle = testParticle().toParcelable()
+    val arr = arrayOf(particle, particle)
+    val marshalled = with(Parcel.obtain()) {
+      writeTypedArray(arr, 0)
+      marshall()
+    }
+
+    val unmarshalled = with(Parcel.obtain()) {
+      unmarshall(marshalled, 0, marshalled.size)
+      setDataPosition(0)
+      createTypedArray(requireNotNull(ParcelableParticle.CREATOR))
+    }
+
+    assertThat(unmarshalled?.size).isEqualTo(2)
+    assertThat(unmarshalled?.get(0)?.actual).isEqualTo(particle.actual)
+  }
+
+  @Test
+  fun handle_malformedParcelMissingName_fails() {
+    val malformedParcel = Parcel.obtain().apply {
+      writeInt(1) // Says value to come is non-empty.
+      writeString(null) // name
+      writeString("location") // location
+      writeMap(null) // handles
+    }
+
+    malformedParcel.setDataPosition(0)
+    assertFailsWith<IllegalArgumentException>("missing name") {
+      malformedParcel.readTypedObject(requireNotNull(ParcelableParticle))
+    }
+  }
+
+  @Test
+  fun handle_malformedParcelMissingLocation_fails() {
+    val malformedParcel = Parcel.obtain().apply {
+      writeInt(1) // Says value to come is non-empty.
+      writeString("name") // name
+      writeString(null) // location
+      writeMap(null) // handles
+    }
+
+    malformedParcel.setDataPosition(0)
+    assertFailsWith<IllegalArgumentException>("missing location") {
+      malformedParcel.readTypedObject(requireNotNull(ParcelableParticle))
+    }
+  }
+
+  private fun testParticle(): Plan.Particle {
     val personSchema = Schema(
       setOf(SchemaName("Person")),
       SchemaFields(mapOf("name" to Text), emptyMap()),
@@ -58,19 +126,6 @@ class ParcelableParticleTest {
       personType
     )
 
-    val particle = Plan.Particle("Foobar", "foo.bar.Foobar", mapOf("foo" to connection))
-
-    val marshalled = with(Parcel.obtain()) {
-      writeTypedObject(particle.toParcelable(), 0)
-      marshall()
-    }
-
-    val unmarshalled = with(Parcel.obtain()) {
-      unmarshall(marshalled, 0, marshalled.size)
-      setDataPosition(0)
-      readTypedObject(requireNotNull(ParcelableParticle.CREATOR))
-    }
-
-    assertThat(unmarshalled?.actual).isEqualTo(particle)
+    return Plan.Particle("Foobar", "foo.bar.Foobar", mapOf("foo" to connection))
   }
 }

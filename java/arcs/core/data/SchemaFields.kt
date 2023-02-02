@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -41,6 +41,8 @@ sealed class FieldType(
 
   data class ListOf(val primitiveType: FieldType) : FieldType(Tag.List)
 
+  data class NullableOf(val innerType: FieldType) : FieldType(Tag.Nullable)
+
   data class InlineEntity(val schemaHash: String) : FieldType(Tag.InlineEntity)
 
   enum class Tag {
@@ -48,8 +50,14 @@ sealed class FieldType(
     EntityRef,
     Tuple,
     List,
-    InlineEntity
+    InlineEntity,
+    Nullable
   }
+
+  /**
+   * A helper method that returns a nullable of the type.
+   */
+  fun nullable(): FieldType = NullableOf(this)
 
   // Convenient aliases for all of the primitive field types.
   companion object {
@@ -64,6 +72,7 @@ sealed class FieldType(
     val Float = Primitive(PrimitiveType.Float)
     val Double = Primitive(PrimitiveType.Double)
     val BigInt = Primitive(PrimitiveType.BigInt)
+    val Duration = Primitive(PrimitiveType.Duration)
     val Instant = Primitive(PrimitiveType.Instant)
   }
 }
@@ -95,7 +104,8 @@ enum class PrimitiveType(val id: kotlin.Int) {
   Float(8),
   Double(9),
   BigInt(10),
-  Instant(11);
+  Instant(11),
+  Duration(12);
 
   fun primitiveTypeId() = id.toLong()
 }

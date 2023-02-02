@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -12,7 +12,7 @@ import {PecFactory} from '../runtime/particle-execution-context.js';
 import {Id, IdGenerator} from '../runtime/id.js';
 import {workerPool} from '../runtime/worker-pool.js';
 
-const WORKER_PATH = `https://$build/worker.js`;
+const WORKER_PATH = `https://$worker/worker.js`;
 
 export const pecIndustry = (loader): PecFactory => {
   // worker paths are relative to worker location, remap urls from there to here

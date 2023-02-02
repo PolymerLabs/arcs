@@ -10,7 +10,4 @@ package(default_visibility = ["//java/arcs:allowed-packages"])
 arcs_kt_library(
     name = "type",
     srcs = glob(["*.kt"]),
-    deps = [
-        "//java/arcs/core/common",  # buildcleaner: keep
-    ],
 )

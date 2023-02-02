@@ -29,7 +29,7 @@ class SlowRamDiskDriverProvider(
     storageKey: StorageKey,
     dataClass: KClass<Data>,
     type: Type
-  ): Driver<Data> = VolatileDriverImpl.create(storageKey, memory)
+  ): Driver<Data> = VolatileDriverImpl.create(storageKey, dataClass, memory)
 
   override suspend fun removeAllEntities() = Unit
 
@@ -78,6 +78,8 @@ class SlowVolatileMemory(
     waitOp(MemoryOp.Update, key)
     return delegate.update(key, updater)
   }
+
+  override fun countEntities(): Long = delegate.countEntities()
 
   override suspend fun clear() {
     waitOp(MemoryOp.Clear, null)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -20,7 +20,7 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.DirectStore.State.Name.AwaitingDriverModel
 import arcs.core.storage.DirectStore.State.Name.AwaitingResponse
 import arcs.core.storage.DirectStore.State.Name.Idle
-import arcs.core.storage.util.randomCallbackManager
+import arcs.core.storage.util.callbackManager
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
 import kotlin.coroutines.coroutineContext
@@ -56,9 +56,6 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
   private val writeBack: WriteBack,
   private val devTools: DevToolsForDirectStore?
 ) : ActiveStore<Data, Op, T>(options) {
-  override val versionToken: String?
-    get() = driver.token
-
   // TODO(#5551): Consider including a hash of state.value and storage key in log prefix.
   private val log = TaggedLog { "DirectStore" }
 
@@ -83,7 +80,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
   private val stateChannel =
     ConflatedBroadcastChannel<State<Data>>(State.Idle(idleDeferred, driver))
   private val stateFlow = stateChannel.asFlow()
-  private val callbackManager = randomCallbackManager<ProxyMessage<Data, Op, T>>(
+  private val callbackManager = callbackManager<ProxyMessage<Data, Op, T>>(
     "direct",
     Random
   )
@@ -95,7 +92,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
   override suspend fun idle() {
     /**
-     * TODO: tune the debounce window
+     * TODO(b/172498981): tune the debounce window
      * Once this is enabled, change [DirectStoreMuxer.idle] accordingly to use
      * simultaneous launches.
      */
@@ -104,14 +101,14 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
   fun getLocalData(): Data = synchronized(this) { localModel.data }
 
-  override suspend fun on(callback: ProxyCallback<Data, Op, T>): Int {
+  override suspend fun on(callback: ProxyCallback<Data, Op, T>): CallbackToken {
     val callbackInvoke = callback::invoke
     synchronized(callbackManager) {
       return callbackManager.register(callbackInvoke)
     }
   }
 
-  override suspend fun off(callbackToken: Int) {
+  override suspend fun off(callbackToken: CallbackToken) {
     synchronized(callbackManager) {
       callbackManager.unregister(callbackToken)
     }
@@ -120,7 +117,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
   /** Closes the store. Once closed, it cannot be re-opened. A new instance must be created. */
   override fun close() {
     synchronized(callbackManager) {
-      callbackManager.callbacks.clear()
+      callbackManager.clear()
       closeInternal()
     }
   }
@@ -150,6 +147,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
    * the message was accepted, a return value of `false` requires that the proxy send a model
    * sync.
    */
+  @Suppress("UNCHECKED_CAST")
   override suspend fun onProxyMessage(
     message: ProxyMessage<Data, Op, T>
   ) {
@@ -205,7 +203,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
       }
     }.also {
       log.verbose { "Model after proxy message: ${localModel.data}" }
-      devTools?.onDirectStoreProxyMessage(proxyMessage = message)
+      devTools?.onDirectStoreProxyMessage(proxyMessage = message as UntypedProxyMessage)
     }
   }
 
@@ -299,16 +297,14 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
   private suspend fun deliverCallbacks(thisChange: CrdtChange<Data, Op>, source: Int?) {
     when (thisChange) {
       is CrdtChange.Operations -> {
-        callbackManager.send(
-          message = ProxyMessage.Operations(thisChange.ops, source),
-          exceptTo = source
-        )
+        callbackManager.allCallbacksExcept(source).forEach { callback ->
+          callback(ProxyMessage.Operations(thisChange.ops, source))
+        }
       }
       is CrdtChange.Data -> {
-        callbackManager.send(
-          message = ProxyMessage.ModelUpdate(thisChange.data, source),
-          exceptTo = source
-        )
+        callbackManager.allCallbacksExcept(source).forEach { callback ->
+          callback(ProxyMessage.ModelUpdate(thisChange.data, source))
+        }
       }
     }
   }

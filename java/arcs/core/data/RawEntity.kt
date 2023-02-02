@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -42,6 +42,9 @@ data class RawEntity(
       }
     )
 
+  // Cached `hashCode` value.
+  private var hashCode: Int = UNINITIALIZED_HASH
+
   /** Iterates over of all field data (both singletons and collections). */
   val allData: Sequence<Map.Entry<FieldName, Any?>>
     get() = sequence {
@@ -64,8 +67,59 @@ data class RawEntity(
     expirationTimestamp
   )
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as RawEntity
+
+    if (id != other.id) return false
+    if (singletons != other.singletons) return false
+    if (collections != other.collections) return false
+    if (creationTimestamp != other.creationTimestamp) return false
+    if (expirationTimestamp != other.expirationTimestamp) return false
+
+    return true
+  }
+
+  /** Computes and caches `hashCode`. */
+  override fun hashCode(): Int {
+    if (UNINITIALIZED_HASH == hashCode) {
+      var result = id.hashCode()
+      result = 31 * result + singletons.hashCode()
+      result = 31 * result + collections.hashCode()
+      result = 31 * result + creationTimestamp.hashCode()
+      result = 31 * result + expirationTimestamp.hashCode()
+
+      // If the hash happens to be the sentinel value, choose a different value.
+      if (UNINITIALIZED_HASH == result) {
+        result = 1
+      }
+      hashCode = result
+    }
+    return hashCode
+  }
+
+  // Override default toString method to output fields in deterministic (alphabetical) order.
+  override fun toString(): String {
+    val singletons = singletons.asSequence()
+      .sortedBy { it.key }
+      .joinToString(prefix = "{", postfix = "}") { (key, value) ->
+        "$key=$value"
+      }
+    val collections = collections.asSequence()
+      .sortedBy { it.key }
+      .joinToString(prefix = "{", postfix = "}") { (key, values) ->
+        val sortedElements = values.sortedBy { it.toString() }
+        "$key=$sortedElements"
+      }
+    return "RawEntity(id=$id, creationTimestamp=$creationTimestamp, " +
+      "expirationTimestamp=$expirationTimestamp, singletons=$singletons, collections=$collections)"
+  }
+
   companion object {
     const val NO_REFERENCE_ID = "NO REFERENCE ID"
     const val UNINITIALIZED_TIMESTAMP: Long = -1
+    const val UNINITIALIZED_HASH: Int = 0
   }
 }

@@ -39,7 +39,9 @@ load(
 )
 load(
     ":util.bzl",
+    "IS_BAZEL",
     "create_build_test",
+    "java_src_dep",
     "manifest_only",
     "merge_lists",
     "replace_arcs_suffix",
@@ -51,18 +53,19 @@ _JS_SUFFIX = "-js"
 
 _KT_SUFFIX = "-kt"
 
-IS_BAZEL = not hasattr(native, "genmpm")
-
 # Kotlin Compiler Options
 COMMON_KOTLINC_OPTS = [
     "-Xallow-kotlin-package",
     "-Xinline-classes",
     "-Xmulti-platform",
+    "-Xopt-in=kotlin.RequiresOptIn",
     "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
 ]
 
 JVM_KOTLINC_OPTS = [
     "-Xskip-runtime-version-check",
+    # TODO(b/173178285): Opt out of IR backend for now.
+    "-Xno-use-ir",
 ]
 
 # Here for future use, bazel (not blaze) specific flags
@@ -82,6 +85,11 @@ ALL_PLATFORMS = [
     "wasm",
 ]
 
+# runtime_deps for all kotlin test suite rules.
+_TEST_RUNTIME_DEPS = [
+    java_src_dep("//third_party/java_src/arcs/java/arcs/flags/testing"),
+]
+
 # Default set of platforms for Kotlin libraries.
 # TODO: re-enable JS after https://github.com/PolymerLabs/arcs/issues/4772 fixed
 DEFAULT_LIBRARY_PLATFORMS = ["jvm"]
@@ -89,12 +97,24 @@ DEFAULT_LIBRARY_PLATFORMS = ["jvm"]
 # Default set of platforms for Kotlin particles.
 DEFAULT_PARTICLE_PLATFORMS = ["jvm"]
 
+def arcs_java_library(**kwargs):
+    """Wrapper around java_library for Arcs.
+
+    Args:
+      **kwargs: Set of args to forward to java_library
+    """
+    if IS_BAZEL:
+        kwargs.pop("constraints", [])
+    java_library(**kwargs)
+    create_build_test(kwargs["name"])
+
 def arcs_kt_jvm_library(**kwargs):
     """Wrapper around kt_jvm_library for Arcs.
 
     Args:
       **kwargs: Set of args to forward to kt_jvm_library
     """
+    build_kt_android_library = kwargs.pop("build_kt_android_library", False)
     add_android_constraints = kwargs.pop("add_android_constraints", True)
     constraints = kwargs.pop("constraints", ["android"] if add_android_constraints else [])
     disable_lint_checks = kwargs.pop("disable_lint_checks", [])
@@ -127,12 +147,17 @@ def arcs_kt_jvm_library(**kwargs):
         java_library(
             name = name,
             exports = exports,
-            visibility = kwargs["visibility"],
+            visibility = kwargs.get("visibility", None),
             testonly = kwargs.get("testonly", False),
             **java_kwargs
         )
 
-    kt_jvm_library(**kwargs)
+    if build_kt_android_library:
+        kwargs.pop("constraints")
+        kt_android_library(**kwargs)
+    else:
+        kt_jvm_library(**kwargs)
+
     create_build_test(kwargs["name"])
 
 def arcs_kt_android_library(**kwargs):
@@ -193,6 +218,7 @@ def arcs_kt_library(
         exports = None,
         visibility = None,
         testonly = 0,
+        build_kt_android_library = False,
         add_android_constraints = True):
     """Declares Kotlin library targets for multiple platforms.
 
@@ -204,6 +230,7 @@ def arcs_kt_library(
           are: "jvm", "js", "wasm". Defaults to "jvm" and "js".
       exports: List; Optional list of deps to export from this build rule.
       visibility: List; List of visibilities
+      build_kt_android_library: Use the kt_android_library build rule to build.
       add_android_constraints: Adds `constraints = ["android"]` to `kt_jvm_library` rule.
       testonly: Marks this target to be used only for tests.
     """
@@ -216,6 +243,7 @@ def arcs_kt_library(
             testonly = testonly,
             # Exclude any wasm-specific srcs.
             srcs = [src for src in srcs if not src.endswith(".wasm.kt")],
+            build_kt_android_library = build_kt_android_library,
             add_android_constraints = add_android_constraints,
             visibility = visibility,
             exports = exports,
@@ -388,7 +416,8 @@ def arcs_kt_android_test_suite(
         deps = [],
         data = [],
         size = "small",
-        flaky = False):
+        flaky = False,
+        shard_count = None):
     """Defines Kotlin Android test targets for a directory.
 
     Defines a Kotlin Android library (kt_android_library) for all of the sources
@@ -408,6 +437,7 @@ def arcs_kt_android_test_suite(
         "medium", "large".
       flaky: boolean indicating whether the test is flaky and should be re-run
         on failure.
+      shard_count: optional number of parallel shards used to run the test
     """
     if not srcs:
         srcs = native.glob(["*.kt"])
@@ -424,6 +454,9 @@ def arcs_kt_android_test_suite(
     if IS_BAZEL:
         android_local_test_deps.append("@robolectric//bazel:android-all")
 
+        # Don't shard any tests on bazel, since we likely don't have good parallelism.
+        shard_count = None
+
     for src in srcs:
         class_name = src[:-3]
         android_local_test(
@@ -432,8 +465,10 @@ def arcs_kt_android_test_suite(
             flaky = flaky,
             data = data,
             manifest = manifest,
+            shard_count = shard_count,
             tags = tags,
             test_class = "%s.%s" % (package, class_name),
+            runtime_deps = _TEST_RUNTIME_DEPS,
             deps = android_local_test_deps,
         )
 
@@ -488,7 +523,7 @@ def arcs_kt_jvm_test_suite(
             data = data,
             tags = tags,
             test_class = "%s.%s" % (package, class_name),
-            runtime_deps = [":%s" % name],
+            runtime_deps = [":%s" % name] + _TEST_RUNTIME_DEPS,
         )
 
 def arcs_kt_plan(
@@ -498,6 +533,8 @@ def arcs_kt_plan(
         data = [],
         deps = [],
         platforms = ["jvm"],
+        build_kt_android_library = False,
+        add_android_constraints = True,
         visibility = None):
     """Converts recipes from manifests into Kotlin plans.
 
@@ -531,6 +568,8 @@ def arcs_kt_plan(
       data: list of Arcs manifests needed at runtime
       deps: list of dependencies (jars)
       platforms: list of target platforms (currently, `jvm` and `wasm` supported).
+      build_kt_android_library: Use the kt_android_library build rule to build.
+      add_android_constraints: Adds `constraints = ["android"]` to `kt_jvm_library` rule.
       visibility: visibility of the generated arcs_kt_library
 
     Returns:
@@ -560,6 +599,8 @@ def arcs_kt_plan(
         platforms = platforms,
         visibility = visibility,
         deps = arcs_sdk_deps + deps,
+        build_kt_android_library = build_kt_android_library,
+        add_android_constraints = add_android_constraints,
     )
     return {"outs": outs, "deps": arcs_sdk_deps}
 
@@ -619,6 +660,8 @@ def arcs_kt_schema(
         deps = [],
         platforms = ["jvm"],
         test_harness = False,
+        build_kt_android_library = False,
+        add_android_constraints = True,
         visibility = None):
     """Generates a Kotlin schemas, entities, specs, handle holders, and base particles for input .arcs manifest files.
 
@@ -647,6 +690,8 @@ def arcs_kt_schema(
       deps: list of imported manifests
       platforms: list of target platforms (currently, `jvm` and `wasm` supported).
       test_harness: whether to generate a test harness target
+      build_kt_android_library: Use the kt_android_library build rule to build.
+      add_android_constraints: Adds `constraints = ["android"]` to `kt_jvm_library` rule.
       visibility: visibility of the generated arcs_kt_library
 
     Returns:
@@ -688,8 +733,10 @@ def arcs_kt_schema(
         platforms = platforms,
         deps = arcs_sdk_deps,
         visibility = visibility,
+        build_kt_android_library = build_kt_android_library,
+        add_android_constraints = add_android_constraints,
     )
-    outdeps = outdeps + arcs_sdk_deps
+    outdeps += arcs_sdk_deps
 
     if test_harness:
         test_harness_outs = []
@@ -712,6 +759,8 @@ def arcs_kt_schema(
             name = name + "_test_harness",
             testonly = 1,
             srcs = test_harness_outs,
+            build_kt_android_library = build_kt_android_library,
+            add_android_constraints = add_android_constraints,
             deps = arcs_sdk_deps + [
                 ":" + name,
                 "//third_party/java/arcs:testing",
@@ -727,6 +776,8 @@ def arcs_kt_gen(
         data = [],
         deps = [],
         platforms = ["jvm"],
+        build_kt_android_library = False,
+        add_android_constraints = True,
         test_harness = False,
         visibility = None):
     """Generates Kotlin files for the given .arcs files.
@@ -742,6 +793,15 @@ def arcs_kt_gen(
       platforms: list of target platforms (currently, `jvm` and `wasm` supported).
       test_harness: whether to generate a test harness target
       visibility: visibility of the generated arcs_kt_library
+      add_android_constraints: Add the "android" value to the constarints set
+        when using the kt_jvm_library build rule.
+      build_kt_android_library: Use the kt_android_library build rule when the
+        "android" constraint it present. Used to prevent warnings/errors in
+         environements that disallow depending on JVM targets from Android
+         targets. This could be removed in favor of always using
+         kt_android_library when add_android_constraints is present, but then a
+         large number of Arcs rules will need to be updated so that JVM targets
+         don't use Android dependencies.
     """
 
     manifest_name = name + "_manifest"
@@ -774,6 +834,8 @@ def arcs_kt_gen(
         platforms = platforms,
         test_harness = test_harness,
         visibility = visibility,
+        build_kt_android_library = build_kt_android_library,
+        add_android_constraints = add_android_constraints,
     )
 
     plan = arcs_kt_plan(
@@ -784,6 +846,8 @@ def arcs_kt_gen(
         deps = deps + [":" + schema_name],
         platforms = platforms,
         visibility = visibility,
+        build_kt_android_library = build_kt_android_library,
+        add_android_constraints = add_android_constraints,
     )
 
     # generates combined library. This allows developers to more easily see what is generated.
@@ -793,30 +857,32 @@ def arcs_kt_gen(
         platforms = platforms,
         deps = depset(schema["deps"] + plan["deps"] + manifest_only(deps, inverse = True)).to_list(),
         visibility = visibility,
+        build_kt_android_library = build_kt_android_library,
+        add_android_constraints = add_android_constraints,
     )
 
 register_extension_info(
     extension = arcs_kt_gen,
-    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
+    label_regex_for_dep = "{extension_name}\\-kt",
 )
 register_extension_info(
     extension = arcs_kt_android_test_suite,
-    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
+    label_regex_for_dep = "{extension_name}\\-kt",
 )
 
 register_extension_info(
     extension = arcs_kt_jvm_library,
-    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
+    label_regex_for_dep = "{extension_name}\\-kt",
 )
 
 register_extension_info(
     extension = arcs_kt_jvm_test_suite,
-    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
+    label_regex_for_dep = "{extension_name}\\-kt",
 )
 
 register_extension_info(
     extension = arcs_kt_library,
-    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
+    label_regex_for_dep = "{extension_name}\\-kt",
 )
 
 register_extension_info(
@@ -831,7 +897,7 @@ register_extension_info(
 
 register_extension_info(
     extension = arcs_kt_particles,
-    label_regex_for_dep = "{extension_name}\\-kt(_DO_NOT_DEPEND_JVM)?",
+    label_regex_for_dep = "{extension_name}\\-kt",
 )
 
 def _check_platforms(platforms):

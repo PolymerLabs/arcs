@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Arc} from '../runtime/arc.js';
+import {ArcInfo} from '../runtime/arc-info.js';
 import {PlanningResult, SerializableGeneration} from './plan/planning-result.js';
 import {Suggestion} from './plan/suggestion.js';
 import {VisibilityOptions} from './plan/plan-consumer.js';
@@ -21,7 +21,7 @@ export interface PlannerInspectorFactory {
  * Planner interface exposed to developer tools.
  */
 export interface InspectablePlanner {
-  readonly arc: Arc;
+  readonly arcInfo: ArcInfo;
   forceReplan?(): Promise<void>;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -123,7 +123,7 @@ class ParcelableTypeTest {
 
   @Test
   fun parcelableRoundtrip_works_forTupleType() {
-    val tupleType = TupleType.of(EntityType(entitySchema), TypeVariable("a"))
+    val tupleType = TupleType(EntityType(entitySchema), TypeVariable("a"))
 
     val marshalled = with(Parcel.obtain()) {
       writeType(tupleType, 0)

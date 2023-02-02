@@ -69,6 +69,9 @@ particle P
     chr: Char,
     flt: Float,
     dbl: Double,
+    bi: BigInt,
+    inst: Instant,
+    dur: Duration,
   }
 -----[results]-----
 arcs.core.data.Schema(
@@ -81,11 +84,14 @@ arcs.core.data.Schema(
             "lng" to arcs.core.data.FieldType.Long,
             "chr" to arcs.core.data.FieldType.Char,
             "flt" to arcs.core.data.FieldType.Float,
-            "dbl" to arcs.core.data.FieldType.Double
+            "dbl" to arcs.core.data.FieldType.Double,
+            "bi" to arcs.core.data.FieldType.BigInt,
+            "inst" to arcs.core.data.FieldType.Instant,
+            "dur" to arcs.core.data.FieldType.Duration
         ),
         collections = emptyMap()
     ),
-    "b552b5ba7dac0edbc0924d52cc97f82705064921",
+    "d2595c159a3537931c9e3981fbad224e2875970d",
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )

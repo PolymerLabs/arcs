@@ -5,7 +5,7 @@ import arcs.core.data.Plan
 import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.ParticleContext
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -22,7 +22,6 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScope
@@ -80,7 +79,7 @@ import org.junit.runners.model.Statement
  *
  * @property factory lambda instantiating a particle under test
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 open class BaseTestHarness<P : Particle>(
   private val factory: (CoroutineScope) -> P,
   private val specs: List<HandleSpec>
@@ -124,7 +123,7 @@ open class BaseTestHarness<P : Particle>(
 
     val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
     scheduler = schedulerProvider("testArc_${this.javaClass.simpleName}")
-    val handleManager = EntityHandleManager(
+    val handleManager = HandleManagerImpl(
       arcId = "testHarness",
       hostId = "testHarnessHost",
       time = JvmTime,
@@ -183,7 +182,7 @@ open class BaseTestHarness<P : Particle>(
       .that(::particle.isInitialized).isFalse()
     particle = factory(scope)
     val plan = Plan.Particle("TestParticle", "", mapOf())
-    val context = ParticleContext(particle, plan, scheduler)
+    val context = ParticleContext(particle, plan)
 
     particleHandles.forEach { (name, handle) ->
       particle.handles.setHandle(name, handle)
@@ -191,12 +190,10 @@ open class BaseTestHarness<P : Particle>(
     }
 
     // Particle.onFirstStart, Particle.onStart
-    context.initParticle()
+    context.initParticle(scheduler)
 
     // Handle.onReady, Particle.onReady
-    val gate = Job()
-    context.runParticle { gate.complete() }
-    gate.join()
+    context.runParticleAsync(scheduler).await()
 
     // Write-only particle handles don't sync their proxies and their harness handle
     // counterparts don't participate in the normal lifecycle process, so harness handle

@@ -11,16 +11,16 @@
 import {assert} from '../../platform/assert-web.js';
 import {now} from '../../platform/date-web.js';
 import {logsFactory} from '../../platform/logs-factory.js';
-import {Arc} from '../../runtime/arc.js';
+import {ArcInfo} from '../../runtime/arc-info.js';
 import {Planner, Generation} from '../planner.js';
 import {RecipeIndex} from '../recipe-index.js';
-import {Speculator} from '../speculator.js';
 import {InitSearch} from '../strategies/init-search.js';
 import {StrategyDerived} from '../strategizer.js';
 import {PlanningResult} from './planning-result.js';
 import {Suggestion} from './suggestion.js';
 import {PlannerInspector} from '../planner-inspector.js';
-import {ActiveSingletonEntityStore, SingletonEntityHandle, handleForActiveStore} from '../../runtime/storage/storage.js';
+import {ActiveSingletonEntityStore, SingletonEntityHandle} from '../../runtime/storage/storage.js';
+import {Runtime} from '../../runtime/runtime.js';
 
 const defaultTimeoutMs = 5000;
 
@@ -38,34 +38,31 @@ type SuggestionOptions = {
 };
 
 export class PlanProducer {
-  arc: Arc;
-  result: PlanningResult;
   planner: Planner|null = null;
   recipeIndex: RecipeIndex;
-  speculator: Speculator;
   needReplan = false;
   replanOptions: SuggestionOptions = {};
   _isPlanning = false;
   stateChangedCallbacks: ((isPlanning: boolean) => void)[] = [];
   search: string;
-  searchStore?: ActiveSingletonEntityStore;
-  handle?: SingletonEntityHandle;
   searchStoreCallbackId: number;
   debug: boolean;
   noSpecEx: boolean;
-  inspector?: PlannerInspector;
 
-  constructor(arc: Arc, result: PlanningResult, searchStore?: ActiveSingletonEntityStore, inspector?: PlannerInspector, {debug = false, noSpecEx = false} = {}) {
-    assert(result, 'result cannot be null');
-    assert(arc, 'arc cannot be null');
-    this.arc = arc;
-    this.result = result;
-    this.recipeIndex = RecipeIndex.create(this.arc);
-    this.speculator = new Speculator();
-    this.searchStore = searchStore;
-    this.inspector = inspector;
+  constructor(
+    readonly arcInfo: ArcInfo,
+    readonly runtime: Runtime,
+    readonly result: PlanningResult,
+    readonly searchStore?: ActiveSingletonEntityStore,
+    readonly searchHandle?: SingletonEntityHandle,
+    readonly inspector?: PlannerInspector,
+    {debug = false, noSpecEx = false} = {}
+  ) {
+    assert(this.result, 'result cannot be null');
+    assert(this.arcInfo, 'arcInfo cannot be null');
+    this.recipeIndex = RecipeIndex.create(this.arcInfo);
     if (this.searchStore) {
-      this.handle = handleForActiveStore(this.searchStore, this.arc);
+      assert(this.searchHandle);
       this.searchStoreCallbackId = this.searchStore.on(() => this.onSearchChanged());
     }
     this.debug = debug;
@@ -86,9 +83,9 @@ export class PlanProducer {
   }
 
   async onSearchChanged(): Promise<void> {
-    const values = JSON.parse((await this.handle.fetch()).current) || [];
+    const values = JSON.parse((await this.searchHandle.fetch()).current) || [];
 
-    const arcId = this.arc.id.idTreeAsString();
+    const arcId = this.arcInfo.id.idTreeAsString();
     const value = values.find(value => value.arc === arcId);
     if (!value) {
       return;
@@ -152,14 +149,14 @@ export class PlanProducer {
     const timestr = ((now() - time) / 1000).toFixed(2);
 
     if (suggestions) {
-      log(`[${this.arc.id.idTreeAsString()}] Produced ${suggestions.length} suggestions [elapsed=${timestr}s].`);
+      log(`[${this.arcInfo.id.idTreeAsString()}] Produced ${suggestions.length} suggestions [elapsed=${timestr}s].`);
       this.isPlanning = false;
 
       const serializedGenerations = this.debug ? PlanningResult.formatSerializableGenerations(generations) : [];
       if (this.result.merge({
           suggestions,
           generations: serializedGenerations,
-          contextual: this.replanOptions.contextual}, this.arc)) {
+          contextual: this.replanOptions.contextual}, this.arcInfo)) {
         // Store suggestions to store.
         await this.result.flush();
 
@@ -181,14 +178,14 @@ export class PlanProducer {
     let suggestions: Suggestion[] = [];
     assert(!this.planner, 'Planner must be null');
     this.planner = new Planner();
-    this.planner.init(this.arc, {
+    this.planner.init(this.arcInfo, {
+      runtime: this.runtime,
       strategies: options.strategies,
       strategyArgs: {
         contextual: options.contextual,
         search: options.search,
         recipeIndex: this.recipeIndex
       },
-      speculator: this.speculator,
       noSpecEx: this.noSpecEx
     });
 
@@ -203,9 +200,9 @@ export class PlanProducer {
 
   protected _cancelPlanning() {
     if (this.planner) {
+      this.planner.dispose();
       this.planner = null;
     }
-    this.speculator.dispose();
     this.needReplan = false;
     this.isPlanning = false; // using the setter method to trigger callbacks.
     log(`Cancel planning`);

@@ -16,6 +16,7 @@ import {Reference} from '../reference.js';
 import {StringEncoder, StringDecoder, DynamicBuffer} from '../wasm.js';
 import {BiMap} from '../../utils/lib-utils.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
+import {MockStorageFrontend} from '../storage/testing/test-storage.js';
 
 async function setup() {
   const manifest = await Manifest.parse(`
@@ -26,20 +27,21 @@ async function setup() {
       flg: Boolean
       ref: &Bar {a: Text}
     `);
-  const fooClass = Entity.createEntityClass(manifest.schemas.Foo, null);
+  const storageFrontend = new MockStorageFrontend();
+  const fooClass = Entity.createEntityClass(manifest.schemas.Foo, storageFrontend);
   const barType = EntityType.make(['Bar'], {a: 'Text'});
 
   const typeMap = new BiMap<string, EntityType>();
   const encoder = StringEncoder.create(fooClass.type);
-  const decoder = StringDecoder.create(fooClass.type, typeMap, null);
-  return {fooClass, barType, encoder, decoder, typeMap};
+  const decoder = StringDecoder.create(fooClass.type, typeMap, storageFrontend);
+  return {fooClass, barType, encoder, decoder, typeMap, storageFrontend};
 }
 
 describe('wasm', () => {
   it('entity packaging supports primitive field types and references', async () => {
-    const {fooClass, barType, encoder, decoder, typeMap} = await setup();
+    const {fooClass, barType, encoder, decoder, typeMap, storageFrontend} = await setup();
     const storageKey = 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}';
-    const ref = new Reference({id: 'i', entityStorageKey: storageKey}, new ReferenceType(barType), null);
+    const ref = new Reference({id: 'i', entityStorageKey: storageKey}, new ReferenceType(barType), storageFrontend);
     const foo = new fooClass({txt: 'abc', lnk: 'http://def', num: 37, flg: true, ref});
     Entity.identify(foo, 'test', null);
 
@@ -88,7 +90,7 @@ describe('wasm', () => {
       return foo;
     };
     const storageKey = 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}';
-    const ref = new Reference({id: 'r1', entityStorageKey: storageKey}, new ReferenceType(barType), null);
+    const ref = new Reference({id: 'r1', entityStorageKey: storageKey}, new ReferenceType(barType), new MockStorageFrontend());
     const f1 = make('id1', {txt: 'abc', lnk: 'http://def', num: 9.2, flg: true, ref});
     const f2 = make('id2|two', {});
     const f3 = make('!id:3!', {txt: 'def', num: -7});

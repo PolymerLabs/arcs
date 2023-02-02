@@ -120,6 +120,70 @@ describe('manifest parser', () => {
         B    //comment
       `);
   });
+  describe('parses block comments', () => {
+    it('parses recipes with a single block comment', () => {
+      parse(`
+        recipe
+          X: writes /*comment here*/ Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash`);
+    });
+    it('parses recipes with a single block comment with an extra star', () => {
+      parse(`
+        recipe
+          X: writes /*comment here**/ Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash`);
+    });
+    it('fails to parse recipes with unfinished block comments', () => {
+      assert.throws(() => {
+      parse(`
+        recipe
+          X: writes /*comment here Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash`);
+      }, 'Unfinished block comment');
+    });
+    it('fails to parse recipes with unfinished nested block comments', () => {
+      assert.throws(() => {
+      parse(`
+        recipe
+          X: writes /*comment /*here*/ Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash`);
+      }, 'Unfinished block comment');
+    });
+    it('parses recipes with block comments', () => {
+      parse(`
+        recipe
+          X: writes /*comment here*/ Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash /* block
+      comment here
+          */
+          a: b
+          a.a: b.b
+          X.a #tag: reads a.y
+      /* trailing block comment
+       * here
+       */`);
+    });
+    it('parses recipes with nested block comments', () => {
+      parse(`
+        recipe
+          X: writes /*comment /*here*/*/ Y
+          X.a: writes Y.a
+          &foo.bar: writes &far.#bash #fash /* block
+      /*comment*/ with inner /*'comments'*/ here
+          */
+          a: b
+          a.a: b.b
+          X.a #tag: reads a.y
+      /* trailing block comment
+       * /*here/ */
+       */`);
+    });
+  });
   it('parses recipes with recipe level connections', () => {
     parse(`
       recipe
@@ -142,6 +206,26 @@ describe('manifest parser', () => {
         description \`my store\`
       store Store1 of Person 'some-id' @7 in 'person.json'
       store Store2 of BigCollection<Person> in 'population.json'`);
+  });
+  it('fails to parse a particle handle with an unknown capability/direction', () => {
+    assert.throws(() => {
+        parse(`
+          particle MyParticle
+            foo: read MyThing`);
+      },
+      /Expected a direction \(reads, writes.*\) but "read" found\./,
+      'this parse should have failed, unknown capabilities/directions should not be accepted!'
+    );
+  });
+  it('fails to parse a recipe connection with an unknown capability/direction', () => {
+    assert.throws(() => {
+        parse(`
+          recipe MyParticle
+            foo: read bar`);
+      },
+      /Expected a direction \(reads, writes.*\) but "read" found\./,
+      'this parse should have failed, unknown capabilities/directions should not be accepted!'
+    );
   });
   it('fails to parse an argument list that use a reserved word as an identifier', () => {
     assert.throws(() => {

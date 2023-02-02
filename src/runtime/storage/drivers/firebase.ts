@@ -8,17 +8,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {StorageDriverProvider, DriverFactory} from './driver-factory.js';
+import {StorageDriverProvider} from './driver-factory.js';
 import {Driver, ReceiveMethod, Exists} from './driver.js';
 import {StorageKey} from '../storage-key.js';
-import {ArcId} from '../../id.js';
 import {RuntimeCacheService} from '../../runtime-cache.js';
 import {assert} from '../../../platform/assert-web.js';
 import {firebase} from '../../../../concrete-storage/firebase.js';
-import {StorageKeyParser} from '../storage-key-parser.js';
-import {CapabilitiesResolver} from '../../capabilities-resolver.js';
 import {Capabilities, Persistence, Shareable} from '../../capabilities.js';
 import {StorageKeyOptions, StorageKeyFactory} from '../../storage-key-factory.js';
+import {StorageRegistry} from '../storage-registry.js';
 
 export {firebase};
 
@@ -73,7 +71,7 @@ export class FirebaseAppCache {
   getApp(key: FirebaseStorageKey) {
     const keyAsString = key.toString();
     if (!this.appCache.has(keyAsString)) {
-      this.appCache.set(keyAsString, firebase.initializeApp(key));
+      this.appCache.set(keyAsString, firebase.initializeApp(key, `[salt${Math.random()}]`));
     }
     return this.appCache.get(keyAsString);
   }
@@ -209,7 +207,6 @@ export class FirebaseDriver<Data> extends Driver<Data> {
   }
 }
 
-
 export class FirebaseStorageDriverProvider implements StorageDriverProvider {
   protected readonly cacheService: RuntimeCacheService;
 
@@ -227,15 +224,17 @@ export class FirebaseStorageDriverProvider implements StorageDriverProvider {
     }
 
     const driver = new FirebaseDriver<Data>(storageKey, exists);
-    await driver.init(new FirebaseAppCache(this.cacheService));
+    const cache = new FirebaseAppCache(this.cacheService);
+    await driver.init(cache);
     return driver;
   }
 
-  static register(cacheService: RuntimeCacheService, options: FirebaseStorageKeyOptions) {
-    DriverFactory.register(new FirebaseStorageDriverProvider(cacheService));
-    StorageKeyParser.addParser(FirebaseStorageKey.protocol, FirebaseStorageKey.fromString);
+  static register(storageRegistry: StorageRegistry, cacheService: RuntimeCacheService, options: FirebaseStorageKeyOptions) {
+    const {driverFactory, storageKeyParser} = storageRegistry;
+    driverFactory.register(new FirebaseStorageDriverProvider(cacheService));
+    storageKeyParser.addParser(FirebaseStorageKey.protocol, FirebaseStorageKey.fromString);
     const {projectId, domain, apiKey} = options;
-    CapabilitiesResolver.registerStorageKeyFactory(new FirebaseStorageKeyFactory(options));
+    storageRegistry.registerStorageKeyFactory(new FirebaseStorageKeyFactory(options));
   }
 }
 
@@ -255,7 +254,7 @@ export class FirebaseStorageKeyFactory extends StorageKeyFactory {
 // If you want to test using the firebase driver you have three options.
 // (1) for (_slow_) manual testing, call FirebaseStorageDriverProvider.register()
 // somewhere at the beginning of your test; if you want to be hermetic,
-// call DriverFactory.clearRegistrationsForTesting() at the end.
+// call Runtime.resetDrivers() at the end.
 // (2) to use a mock firebase implementation and directly test the driver,
 // construct your driver using
 // FakeFirebaseStorageDriverProvider.newDriverForTesting(key, exists);
@@ -263,4 +262,4 @@ export class FirebaseStorageKeyFactory extends StorageKeyFactory {
 // (3) you can also register the FakeFirebaseStorageDriverProvider with
 // the DriverFactory by calling FakeFirebaseStorageDriverProvider.register();
 // again your storageKey databaseURLs must be test-url and don't forget
-// to clean up with DriverFactory.clearRegistrationsForTesting().
+// to clean up with Runtime.resetDrivers().

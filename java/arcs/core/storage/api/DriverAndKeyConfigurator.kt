@@ -12,15 +12,15 @@
 package arcs.core.storage.api
 
 import arcs.core.data.CreatableStorageKey
-import arcs.core.data.SchemaRegistry
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.DriverProvider
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.VolatileDriverProviderFactory
+import arcs.core.storage.driver.VolatileDriverProvider
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.ForeignStorageKey
 import arcs.core.storage.keys.JoinStorageKey
@@ -40,26 +40,29 @@ object DriverAndKeyConfigurator {
   fun configure(databaseManager: DatabaseManager?) {
     val driverProviders = mutableListOf(
       RamDiskDriverProvider(),
-      VolatileDriverProviderFactory()
+      VolatileDriverProvider()
     )
     // Only register the database driver provider if a database manager was provided.
     databaseManager?.let {
-      driverProviders += DatabaseDriverProvider.configure(it, SchemaRegistry::getSchema)
+      driverProviders += DatabaseDriverProvider.configure(it)
     }
 
     DefaultDriverFactory.update(driverProviders)
 
     // Also register the parsers.
-    configureKeyParsers()
+    configureKeyParsersAndFactories()
   }
 
   /**
-   * Allows the caller to ensure all of the available key parsers are registered.
+   * A convenience method to register behavior for the commonly used set of [StorageKey]s.
+   *
+   * Registers a number of likely-used [StorageKey]s with the global []StorageKeyParser] instance,
+   * and registers a number of like-used [StorageKeyFactory] instances with the global
+   * [CapabilitiesResolver] instance.
    */
-  // TODO: make the set of keyparsers configurable.
-  fun configureKeyParsers() {
+  fun configureKeyParsersAndFactories() {
     // Start fresh.
-    StorageKeyParser.reset(
+    StorageKeyManager.GLOBAL_INSTANCE.reset(
       VolatileStorageKey,
       RamDiskStorageKey,
       DatabaseStorageKey.Persistent,
@@ -71,8 +74,9 @@ object DriverAndKeyConfigurator {
     )
 
     CapabilitiesResolver.reset()
-    VolatileStorageKey.registerKeyCreator()
-    RamDiskStorageKey.registerKeyCreator()
-    DatabaseStorageKey.registerKeyCreator()
+    CapabilitiesResolver.registerStorageKeyFactory(VolatileStorageKey.VolatileStorageKeyFactory())
+    CapabilitiesResolver.registerStorageKeyFactory(RamDiskStorageKey.RamDiskStorageKeyFactory())
+    CapabilitiesResolver.registerStorageKeyFactory(DatabaseStorageKey.Persistent.Factory())
+    CapabilitiesResolver.registerStorageKeyFactory(DatabaseStorageKey.Memory.Factory())
   }
 }

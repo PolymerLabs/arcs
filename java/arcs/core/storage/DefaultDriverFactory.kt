@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -16,6 +16,8 @@ import kotlinx.atomicfu.update
 
 /**
  * Manages a single global [DriverFactory] instance.
+ *
+ * TODO(b/170218162) Remove this global instance; provide driver factories where needed.
  */
 object DefaultDriverFactory {
   private val instance = atomic(FixedDriverFactory(emptyList()))

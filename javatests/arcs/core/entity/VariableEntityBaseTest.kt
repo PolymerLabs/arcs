@@ -2,6 +2,11 @@ package arcs.core.entity
 
 import arcs.core.crdt.VersionMap
 import arcs.core.data.SchemaRegistry
+import arcs.core.data.testutil.RawEntitySubject.Companion.assertThat
+import arcs.core.entity.testutil.DummyEntity
+import arcs.core.entity.testutil.DummyVariableEntity
+import arcs.core.entity.testutil.InlineDummyEntity
+import arcs.core.storage.RawReference
 import arcs.core.storage.testutil.DummyStorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
@@ -105,6 +110,6 @@ class VariableEntityBaseTest {
 
   private fun createDummyReference(id: String) = Reference(
     DummyEntity,
-    arcs.core.storage.Reference(id, DummyStorageKey(id), VersionMap("id" to 1))
+    RawReference(id, DummyStorageKey(id), VersionMap("id" to 1))
   )
 }

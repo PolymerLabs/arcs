@@ -12,6 +12,7 @@
 package arcs.core.storage.keys
 
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.StorageKeySpec
 import arcs.core.storage.StorageKeyUtils
 import arcs.core.storage.embed
@@ -28,13 +29,13 @@ class JoinStorageKey(
     return builder.toString()
   }
 
-  override fun childKeyWithComponent(component: String): StorageKey {
+  override fun newKeyWithComponent(component: String): StorageKey {
     TODO("Not yet implemented for JoinStorageKey")
   }
 
   companion object : StorageKeySpec<JoinStorageKey> {
     /** Protocol to be used when the StorageKey is composed of multiple StorageKeys. */
-    override val protocol = "join"
+    override val protocol = StorageKeyProtocol.Join
     override fun parse(rawKeyString: String): JoinStorageKey {
       val invalidFormatMessage: () -> String =
         { "Invalid format for JoinStorageKey." }

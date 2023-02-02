@@ -10,6 +10,7 @@ load(
 )
 load(
     "//third_party/java/arcs/build_defs/internal:kotlin.bzl",
+    _arcs_java_library = "arcs_java_library",
     _arcs_kt_android_library = "arcs_kt_android_library",
     _arcs_kt_android_test_suite = "arcs_kt_android_test_suite",
     _arcs_kt_gen = "arcs_kt_gen",
@@ -30,6 +31,14 @@ load(
     _arcs_manifest_proto = "arcs_manifest_proto",
     _arcs_proto_plan = "arcs_proto_plan",
 )
+load(
+    "//third_party/java/arcs/build_defs/internal:stopwords.bzl",
+    _arcs_stopwords_test = "arcs_stopwords_test",
+)
+load(
+    "//third_party/java/arcs/build_defs/internal:util.bzl",
+    _java_src_dep = "java_src_dep",
+)
 
 # Re-export rules from various other files.
 
@@ -37,6 +46,8 @@ load(
 DEFAULT_ARCS_SDK_DEPS = ["//third_party/java/arcs"]
 
 arcs_cc_schema = _arcs_cc_schema
+
+arcs_java_library = _arcs_java_library
 
 arcs_kt_android_library = _arcs_kt_android_library
 
@@ -104,5 +115,9 @@ arcs_manifest_bundle = _arcs_manifest_bundle
 arcs_manifest_proto = _arcs_manifest_proto
 
 arcs_proto_plan = _arcs_proto_plan
+
+arcs_stopwords_test = _arcs_stopwords_test
+
+java_src_dep = _java_src_dep
 
 kt_js_library = _kt_js_library

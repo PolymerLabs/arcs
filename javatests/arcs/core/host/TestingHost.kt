@@ -1,33 +1,37 @@
 package arcs.core.host
 
 import arcs.core.common.ArcId
+import arcs.core.data.Capabilities
+import arcs.core.data.Capability
 import arcs.core.data.Plan
 import arcs.core.entity.Storable
 import arcs.core.host.api.Particle
-import arcs.core.storage.StorageEndpointManager
-import arcs.core.util.Time
-import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.Handle
 import arcs.sdk.HandleHolderBase
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
-import java.lang.IllegalArgumentException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 open class TestingHost(
-  schedulerProvider: SchedulerProvider,
-  storageEndpointManager: StorageEndpointManager,
+  handleManagerFactory: HandleManagerFactory,
+  arcHostContextCapabilities: Capabilities,
   vararg particles: ParticleRegistration
 ) : AbstractArcHost(
   coroutineContext = Dispatchers.Default,
-  updateArcHostContextCoroutineContext = Dispatchers.Default,
-  schedulerProvider = schedulerProvider,
-  storageEndpointManager = storageEndpointManager,
-  initialParticles = *particles
+  handleManagerFactory = handleManagerFactory,
+  arcHostContextSerializer = StoreBasedArcHostContextSerializer(
+    Dispatchers.Default,
+    handleManagerFactory,
+    arcHostContextCapabilities = arcHostContextCapabilities
+  ),
+  initialParticles = particles
 ) {
+
+  constructor(handleManagerFactory: HandleManagerFactory, vararg particles: ParticleRegistration) :
+    this(handleManagerFactory, Capabilities(Capability.Shareable(true)), *particles)
 
   suspend fun arcHostContext(arcId: String) = getArcHostContext(arcId)
 
@@ -36,6 +40,9 @@ open class TestingHost(
   var waitingFor: String? = null
 
   var throws = false
+
+  fun registerTestParticle(id: ParticleIdentifier, ctor: suspend (Plan.Particle?) -> Particle) =
+    registerParticle(id, ctor)
 
   override suspend fun startArc(partition: Plan.Partition) {
     if (throws) {
@@ -49,8 +56,6 @@ open class TestingHost(
   }
 
   suspend fun isIdle() = isArcHostIdle()
-
-  override val platformTime: Time = FakeTime()
 
   suspend fun setup() {
     started.clear()
@@ -84,23 +89,23 @@ open class TestingHost(
   }
 
   /** Create a read/write singleton handle for tests to access an arc's stores. */
-  suspend fun <T : Storable> singletonForTest(
+  suspend fun <E : I, I : Storable> singletonForTest(
     arcId: ArcId,
     particleName: String,
     handleName: String
-  ): ReadWriteSingletonHandle<T> {
+  ): ReadWriteSingletonHandle<E, I> {
     @Suppress("UNCHECKED_CAST")
-    return createHandleForTest(arcId, particleName, handleName) as ReadWriteSingletonHandle<T>
+    return createHandleForTest(arcId, particleName, handleName) as ReadWriteSingletonHandle<E, I>
   }
 
   /** Create a read/write collection handle for tests to access an arc's stores. */
-  suspend fun <T : Storable> collectionForTest(
+  suspend fun <E : I, I : Storable> collectionForTest(
     arcId: ArcId,
     particleName: String,
     handleName: String
-  ): ReadWriteCollectionHandle<T> {
+  ): ReadWriteCollectionHandle<E, I> {
     @Suppress("UNCHECKED_CAST")
-    return createHandleForTest(arcId, particleName, handleName) as ReadWriteCollectionHandle<T>
+    return createHandleForTest(arcId, particleName, handleName) as ReadWriteCollectionHandle<E, I>
   }
 
   // TODO: is there a simpler way to do this?
@@ -112,7 +117,8 @@ open class TestingHost(
     particleName: String,
     handleName: String
   ): Handle {
-    val arcHostContext = requireNotNull(getArcHostContext(arcId.toString()))
+    val runningArc = requireNotNull(getRunningArc(arcId.toString()))
+    val arcHostContext = runningArc.context
     val particleContext = arcHostContext.particles.first {
       it.planParticle.particleName == particleName
     }
@@ -124,7 +130,7 @@ open class TestingHost(
       mapOf(handleName to entitySpecs)
     )
     return createHandle(
-      arcHostContext.handleManager,
+      runningArc.handleManager,
       handleName,
       readWriteConnection,
       handleHolder

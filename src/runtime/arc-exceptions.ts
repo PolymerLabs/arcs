@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -134,9 +134,14 @@ export const defaultSystemExceptionHandler = (arc: Arc, exception: Error) => {
       console.log(`Exception in particle '${exception.particleName}', unknown method`);
     } else if (exception.method) {
       console.log(`Exception in unknown particle, method '${exception.method}'`);
+    } else if (exception.cause) {
+      console.log(`Exception in unknown particle, cause '${exception.cause.stack}'`, exception.cause);
+    } else {
+      console.log(exception.message || exception);
     }
+  } else {
+    console.log(exception.message || exception);
   }
-  console.log(exception.message);
   arc.dispose();
 };
 

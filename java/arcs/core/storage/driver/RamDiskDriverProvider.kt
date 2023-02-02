@@ -28,7 +28,7 @@ class RamDiskDriverProvider : DriverProvider {
     require(willSupport(storageKey)) {
       "This provider does not support StorageKey: $storageKey"
     }
-    return VolatileDriverImpl.create(storageKey, RamDisk.memory)
+    return VolatileDriverImpl.create(storageKey, dataClass, RamDisk.memory)
   }
 
   /*

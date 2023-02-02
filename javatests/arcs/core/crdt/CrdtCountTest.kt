@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -12,6 +12,7 @@
 package arcs.core.crdt
 
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -38,7 +39,9 @@ class CrdtCountTest {
 
   @Test
   fun canApplyAnIncrementOp() {
-    assertTrue(alice.applyOperation(CrdtCount.Operation.Increment("alice", 0 to 1)))
+    assertTrue(
+      alice.applyOperation(CrdtCount.Operation.Increment("alice", VersionMap("alice" to 1)))
+    )
     assertThat(alice.consumerView).isEqualTo(1)
   }
 
@@ -50,22 +53,34 @@ class CrdtCountTest {
 
   @Test
   fun canApplyTwoIncrementOps_fromDifferentActors() {
-    assertTrue(alice.applyOperation(CrdtCount.Operation.Increment("alice", 0 to 1)))
-    assertTrue(alice.applyOperation(CrdtCount.Operation.Increment("bob", 0 to 1)))
+    assertTrue(
+      alice.applyOperation(CrdtCount.Operation.Increment("alice", VersionMap("alice" to 1)))
+    )
+    assertTrue(
+      alice.applyOperation(CrdtCount.Operation.Increment("bob", VersionMap("bob" to 1)))
+    )
     assertThat(alice.consumerView).isEqualTo(2)
   }
 
   @Test
   fun canApplyTwoIncrementOps_fromSameActor() {
-    assertTrue(alice.applyOperation(CrdtCount.Operation.Increment("alice", 0 to 1)))
-    assertTrue(alice.applyOperation(CrdtCount.Operation.Increment("alice", 1 to 2)))
+    assertTrue(
+      alice.applyOperation(CrdtCount.Operation.Increment("alice", VersionMap("alice" to 1)))
+    )
+    assertTrue(
+      alice.applyOperation(CrdtCount.Operation.Increment("alice", VersionMap("alice" to 2)))
+    )
     assertThat(alice.consumerView).isEqualTo(2)
   }
 
   @Test
   fun canNotApplyTwoIncrementOps_fromSameActor_withSameVersions() {
-    assertTrue(alice.applyOperation(CrdtCount.Operation.Increment("alice", 0 to 1)))
-    assertFalse(alice.applyOperation(CrdtCount.Operation.Increment("alice", 0 to 1)))
+    assertTrue(
+      alice.applyOperation(CrdtCount.Operation.Increment("alice", VersionMap("alice" to 1)))
+    )
+    assertFalse(
+      alice.applyOperation(CrdtCount.Operation.Increment("alice", VersionMap("alice" to 1)))
+    )
     assertThat(alice.consumerView).isEqualTo(1)
   }
 
@@ -73,7 +88,7 @@ class CrdtCountTest {
   fun canApplyAMultiincrementOp() {
     assertTrue(
       alice.applyOperation(
-        CrdtCount.Operation.MultiIncrement("alice", 0 to 1, 10)
+        CrdtCount.Operation.MultiIncrement("alice", VersionMap("alice" to 1), 10)
       )
     )
     assertThat(alice.consumerView).isEqualTo(10)
@@ -91,11 +106,11 @@ class CrdtCountTest {
 
     assertThat(results.modelChange).isInstanceOf(CrdtChange.Operations::class.java)
     assertThat((results.modelChange as CrdtChange.Operations)[0])
-      .isEqualTo(CrdtCount.Operation.MultiIncrement("bob", 0 to 1, 13))
+      .isEqualTo(CrdtCount.Operation.MultiIncrement("bob", VersionMap("bob" to 1), 13))
 
     assertThat(results.otherChange).isInstanceOf(CrdtChange.Operations::class.java)
     assertThat((results.otherChange as CrdtChange.Operations)[0])
-      .isEqualTo(CrdtCount.Operation.MultiIncrement("alice", 0 to 1, 7))
+      .isEqualTo(CrdtCount.Operation.MultiIncrement("alice", VersionMap("alice" to 1), 7))
 
     bob.applyChanges(results.otherChange)
     assertThat(bob.consumerView).isEqualTo(20)
@@ -114,7 +129,7 @@ class CrdtCountTest {
 
     assertThat(results.modelChange).isInstanceOf(CrdtChange.Operations::class.java)
     assertThat((results.modelChange as CrdtChange.Operations)[0])
-      .isEqualTo(CrdtCount.Operation.MultiIncrement("alice", 1 to 2, 13))
+      .isEqualTo(CrdtCount.Operation.MultiIncrement("alice", VersionMap("alice" to 2), 13))
 
     assertThat(results.otherChange).isInstanceOf(CrdtChange.Operations::class.java)
     // We already merged alice into bob.
@@ -124,37 +139,54 @@ class CrdtCountTest {
     assertThat(bob.consumerView).isEqualTo(20)
   }
 
-  @Test(expected = CrdtException::class)
+  @Test
   fun throwsOnDivergentModels() {
-    alice.applyOperation(CrdtCount.Operation.MultiIncrement("alice", 0 to 1, 7))
-    bob.applyOperation(CrdtCount.Operation.MultiIncrement("alice", 0 to 1, 13))
-
-    alice.merge(bob.data)
+    assertTrue(
+      alice.applyOperation(CrdtCount.Operation.MultiIncrement("alice", VersionMap("alice" to 1), 7))
+    )
+    assertTrue(
+      bob.applyOperation(CrdtCount.Operation.MultiIncrement("alice", VersionMap("alice" to 1), 13))
+    )
+    assertFailsWith<CrdtException> {
+      alice.merge(bob.data)
+    }
   }
 
-  @Test(expected = CrdtException::class)
+  @Test
   fun throwsOnApparentDecrement() {
-    alice.applyOperation(CrdtCount.Operation.MultiIncrement("alice", 0 to 1, 7))
-    bob.applyOperation(CrdtCount.Operation.MultiIncrement("alice", 0 to 2, 3))
-
-    alice.merge(bob.data)
+    assertTrue(
+      alice.applyOperation(CrdtCount.Operation.MultiIncrement("alice", VersionMap("alice" to 1), 7))
+    )
+    assertTrue(
+      bob.applyOperation(CrdtCount.Operation.Increment("alice", VersionMap("alice" to 1)))
+    )
+    assertTrue(
+      bob.applyOperation(CrdtCount.Operation.MultiIncrement("alice", VersionMap("alice" to 2), 3))
+    )
+    assertFailsWith<CrdtException> {
+      alice.merge(bob.data)
+    }
   }
 
   @Test
   fun mergesSeveralActors() {
     alice.forActor("a") += 6
-    alice.forActor("c").withNextVersion(2) += 12
+    alice.forActor("c") += 12
     alice.forActor("d") += 22
+    // Two increments for 'e' on alice trumps the single increment on bob.
     alice.forActor("e") += 4
+    alice.forActor("e") += 13
     bob.forActor("b") += 5
-    bob.forActor("c") += 9
+    // Vice versa for 'c'.
+    bob.forActor("c") += 12
+    bob.forActor("c") += 6
     bob.forActor("d") += 22
-    bob.forActor("e").withNextVersion(2) += 14
+    bob.forActor("e") += 4
 
     val results = alice.merge(bob.data)
-    assertThat(alice.consumerView).isEqualTo(59)
+    assertThat(alice.consumerView).isEqualTo(68)
 
     bob.applyChanges(results.otherChange)
-    assertThat(bob.consumerView).isEqualTo(59)
+    assertThat(bob.consumerView).isEqualTo(68)
   }
 }

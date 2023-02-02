@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -11,7 +11,12 @@
 
 package arcs.core.crdt
 
+import arcs.core.util.FORBIDDEN_STRINGS
+import arcs.core.util.SAFE_CHARS
+import arcs.flags.testing.BuildFlagsRule
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -19,6 +24,9 @@ import org.junit.runners.JUnit4
 /** Tests for [VersionMap]. */
 @RunWith(JUnit4::class)
 class VersionMapTest {
+  @get:Rule
+  val buildFlagsRule = BuildFlagsRule.create()
+
   @Test
   fun nonExistentActor_hasDefaultVersion() {
     val versions = VersionMap()
@@ -221,5 +229,87 @@ class VersionMapTest {
 
     var difference = a - b
     assertThat(difference["alice"]).isEqualTo(1)
+  }
+
+  @Test
+  fun encoding_simple_roundTrip() {
+    val versionMap = VersionMap("foo", 1)
+    val str = "foo|1"
+    assertThat(versionMap.encode()).isEqualTo(str)
+    assertThat(VersionMap.decode(str)).isEqualTo(versionMap)
+  }
+
+  @Test
+  fun encoding_complex_roundTrip() {
+    val versionMap = VersionMap(
+      "hello" to 1,
+      "g'day" to 3132,
+      "hi" to 971
+    )
+    val encoded = versionMap.encode()
+    val decoded = VersionMap.decode(encoded)
+    assertThat(decoded).isEqualTo(versionMap)
+    assertThat(decoded.encode()).isEqualTo(encoded)
+  }
+
+  @Test
+  fun encode_empty() {
+    val versionMap = VersionMap()
+    val str = ""
+    assertThat(versionMap.encode()).isEqualTo(str)
+    assertThat(VersionMap.decode(str)).isEqualTo(versionMap)
+  }
+
+  @Test
+  fun encode_emptyActor() {
+    val versionMap = VersionMap("" to 123)
+    val str = "|123"
+    assertThat(versionMap.encode()).isEqualTo(str)
+    assertThat(VersionMap.decode(str)).isEqualTo(versionMap)
+  }
+
+  @Test
+  fun encode_extraActor_fails() {
+    val str = "foo1|foo2|123"
+    assertFailsWith<IllegalStateException> { (VersionMap.decode(str)) }
+  }
+
+  @Test
+  fun encode_emptyPair_fails() {
+    val str = "foo1|971;;"
+    assertFailsWith<IllegalStateException> { (VersionMap.decode(str)) }
+  }
+
+  @Test
+  fun encode_singleTrailingColon_fails() {
+    val str = "bar2|3132;"
+    assertFailsWith<IllegalStateException> { (VersionMap.decode(str)) }
+  }
+
+  @Test
+  fun encode_invalidVersion_fails() {
+    val str = "bar2|boo"
+    assertFailsWith<NumberFormatException> { (VersionMap.decode(str)) }
+  }
+
+  @Test
+  fun encode_negativeVersion() {
+    val versionMap = VersionMap("bar2" to -123)
+    val str = "bar2|-123"
+    assertThat(versionMap.encode()).isEqualTo(str)
+    assertThat(VersionMap.decode(str)).isEqualTo(versionMap)
+  }
+
+  @Test
+  fun encode_versionBiggerThanMaxInt_fails() {
+    val str = "bar2|${Int.MAX_VALUE}0"
+    assertFailsWith<NumberFormatException> { (VersionMap.decode(str)) }
+  }
+
+  @Test
+  fun safeChars_noForbiddenStrings() {
+    SAFE_CHARS.forEach { char ->
+      assertThat(FORBIDDEN_STRINGS.contains(char.toString())).isFalse()
+    }
   }
 }

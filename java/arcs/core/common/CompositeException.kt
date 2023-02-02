@@ -34,7 +34,7 @@ class CompositeException(
  * A helper to wait for a group of [Deferred] objects to complete, collect any exceptions taht
  * occurred, and wrap the results in a composite exception, if there were any.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 suspend fun Collection<Deferred<*>>.toCompositeExceptionOrNull() =
   onEach { it.join() }
     .mapNotNull { it.getCompletionExceptionOrNull() }
@@ -46,7 +46,7 @@ suspend fun Collection<Deferred<*>>.toCompositeExceptionOrNull() =
  * the jobs throw an exception, they'll be aggregated into a [CompositeException] which will be
  * thrown once all jobs complete
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 suspend inline fun <T> Collection<T>.collectExceptions(
   crossinline block: suspend (T) -> Unit
 ) {

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -9,7 +9,7 @@
  */
 
 import {Xen} from '../../../lib/components/xen.js';
-import IconStyle from '../../../../modalities/dom/components/icons.css.js';
+import IconStyle from '../../../lib/modalities/dom/components/icons.css.js';
 import './system-ui.js';
 import './web-tools.js';
 import './suggestion-element.js';

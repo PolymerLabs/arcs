@@ -11,7 +11,7 @@ import 'Product.schema'
 
 particle Interests in 'source/Interests.js'
   list: reads [Product]
-  person: reads Person
+  person: reads Person {}
   postamble: consumes? Slot
   description `find out about ${person.name}'s interests`
 

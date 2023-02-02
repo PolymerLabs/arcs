@@ -23,7 +23,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  * The local service type evaluates latency/RTT within the same process boundary,
  * stability of storage service, etc.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class LocalService : Service() {
   private val storageCore = StorageCore(this)
   private val binder = Binder()

@@ -16,8 +16,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.util.writeProto
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
-import arcs.core.storage.Reference
-import arcs.core.storage.StorageKeyParser
+import arcs.core.data.testutil.RawEntitySubject.Companion.assertThat
+import arcs.core.storage.RawReference
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
@@ -28,19 +29,19 @@ import org.junit.runner.RunWith
 class ReferenceProtoTest {
   @Before
   fun setUp() {
-    StorageKeyParser.addParser(RamDiskStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.addParser(RamDiskStorageKey)
   }
 
   @Test
   fun parcelableRoundtrip_works_withNullVersionMap() {
-    val expected = Reference("myId", RamDiskStorageKey("backingKey"), null)
+    val expected = RawReference("myId", RamDiskStorageKey("backingKey"), null)
 
     testReferenceRoundtrip(expected)
   }
 
   @Test
   fun parcelableRoundtrip_works_withNonNullVersionMap() {
-    val expected = Reference(
+    val expected = RawReference(
       "myId",
       RamDiskStorageKey("backingKey"),
       VersionMap("foo" to 1)
@@ -51,7 +52,7 @@ class ReferenceProtoTest {
 
   @Test
   fun parcelableRoundtrip_works_withTimestamps() {
-    val expected = Reference(
+    val expected = RawReference(
       "myId",
       RamDiskStorageKey("backingKey"),
       VersionMap("foo" to 1),
@@ -63,7 +64,7 @@ class ReferenceProtoTest {
 
   @Test
   fun parcelableRoundtrip_works_Hardreference() {
-    val expected = Reference(
+    val expected = RawReference(
       "myId",
       RamDiskStorageKey("backingKey"),
       VersionMap("foo" to 1)
@@ -72,7 +73,7 @@ class ReferenceProtoTest {
     testReferenceRoundtrip(expected)
   }
 
-  fun testReferenceRoundtrip(expected: Reference) {
+  fun testReferenceRoundtrip(expected: RawReference) {
     // Create a parcel and populate it with a ParcelableOperations object.
     val marshalled = with(Parcel.obtain()) {
       writeProto(expected.toProto())
@@ -83,14 +84,14 @@ class ReferenceProtoTest {
     val unmarshalled = with(Parcel.obtain()) {
       unmarshall(marshalled, 0, marshalled.size)
       setDataPosition(0)
-      readReference()
+      readRawReference()
     }
     assertThat(unmarshalled).isEqualTo(expected)
   }
 
   @Test
   fun parcelableRoundtripWorks_whenReference_isPartOfRawEntity() {
-    val expectedReference = Reference(
+    val expectedReference = RawReference(
       "myId",
       RamDiskStorageKey("backingKey"),
       VersionMap("foo" to 1)

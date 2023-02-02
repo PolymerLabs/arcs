@@ -22,8 +22,8 @@ import {Policy} from '../runtime/policy/policy.js';
 import {policyToProtoPayload} from './policy2proto.js';
 import {annotationToProtoPayload} from './annotations-utils.js';
 
-export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
-  const manifest = await Runtime.parseFile(path, {throwImportErrors: true});
+export async function encodeManifestToProto(runtime, path: string): Promise<Uint8Array> {
+  const manifest = await runtime.parseFile(path, {throwImportErrors: true});
   return encodePayload(await manifestToProtoPayload(manifest));
 }
 
@@ -72,7 +72,10 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
     connections,
     claims,
     checks,
-    annotations: spec.annotations.map(a => annotationToProtoPayload(a)),
+    annotations:
+        spec.annotations.filter(a => a).map(a => annotationToProtoPayload(a)),
+    // TODO(b/185068382): The above filter should be removed when annotations
+    // validation is fixed.
   };
 }
 
@@ -234,12 +237,12 @@ async function recipeToProtoPayload(recipe: Recipe) {
   for (const h of recipe.handles) {
     // After type inference which runs as a part of the recipe.normalize() above
     // all handle types are constrained type variables. We force these type variables
-    // to their resolution by called maybeEnsureResolved(), so that handle types
+    // to their resolution by called maybeResolve(), so that handle types
     // are encoded with concrete types, instead of variables.
     if (h.type === undefined) {
       throw new Error(`Type of handle '${h.localName}' in recipe '${recipe.name}' could not be resolved.`);
     }
-    h.type.maybeEnsureResolved();
+    h.type.maybeResolve();
     handleToProtoPayload.set(h, await recipeHandleToProtoPayload(h));
   }
 
@@ -350,7 +353,10 @@ export async function schemaToProtoPayload(schema: Schema) {
   return {
     names: schema.names,
     fields: objectFromEntries(await Promise.all(Object.entries(schema.fields).map(
-      async ([key, value]) => [key, await schemaFieldToProtoPayload(value)]))),
+      async ([key, value]) => [key, {
+        ...await schemaFieldToProtoPayload(value),
+        annotations: value.annotations.map(a => annotationToProtoPayload(a))
+      }]))),
     hash: await schema.hash()
   };
 }
@@ -377,6 +383,13 @@ async function schemaFieldToProtoPayload(fieldType: FieldType) {
       return {
         tuple: {
           elements: await Promise.all(fieldType.getFieldTypes().map(schemaFieldToProtoPayload))
+        }
+      };
+    }
+    case 'schema-nullable': {
+      return {
+        nullable: {
+          elementType: await schemaFieldToProtoPayload(fieldType.getFieldType())
         }
       };
     }

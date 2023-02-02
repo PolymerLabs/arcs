@@ -6,9 +6,12 @@ import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaRegistry
-import arcs.core.host.EntityHandleManager
+import arcs.core.entity.testutil.DummyEntity
+import arcs.core.entity.testutil.DummyEntitySlice
+import arcs.core.entity.testutil.InlineDummyEntity
+import arcs.core.host.HandleManagerImpl
 import arcs.core.storage.RawEntityDereferencer
-import arcs.core.storage.Reference as StorageReference
+import arcs.core.storage.RawReference
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -31,7 +34,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 @Suppress("UNCHECKED_CAST")
 class ReferenceTest {
@@ -40,8 +43,8 @@ class ReferenceTest {
 
   private lateinit var scheduler: Scheduler
   private lateinit var dereferencer: RawEntityDereferencer
-  private lateinit var entityHandleManager: EntityHandleManager
-  private lateinit var handle: ReadWriteCollectionHandle<DummyEntity>
+  private lateinit var handleManagerImpl: HandleManagerImpl
+  private lateinit var handle: ReadWriteCollectionHandle<DummyEntity, DummyEntitySlice>
 
   private val STORAGE_KEY = ReferenceModeStorageKey(
     RamDiskStorageKey("backing"),
@@ -58,7 +61,7 @@ class ReferenceTest {
     scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher())
     val storageEndpointManager = testStorageEndpointManager()
     dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA, storageEndpointManager)
-    entityHandleManager = EntityHandleManager(
+    handleManagerImpl = HandleManagerImpl(
       "testArc",
       "",
       FakeTime(),
@@ -67,7 +70,7 @@ class ReferenceTest {
       foreignReferenceChecker = ForeignReferenceCheckerImpl(emptyMap())
     )
 
-    handle = entityHandleManager.createHandle(
+    handle = handleManagerImpl.createHandle(
       HandleSpec(
         "testHandle",
         HandleMode.ReadWrite,
@@ -75,13 +78,13 @@ class ReferenceTest {
         DummyEntity
       ),
       STORAGE_KEY
-    ) as ReadWriteCollectionHandle<DummyEntity>
+    ) as ReadWriteCollectionHandle<DummyEntity, DummyEntitySlice>
   }
 
   @After
   fun tearDown() = runTest {
     scheduler.waitForIdle()
-    entityHandleManager.close()
+    handleManagerImpl.close()
     scheduler.cancel()
 
     SchemaRegistry.clearForTest()
@@ -133,12 +136,12 @@ class ReferenceTest {
     storageKey: String,
     entitySpec: EntitySpec<*>
   ): Reference<*> {
-    val storageReference = StorageReference(
+    val rawReference = RawReference(
       entityId,
       RamDiskStorageKey(storageKey),
       version = null
     )
-    storageReference.dereferencer = dereferencer
-    return Reference(entitySpec, storageReference)
+    rawReference.dereferencer = dereferencer
+    return Reference(entitySpec, rawReference)
   }
 }

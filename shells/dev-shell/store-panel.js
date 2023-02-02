@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {handleForActiveStore} from '../../build/runtime/storage/storage.js';
 import {CollectionHandle} from '../../build/runtime/storage/handle.js';
 import {Entity} from '../../build/runtime/entity.js';
 
@@ -128,9 +127,9 @@ export class StorePanel extends HTMLElement {
     this.contents.addEventListener('keypress', this.interceptCtrlEnter.bind(this));
   }
 
-  async attach(store, arc) {
+  async attach(store, arc, runtime) {
     this.store = store;
-    this.handle = await handleForActiveStore(store, arc);
+    this.handle = await runtime.host.handleForStoreInfo(store, arc.arcInfo);
     this.storeLabel.textContent = store.storageKey;
     const schema = store.type.getEntitySchema();
     this.schema.textContent = schema ? schema.toManifestString() : '// Unknown schema';

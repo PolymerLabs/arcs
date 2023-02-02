@@ -13,6 +13,7 @@ package arcs.core.util.performance
 
 import arcs.core.util.Time
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -29,7 +30,9 @@ class FiboPerformanceStatisticsTest {
     assertThat(calculator.fiboSlow(3)).isEqualTo(3)
     assertThat(calculator.fiboSlow(4)).isEqualTo(5)
     assertThat(calculator.fiboSlow(5)).isEqualTo(8)
-    assertThat(calculator.fiboSlow(20)).isEqualTo(10946)
+    assertThat(calculator.fiboSlow(6)).isEqualTo(13)
+    assertThat(calculator.fiboSlow(7)).isEqualTo(21)
+    assertThat(calculator.fiboSlow(8)).isEqualTo(34)
 
     assertThat(calculator.fiboFast(0)).isEqualTo(1)
     assertThat(calculator.fiboFast(1)).isEqualTo(1)
@@ -37,7 +40,9 @@ class FiboPerformanceStatisticsTest {
     assertThat(calculator.fiboFast(3)).isEqualTo(3)
     assertThat(calculator.fiboFast(4)).isEqualTo(5)
     assertThat(calculator.fiboFast(5)).isEqualTo(8)
-    assertThat(calculator.fiboFast(20)).isEqualTo(10946)
+    assertThat(calculator.fiboFast(6)).isEqualTo(13)
+    assertThat(calculator.fiboFast(7)).isEqualTo(21)
+    assertThat(calculator.fiboFast(8)).isEqualTo(34)
 
     val slowStats = calculator.fiboSlowStats.snapshot()
     val fastStats = calculator.fiboFastStats.snapshot()
@@ -86,7 +91,7 @@ class FiboPerformanceStatisticsTest {
     val fiboFastStats = PerformanceStatistics(Timer(PlatformTime), "additions", "loops")
 
     suspend fun fiboSlow(n: Int): Int = fiboSlowStats.timeSuspending { counters ->
-      fun inner(n: Int): Int {
+      suspend fun inner(n: Int): Int {
         if (n == 0 || n == 1) return 1
 
         counters.increment("recursiveCalls")
@@ -95,6 +100,7 @@ class FiboPerformanceStatisticsTest {
         val nMinus1 = inner(n - 1)
 
         counters.increment("additions")
+        delay(10)
         return nMinus2 + nMinus1
       }
 

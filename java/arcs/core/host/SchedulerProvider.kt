@@ -20,6 +20,12 @@ import arcs.core.util.Scheduler
  * [StorageProxy] instances created by the [ArcHost].
  */
 interface SchedulerProvider {
+  /**
+   * Create a new [Scheduler], creating a name for it based on the provided [arcId].
+   *
+   * Calling [invoke] multiple times with the same `arcId` will create a new scheduler instance
+   * each time.
+   */
   operator fun invoke(arcId: String): Scheduler
 
   /** Cancel all schedulers that this [SchedulerProvider] has created. */

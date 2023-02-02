@@ -19,8 +19,9 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.Reference
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.RawReference
+import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.database.DatabaseConfig
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.testutil.DummyStorageKey
@@ -34,7 +35,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class AndroidSqliteDatabaseManagerTest {
   private lateinit var manager: DatabaseManager
@@ -61,7 +62,7 @@ class AndroidSqliteDatabaseManagerTest {
   fun setUp() {
     manager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
     random = Random(System.currentTimeMillis())
-    StorageKeyParser.addParser(DummyStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.addParser(DummyStorageKey)
   }
 
   @Test
@@ -235,6 +236,15 @@ class AndroidSqliteDatabaseManagerTest {
   }
 
   @Test
+  fun test_isStorageTooLarge_nullMaxSize() = runBlockingTest {
+    // A manager with the default max size.
+    manager =
+      AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext(), null)
+    manager.getDatabase("foo", true)
+    assertThat(manager.isStorageTooLarge()).isFalse()
+  }
+
+  @Test
   fun getAllHardReferenceIds() = runBlockingTest {
     manager.getDatabase("foo", true).insertOrUpdate(key, entityWithHardRef("id1"))
     manager.getDatabase("bar", false).insertOrUpdate(key, entityWithHardRef("id2"))
@@ -242,9 +252,48 @@ class AndroidSqliteDatabaseManagerTest {
     assertThat(manager.getAllHardReferenceIds(refKey)).containsExactly("id1", "id2")
   }
 
+  @Test
+  fun removeEntitiesHardReferencing_removesTwoEntities() = runBlockingTest {
+    manager.getDatabase("foo", true).insertOrUpdate(key, entityWithHardRef("id1"))
+    manager.getDatabase("bar", false).insertOrUpdate(key, entityWithHardRef("id1"))
+
+    assertThat(manager.removeEntitiesHardReferencing(refKey, "id1")).isEqualTo(2)
+  }
+
+  @Test
+  fun removeEntitiesHardReferencing_removesZeroEntities() = runBlockingTest {
+    manager.getDatabase("foo", true).insertOrUpdate(key, entityWithHardRef("id1"))
+    manager.getDatabase("bar", false).insertOrUpdate(key, entityWithHardRef("id1"))
+
+    assertThat(manager.removeEntitiesHardReferencing(refKey, "id2")).isEqualTo(0)
+  }
+
+  @Test
+  fun updateDatabaseConfig_propagatesToDatabases() = runBlockingTest {
+    val database = manager.getDatabase("foo", true) as DatabaseImpl
+
+    val managerDatabaseConfigBefore = manager.databaseConfig.get()
+    val databaseDatabaseConfigBefore = database.databaseConfigGetter()
+
+    manager.updateDatabaseConfig(DatabaseConfig(diffbasedEntityInsertion = true))
+
+    val managerDatabaseConfigAfter = manager.databaseConfig.get()
+    val databaseDatabaseConfigAfter = database.databaseConfigGetter()
+
+    val expectedBefore = DatabaseConfig()
+    val expectedAfter = DatabaseConfig(diffbasedEntityInsertion = true)
+
+    assertThat(managerDatabaseConfigBefore).isEqualTo(expectedBefore)
+    assertThat(databaseDatabaseConfigBefore).isEqualTo(expectedBefore)
+    assertThat(managerDatabaseConfigAfter).isEqualTo(expectedAfter)
+    assertThat(databaseDatabaseConfigAfter).isEqualTo(expectedAfter)
+  }
+
   private fun entityWithHardRef(refId: String) = DatabaseData.Entity(
     RawEntity(
-      collections = mapOf("refs" to setOf(Reference(refId, refKey, null, isHardReference = true)))
+      collections = mapOf(
+        "refs" to setOf(RawReference(refId, refKey, null, isHardReference = true))
+      )
     ),
     schema,
     1,

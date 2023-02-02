@@ -11,7 +11,8 @@
 
 package arcs.core.data
 
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
@@ -24,17 +25,20 @@ import org.junit.runners.JUnit4
 class CreatableStorageKeyTest {
 
   @Before
-  fun registerParsers() = DriverAndKeyConfigurator.configureKeyParsers()
+  fun registerParsers() = DriverAndKeyConfigurator.configureKeyParsersAndFactories()
 
   @Test
   fun serializesToString() {
-    assertThat(CreatableStorageKey("abc").toString()).isEqualTo("create://abc")
+    assertThat(CreatableStorageKey("abc").toString())
+      .isEqualTo("${StorageKeyProtocol.Create.protocol}abc")
   }
 
   @Test
   fun parsesFromString() {
     val name = "abc"
-    val storageKey = StorageKeyParser.parse("create://$name")
+    val storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse(
+      "${StorageKeyProtocol.Create.protocol}$name"
+    )
     assertThat(storageKey).isInstanceOf(CreatableStorageKey::class.java)
     storageKey as CreatableStorageKey
     assertThat(storageKey.nameFromManifest).isEqualTo(name)
@@ -45,7 +49,7 @@ class CreatableStorageKeyTest {
     val name = "recipePerson"
 
     val key = CreatableStorageKey(name)
-    val parsedKey = StorageKeyParser.parse(key.toString())
+    val parsedKey = StorageKeyManager.GLOBAL_INSTANCE.parse(key.toString())
     assertThat(parsedKey).isEqualTo(key)
   }
 }

@@ -77,6 +77,7 @@ maven_install(
         "androidx.test:rules:" + ANDROIDX_TEST_VERSION,
         "androidx.test.uiautomator:uiautomator:" + UI_AUTOMATOR_VERSION,
         "com.google.flogger:flogger:0.4",
+        "javax.annotation:javax.annotation-api:1.3.2",
         "com.google.code.findbugs:jsr305:3.0.2",
         "com.google.flogger:flogger-system-backend:0.4",
         "com.google.dagger:dagger:2.23.1",
@@ -95,12 +96,14 @@ maven_install(
         "org.jetbrains.kotlinx:kotlinx-coroutines-android:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:" + KOTLINX_COROUTINES_VERSION,
+        "org.jetbrains.kotlinx:kotlinx-coroutines-debug:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-test:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:atomicfu:" + KOTLINX_ATOMICFU_VERSION,
         "org.jetbrains.kotlinx:atomicfu-js:" + KOTLINX_ATOMICFU_VERSION,
         "org.json:json:20141113",
         "org.mockito:mockito-core:2.23.0",
         "org.robolectric:robolectric:" + ROBOLECTRIC_VERSION,
+        "org.robolectric:annotations:" + ROBOLECTRIC_VERSION,
         "org.robolectric:shadowapi:" + ROBOLECTRIC_VERSION,
         "org.robolectric:shadows-framework:" + ROBOLECTRIC_VERSION,
         "com.squareup:kotlinpoet:" + KOTLINPOET_VERSION,
@@ -189,9 +192,9 @@ git_repository(
 load("@io_bazel_rules_kotlin//kotlin:dependencies.bzl", "kt_download_local_dev_dependencies")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 
-KOTLIN_VERSION = "1.4.0"
+KOTLIN_VERSION = "1.4.10"
 
-KOTLINC_RELEASE_SHA = "590391d13b3c65ba52cba470f56efd5b14e2b1f5b9459f63aa12eb38ef52f161"
+KOTLINC_RELEASE_SHA = "bb1a21d70e521a01ae104e99a082a6e7bb58699b86347049da521d175d0dace7"
 
 KOTLINC_RELEASE = {
     "urls": [

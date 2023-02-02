@@ -22,8 +22,3 @@ export const dispatcher = {
     }
   }
 };
-
-export const registerHandler = (name, handler) => {
-  dispatcher[`${name}`] = handler;
-  console.log('registered handler: ', name);
-};

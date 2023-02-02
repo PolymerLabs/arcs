@@ -32,7 +32,7 @@ fun AccessPathProto.decode(
       AccessPath.Root.Store(storeId),
       selectors
     )
-    else -> throw UnsupportedOperationException("Unsupported AccessPathProto.Root: $this")
+    else -> throw UnsupportedOperationException("Unsupported AccessPathProto.Root: $rootCase")
   }
 }
 
@@ -71,7 +71,7 @@ fun AccessPath.encode(): AccessPathProto {
 
 fun AccessPathProto.Selector.decode(): AccessPath.Selector = when (selectorCase) {
   AccessPathProto.Selector.SelectorCase.FIELD -> AccessPath.Selector.Field(field)
-  else -> throw UnsupportedOperationException("Unsupported AccessPathProto.Selector: $this")
+  else -> throw UnsupportedOperationException("Unsupported AccessPathProto.Selector: $selectorCase")
 }
 
 fun AccessPath.Selector.encode(): AccessPathProto.Selector {

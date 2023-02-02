@@ -4,6 +4,7 @@ import arcs.core.util.ParseResult.Failure
 import arcs.core.util.ParseResult.Success
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.fail
+import kotlin.text.RegexOption.IGNORE_CASE
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -119,6 +120,39 @@ class ParserTest {
   }
 
   @Test
+  fun parserMany_complexSubExpression() {
+    // A regression test for a bug where the parser composed by ManyOfParser fails mid-way and
+    // ManyOfParser incorrectly reports its parsed range as including the partially parsed sequence.
+    //
+    // In this examples we are parsing repeated "_" + "x", but fail to find the third occurrence,
+    // as we find "_" + "o". The partial match of "_" in the third attempt used to influence the
+    // reported "end" position of parsing. ManyOfParser reported successfully parsing the "_x_x_"
+    // string, instead of "_x_x".
+    val composed = many(-token("_") + token("x")) + many(-token("_") + token("o"))
+
+    composed("_x_x_o_o").map { r, s, e, _ ->
+      assertThat(r).isEqualTo(Pair(listOf("x", "x"), listOf("o", "o")))
+      Success(r, s, e)
+    }.orElse<Nothing> {
+      fail()
+    }
+  }
+
+  @Test
+  fun parseMany_limited() {
+    val cappedMany = many(token("a"), limit = 3)
+
+    cappedMany("aaaaaaa").map { r, s, e, _ ->
+      // Note that containsExactly accepts multiplicity, but adding hasSize to increase readability.
+      assertThat(r).containsExactly("a", "a", "a")
+      assertThat(r).hasSize(3)
+      Success(r, s, e)
+    }.orElse<Nothing> {
+      fail()
+    }
+  }
+
+  @Test
   fun parseOptional() {
     val trailing = token("hello") + optional(token(", "))
     trailing("hello.").map { (hello, _), start, end, _ ->
@@ -156,6 +190,70 @@ class ParserTest {
     }.orElse<Nothing> {
       fail()
     }
+  }
+
+  @Test
+  fun testIgnoring_chainedWithPlus() {
+    val ignoreA: IgnoringParser<String> = -token("a")
+    val ignoreB: IgnoringParser<String> = -token("b")
+    val takeC: Parser<String> = token("c")
+    val parser = ignoreA + ignoreB + takeC + ignoreB + ignoreA
+    parser("abcba").map { text, start, end, _ ->
+      assertThat(start).isEqualTo(SourcePosition(0, 0, 0))
+      assertThat(end).isEqualTo(SourcePosition(5, 0, 5))
+      assertThat(text).isEqualTo("c")
+      Success(text, start, end)
+    }.orElse<Nothing> {
+      fail()
+    }
+  }
+
+  @Test
+  fun testNamingAParser() {
+    val parser = (token("hello") + -regex("(\\s+)") + token("world")).named("helloParser")
+    assertThat(parser.name).isEqualTo("helloParser")
+
+    parser("hello   world").map { (hello, world), start, end, _ ->
+      assertThat(hello).isEqualTo("hello")
+      assertThat(world).isEqualTo("world")
+      Success(hello to world, start, end)
+    }.orElse<Nothing> {
+      fail()
+    }
+
+    val result = parser("sayonara")
+    assertThat(result).isInstanceOf(Failure::class.java)
+    val failure = result as Failure
+    assertThat(traceBack(failure)).contains("helloParser")
+  }
+
+  @Test
+  fun testRegex() {
+    val parser = regex("(hello|world)")
+    parser("world").map { text, start, end, _ ->
+      assertThat(start).isEqualTo(SourcePosition(0, 0, 0))
+      assertThat(end).isEqualTo(SourcePosition(5, 0, 5))
+      assertThat(text).isEqualTo("world")
+      Success(text, start, end)
+    }.orElse<Nothing> {
+      fail()
+    }
+
+    assertThat(parser("sayonara")).isInstanceOf(Failure::class.java)
+    assertThat(parser("WORLD")).isInstanceOf(Failure::class.java)
+  }
+
+  @Test
+  fun testRegex_withOptions() {
+    val parser = regex("(hello|world)", IGNORE_CASE)
+    parser("wOrlD").map { text, start, end, _ ->
+      assertThat(text).isEqualTo("wOrlD")
+      Success(text, start, end)
+    }.orElse<Nothing> {
+      fail()
+    }
+
+    assertThat(parser("Sayonara")).isInstanceOf(Failure::class.java)
   }
 
   @Test

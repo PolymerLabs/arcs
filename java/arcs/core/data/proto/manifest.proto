@@ -26,7 +26,7 @@ message RecipeProto {
 
 // Recipe-level representation of a store.
 message HandleProto {
-  // Next Id: 5
+  // Next Id: 6
   enum Fate {
     UNSPECIFIED = 0;
     CREATE = 1;
@@ -89,6 +89,10 @@ message HandleConnectionSpecProto {
     READS = 1;
     WRITES = 2;
     READS_WRITES = 3;
+    QUERY = 4;
+    READS_QUERY = 5;
+    WRITES_QUERY = 6;
+    READS_WRITES_QUERY = 7;
   }
   // Identifies a connection in a particle spec.
   string name = 1;
@@ -109,9 +113,11 @@ message TypeProto {
     SingletonTypeProto singleton = 7;
     CountTypeProto count = 8;
     ListTypeProto list = 9;
+    NullableTypeProto nullable = 13;
   }
-  bool optional = 10;
   RefinementExpressionProto refinement = 11;
+  repeated AnnotationProto annotations = 12;
+  reserved 10;
 }
 
 enum PrimitiveTypeProto {
@@ -127,6 +133,7 @@ enum PrimitiveTypeProto {
   FLOAT = 9;
   DOUBLE = 10;
   INSTANT = 11;
+  DURATION = 12;
 }
 
 message EntityTypeProto {
@@ -160,6 +167,10 @@ message TypeVariableProto {
 }
 
 message ListTypeProto {
+  TypeProto element_type = 1;
+}
+
+message NullableTypeProto {
   TypeProto element_type = 1;
 }
 

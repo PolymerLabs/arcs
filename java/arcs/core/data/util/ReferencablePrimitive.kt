@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -13,37 +13,59 @@ package arcs.core.data.util
 
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
+import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.Base64
 import arcs.core.util.BigInt
 import arcs.core.util.toBase64Bytes
+import kotlin.math.abs
 import kotlin.reflect.KClass
 
 /**
  * Represents a primitive which can be referenced - and thus used by Crdts.
  */
-data class ReferencablePrimitive<T>(
+data class ReferencablePrimitive<T : Any> private constructor(
   /** Type of primitive being referencable-ified. */
-  val klass: KClass<*>,
+  val klass: String,
   /** The actual value. */
-  val value: T,
-  /**
-   * A string-representation of the value, when `value.toString()` is unwieldy (e.g. ByteArrays).
-   */
-  val valueRepr: String = value.toString()
+  val value: T
 ) : Referencable {
+
+  /** Represent a primitive (which can be referenced) from a Kotlin class. */
   // TODO: consider other 'serialization' mechanisms.
-  private val klassRepr = "Primitive<${primitiveKClassMap.getOrElse(klass, klass::toString)}>"
+  constructor(klass: KClass<T>, value: T) : this(primitiveKClassMap.getValue(klass), value)
+
+  val valueRepr: String
+    get() = when (value) {
+      is ArcsDuration -> value.toMillis().toString()
+      is ArcsInstant -> value.toEpochMilli().toString()
+      is ByteArray -> Base64.encode(value)
+      else -> value.toString()
+    }
+
   override val id: ReferenceId
-    get() = "$klassRepr($valueRepr)"
+    get() = "$klass($valueRepr)"
 
   override fun toString(): String = "Primitive($valueRepr)"
 
   override fun hashCode(): Int = id.hashCode()
 
   override fun equals(other: Any?): Boolean {
-    val otherRef = other as? Referencable ?: return false
-    return otherRef.id == id
+    val otherRef = other as? ReferencablePrimitive<*> ?: return false
+    if (otherRef.id == id) return true
+    if (otherRef.klass != klass) return false
+
+    // Special comparison logic for floating point numbers.
+    when (klass) {
+      "Primitive<$primitiveKotlinFloat>" -> {
+        return abs(value as Float - otherRef.value as Float) < FLOAT_TOLERANCE
+      }
+      "Primitive<$primitiveKotlinDouble>" -> {
+        return abs(value as Double - otherRef.value as Double) < DOUBLE_TOLERANCE
+      }
+    }
+
+    return false
   }
 
   companion object {
@@ -59,37 +81,36 @@ data class ReferencablePrimitive<T>(
     private const val primitiveKotlinBoolean = "kotlin.Boolean"
     private const val primitiveKotlinByteArray = "kotlin.ByteArray"
     private const val primitiveBigInt = "arcs.core.util.BigInt"
+    private const val primitiveArcsDuration = "arcs.core.util.ArcsDuration"
     private const val primitiveArcsInstant = "arcs.core.util.ArcsInstant"
     private val primitiveKClassMap = mapOf<KClass<*>, String>(
-      Byte::class to primitiveKotlinByte,
-      Short::class to primitiveKotlinShort,
-      Int::class to primitiveKotlinInt,
-      Long::class to primitiveKotlinLong,
-      Char::class to primitiveKotlinChar,
-      Float::class to primitiveKotlinFloat,
-      Double::class to primitiveKotlinDouble,
-      String::class to primitiveKotlinString,
-      Boolean::class to primitiveKotlinBoolean,
-      ByteArray::class to primitiveKotlinByteArray,
-      BigInt::class to primitiveBigInt,
-      ArcsInstant::class to primitiveArcsInstant
+      Byte::class to "Primitive<$primitiveKotlinByte>",
+      Short::class to "Primitive<$primitiveKotlinShort>",
+      Int::class to "Primitive<$primitiveKotlinInt>",
+      Long::class to "Primitive<$primitiveKotlinLong>",
+      Char::class to "Primitive<$primitiveKotlinChar>",
+      Float::class to "Primitive<$primitiveKotlinFloat>",
+      Double::class to "Primitive<$primitiveKotlinDouble>",
+      String::class to "Primitive<$primitiveKotlinString>",
+      Boolean::class to "Primitive<$primitiveKotlinBoolean>",
+      ByteArray::class to "Primitive<$primitiveKotlinByteArray>",
+      BigInt::class to "Primitive<$primitiveBigInt>",
+      ArcsDuration::class to "Primitive<$primitiveArcsDuration>",
+      ArcsInstant::class to "Primitive<$primitiveArcsInstant>"
     )
-    private val pattern = "Primitive<([^>]+)>\\((.*)\\)$".toRegex()
+
+    /** The tolerance to use when comparing floats. */
+    const val FLOAT_TOLERANCE: Float = 1e-7f
+
+    /** The tolerance to use when comparing doubles. */
+    const val DOUBLE_TOLERANCE: Double = 1e-10
+
+    // the DOT_MATCHES_ALL flag is required so that .* matches newlines and other characters
+    private val pattern = Regex("Primitive<([^>]+)>\\((.*)\\)", RegexOption.DOT_MATCHES_ALL)
 
     /** Returns whether or not the given type is a supported type for [ReferencablePrimitive]. */
     fun isSupportedPrimitive(klass: KClass<*>): Boolean =
-      klass == Byte::class ||
-        klass == Short::class ||
-        klass == Int::class ||
-        klass == Long::class ||
-        klass == Float::class ||
-        klass == Char::class ||
-        klass == Double::class ||
-        klass == String::class ||
-        klass == Boolean::class ||
-        klass == ByteArray::class ||
-        klass == BigInt::class ||
-        klass == ArcsInstant::class
+      klass in primitiveKClassMap
 
     /**
      * If the given [ReferenceId] matches the type of `serialized` reference id created by
@@ -108,13 +129,13 @@ data class ReferencablePrimitive<T>(
           className.contains("java.lang.Short") ->
           ReferencablePrimitive(Short::class, value.toShort())
         className == primitiveKotlinInt ||
-          className.contains("java.lang.Int") ->
+          className.contains("java.lang.Integer") ->
           ReferencablePrimitive(Int::class, value.toInt())
         className == primitiveKotlinLong ||
           className.contains("java.lang.Long") ->
           ReferencablePrimitive(Long::class, value.toLong())
         className == primitiveKotlinChar ||
-          className.contains("java.lang.Char") ->
+          className.contains("java.lang.Character") ->
           ReferencablePrimitive(Char::class, value.single())
         className == primitiveKotlinFloat ||
           className.contains("java.lang.Float") ->
@@ -128,14 +149,18 @@ data class ReferencablePrimitive<T>(
           className.contains("java.lang.Boolean") ->
           ReferencablePrimitive(Boolean::class, value.toBoolean())
         className == primitiveKotlinByteArray ->
-          ReferencablePrimitive(ByteArray::class, value.toBase64Bytes(), value)
+          ReferencablePrimitive(ByteArray::class, value.toBase64Bytes())
         className == primitiveBigInt ->
           ReferencablePrimitive(BigInt::class, BigInt(value))
+        className == primitiveArcsDuration ->
+          ReferencablePrimitive(
+            ArcsDuration::class,
+            ArcsDuration.ofMillis(value.toLong())
+          )
         className == primitiveArcsInstant ->
           ReferencablePrimitive(
             ArcsInstant::class,
-            ArcsInstant.ofEpochMilli(value.toLong()),
-            value
+            ArcsInstant.ofEpochMilli(value.toLong())
           )
         else -> null
       }
@@ -181,17 +206,18 @@ fun String.toReferencable(): ReferencablePrimitive<String> =
 fun Boolean.toReferencable(): ReferencablePrimitive<Boolean> =
   ReferencablePrimitive(Boolean::class, this)
 
-/**
- * Makes a [ByteArray]-based [ReferencablePrimitive] from the receiving [ByteArray], with the
- * [ReferencablePrimitive.valueRepr] equal to the Base64 encoding of the array.
- */
+/** Makes a [ByteArray]-based [ReferencablePrimitive] from the receiving [ByteArray]. */
 fun ByteArray.toReferencable(): ReferencablePrimitive<ByteArray> =
-  ReferencablePrimitive(ByteArray::class, this, Base64.encode(this))
+  ReferencablePrimitive(ByteArray::class, this)
 
 /** Makes a [BigInt]-based [ReferencablePrimitive] from the receiving [BigInt]. */
 fun BigInt.toReferencable(): ReferencablePrimitive<BigInt> =
   ReferencablePrimitive(BigInt::class, this)
 
+/** Makes a [ArcsDuration]-based [ReferencablePrimitive] from the receiving [ArcsDuration]. */
+fun ArcsDuration.toReferencable(): ReferencablePrimitive<ArcsDuration> =
+  ReferencablePrimitive(ArcsDuration::class, this)
+
 /** Makes a [ArcsInstant]-based [ReferencablePrimitive] from the receiving [ArcsInstant]. */
 fun ArcsInstant.toReferencable(): ReferencablePrimitive<ArcsInstant> =
-  ReferencablePrimitive(ArcsInstant::class, this, this.toEpochMilli().toString())
+  ReferencablePrimitive(ArcsInstant::class, this)

@@ -12,9 +12,7 @@ arcs_kt_library(
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/data:rawentity",
-        "//java/arcs/core/data:reference",
         "//java/arcs/core/data:schema_fields",
-        "//java/arcs/core/data/expression",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:reference",
@@ -24,7 +22,7 @@ arcs_kt_library(
         "//java/arcs/core/type",
         "//java/arcs/core/util",
         "//java/arcs/core/util:utils-platform-dependencies",
-        "//third_party/kotlin/kotlinx_atomicfu",
+        "//java/arcs/flags",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

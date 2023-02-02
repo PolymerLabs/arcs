@@ -59,7 +59,8 @@ function resolveForField(fieldPath: string[], field: FieldType): FieldPathType {
       }
     }
     case 'schema-collection':
-    case 'schema-ordered-list': {
+    case 'schema-ordered-list':
+    case 'schema-nullable': {
       // Check inner type.
       return resolveForField(fieldPath, field.getFieldType());
     }
@@ -114,4 +115,4 @@ function parseTupleAccessor(field: string): number {
   return result;
 }
 
-class FieldPathError extends Error {}
+export class FieldPathError extends Error {}

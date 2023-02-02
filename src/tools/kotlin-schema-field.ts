@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {SchemaNode} from './schema2graph.js';
 import {Dictionary} from '../utils/lib-utils.js';
+import {SchemaNode} from './schema2graph';
 
 /** Generates KotlinSchemaFields for a given SchemaNode */
 export function generateFields(node: SchemaNode): KotlinSchemaField[] {
@@ -21,6 +21,7 @@ export function generateFields(node: SchemaNode): KotlinSchemaField[] {
         case 'schema-collection': return new CollectionType(constructType(descriptor.getFieldType()));
         case 'schema-ordered-list': return new ListType(constructType(descriptor.getFieldType()));
         case 'schema-reference': return new ReferenceType(constructType(descriptor.getFieldType()));
+        case 'schema-nullable': return new NullableType(constructType(descriptor.getFieldType()));
         case 'type-name': return new ReferencedSchema(node.refs.get(name));
         case 'schema-inline': return new ReferencedSchema(node.refs.get(name));
         case 'schema-nested': return new InlineSchema(node.refs.get(name));
@@ -47,7 +48,8 @@ export class KotlinSchemaField {
  *  ├─TypeContainer
  *  │  ├─CollectionType
  *  │  ├─ListType
- *  │  └─ReferenceType
+ *  │  ├─ReferenceType
+ *  │  └─NullableType
  *  ├─SchemaType
  *  │  ├─ReferencedSchema
  *  │  └─InlineSchema
@@ -162,6 +164,22 @@ class ReferenceType extends TypeContainer {
   }
 }
 
+/** Nullable of a type, e.g. &Person {name: Text} */
+class NullableType extends TypeContainer {
+
+  constructor(innerType: SchemaFieldType) {
+    super(innerType);
+  }
+
+  getKotlinType(contained: boolean) {
+    return `${this.innerKotlinType}?`;
+  }
+
+  get defaultVal() {
+    return `null`;
+  }
+}
+
 /** Super class for all schema-based type */
 abstract class SchemaType extends SchemaFieldType {
 
@@ -211,7 +229,6 @@ class InlineSchema extends SchemaType {
 
 /* An primitive type, e.g. Number, Char, Boolean, URL, BigInt */
 class PrimitiveType extends SchemaFieldType {
-
   constructor(readonly _arcsTypeName: string) {
     super();
     if (!primitiveTypeMap[this.arcsTypeName]) throw new Error(`Invalid Primitive Type "${this.arcsTypeName}".`);
@@ -260,7 +277,7 @@ const primitiveTypeMap: Dictionary<KotlinTypeInfo> = {
   'Number': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0', isNumber: true},
   'BigInt': {type: 'BigInt', decodeFn: 'decodeBigInt()', defaultVal: 'BigInt.ZERO', isNumber: true},
   'Instant': {type: 'ArcsInstant', decodeFn: 'decodeInstant()', defaultVal: 'ArcsInstant.ofEpochMilli(-1L)', isNumber: true},
-  'Duration': {type: 'ArcsDuration', decodeFn: 'decodeDuration()', defaultVal: 'ArcsDuration.ofMillis(-1L)', isNumber: true},
+  'Duration': {type: 'ArcsDuration', decodeFn: 'decodeDuration()', defaultVal: 'ArcsDuration.ofMillis(0L)', isNumber: true},
   'Boolean': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false'},
   'Byte': {type: 'Byte', decodeFn: 'decodeByte()', defaultVal: '0.toByte()', isNumber: true},
   'Short': {type: 'Short', decodeFn: 'decodeShort()', defaultVal: '0.toShort()', isNumber: true},

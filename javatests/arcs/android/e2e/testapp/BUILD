@@ -29,8 +29,7 @@ arcs_kt_android_library(
         ":animal_arcs",
         ":person_arcs",
         "//java/arcs/android/devtools",
-        "//java/arcs/android/host",
-        "//java/arcs/android/sdk/host",
+        "//java/arcs/android/labs/host",
         "//java/arcs/android/storage/database",
         "//java/arcs/android/util",
         "//java/arcs/core/allocator",
@@ -48,9 +47,9 @@ arcs_kt_android_library(
         "//java/arcs/core/util",
         "//java/arcs/jvm/util",
         "//java/arcs/sdk:sdk-kt",
+        "//java/arcs/sdk/android/labs/host",
         "//java/arcs/sdk/android/storage",
         "//java/arcs/sdk/android/storage/service",
-        "//java/arcs/sdk/storage",
         "//third_party/java/androidx/appcompat",
         "//third_party/java/androidx/work",
         "//third_party/kotlin/kotlinx_coroutines",
@@ -65,5 +64,9 @@ android_binary(
     incremental_dexing = 0,
     manifest = ":AndroidManifest.xml",
     multidex = "native",
-    deps = [":test_app_lib"],
+    deps = [
+        ":test_app_lib",
+        # Unit testing build flags needed as a runtime dep.
+        "//java/arcs/flags/testing",
+    ],
 )

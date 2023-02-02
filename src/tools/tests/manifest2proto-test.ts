@@ -8,17 +8,17 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../platform/chai-web.js';
+import {fs} from '../../platform/fs-web.js';
 import {encodeManifestToProto, manifestToProtoPayload, typeToProtoPayload} from '../manifest2proto.js';
 import {CountType, EntityType, SingletonType, TupleType, Type, TypeVariable} from '../../types/lib-types.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {fs} from '../../platform/fs-web.js';
-import {ManifestProto, TypeProto} from '../manifest-proto.js';
-import {Loader} from '../../platform/loader.js';
+import {Loader} from '../../runtime/loader.js';
+import {Runtime} from '../../runtime/runtime.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 import {deleteFieldRecursively} from '../../utils/lib-utils.js';
+import {ManifestProto, TypeProto} from '../manifest-proto.js';
 
 describe('manifest2proto', () => {
-
   // The tests below construct the JSON representation equivalent to the proto,
   // construct the proto object from the constructed JSON and produce JSON back
   // from the proto object. This ensures that all JSON produced fits the
@@ -699,7 +699,7 @@ describe('manifest2proto', () => {
   it('encodes variable type - resolved constraint', async () => {
     const constraint = EntityType.make(['Foo'], {value: 'Text'}).singletonOf();
     const varType = TypeVariable.make('a', constraint, constraint);
-    varType.maybeEnsureResolved();
+    varType.maybeResolve();
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
       singleton: {singletonType: {
         entity: {schema: {
@@ -893,6 +893,19 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(schema.names, ['Foo']);
     assert.deepStrictEqual(schema.fields, {
       l: {list: {elementType: {primitive: 'NUMBER'}}}
+    });
+  });
+
+  it('encodes schema fields with annotations', async () => {
+    const manifest = await Manifest.parse(`
+      particle Abc in 'a/b/c.js'
+        input: writes Foo {t: Text @hardRef}
+    `);
+    const schema = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type.entity.schema;
+
+    assert.deepStrictEqual(schema.names, ['Foo']);
+    assert.deepStrictEqual(schema.fields, {
+      t: {primitive: 'TEXT', annotations: [{name: 'hardRef'}]},
     });
   });
 
@@ -1517,8 +1530,9 @@ describe('manifest2proto', () => {
   // This ensures that at least all the constructs used in the .arcs file can be serialized in TS
   // and deserialized in Kotlin to the extent that they are present in the .textproto file.
   it('encodes the Manifest2ProtoTest manifest', async () => {
+    const runtime = new Runtime();
     assert.deepStrictEqual(
-      await encodeManifestToProto('java/arcs/core/data/testdata/Manifest2ProtoTest.arcs'),
+      await encodeManifestToProto(runtime, 'java/arcs/core/data/testdata/Manifest2ProtoTest.arcs'),
       fs.readFileSync('java/arcs/core/data/testdata/Manifest2ProtoTest.binarypb'),
       `The output of manifest2proto for Manifest2ProtoTest.arcs does not match the expectation.\n
 If you want to update the expected output please run:\n

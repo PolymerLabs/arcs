@@ -13,29 +13,39 @@ package arcs.sdk.android.storage.service
 
 import android.app.Application
 import android.content.Intent
+import android.os.IBinder
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.common.resurrection.ResurrectionRequest
+import arcs.android.crdt.toParcelableType
+import arcs.android.storage.StorageServiceMessageProto
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
-import arcs.android.storage.service.BindingContext
+import arcs.android.storage.service.IStorageChannel
+import arcs.android.storage.service.IStorageServiceNg
+import arcs.android.storage.service.StorageServiceNgImpl
 import arcs.android.storage.service.suspendForResultCallback
+import arcs.android.storage.service.testing.FakeMessageCallback
+import arcs.android.storage.service.testing.FakeStorageChannelCallback
+import arcs.android.storage.toParcelByteArray
 import arcs.android.storage.toProto
 import arcs.android.storage.ttl.PeriodicCleanupTask
+import arcs.android.util.testutil.AndroidLogRule
 import arcs.core.crdt.CrdtCount
+import arcs.core.crdt.VersionMap
 import arcs.core.data.CountType
 import arcs.core.storage.ProxyMessage
-import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.RamDiskStorageKey
-import arcs.sdk.android.storage.ResurrectionHelper
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
@@ -44,12 +54,13 @@ import org.robolectric.Shadows.shadowOf
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
 class StorageServiceTest {
+
+  @get:Rule
+  val log = AndroidLogRule()
+
   private lateinit var app: Application
   private lateinit var storeOptions: StoreOptions
   private lateinit var workManager: WorkManager
-
-  private val ttlTag = PeriodicCleanupTask.WORKER_TAG
-  private val gcTag = DatabaseGarbageCollectionPeriodicTask.WORKER_TAG
 
   @Before
   fun setUp() {
@@ -64,17 +75,26 @@ class StorageServiceTest {
   }
 
   @Test
-  fun sendingProxyMessage_resultsInResurrection() = lifecycle(storeOptions) { service, context ->
-    // Setup:
-    // Create a resurrection helper we'll use to collect updated storage keys coming from the
-    // ShadowApplication-captured nextStartedService intents.
-    val receivedUpdates = mutableListOf<List<StorageKey>>()
-    val receivedIds = mutableListOf<String>()
-    val resurrectionHelper = ResurrectionHelper(app) { id: String, keys: List<StorageKey> ->
-      receivedUpdates.add(keys)
-      receivedIds.add(id)
-    }
+  fun bindingWithStorageServiceNgIntent_createsStorageServiceNgService() = runBlocking {
+    val intent = StorageServiceIntentHelpers.storageServiceNgIntent(
+      app
+    )
 
+    val deferredBinder = CompletableDeferred<IBinder?>()
+
+    Robolectric.buildService(StorageService::class.java, intent)
+      .create()
+      .bind()
+      .also {
+        deferredBinder.complete(it.get().onBind(intent))
+      }
+
+    val binder = deferredBinder.await()
+    assertThat(binder).isInstanceOf(StorageServiceNgImpl::class.java)
+  }
+
+  @Test
+  fun sendingProxyMessage_resultsInResurrection() = lifecycle(storeOptions) { service, channel ->
     // Setup:
     // Add a resurrection request to the storage service.
     val resurrectionRequestIntent = Intent(app, StorageService::class.java).apply {
@@ -92,17 +112,23 @@ class StorageServiceTest {
       }
       service.loadJob?.join()
 
-      val op = CrdtCount.Operation.Increment("foo", 0 to 1)
+      val op = CrdtCount.Operation.Increment("foo", VersionMap("foo" to 1))
       val proxyMessage = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
         listOf(op), id = 1
       )
 
-      suspendForResultCallback {
-        context.sendProxyMessage(proxyMessage.toProto().toByteArray(), it)
+      suspendForResultCallback { resultCallback ->
+        channel.sendMessage(
+          StorageServiceMessageProto.newBuilder()
+            .setProxyMessage(proxyMessage.toProto())
+            .build()
+            .toByteArray(),
+          resultCallback
+        )
       }
 
       suspendForResultCallback {
-        context.idle(10000, it)
+        channel.idle(10000, it)
       }
 
       true
@@ -114,18 +140,66 @@ class StorageServiceTest {
     // the helper's callback will be triggered, adding to `receivedUpdates`.
     val shadowApp = shadowOf(app)
 
-    resurrectionHelper.onStartCommand(shadowApp.nextStartedService)
-    assertThat(receivedUpdates).hasSize(1)
-    assertThat(receivedUpdates[0]).containsExactly(storeOptions.storageKey)
-    assertThat(receivedIds[0]).isEqualTo("test")
+    val next = shadowApp.nextStartedService
+    val id = next.getStringExtra(ResurrectionRequest.EXTRA_REGISTRATION_TARGET_ID)
+    val ids = next.getStringArrayListExtra(ResurrectionRequest.EXTRA_RESURRECT_NOTIFIER)
+    assertThat(id).isEqualTo("test")
+    assertThat(ids).containsExactly(storeOptions.storageKey.toString())
+    assertThat(shadowApp.nextStartedService).isNull()
+  }
+
+  @Test
+  fun storageService_unbind_closesStores() = runBlocking<Unit> {
+    val intent = StorageServiceIntentHelpers.storageServiceNgIntent(
+      app
+    )
+
+    val storeOptions2 = StoreOptions(
+      RamDiskStorageKey("count2"),
+      CountType()
+    )
+
+    Robolectric.buildService(StorageService::class.java, intent)
+      .create()
+      .bind()
+      .also {
+        val storageServiceNg = it.get().onBind(intent) as IStorageServiceNg
+        // Creating a channel triggers store creation.
+        val channelCallback1 = FakeStorageChannelCallback()
+        storageServiceNg.openStorageChannel(
+          storeOptions.toParcelByteArray(storeOptions.type.toParcelableType()),
+          channelCallback1,
+          FakeMessageCallback()
+        )
+        channelCallback1.waitForOnCreate()
+
+        assertThat(it.get().storeCount()).isEqualTo(1)
+
+        // Create another channel to trigger store creation.
+        val channelCallback2 = FakeStorageChannelCallback()
+        storageServiceNg.openStorageChannel(
+          storeOptions2.toParcelByteArray(storeOptions2.type.toParcelableType()),
+          channelCallback2,
+          FakeMessageCallback()
+        )
+        channelCallback2.waitForOnCreate()
+        assertThat(it.get().storeCount()).isEqualTo(2)
+
+        it.get().onUnbind(intent)
+
+        Thread.sleep(50)
+
+        assertThat(it.get().storeCount()).isEqualTo(0)
+      }
+      .destroy()
   }
 
   @Test
   fun testPeriodicJobsConfig_default() = runBlocking {
     StorageService().onCreate()
 
-    assertEnqueued(ttlTag)
-    assertEnqueued(gcTag)
+    assertEnqueued(TTL_TAG)
+    assertEnqueued(GC_TAG)
   }
 
   @Test
@@ -135,8 +209,8 @@ class StorageServiceTest {
     }
     MyStorageService().onCreate()
 
-    assertNotEnqueued(ttlTag)
-    assertNotEnqueued(gcTag)
+    assertNotEnqueued(TTL_TAG)
+    assertNotEnqueued(GC_TAG)
   }
 
   @Test
@@ -146,8 +220,8 @@ class StorageServiceTest {
     }
     MyStorageService().onCreate()
 
-    assertNotEnqueued(ttlTag)
-    assertEnqueued(gcTag)
+    assertNotEnqueued(TTL_TAG)
+    assertEnqueued(GC_TAG)
   }
 
   @Test
@@ -159,31 +233,83 @@ class StorageServiceTest {
     val sts = MyStorageService()
     sts.onCreate()
 
-    assertEnqueued(ttlTag)
-    assertEnqueued(gcTag)
+    assertEnqueued(TTL_TAG)
+    assertEnqueued(GC_TAG)
 
     sts.changeConfig(StorageService.StorageServiceConfig(false, 2, false, 2))
 
-    assertCanceled(ttlTag)
-    assertCanceled(gcTag)
+    assertCanceled(TTL_TAG)
+    assertCanceled(GC_TAG)
 
     sts.changeConfig(StorageService.StorageServiceConfig(true, 2, false, 2))
 
-    assertEnqueued(ttlTag)
-    assertCanceled(gcTag)
+    assertEnqueued(TTL_TAG)
+    assertCanceled(GC_TAG)
   }
 
   @Test
   fun testPeriodicJobsConfig_subclass_cancelAll() = runBlocking {
     StorageService().onCreate()
 
-    assertEnqueued(ttlTag)
-    assertEnqueued(gcTag)
+    assertEnqueued(TTL_TAG)
+    assertEnqueued(GC_TAG)
 
     StorageService.cancelAllPeriodicJobs(app)
 
-    assertCanceled(ttlTag)
-    assertCanceled(gcTag)
+    assertCanceled(TTL_TAG)
+    assertCanceled(GC_TAG)
+  }
+
+  @Test
+  fun testPeriodicJobsConfig_startWithDifferentWorkerClass() = runBlocking {
+    class MyStorageService : StorageService() {
+      override val config = StorageServiceConfig(
+        ttlJobEnabled = true,
+        garbageCollectionJobEnabled = true,
+        useGarbageCollectionTaskV2 = true
+      )
+    }
+    MyStorageService().onCreate()
+
+    assertEnqueued(TTL_TAG)
+    assertEnqueued(GC_V2_TAG)
+    assertNotEnqueued(GC_TAG)
+  }
+
+  @Test
+  fun testPeriodicJobsConfig_changeWorkerClass() = runBlocking {
+    class MyStorageService : StorageService() {
+      fun changeConfig(config: StorageServiceConfig) = schedulePeriodicJobs(config)
+    }
+    val sts = MyStorageService()
+    sts.onCreate()
+
+    assertEnqueued(TTL_TAG)
+    assertEnqueued(GC_TAG)
+    assertNotEnqueued(GC_V2_TAG)
+
+    sts.changeConfig(
+      StorageService.StorageServiceConfig(
+        ttlJobEnabled = true,
+        garbageCollectionJobEnabled = true,
+        useGarbageCollectionTaskV2 = true
+      )
+    )
+
+    assertEnqueued(TTL_TAG)
+    assertCanceled(GC_TAG)
+    assertEnqueued(GC_V2_TAG)
+
+    sts.changeConfig(
+      StorageService.StorageServiceConfig(
+        ttlJobEnabled = true,
+        garbageCollectionJobEnabled = false,
+        useGarbageCollectionTaskV2 = true
+      )
+    )
+
+    assertCanceled(GC_TAG)
+    assertCanceled(GC_V2_TAG)
   }
 
   private fun assertEnqueued(tag: String) {
@@ -205,19 +331,40 @@ class StorageServiceTest {
 
   private fun lifecycle(
     storeOptions: StoreOptions,
-    block: (StorageService, BindingContext) -> Unit
+    block: (StorageService, IStorageChannel) -> Unit
   ) {
-    val intent = StorageServiceIntentHelpers.storageServiceIntent(
-      app,
-      storeOptions
+    val intent = StorageServiceIntentHelpers.storageServiceNgIntent(
+      app
     )
+
     Robolectric.buildService(StorageService::class.java, intent)
       .create()
       .bind()
       .also {
-        val context = it.get().onBind(intent)
-        block(it.get(), context as BindingContext)
+        val storageServiceNg = it.get().onBind(intent) as IStorageServiceNg
+
+        // Open a channel for store
+        val channelCallback = FakeStorageChannelCallback()
+        storageServiceNg.openStorageChannel(
+        storeOptions.toParcelByteArray(storeOptions.type.toParcelableType()),
+          channelCallback,
+          FakeMessageCallback()
+        )
+        val channel = runBlocking { channelCallback.waitForOnCreate() }
+
+        // Run the code block.
+        block(it.get(), channel)
+
+        // Close channel and unbind service.
+        runBlocking { suspendForResultCallback { channel.close(it) } }
+        it.get().onUnbind(intent)
       }
       .destroy()
+  }
+
+  companion object {
+    private const val TTL_TAG = PeriodicCleanupTask.WORKER_TAG
+    private const val GC_TAG = DatabaseGarbageCollectionPeriodicTask.WORKER_TAG
+    private const val GC_V2_TAG = DatabaseGarbageCollectionPeriodicTaskV2.WORKER_TAG
   }
 }

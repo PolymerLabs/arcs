@@ -11,11 +11,11 @@ import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 
 val IngestionOnly_handle0: Plan.Handle = Plan.Handle(
             storageKey =
-                StorageKeyParser.parse("reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"),
+                StorageKeyManager.GLOBAL_INSTANCE.parse("reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"),
             type = EntityType(Schema(
             names = setOf(SchemaName("Thing")),
             fields = SchemaFields(
@@ -35,7 +35,7 @@ val IngestionOnlyPlan: Plan = Plan(
 
 val Ingestion_handle0: Plan.Handle = Plan.Handle(
             storageKey =
-                StorageKeyParser.parse("reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingArcId/handle/my-handle-id}"),
+                StorageKeyManager.GLOBAL_INSTANCE.parse("reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingArcId/handle/my-handle-id}"),
             type = EntityType(Schema(
             names = setOf(SchemaName("Thing")),
             fields = SchemaFields(
@@ -55,7 +55,7 @@ val IngestionPlan: Plan = Plan(
 
 val Consumption_handle0: Plan.Handle = Plan.Handle(
             storageKey =
-                StorageKeyParser.parse("reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingArcId/handle/my-handle-id}"),
+                StorageKeyManager.GLOBAL_INSTANCE.parse("reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingArcId/handle/my-handle-id}"),
             type = EntityType(Schema(
             names = setOf(SchemaName("Thing")),
             fields = SchemaFields(
@@ -74,7 +74,7 @@ val ConsumptionPlan: Plan = Plan(
         )
 
 val EphemeralWriting_handle0: Plan.Handle = Plan.Handle(
-            storageKey = StorageKeyParser.parse("create://my-ephemeral-handle-id"),
+            storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse("create://my-ephemeral-handle-id"),
             type = EntityType(Schema(
             names = setOf(SchemaName("Thing")),
             fields = SchemaFields(
@@ -94,7 +94,7 @@ val EphemeralWritingPlan: Plan = Plan(
 
 val EphemeralReading_handle0: Plan.Handle = Plan.Handle(
             storageKey =
-                StorageKeyParser.parse("reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"),
+                StorageKeyManager.GLOBAL_INSTANCE.parse("reference-mode://{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/Thing}{db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"),
             type = EntityType(Schema(
             names = setOf(SchemaName("Thing")),
             fields = SchemaFields(
@@ -114,7 +114,7 @@ val EphemeralReadingPlan: Plan = Plan(
 
 val ReferencesRecipe_handle0: Plan.Handle = Plan.Handle(
             storageKey =
-                StorageKeyParser.parse("db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:referencesArcId/handle/my-refs-id"),
+                StorageKeyManager.GLOBAL_INSTANCE.parse("db://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:referencesArcId/handle/my-refs-id"),
             type = CollectionType(ReferenceType(EntityType(Schema(
             names = setOf(SchemaName("Thing")),
             fields = SchemaFields(
@@ -128,7 +128,7 @@ val ReferencesRecipe_handle0: Plan.Handle = Plan.Handle(
 
 val ReferencesRecipe_handle1: Plan.Handle = Plan.Handle(
             storageKey =
-                StorageKeyParser.parse("memdb://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:referencesArcId/handle/my-ref-id"),
+                StorageKeyManager.GLOBAL_INSTANCE.parse("memdb://503ee2172e4a0ec16b2c7245ae8b7dd30fe9315b@arcs/!:referencesArcId/handle/my-ref-id"),
             type = ReferenceType(EntityType(Schema(
             names = setOf(SchemaName("Thing")),
             fields = SchemaFields(

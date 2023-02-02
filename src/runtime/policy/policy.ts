@@ -12,7 +12,8 @@ import {AnnotationRef} from '../arcs-types/annotation.js';
 import {assert} from '../../platform/assert-web.js';
 import {IndentingStringBuilder} from '../../utils/lib-utils.js';
 import {Ttl, Capabilities, Capability, Persistence, Encryption} from '../capabilities.js';
-import {EntityType, FieldType, InterfaceType, Type, Schema, ReferenceField, InlineField} from '../../types/lib-types.js';
+import {EntityType, FieldType, InterfaceType, NullableField, Type, Schema, ReferenceField,
+  InlineField} from '../../types/lib-types.js';
 import {FieldPathType, resolveFieldPathType} from '../field-path.js';
 
 export enum PolicyRetentionMedium {
@@ -61,7 +62,7 @@ export class Policy {
 
   static fromAstNode(
       node: AstNode.Policy,
-      buildAnnotationRefs: (ref: AstNode.AnnotationRef[]) => AnnotationRef[],
+      buildAnnotationRefs: (ref: AstNode.AnnotationRefNode[]) => AnnotationRef[],
       findTypeByName: (name: string) => EntityType | InterfaceType | undefined): Policy {
     checkNamesAreUnique(node.targets.map(target => ({name: target.schemaName})));
     const targets = node.targets.map(target => PolicyTarget.fromAstNode(target, buildAnnotationRefs, findTypeByName));
@@ -122,7 +123,7 @@ export class PolicyTarget {
 
   static fromAstNode(
       node: AstNode.PolicyTarget,
-      buildAnnotationRefs: (ref: AstNode.AnnotationRef[]) => AnnotationRef[],
+      buildAnnotationRefs: (ref: AstNode.AnnotationRefNode[]) => AnnotationRef[],
       findTypeByName: (name: string) => EntityType | InterfaceType | undefined): PolicyTarget {
     // Check type.
     const type = findTypeByName(node.schemaName);
@@ -239,7 +240,7 @@ export class PolicyField {
   static fromAstNode(
       node: AstNode.PolicyField,
       parentType: FieldPathType,
-      buildAnnotationRefs: (ref: AstNode.AnnotationRef[]) => AnnotationRef[]): PolicyField {
+      buildAnnotationRefs: (ref: AstNode.AnnotationRefNode[]) => AnnotationRef[]): PolicyField {
     // Validate field name against type.
     const type = resolveFieldPathType([node.name], parentType);
 
@@ -322,6 +323,9 @@ export class PolicyField {
         if (entityType == null) return this;
         return new InlineField(this.restrictedEntityType(entityType));
       }
+      case 'schema-nullable': {
+        return new NullableField(field.getFieldType());
+      }
       // TODO(bgogul): `field-path` does not support these types yet.
       // case 'schema-union':
       // case 'schema-tuple':
@@ -340,7 +344,8 @@ export class PolicyField {
     const restrictedFields = {};
     const schema = entityType.entitySchema;
     for (const subfield of this.subfields) {
-      restrictedFields[subfield.name] = schema.fields[subfield.name];
+      restrictedFields[subfield.name] =
+        subfield.toSchemaField(schema.fields[subfield.name]);
     }
     return EntityType.make(schema.names, restrictedFields, schema);
   }

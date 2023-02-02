@@ -22,20 +22,19 @@ import org.junit.runners.JUnit4
 class TupleTypeTest {
 
   @Test
-  fun tagIsTuple() {
-    assertThat(TupleType.of().tag).isEqualTo(Tag.Tuple)
+  fun tag_isTuple() {
+    assertThat(TupleType().tag).isEqualTo(Tag.Tuple)
   }
 
   @Test
-  fun toStringListsElementTypes() {
-    assertThat(
-      TupleType.of(
-        TypeVariable("a"),
-        ReferenceType(EntityType(PRODUCT_SCHEMA))
-      ).toString(ToStringOptions())
-    ).isEqualTo(
-      "(~a, &Product {})"
+  fun toStringWithOptions_listsElementTypes() {
+    val tupleType = TupleType(
+      TypeVariable("a"),
+      EntityType(PRODUCT_SCHEMA),
+      ReferenceType(EntityType(PRODUCT_SCHEMA))
     )
+    assertThat(tupleType.toStringWithOptions(ToStringOptions()))
+      .isEqualTo("(~a, Product {}, &Product {})")
   }
 
   companion object {

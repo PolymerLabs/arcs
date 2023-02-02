@@ -37,6 +37,10 @@ class ArcsDuration private constructor(
     return platformDuration.equals(other.platformDuration)
   }
 
+  override fun hashCode(): Int {
+    return platformDuration.hashCode()
+  }
+
   fun toPlatform() = platformDuration
 
   companion object {
@@ -47,5 +51,8 @@ class ArcsDuration private constructor(
 
     @Suppress("NewApi") // See b/167491554
     fun ofHours(days: Long): ArcsDuration = ArcsDuration(PlatformDuration.ofHours(days))
+
+    @Suppress("NewApi") // See b/167491554
+    fun ofMillis(millis: Long): ArcsDuration = ArcsDuration(PlatformDuration.ofMillis(millis))
   }
 }

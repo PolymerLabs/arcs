@@ -16,21 +16,29 @@ import {Consumer} from '../../utils/lib-utils.js';
 import {ProxyMessage} from './store-interface.js';
 import {Type} from '../../types/lib-types.js';
 import {PropagatedException} from '../arc-exceptions.js';
+import {StoreInfo} from './store-info.js';
+import {IdGenerator} from '../id.js';
+import {Producer} from '../../utils/lib-utils.js';
+import {StorageKeyParser} from './storage-key-parser.js';
 
 export interface StorageFrontend {
-  Register(
-    handle: StorageProxy<CRDTTypeRecord>,
-    messagesCallback: ProxyCallback<CRDTTypeRecord>,
-    idCallback: Consumer<number>): void;
-  DirectStoreMuxerRegister(
-    handle: StorageProxyMuxer<CRDTTypeRecord>,
-    messagesCallback: ProxyCallback<CRDTTypeRecord>,
-    idCallback: Consumer<number>): void;
-  ProxyMessage(handle: StorageProxy<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>): void;
-  StorageProxyMuxerMessage(handle: StorageProxyMuxer<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>): void;
+  registerStorageProxy(storageProxy: StorageProxy<CRDTTypeRecord>,
+                       messagesCallback: ProxyCallback<CRDTTypeRecord>,
+                       idCallback: Consumer<number>): void;
 
-  GetDirectStoreMuxer(callback: (proxy: StorageProxyMuxer<CRDTTypeRecord>, key: string) => void, storageKey: string, type: Type);
-  onGetDirectStoreMuxerCallback(callback: (proxy: StorageProxyMuxer<CRDTTypeRecord>, key: string) => void, type: Type, name: string, id: string, storageKey: string);
+  directStorageProxyMuxerRegister(storageProxyMuxer: StorageProxyMuxer<CRDTTypeRecord>,
+                                  messagesCallback: ProxyCallback<CRDTTypeRecord>,
+                                  idCallback: Consumer<number>): void;
 
-  ReportExceptionInHost(exception: PropagatedException);
+  storageProxyMessage(storageProxy: StorageProxy<CRDTTypeRecord>,
+                      message: ProxyMessage<CRDTTypeRecord>): void;
+
+  storageProxyMuxerMessage(storageProxyMuxer: StorageProxyMuxer<CRDTTypeRecord>,
+                           message: ProxyMessage<CRDTTypeRecord>): void;
+
+  getStorageProxyMuxer(storageKey: string, type: Type);
+  idGenerator: IdGenerator;
+  storageKeyParser: StorageKeyParser;
+  generateID: Producer<string>;
+  reportExceptionInHost(exception: PropagatedException);
 }

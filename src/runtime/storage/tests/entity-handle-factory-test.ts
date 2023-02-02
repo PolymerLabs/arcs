@@ -10,12 +10,12 @@
 
 import {Manifest} from '../../manifest.js';
 import {EntityType, MuxType, SingletonType} from '../../../types/lib-types.js';
-import {MockDirectStoreMuxer} from '../testing/test-storage.js';
+import {MockStoreInfo, MockDirectStoreMuxer} from '../testing/test-storage.js';
 import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 import {StorageProxyMuxer} from '../storage-proxy-muxer.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {EntityHandleFactory} from '../entity-handle-factory.js';
-import {ProxyMessageType} from '../store-interface.js';
+import {ProxyMessageType, StorageCommunicationEndpoint} from '../store-interface.js';
 import {assert} from '../../../platform/chai-web.js';
 import {Entity} from '../../entity.js';
 import {ArcId} from '../../id.js';
@@ -24,11 +24,16 @@ import {VolatileStorageKey} from '../drivers/volatile.js';
 import {Loader} from '../../../platform/loader.js';
 import {TestVolatileMemoryProvider} from '../../testing/test-volatile-memory-provider.js';
 import {Runtime} from '../../runtime.js';
-import {CRDTMuxEntity, SingletonReferenceType, SingletonEntityType, handleForStoreInfo} from '../storage.js';
+import {CRDTMuxEntity, SingletonReferenceType, SingletonEntityType, CRDTTypeRecordToType, TypeToCRDTTypeRecord} from '../storage.js';
 import {Reference} from '../../reference.js';
 import {StoreInfo} from '../store-info.js';
+import {DirectStorageEndpoint} from '../direct-storage-endpoint.js';
 
 describe('entity handle factory', () => {
+  let runtime;
+  beforeEach(() => {
+    runtime = new Runtime();
+  });
   it('can produce entity handles upon request', async () => {
     const manifest = await Manifest.parse(`
     schema Foo
@@ -52,8 +57,8 @@ describe('entity handle factory', () => {
     const fooEntity2CRDT = new CRDTEntity({value: new CRDTSingleton<{id: string, value: string}>()}, {});
     fooEntity2CRDT.applyOperation({type: EntityOpTypes.Set, field: 'value', value: {id: 'Text', value: 'OtherText'}, actor: 'me', versionMap: {'me': 1}});
 
-    const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTMuxEntity>();
-    const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer as DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>, new MuxType(fooEntityType), mockDirectStoreMuxer.storageKey.toString());
+    const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTMuxEntity>(new MockStoreInfo(new MuxType(fooEntityType)));
+    const storageProxyMuxer = new StorageProxyMuxer(new DirectStorageEndpoint(mockDirectStoreMuxer, runtime.storageKeyParser));
     const entityHandleProducer = new EntityHandleFactory(storageProxyMuxer);
 
     const entityHandle1 = entityHandleProducer.getHandle(fooMuxId1);
@@ -95,7 +100,7 @@ describe('entity handle factory', () => {
     assert.isTrue(recipe.isResolved());
     assert.strictEqual(recipe.handles[0].id, 'input:1');
     assert.strictEqual(recipe.handles[1].id, 'input:2');
-    recipe.handles[1].type.maybeEnsureResolved();
+    recipe.handles[1].type.maybeResolve();
     assert.instanceOf(recipe.handles[1].type, MuxType);
     assert.strictEqual((recipe.handles[1].type.resolvedType() as MuxType<EntityType>).innerType.entitySchema.name, 'Result');
   });
@@ -143,35 +148,32 @@ describe('entity handle factory', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test', storageKeyPrefix});
+    const arc = runtime.getArcById(arcInfo.id);
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
-    const refModeStore = await arc.createStore(
-      new SingletonType(result.type),
-      undefined,
-      'test:1',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, '/handle/input:2'), new VolatileStorageKey(arc.id, 'b'))
-    );
+    const refModeStore = await arcInfo.createStoreInfo(
+      new SingletonType(result.type), {
+      id: 'test:1',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, '/handle/input:2'), new VolatileStorageKey(arc.id, 'b'))
+    });
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arcInfo, recipe);
     await arc.idle;
 
-    const handleForEntity = await handleForStoreInfo(refModeStore, arc);
+    const handleForEntity = await runtime.host.handleForStoreInfo(refModeStore, arcInfo);
     const entity = await handleForEntity.setFromData({value: 'val1'});
     await arc.idle;
 
-    const inputStore = arc.findStoreById('input:1') as StoreInfo<SingletonReferenceType>;
-    const outputStore = arc.findStoreById('output:1') as StoreInfo<SingletonEntityType>;
+    const inputStore = arcInfo.findStoreById('input:1') as StoreInfo<SingletonReferenceType>;
+    const outputStore = arcInfo.findStoreById('output:1') as StoreInfo<SingletonEntityType>;
 
-    const handleForInput = await handleForStoreInfo(inputStore, arc);
-    await handleForInput.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, inputStore.type.getContainedType(), null));
+    const handleForInput = await runtime.host.handleForStoreInfo(inputStore, arcInfo);
+    await handleForInput.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, inputStore.type.getContainedType(), handleForInput.storageFrontend));
     await arc.idle;
 
-    const handleForOutput = await handleForStoreInfo(outputStore, arc);
+    const handleForOutput = await runtime.host.handleForStoreInfo(outputStore, arcInfo);
     const output = await handleForOutput.fetch();
     assert.equal(output.value, 'val1');
   });
@@ -214,46 +216,41 @@ describe('entity handle factory', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test', storageKeyPrefix});
+    const arc = runtime.getArcById(arcInfo.id);
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
-    const refModeStore = await arc.createStore(
-      new SingletonType(result.type),
-      undefined,
-      'test:1',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, '/handle/input:2'), new VolatileStorageKey(arc.id, 'b'))
-    );
+    const refModeStore = await arcInfo.createStoreInfo(
+      new SingletonType(result.type), {
+      id: 'test:1',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, '/handle/input:2'), new VolatileStorageKey(arc.id, 'b'))
+    });
 
-    const dsmForVerifying = await arc.createStore(
-      new MuxType(result.type),
-      undefined,
-      'test:2',
-      undefined,
-      new VolatileStorageKey(arc.id, '/handle/input:2')
-    );
+    const dsmForVerifying = await arcInfo.createStoreInfo(
+      new MuxType(result.type), {
+      id: 'test:2',
+      storageKey: new VolatileStorageKey(arc.id, '/handle/input:2')
+    });
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arcInfo, recipe);
     await arc.idle;
 
     // create and store an entity in the reference mode store.
-    const handleForEntity = await handleForStoreInfo(refModeStore, arc);
+    const handleForEntity = await runtime.host.handleForStoreInfo(refModeStore, arcInfo);
     const entity = await handleForEntity.setFromData({colour: 'red'});
     await arc.idle;
 
     // fetch the entity from dsmForVerifying store
-    const entityHandleFactory = await handleForStoreInfo(dsmForVerifying, arc);
+    const entityHandleFactory = await runtime.host.handleForStoreInfo(dsmForVerifying, arcInfo);
     const entityHandle = entityHandleFactory.getHandle(Entity.id(entity));
     let output = await entityHandle.fetch();
     assert.equal(output.colour, 'red');
 
     // create and store a reference to the entity in the input
-    const inResultStore = arc.findStoreById('input:1') as StoreInfo<SingletonReferenceType>;
-    const inputForInResultStore = await handleForStoreInfo(inResultStore, arc);
-    await inputForInResultStore.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, inResultStore.type.getContainedType(), null));
+    const inResultStore = arcInfo.findStoreById('input:1') as StoreInfo<SingletonReferenceType>;
+    const inputForInResultStore = await runtime.host.handleForStoreInfo(inResultStore, arcInfo);
+    await inputForInResultStore.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, inResultStore.type.getContainedType(), inputForInResultStore.storageFrontend));
     await arc.idle;
 
     // fetch the entity again and check it has been mutated.
@@ -324,65 +321,56 @@ describe('entity handle factory', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test', storageKeyPrefix});
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
-    const dsm1 = await arc.createStore(
-      new MuxType(result.type),
-      undefined,
-      'test:2',
-      undefined,
-      new VolatileStorageKey(arc.id, 'input:2')
-    );
+    const dsm1 = await arcInfo.createStoreInfo(
+      new MuxType(result.type), {
+      id: 'test:2',
+      storageKey: new VolatileStorageKey(arcInfo.id, 'input:2')
+    });
 
-    const dsm2 = await arc.createStore(
-      new MuxType(result.type),
-      undefined,
-      'test:3',
-      undefined,
-      new VolatileStorageKey(arc.id, 'input:2')
-    );
+    const dsm2 = await arcInfo.createStoreInfo(
+      new MuxType(result.type), {
+      id: 'test:3',
+      storageKey: new VolatileStorageKey(arcInfo.id, 'input:2')
+    });
 
-    const dsmForVerifying = await arc.createStore(
-      new MuxType(result.type),
-      undefined,
-      'test:4',
-      undefined,
-      new VolatileStorageKey(arc.id, 'input:2')
-    );
+    const dsmForVerifying = await arcInfo.createStoreInfo(
+      new MuxType(result.type), {
+      id: 'test:4',
+      storageKey: new VolatileStorageKey(arcInfo.id, 'input:2')
+    });
 
-    const refModeStore = await arc.createStore(
-      new SingletonType(result.type),
-      undefined,
-      'test:1',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'input:2'), new VolatileStorageKey(arc.id, 'b'))
-    );
+    const refModeStore = await arcInfo.createStoreInfo(
+      new SingletonType(result.type), {
+      id: 'test:1',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arcInfo.id, 'input:2'), new VolatileStorageKey(arcInfo.id, 'b'))
+    });
 
     recipe.handles[0].mapToStorage(dsm1);
     recipe.handles[1].mapToStorage(dsm2);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arcInfo, recipe);
+    const arc = runtime.getArcById(arcInfo.id);
     await arc.idle;
 
     // create and store an entity in the reference mode store.
-    const handleForEntity = await handleForStoreInfo(refModeStore, arc);
+    const handleForEntity = await runtime.host.handleForStoreInfo(refModeStore, arcInfo);
     const entity = await handleForEntity.setFromData({colour: 'red'});
     await arc.idle;
 
     // fetch the entity from dsmForVerifying store
-    const handleFactoryForMutatedEntity = await handleForStoreInfo(dsmForVerifying, arc);
+    const handleFactoryForMutatedEntity = await runtime.host.handleForStoreInfo(dsmForVerifying, arcInfo);
     const handleForMutatedEntity = handleFactoryForMutatedEntity.getHandle(Entity.id(entity));
     let output = await handleForMutatedEntity.fetch();
     assert.equal(output.colour, 'red');
 
     // create and store a reference to the entity in the input store for the entityMutator1 particle
-    const entityMutator1Store = arc.findStoreById('input:0') as StoreInfo<SingletonReferenceType>;
-    const inputHandleForEntityMutator1 = await handleForStoreInfo(entityMutator1Store, arc);
-    await inputHandleForEntityMutator1.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, entityMutator1Store.type.getContainedType(), null));
+    const entityMutator1Store = arcInfo.findStoreById('input:0') as StoreInfo<SingletonReferenceType>;
+    const inputHandleForEntityMutator1 = await runtime.host.handleForStoreInfo(entityMutator1Store, arcInfo);
+    await inputHandleForEntityMutator1.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, entityMutator1Store.type.getContainedType(), inputHandleForEntityMutator1.storageFrontend));
     await arc.idle;
 
     // fetch the entity from dsmForVerifying store and check it has been mutated.
@@ -390,9 +378,9 @@ describe('entity handle factory', () => {
     assert.equal(output.colour, 'purple');
 
     // create and store a reference to the entity in the input store for the entityMutator2 particle
-    const entityMutator2Store = arc.findStoreById('input:1') as StoreInfo<SingletonReferenceType>;
-    const handleForEntityMutator2 = await handleForStoreInfo(entityMutator2Store, arc);
-    await handleForEntityMutator2.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, entityMutator1Store.type.getContainedType(), null));
+    const entityMutator2Store = arcInfo.findStoreById('input:1') as StoreInfo<SingletonReferenceType>;
+    const handleForEntityMutator2 = await runtime.host.handleForStoreInfo(entityMutator2Store, arcInfo);
+    await handleForEntityMutator2.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, entityMutator1Store.type.getContainedType(), handleForEntityMutator2.storageFrontend));
     await arc.idle;
 
     // fetch the entity from dsmForVerifying store and check it has been mutated again.

@@ -17,14 +17,13 @@ The first step is to add the `INTERNET` and `FORGROUND_SERVICE` android permissi
 Next, you need to add `//java/arcs/android/devtools` and `//java/arcs/android/devtools:aidl`
 dependencies to your build file.
 
-Finally, create an `Intent` and start the service as shown below.
+Finally, call the `DevToolsStarter` from an activity or service to start DevTools as shown below.
 
 ```
-val devToolsIntent = Intent(this, DevToolsService::class.java)
-startForegroundService(devToolsIntent)
+DevToolsStarter(this).start()
 ```
 
-Once `startForegroundService` is called, the DevToolsService will connect to the Arcs
+Once this is called, the DevToolsService will connect to the Arcs
 StorageService and begin sending messages to your client.
 
 For an example of DevToolsService you can checkout the [E2E TestApp.](https://github.com/PolymerLabs/arcs/tree/master/javatests/arcs/android/e2e/testapp)

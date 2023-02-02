@@ -3,10 +3,18 @@ package arcs.core.entity
 import arcs.core.common.Id
 import arcs.core.crdt.VersionMap
 import arcs.core.data.Capability.Ttl
+import arcs.core.data.RawEntity
 import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.data.SchemaRegistry
+import arcs.core.data.expression.asExpr
+import arcs.core.data.expression.neq
+import arcs.core.data.expression.text
+import arcs.core.data.testutil.RawEntitySubject.Companion.assertThat
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.Reference as StorageReference
+import arcs.core.entity.testutil.DummyEntity
+import arcs.core.entity.testutil.InlineDummyEntity
+import arcs.core.entity.testutil.RestrictedDummyEntity
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -111,12 +119,58 @@ class StorageAdapterTest {
     )
     val entity = DummyEntity().apply { text = "Watson" }
     // This call sets the timestamps.
-    adapter.storableToReferencable(entity)
+    val rawEntity = adapter.storableToReferencable(entity)
+
     assertThat(entity.expirationTimestamp).isEqualTo(time.currentTimeMillis + 60_000)
 
-    assertThat(adapter.isExpired(entity)).isFalse()
+    assertThat(adapter.isExpired(rawEntity)).isFalse()
+
     time.millis += 60_001
-    assertThat(adapter.isExpired(entity)).isTrue()
+
+    assertThat(adapter.isExpired(rawEntity)).isTrue()
+  }
+
+  @Test
+  fun entityStorageAdapter_getId() {
+    val adapter = EntityStorageAdapter(
+      "name",
+      idGenerator,
+      DummyEntity,
+      Ttl.Minutes(1),
+      time,
+      dereferencerFactory,
+      storageKey
+    )
+    val entity = DummyEntity().apply { text = "Watson" }
+    // This assigns an ID.
+    adapter.storableToReferencable(entity)
+
+    assertThat(adapter.getId(entity)).isEqualTo(entity.entityId)
+  }
+
+  @Test
+  fun entityStorageAdapter_failsRefinement() {
+    val specWithRefinement: EntitySpec<DummyEntity> = object : EntitySpec<DummyEntity> {
+      override fun deserialize(data: RawEntity) = DummyEntity.deserialize(data)
+      override val SCHEMA =
+        DummyEntity.SCHEMA.copy(refinementExpression = text("text") neq "FORBIDDEN!".asExpr())
+    }
+    val adapter = EntityStorageAdapter(
+      "name",
+      idGenerator,
+      specWithRefinement,
+      Ttl.Minutes(1),
+      time,
+      dereferencerFactory,
+      storageKey
+    )
+    val entity = DummyEntity().apply { text = "FORBIDDEN!" }
+    val exception = assertFailsWith<IllegalArgumentException> {
+      adapter.storableToReferencable(entity)
+    }
+    assertThat(exception).hasMessageThat().startsWith(
+      "Invalid entity stored to handle (failed refinement)"
+    )
   }
 
   @Test
@@ -128,21 +182,21 @@ class StorageAdapterTest {
       time,
       storageKey
     )
-    val storageReference = StorageReference(
+    val rawReference = RawReference(
       "id",
       DummyStorageKey("storage-key"),
       VersionMap("a" to 1)
     )
-    val reference = Reference(DummyEntity, storageReference)
+    val reference = Reference(DummyEntity, rawReference)
 
-    // Convert to storage format (StorageReference).
+    // Convert to storage format (RawReference).
     val referencable = adapter.storableToReferencable(reference)
-    assertThat(referencable).isEqualTo(storageReference)
+    assertThat(referencable).isEqualTo(rawReference)
     assertThat(referencable.creationTimestamp).isEqualTo(time.currentTimeMillis)
     assertThat(referencable.expirationTimestamp).isEqualTo(time.currentTimeMillis + 60000)
 
     // Convert back from storage format again.
-    val convertBack = adapter.referencableToStorable(storageReference)
+    val convertBack = adapter.referencableToStorable(rawReference)
     assertThat(convertBack).isEqualTo(reference)
     assertThat(convertBack.creationTimestamp).isEqualTo(time.currentTimeMillis)
     assertThat(convertBack.expirationTimestamp).isEqualTo(time.currentTimeMillis + 60000)
@@ -157,19 +211,38 @@ class StorageAdapterTest {
       time,
       storageKey
     )
-    val storageReference = StorageReference(
+    val rawReference = RawReference(
       "id",
       DummyStorageKey("storage-key"),
       VersionMap("a" to 1)
     )
-    val reference = Reference(DummyEntity, storageReference)
+    val reference = Reference(DummyEntity, rawReference)
     // This sets the timestamps.
-    adapter.storableToReferencable(reference)
+    val referencable = adapter.storableToReferencable(reference)
     assertThat(reference.expirationTimestamp).isEqualTo(time.currentTimeMillis + 60_000)
 
-    assertThat(adapter.isExpired(reference)).isFalse()
+    assertThat(adapter.isExpired(referencable)).isFalse()
     time.millis += 60_001
-    assertThat(adapter.isExpired(reference)).isTrue()
+    assertThat(adapter.isExpired(referencable)).isTrue()
+  }
+
+  @Test
+  fun referenceStorageAdapter_getId() {
+    val adapter = ReferenceStorageAdapter(
+      DummyEntity,
+      dereferencerFactory,
+      Ttl.Minutes(1),
+      time,
+      storageKey
+    )
+    val rawReference = RawReference(
+      "an-id",
+      DummyStorageKey("storage-key"),
+      VersionMap("a" to 1)
+    )
+    val reference = Reference(DummyEntity, rawReference)
+
+    assertThat(adapter.getId(reference)).isEqualTo("an-id")
   }
 
   @Test
@@ -199,7 +272,6 @@ class StorageAdapterTest {
     // Storing the reference in a different db.
     val dbKey2 = DatabaseStorageKey.Persistent(
       "db",
-      DummyEntity.SCHEMA_HASH,
       dbName = "different"
     )
     assertFails { refAdapterWithKey(dbKey2).storableToReferencable(referenceWithKey(dbKey)) }
@@ -244,7 +316,6 @@ class StorageAdapterTest {
     // Storing the reference in a different db.
     val dbKey2 = DatabaseStorageKey.Persistent(
       "db",
-      DummyEntity.SCHEMA_HASH,
       dbName = "different"
     )
     assertFails {
@@ -278,7 +349,7 @@ class StorageAdapterTest {
 
   private fun referenceWithKey(key: StorageKey) = Reference(
     DummyEntity,
-    StorageReference(
+    RawReference(
       "id",
       key,
       VersionMap("a" to 1)

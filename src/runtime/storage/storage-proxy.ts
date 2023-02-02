@@ -8,18 +8,21 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {assert} from '../../platform/assert-web.js';
 import {mapStackTrace} from '../../platform/sourcemapped-stacktrace-web.js';
 import {PropagatedException, SystemException} from '../arc-exceptions.js';
 import {CRDTError, CRDTModel, CRDTOperation, CRDTTypeRecord, VersionMap, ChangeType} from '../../crdt/lib-crdt.js';
 import {Runnable, Predicate} from '../../utils/lib-utils.js';
 import {Particle} from '../particle.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
-import {ChannelConstructor} from '../channel-constructor.js';
 import {EntityType, Type} from '../../types/lib-types.js';
 import {Handle, HandleOptions} from './handle.js';
-import {ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store-interface.js';
+import {ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint} from './store-interface.js';
 import {ActiveStore} from './active-store.js';
 import {Ttl} from '../capabilities.js';
+import {StoreInfo} from './store-info.js';
+import {CRDTTypeRecordToType} from './storage.js';
+import {StorageFrontend} from './storage-frontend.js';
 
 /**
  * Mediates between one or more Handles and the backing store. The store can be outside the PEC or
@@ -28,10 +31,6 @@ import {Ttl} from '../capabilities.js';
 export class StorageProxy<T extends CRDTTypeRecord> {
   private handles: Handle<T>[] = [];
   private crdt: CRDTModel<T>;
-  // TODO(shans): remove apiChannelId once we're not constructing StorageProxy objects
-  // directly from many places.
-  apiChannelId: string;
-  private store: StorageCommunicationEndpoint<T>;
   readonly type: Type;
   private listenerAttached = false;
   private keepSynced = false;
@@ -39,22 +38,16 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   private readonly scheduler: StorageProxyScheduler<T>;
   private modelHasSynced: Runnable = () => undefined;
   readonly storageKey: string;
-  readonly ttl: Ttl;
 
-  constructor(
-      apiChannelId: string,
-      storeProvider: StorageCommunicationEndpointProvider<T>,
-      type: Type,
-      storageKey: string,
-      ttl = Ttl.infinite()) {
-    this.apiChannelId = apiChannelId;
-    this.store = storeProvider.getStorageEndpoint(this);
-    this.crdt = new (type.crdtInstanceConstructor<T>())();
-    this.type = type;
-    this.storageKey = storageKey;
-    this.ttl = ttl;
+  constructor(private readonly store: StorageCommunicationEndpoint<T>,
+              public readonly ttl = Ttl.infinite()) {
+    this.type = store.storeInfo.type;
+    this.crdt = new (this.type.crdtInstanceConstructor<T>())();
+    this.storageKey = store.storeInfo.storageKey ? store.storeInfo.storageKey.toString() : null;
     this.scheduler = new StorageProxyScheduler<T>();
   }
+
+  get storeInfo(): StoreInfo<CRDTTypeRecordToType<T>> { return this.store.storeInfo; }
 
   async pause() {
     await this.scheduler.pause();
@@ -64,13 +57,8 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     this.scheduler.unpause();
   }
 
-  getChannelConstructor(): ChannelConstructor {
-    return this.store.getChannelConstructor();
-  }
-
-  // TODO: remove this after migration.
-  get pec(): ParticleExecutionContext {
-    throw new Error('StorageProxy does not have a pec.');
+  getStorageFrontend(): StorageFrontend {
+    return this.store.getStorageFrontend();
   }
 
   async idle(): Promise<void> {
@@ -303,13 +291,20 @@ export class StorageProxy<T extends CRDTTypeRecord> {
 
 export class NoOpStorageProxy<T extends CRDTTypeRecord> extends StorageProxy<T> {
   constructor() {
-    super(null, {getStorageEndpoint() {}} as ActiveStore<T>, EntityType.make([], {}), null);
+    super({
+      // tslint:disable-next-line: no-any
+      storeInfo: new StoreInfo({id: null, type: EntityType.make([], {}) as any as CRDTTypeRecordToType<T>}),
+      setCallback: (_) => {},
+      reportExceptionInHost: (_) => {},
+      onProxyMessage: async (_) => {},
+      getStorageFrontend: null
+    });
   }
   async idle(): Promise<void> {
     return new Promise(resolve => {});
   }
 
-  getChannelConstructor(): ChannelConstructor {
+  getStorageFrontend(): StorageFrontend {
     return null;
   }
 

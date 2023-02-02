@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -35,22 +35,18 @@ class CrdtCount : CrdtModel<CrdtCount.Data, CrdtCount.Operation, Int> {
 
       if (myValue > otherValue) {
         if (otherVersion >= myVersion) {
-          throw CrdtException(
-            "Divergent versions encountered when merging CrdtCount models"
-          )
+          throw CrdtException("Divergent versions encountered when merging CrdtCount models")
         }
 
         otherChanges +=
-          Operation.MultiIncrement(actor, otherVersion to myVersion, myValue - otherValue)
+          Operation.MultiIncrement(actor, VersionMap(actor to myVersion), myValue - otherValue)
       } else if (otherValue > myValue) {
         if (myVersion >= otherVersion) {
-          throw CrdtException(
-            "Divergent versions encountered when merging CrdtCount models"
-          )
+          throw CrdtException("Divergent versions encountered when merging CrdtCount models")
         }
 
         myChanges +=
-          Operation.MultiIncrement(actor, myVersion to otherVersion, otherValue - myValue)
+          Operation.MultiIncrement(actor, VersionMap(actor to otherVersion), otherValue - myValue)
         _data.values[actor] = otherValue
         _data.versionMap[actor] = otherVersion
       }
@@ -63,46 +59,31 @@ class CrdtCount : CrdtModel<CrdtCount.Data, CrdtCount.Operation, Int> {
       }
 
       otherChanges +=
-        Operation.MultiIncrement(actor, 0 to _data.versionMap[actor], myValue)
+        Operation.MultiIncrement(actor, VersionMap(actor to _data.versionMap[actor]), myValue)
     }
-
     return MergeChanges(myChanges, otherChanges)
   }
 
   override fun applyOperation(op: Operation): Boolean {
-    val myVersionForActor = _data.versionMap[op.actor]
+    // Only accept an operation if it is immediately consecutive to the versionMap for that actor.
+    val opVersion = op.versionMap[op.actor]
+    if (opVersion != _data.versionMap[op.actor] + 1) return false
 
-    if (op.version.from != myVersionForActor) return false
-
-    val newValue = when (op) {
-      is Operation.MultiIncrement -> {
-        if (op.delta < 0) {
-          // TODO: Maybe this should throw a CrdtException.
-          return false
-        }
-
-        (_data.values[op.actor] ?: 0) + op.delta
-      }
-      is Operation.Increment -> (_data.values[op.actor] ?: 0) + 1
+    val delta = when (op) {
+      is Operation.Increment -> 1
+      is Operation.MultiIncrement -> op.delta
     }
-
-    _data.values[op.actor] = newValue
-    _data.versionMap[op.actor] = op.version.to
-
+    _data.values[op.actor] = (_data.values[op.actor] ?: 0) + delta
+    _data.versionMap[op.actor] = opVersion
     return true
   }
 
   /** Scoped access to this [CrdtCount], where all ops will be marked as performed by [actor]. */
   inner class Scoped(private val actor: Actor) {
-    private var currentVersion = _data.versionMap[actor]
-    private var nextVersion = currentVersion + 1
-
-    fun withCurrentVersion(version: Version) = apply { currentVersion = version }
-    fun withNextVersion(version: Version) = apply { nextVersion = version }
-
     operator fun plusAssign(delta: Int) {
+      // [versionMap] getter makes a copy of _data.versionMap, so it's safe to increment in place.
       applyOperation(
-        Operation.MultiIncrement(actor, currentVersion to nextVersion, delta)
+        Operation.MultiIncrement(actor, versionMap.increment(actor), delta)
       )
     }
   }
@@ -116,18 +97,15 @@ class CrdtCount : CrdtModel<CrdtCount.Data, CrdtCount.Operation, Int> {
   ) : CrdtData
 
   /** Operation which can be performed on a [CrdtCount]. */
-  sealed class Operation(
-    open val actor: Actor,
-    open val version: VersionInfo
-  ) : CrdtOperation {
+  sealed class Operation(open val actor: Actor) : CrdtOperation {
     /**
      * Increments the value by 1 for the given [actor] when going from one version to another
      * for that actor.
      */
     data class Increment(
       override val actor: Actor,
-      override val version: VersionInfo
-    ) : Operation(actor, version)
+      override val versionMap: VersionMap
+    ) : Operation(actor)
 
     /**
      * Increments the value by some positive integer [delta] for the given [actor] when going
@@ -135,20 +113,12 @@ class CrdtCount : CrdtModel<CrdtCount.Data, CrdtCount.Operation, Int> {
      */
     data class MultiIncrement(
       override val actor: Actor,
-      override val version: VersionInfo,
+      override val versionMap: VersionMap,
       val delta: Int
-    ) : Operation(actor, version) {
+    ) : Operation(actor) {
       init {
         require(delta > 0)
       }
     }
   }
 }
-
-/** Pair of versions. */
-private typealias VersionInfo = Pair<Int, Int>
-
-val VersionInfo.from: Int
-  get() = first
-val VersionInfo.to: Int
-  get() = second

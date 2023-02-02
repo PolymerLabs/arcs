@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -10,9 +10,11 @@
  */
 package arcs.core.storage
 
+import arcs.core.analytics.Analytics
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.Time
 import kotlinx.coroutines.CoroutineScope
 
 /**
@@ -27,21 +29,38 @@ suspend fun <Data : CrdtData, Op : CrdtOperation, T> ActiveStore(
   scope: CoroutineScope,
   driverFactory: DriverFactory,
   writeBackProvider: WriteBackProvider,
-  devTools: DevToolsForStorage?
-): ActiveStore<Data, Op, T> = when (options.storageKey) {
-  is ReferenceModeStorageKey ->
-    ReferenceModeStore.create(
+  devTools: DevToolsForStorage?,
+  time: Time,
+  analytics: Analytics = Analytics.defaultAnalytics
+): ActiveStore<Data, Op, T> {
+  if (options.writeOnly) {
+    return WriteOnlyDirectStore.create(
       options,
       scope,
       driverFactory,
       writeBackProvider,
       devTools
-    ) as ActiveStore<Data, Op, T>
-  else -> DirectStore.create(
-    options,
-    scope,
-    driverFactory,
-    writeBackProvider,
-    devTools
-  )
+    )
+  }
+  return when (options.storageKey) {
+    is ReferenceModeStorageKey ->
+      ReferenceModeStore.create(
+        options,
+        scope,
+        driverFactory,
+        writeBackProvider,
+        devTools,
+        time,
+        analytics
+      ) as ActiveStore<Data, Op, T>
+    else -> {
+      DirectStore.create(
+        options,
+        scope,
+        driverFactory,
+        writeBackProvider,
+        devTools
+      )
+    }
+  }
 }

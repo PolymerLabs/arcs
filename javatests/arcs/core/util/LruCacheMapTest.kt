@@ -1,5 +1,6 @@
 package arcs.core.util
 
+import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,6 +35,35 @@ class LruCacheMapTest {
       cache["key$x"] = "value$x"
     }
 
+    for (x in 1..5) {
+      assertThat(cache).doesNotContainKey("key$x")
+    }
+
+    for (x in 6..10) {
+      assertThat(cache).containsEntry("key$x", "value$x")
+    }
+  }
+
+  @Test
+  fun lruCache_containsOnly_nonExpiredEntries() {
+    val time = FakeTime()
+
+    val cache = LruCacheMap<String, String>(
+      50,
+      ttlConfig = LruCacheMap.TtlConfig(10) { time.currentTimeMillis }
+    )
+
+    for (x in 1..5) {
+      cache["key$x"] = "value$x"
+    }
+    time.millis += 1
+    for (x in 6..10) {
+      cache["key$x"] = "value$x"
+    }
+
+    // this should trigger expireEntries for 1..5
+    time.millis += 10
+    cache["key1"]
     for (x in 1..5) {
       assertThat(cache).doesNotContainKey("key$x")
     }

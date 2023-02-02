@@ -1,12 +1,19 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
+import {Literal} from '../../utils/lib-utils.js';
+
+export interface StorageKeyLiteral extends Literal {
+  protocol: string;
+  key: string;
+}
 
 export abstract class StorageKey {
   readonly protocol: string;
@@ -16,6 +23,9 @@ export abstract class StorageKey {
   }
 
   abstract toString(): string;
+
+  toLiteral(): StorageKeyLiteral { return {protocol: this.protocol, key: this.toString()}; }
+  static fromLiteral : (literal: StorageKeyLiteral) => StorageKey = null;
 
   // Where there's a distinction, childWithComponent produces
   // a new key inside the serialization root of the parent

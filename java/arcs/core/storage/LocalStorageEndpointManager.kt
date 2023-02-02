@@ -1,8 +1,19 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtOperation
 import arcs.core.util.guardedBy
+import arcs.jvm.util.JvmTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -19,7 +30,7 @@ class LocalStorageEndpointManager(
   private val storesMutex = Mutex()
   private val stores by guardedBy(storesMutex, mutableMapOf<StorageKey, ActiveStore<*, *, *>>())
 
-  override suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> get(
+  override suspend fun <Data : CrdtData, Op : CrdtOperation, T> get(
     storeOptions: StoreOptions,
     callback: ProxyCallback<Data, Op, T>
   ): StorageEndpoint<Data, Op, T> {
@@ -31,7 +42,8 @@ class LocalStorageEndpointManager(
           scope,
           driverFactory,
           writeBackProvider,
-          null
+          null,
+          JvmTime // TODO(b/178103749) make injectable
         )
       }
     } as ActiveStore<Data, Op, T>
@@ -46,18 +58,4 @@ class LocalStorageEndpointManager(
       stores.clear()
     }
   }
-}
-
-/** A [StorageEndpoint] that directly wraps an [ActiveStore]. */
-class LocalStorageEndpoint<Data : CrdtData, Op : CrdtOperationAtTime, T>(
-  private val store: ActiveStore<Data, Op, T>,
-  private val id: Int
-) : StorageEndpoint<Data, Op, T> {
-  override suspend fun idle() = store.idle()
-
-  override suspend fun onProxyMessage(
-    message: ProxyMessage<Data, Op, T>
-  ) = store.onProxyMessage(message.withId(id))
-
-  override suspend fun close() = store.off(id)
 }

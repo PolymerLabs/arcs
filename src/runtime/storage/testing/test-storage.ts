@@ -18,10 +18,17 @@ import {Driver, Exists, ReceiveMethod} from '../drivers/driver.js';
 import {Handle} from '../handle.js';
 import {StorageKey} from '../storage-key.js';
 import {StorageProxy} from '../storage-proxy.js';
-import {ProxyCallback, ProxyMessage, StorageMode, ProxyMessageType} from '../store-interface.js';
+import {ProxyCallback, ProxyMessage, StorageMode, ProxyMessageType, StorageCommunicationEndpoint} from '../store-interface.js';
 import {ActiveStore} from '../active-store.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
-import {CRDTMuxEntity} from '../storage.js';
+import {CRDTMuxEntity, CRDTTypeRecordToType, TypeToCRDTTypeRecord, MuxEntityType} from '../storage.js';
+import {StoreInfo} from '../store-info.js';
+import {MuxType, Type} from '../../../types/lib-types.js';
+import {StorageProxyMuxer} from '../storage-proxy-muxer.js';
+import {DirectStorageEndpoint} from '../direct-storage-endpoint.js';
+import {Runtime} from '../../runtime.js';
+import {StorageFrontend} from '../storage-frontend.js';
+import {StorageKeyParser} from '../storage-key-parser.js';
 
 /**
  * These classes are intended to provide **extremely** simple fake objects to use
@@ -49,18 +56,27 @@ export class MockDriver<Data> extends Driver<Data> {
   }
 }
 
+export class MockStoreInfo<T extends Type> extends StoreInfo<T> {
+  constructor(type: T) {
+    super({id: 'mock', type, storageKey: new MockStorageKey()});
+  }
+}
+
+const runtime = new Runtime();
+
 export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   lastCapturedMessage: ProxyMessage<T> = null;
   lastCapturedException: PropagatedException = null;
   crdtData: T['data'] = null;
   callback: ProxyCallback<T> = null;
   // Initial crdtData that will be sent to the proxy in response to SyncRequests.
-  constructor(crdtData?: T['data']) {
+  constructor(storeInfo: StoreInfo<CRDTTypeRecordToType<T>>, crdtData?: T['data']) {
     super({
       storageKey: new MockStorageKey(),
       exists: Exists.ShouldCreate,
-      type: null,
-      storeInfo: null,
+      type: storeInfo.type,
+      storeInfo,
+      driverFactory: runtime.driverFactory,
     });
     this.crdtData = crdtData;
   }
@@ -96,12 +112,13 @@ export class MockDirectStoreMuxer<T extends CRDTMuxEntity> extends DirectStoreMu
   callback: ProxyCallback<T> = null;
   mockCRDTData: Dictionary<T['data']> = {};
   callbackNum = 0;
-  constructor() {
+  constructor(storeInfo: StoreInfo<CRDTTypeRecordToType<T>>) {
     super({
       storageKey: new MockStorageKey(),
       exists: Exists.ShouldCreate,
-      type: null,
-      storeInfo: null,
+      type: storeInfo.type,
+      storeInfo,
+      driverFactory: runtime.driverFactory,
     });
   }
 
@@ -197,4 +214,22 @@ export class MockParticle {
   async callOnHandleDesync(handle: Handle<CRDTTypeRecord>, onException: Consumer<Error>) {
     this.onDesyncCalled = true;
   }
+}
+
+export class MockStorageFrontend implements StorageFrontend {
+  generateID() { return null; }
+  public readonly idGenerator: null;
+  get storageKeyParser() { return runtime.storageKeyParser; }
+  getStorageProxyMuxer() {}
+  registerStorageProxy(storageProxy: StorageProxy<CRDTTypeRecord>,
+    messagesCallback: ProxyCallback<CRDTTypeRecord>,
+    idCallback: Consumer<number>): void {}
+  directStorageProxyMuxerRegister(storageProxyMuxer: StorageProxyMuxer<CRDTTypeRecord>,
+                messagesCallback: ProxyCallback<CRDTTypeRecord>,
+                idCallback: Consumer<number>): void {}
+  storageProxyMessage(storageProxy: StorageProxy<CRDTTypeRecord>,
+        message: ProxyMessage<CRDTTypeRecord>): void {}
+  storageProxyMuxerMessage(storageProxyMuxer: StorageProxyMuxer<CRDTTypeRecord>,
+        message: ProxyMessage<CRDTTypeRecord>): void {}
+  reportExceptionInHost(exception: PropagatedException): void {}
 }

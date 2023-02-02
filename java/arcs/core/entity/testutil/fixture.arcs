@@ -1,0 +1,79 @@
+meta
+  namespace: arcs.core.entity.testutil
+
+schema EmptyEntity
+
+schema MoreNested
+  textsField: [Text]
+
+schema InnerEntity
+  textField: Text
+  longField: Long
+  numberField: Number
+  moreInlineField: inline MoreNested
+  moreInlinesField: [inline MoreNested]
+  moreReferenceField: &MoreNested
+
+// An entity with a lot of field types, that can be used in tests.
+schema FixtureEntity
+  textField: Text
+  numField: Number
+  boolField: Boolean
+  byteField: Byte
+  shortField: Short
+  intField: Int
+  longField: Long
+  charField: Char
+  floatField: Float
+  doubleField: Double
+  instantField: Instant
+  durationField: Duration
+  bigintField: BigInt
+  textsField: [Text]
+  numsField: [Number]
+  boolsField: [Boolean]
+  bytesField: [Byte]
+  shortsField: [Short]
+  intsField: [Int]
+  longsField: [Long]
+  charsField: [Char]
+  floatsField: [Float]
+  doublesField: [Double]
+  instantsField: [Instant]
+  durationsField: [Duration]
+  bigintsField: [BigInt]
+  textListField: List<Text>
+  numListField: List<Number>
+  boolListField: List<Boolean>
+  longListField: List<Long>
+
+  inlineEntityField: inline InnerEntity
+  inlinesField: [inline InnerEntity]
+  inlineListField: List<inline InnerEntity>
+
+  referenceField: &InnerEntity
+  referencesField: [&InnerEntity]
+  referenceListField: List<&InnerEntity>
+  hardReferenceField: &InnerEntity @hardRef
+
+  foreignField: &EmptyEntity
+
+particle TestParticle
+  entities: reads writes [FixtureEntity]
+
+particle TestTextQueryParticle
+  entities: reads writes [FixtureEntity {textField, numField, longListField, referencesField} [textField == ?]]
+
+particle TestNumQueryParticle
+  entities: reads writes [FixtureEntity {textField, numField, longListField, referencesField} [numField > 0]]
+
+particle TestReferencesParticle
+  entities: reads writes [FixtureEntity {referencesField, referenceListField}]
+
+schema TestInline
+  inlineEntityField: inline InnerEntity {longField, textField}
+  inlinesField: [inline InnerEntity {numberField}]
+  inlineListField: List<inline InnerEntity {moreInlinesField}>
+
+particle TestInlineParticle
+  entities: reads writes [TestInline {inlineEntityField, inlinesField, inlineListField}]

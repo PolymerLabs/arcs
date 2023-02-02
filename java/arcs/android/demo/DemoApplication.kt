@@ -34,7 +34,7 @@ class DemoApplication : Application(), Configuration.Provider {
     runBlocking { RamDisk.clear() }
     RamDiskDriverProvider()
 
-    DriverAndKeyConfigurator.configureKeyParsers()
+    DriverAndKeyConfigurator.configureKeyParsersAndFactories()
 
     initLogForAndroid(Log.Level.Debug)
   }

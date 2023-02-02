@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -11,6 +11,7 @@
 
 package arcs.core.storage
 
+import arcs.core.analytics.Analytics
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtData
@@ -19,7 +20,6 @@ import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtModelType
 import arcs.core.crdt.CrdtOperation
-import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.VersionMap
@@ -29,7 +29,6 @@ import arcs.core.data.RawEntity
 import arcs.core.data.ReferenceType
 import arcs.core.data.SingletonType
 import arcs.core.data.util.ReferencableList
-import arcs.core.storage.referencemode.BridgingOperation
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
@@ -38,27 +37,25 @@ import arcs.core.storage.referencemode.sanitizeForRefModeStore
 import arcs.core.storage.referencemode.toBridgingData
 import arcs.core.storage.referencemode.toBridgingOp
 import arcs.core.storage.referencemode.toBridgingOps
-import arcs.core.storage.referencemode.toReferenceModeMessage
 import arcs.core.storage.util.HoldQueue
 import arcs.core.storage.util.OperationQueue
 import arcs.core.storage.util.SimpleQueue
-import arcs.core.storage.util.randomCallbackManager
+import arcs.core.storage.util.callbackManager
 import arcs.core.type.Type
 import arcs.core.util.Random
 import arcs.core.util.Result
 import arcs.core.util.TaggedLog
+import arcs.core.util.Time
 import arcs.core.util.computeNotNull
-import arcs.core.util.nextSafeRandomLong
+import arcs.core.util.nextVersionMapSafeString
 import kotlin.properties.Delegates
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /** This is a convenience for the parameter type of [handleContainerMessage]. */
-internal typealias ContainerProxyMessage =
-  ProxyMessage<CrdtData, CrdtOperationAtTime, Referencable>
+internal typealias ContainerProxyMessage = ProxyMessage<CrdtData, CrdtOperation, Referencable>
 
 /** This is a convenience for the parameter type of [handleBackingStoreMessage]. */
 internal typealias BackingStoreProxyMessage =
@@ -85,14 +82,17 @@ internal typealias RefModeProxyMessage =
  * * updates should always be sent in order, so a blocked send should block subsequent sends too.
  *   The pendingSends queue ensures that all outgoing updates are sent in the correct order.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class ReferenceModeStore private constructor(
   options: StoreOptions,
   /* internal */
   val containerStore: DirectStore<CrdtData, CrdtOperation, Any?>,
   /* internal */
   val backingStore: DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>,
-  private val devTools: DevToolsForRefModeStore?
+  private val scope: CoroutineScope,
+  private val devTools: DevToolsForRefModeStore?,
+  private val time: Time,
+  private val analytics: Analytics
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
   // TODO(#5551): Consider including a hash of the storage key in log prefix.
   private val log = TaggedLog { "ReferenceModeStore" }
@@ -112,7 +112,7 @@ class ReferenceModeStore private constructor(
    * Registered callbacks to Storage Proxies.
    */
   private val callbacks =
-    randomCallbackManager<ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>>(
+    callbackManager<ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>>(
       "reference",
       Random
     )
@@ -132,7 +132,7 @@ class ReferenceModeStore private constructor(
   /**
    * [Type] of data managed by the [backingStore] and tracked in the [containerStore].
    */
-  private val crdtType: CrdtModelType<CrdtData, CrdtOperationAtTime, Referencable>
+  private val crdtType: CrdtModelType<CrdtData, CrdtOperation, Referencable>
 
   /**
    * A randomly generated key that is used for synthesized entity CRDT modifications.
@@ -142,7 +142,7 @@ class ReferenceModeStore private constructor(
    * needs to synthesize updates. This key is used as the unique write key and
    * [arcs.core.crdt.internal.Actor] for those updates.
    */
-  /* internal */ val crdtKey = Random.nextSafeRandomLong().toString()
+  /* internal */ val crdtKey = Random.nextVersionMapSafeString(10)
 
   /**
    * The [versions] map transitively tracks the maximum write version for each contained entity's
@@ -150,7 +150,7 @@ class ReferenceModeStore private constructor(
    *
    * All access to this map should be synchronized.
    */
-  private val versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
+  private var versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
 
   /**
    * Callback Id of the callback that the [ReferenceModeStore] registered with the backing store.
@@ -160,10 +160,21 @@ class ReferenceModeStore private constructor(
    */
   var backingStoreId by Delegates.notNull<Int>()
 
+  /**
+   * Callback Id of the callback that the [ReferenceModeStore] registered with the container store.
+   *
+   * This is visible only for tests. Do not use outside of [ReferenceModeStore] other than for
+   * tests.
+   */
+  var containerStoreId by Delegates.notNull<Int>()
+
+  /** VisibleForTesting */
+  val holdQueueEmpty get() = holdQueue.queue.size == 0
+
   init {
     @Suppress("UNCHECKED_CAST")
     crdtType = requireNotNull(
-      type as? Type.TypeContainer<CrdtModelType<CrdtData, CrdtOperationAtTime, Referencable>>
+      type as? Type.TypeContainer<CrdtModelType<CrdtData, CrdtOperation, Referencable>>
     ) { "Provided type must contain CrdtModelType" }.containedType
   }
 
@@ -175,13 +186,22 @@ class ReferenceModeStore private constructor(
 
   override suspend fun on(
     callback: ProxyCallback<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
-  ): Int = callbacks.register(callback::invoke)
+  ): CallbackToken = callbacks.register(callback::invoke)
 
-  override suspend fun off(callbackToken: Int) {
+  override suspend fun off(callbackToken: CallbackToken) {
     callbacks.unregister(callbackToken)
     // Enqueue something, in case the queue was already empty, since queue transitioning
     // to empty is what triggers potential cleanup.
     receiveQueue.enqueue { }
+  }
+
+  override fun close() {
+    scope.launch {
+      receiveQueue.enqueue {
+        containerStore.close()
+        backingStore.clearStoresCache()
+      }
+    }
   }
 
   /*
@@ -193,12 +213,13 @@ class ReferenceModeStore private constructor(
    * store needs to be updated, and once that has completed then the container store needs
    * to be updated.
    */
+  @Suppress("UNCHECKED_CAST")
   override suspend fun onProxyMessage(
     message: ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
   ) {
     log.verbose { "onProxyMessage: $message" }
     val refModeMessage = message.sanitizeForRefModeStore(type)
-    devTools?.onRefModeStoreProxyMessage(message)
+    devTools?.onRefModeStoreProxyMessage(message as UntypedProxyMessage)
     receiveQueue.enqueueAndWait {
       handleProxyMessage(refModeMessage)
     }
@@ -225,53 +246,65 @@ class ReferenceModeStore private constructor(
     log.verbose { "handleProxyMessage: $proxyMessage" }
     suspend fun itemVersionGetter(item: RawEntity): VersionMap {
       val localBackingVersion = getLocalData(item.id).versionMap
-      if (localBackingVersion.isNotEmpty()) return localBackingVersion
-
-      updateBackingStore(item)
-
-      return requireNotNull(getLocalData(item.id)).versionMap
+      check(localBackingVersion.isNotEmpty()) { "Local backing version map is empty." }
+      return localBackingVersion
     }
 
     when (proxyMessage) {
       is ProxyMessage.Operations -> {
-        proxyMessage.operations.toBridgingOps(backingStore.storageKey).forEach { op ->
-          when (op) {
-            is BridgingOperation.UpdateSingleton,
-            is BridgingOperation.ClearSingleton -> {
-              // Free up the memory used by the previous instance (for a Singleton,
-              // there would be only one instance).
-              backingStore.clearStoresCache()
-              op.entityValue?.let { updateBackingStore(it) }
-            }
+        val containerOps = mutableListOf<CrdtOperation>()
+        val upstreamOps = mutableListOf<RefModeStoreOp>()
 
-            is BridgingOperation.AddToSet ->
-              op.entityValue?.let { updateBackingStore(it) }
+        // Update the backing store
+        proxyMessage.operations.forEach { op ->
+          handleOpForBackingStore(op)
+        }
 
-            is BridgingOperation.RemoveFromSet -> clearEntityInBackingStore(op.referenceId)
+        // Create bridging operations.
+        val ops = proxyMessage.operations.toBridgingOps(
+          backingStore.storageKey,
+          ::itemVersionGetter
+        )
 
-            is BridgingOperation.ClearSet -> clearAllEntitiesInBackingStore()
+        ops.forEach { op ->
+          // Update container store and other clients.
+          containerOps.add(op.containerOp)
+          upstreamOps.add(op.refModeOp)
+        }
+        containerStore.onProxyMessage(
+          ProxyMessage.Operations(containerOps, containerStoreId)
+        )
+        sendQueue.enqueue {
+          callbacks.allCallbacksExcept(proxyMessage.id).forEach { callback ->
+            callback(
+              ProxyMessage.Operations(upstreamOps, id = proxyMessage.id)
+            )
           }
-          containerStore.onProxyMessage(
-            ProxyMessage.Operations(listOf(op.containerOp), proxyMessage.id)
-          )
         }
       }
       is ProxyMessage.ModelUpdate -> {
+        // Update the backing store
+        handleModelForBackingStore(proxyMessage.model)
+
+        // Create bridging data.
         val newModelsResult = proxyMessage.model.toBridgingData(
           backingStore.storageKey,
           ::itemVersionGetter
         )
+
         when (newModelsResult) {
           is Result.Ok -> {
-            newModelsResult.value.backingModels.forEach { updateBackingStore(it) }
+            // Update container store and other clients.
             containerStore.onProxyMessage(
               ProxyMessage.ModelUpdate(
                 newModelsResult.value.collectionModel.data,
-                id = 1
+                id = containerStoreId
               )
             )
             sendQueue.enqueue {
-              callbacks.send(proxyMessage, proxyMessage.id)
+              callbacks.allCallbacksExcept(proxyMessage.id).forEach { callback ->
+                callback(proxyMessage)
+              }
             }
           }
           else -> return
@@ -291,37 +324,33 @@ class ReferenceModeStore private constructor(
         if (pendingIds.isEmpty()) {
           sendQueue.enqueue(::sender)
         } else {
-          try {
-            withTimeout(BLOCKING_QUEUE_TIMEOUT_MILLIS) {
-              val deferred = CompletableDeferred<Unit>()
-              addToHoldQueueFromReferences(pendingIds) {
-                try {
-                  sender()
-                } finally {
-                  deferred.complete(Unit)
-                }
-              }
-              deferred.await()
-            }
-          } catch (e: TimeoutCancellationException) {
-            // If the queued+blocked send item times out (likely due to missing data in
-            // the backing-store), assume that the backing store is corrupted and
-            // clear-out the collection store before re-attempting the sync.
-            val ops = buildClearContainerStoreOps()
-            log.info {
-              "SyncRequest timed out after $BLOCKING_QUEUE_TIMEOUT_MILLIS " +
-                "milliseconds, backing store is likely corrupted - sending " +
-                "clear operations to container store."
-            }
-            log.verbose { "Clear ops = $ops" }
-            containerStore.onProxyMessage(ProxyMessage.Operations(ops, null))
 
-            val refModeMessage = proxyMessage.sanitizeForRefModeStore(type)
-            handleProxyMessage(refModeMessage)
+          addToHoldQueueFromReferences(
+            pendingIds,
+            onTimeout = { handlePendingReferenceTimeout(proxyMessage) }
+          ) {
+            sender()
           }
         }
       }
     }
+  }
+
+  private suspend fun handlePendingReferenceTimeout(proxyMessage: RefModeProxyMessage) {
+    analytics.logPendingReferenceTimeout()
+    // If the queued+blocked send item times out (likely due to missing data in
+    // the backing-store), assume that the backing store is corrupted and
+    // clear-out the collection store before re-attempting the sync.
+    val ops = buildClearContainerStoreOps()
+    log.info {
+      "SyncRequest timed out after $BLOCKING_QUEUE_TIMEOUT_MILLIS " +
+        "milliseconds, backing store is likely corrupted - sending " +
+        "clear operations to container store."
+    }
+    log.verbose { "Clear ops = $ops" }
+    containerStore.onProxyMessage(ProxyMessage.Operations(ops, containerStoreId))
+
+    onProxyMessage(proxyMessage)
   }
 
   /**
@@ -365,14 +394,17 @@ class ReferenceModeStore private constructor(
         val containerOps = proxyMessage.operations
         opLoop@ for (op in containerOps) {
           val reference = when (op) {
-            is CrdtSet.Operation.Add<*> -> op.added as Reference
-            is CrdtSingleton.Operation.Update<*> -> op.value as Reference
+            is CrdtSet.Operation.Add<*> -> op.added as RawReference
+            is CrdtSingleton.Operation.Update<*> -> op.value as RawReference
             else -> null
           }
           val getEntity = if (reference != null) {
             val entityCrdt = getLocalData(reference.id) as? CrdtEntity.Data
             if (entityCrdt == null) {
-              addToHoldQueueFromReferences(listOf(reference)) {
+              addToHoldQueueFromReferences(
+                listOf(reference),
+                onTimeout = {}
+              ) {
                 val updated =
                   getLocalData(reference.id) as? CrdtEntity.Data
 
@@ -383,13 +415,14 @@ class ReferenceModeStore private constructor(
                   op.toBridgingOp(updated?.toRawEntity(reference.id)).refModeOp
                 )
 
-                callbacks.send(
-                  message = ProxyMessage.Operations(
-                    operations = upstreamOps,
-                    id = proxyMessage.id
-                  ),
-                  exceptTo = proxyMessage.id
-                )
+                callbacks.allCallbacksExcept(proxyMessage.id).forEach { callback ->
+                  callback(
+                    ProxyMessage.Operations(
+                      operations = upstreamOps,
+                      id = proxyMessage.id
+                    )
+                  )
+                }
               }
               continue@opLoop
             }
@@ -400,10 +433,11 @@ class ReferenceModeStore private constructor(
 
           sendQueue.enqueue {
             val upstream = listOf(op.toBridgingOp(getEntity()).refModeOp)
-            callbacks.send(
-              message = ProxyMessage.Operations(upstream, id = proxyMessage.id),
-              exceptTo = proxyMessage.id
-            )
+            callbacks.allCallbacksExcept(proxyMessage.id).forEach { callback ->
+              callback(
+                ProxyMessage.Operations(upstream, id = proxyMessage.id)
+              )
+            }
           }
         }
       }
@@ -413,26 +447,57 @@ class ReferenceModeStore private constructor(
 
         suspend fun sender() {
           // TODO? Typescript doesn't pass an id.
-          callbacks.send(
-            ProxyMessage.ModelUpdate(model() as RefModeStoreData, id = proxyMessage.id)
-          )
+          callbacks.callbacks.forEach { callback ->
+            callback(ProxyMessage.ModelUpdate(model() as RefModeStoreData, id = proxyMessage.id))
+          }
         }
 
         if (pendingIds.isEmpty()) {
           sendQueue.enqueue(::sender)
         } else {
-          addToHoldQueueFromReferences(pendingIds, ::sender)
+          addToHoldQueueFromReferences(
+            pendingIds,
+            onTimeout = {},
+            ::sender
+          )
         }
       }
       is ProxyMessage.SyncRequest -> sendQueue.enqueue {
         // TODO? Typescript doesn't pass an id.
-        callbacks.send(ProxyMessage.SyncRequest(id = proxyMessage.id))
+        callbacks.callbacks.forEach { callback ->
+          callback(ProxyMessage.SyncRequest(id = proxyMessage.id))
+        }
       }
     }
+    removeUnusedEntityVersions(proxyMessage)
     return true
   }
 
-  private fun newBackingInstance(): CrdtModel<CrdtData, CrdtOperationAtTime, Referencable> =
+  /* Removes entries from the entities versions, if they were removed from the container store. */
+  private fun removeUnusedEntityVersions(proxyMessage: ContainerProxyMessage) =
+    synchronized(versions) {
+      when (proxyMessage) {
+        is ProxyMessage.Operations ->
+          proxyMessage.operations.forEach { op ->
+            when (op) {
+              is CrdtSet.Operation.Remove<*> -> versions.remove(op.removed)
+              is CrdtSet.Operation.Clear<*> -> versions.clear()
+              is CrdtSet.Operation.FastForward<*> ->
+                versions.keys.removeAll(op.removed.map { it.id })
+            }
+          }
+        is ProxyMessage.ModelUpdate -> {
+          if (proxyMessage.model is CrdtSet.Data<*>) {
+            val keys =
+              (proxyMessage.model as CrdtSet.Data<*>).values.keys.filter { versions.contains(it) }
+            versions = keys.associateWithTo(mutableMapOf()) { versions[it]!! }
+          }
+        }
+        is ProxyMessage.SyncRequest -> return
+      }
+    }
+
+  private fun newBackingInstance(): CrdtModel<CrdtData, CrdtOperation, Referencable> =
     crdtType.createCrdtModel()
 
   /**
@@ -449,6 +514,31 @@ class ReferenceModeStore private constructor(
     backingStore.onProxyMessage(
       MuxedProxyMessage(referencable.id, ProxyMessage.ModelUpdate(model, id = backingStoreId))
     )
+  }
+
+  private suspend fun handleOpForBackingStore(op: RefModeStoreOp) {
+    when (op) {
+      is RefModeStoreOp.SingletonUpdate -> {
+        backingStore.clearStoresCache()
+        updateBackingStore(op.value)
+      }
+      is RefModeStoreOp.SingletonClear -> {
+        backingStore.clearStoresCache()
+      }
+      is RefModeStoreOp.SetAdd -> {
+        updateBackingStore(op.added)
+      }
+      is RefModeStoreOp.SetRemove -> {
+        clearEntityInBackingStore(op.removed)
+      }
+      is RefModeStoreOp.SetClear -> {
+        clearAllEntitiesInBackingStore()
+      }
+    }
+  }
+
+  private suspend fun handleModelForBackingStore(model: RefModeStoreData) {
+    model.values.values.map { updateBackingStore(it.value) }
   }
 
   /** Clear the provided entity in the backing store. */
@@ -485,17 +575,17 @@ class ReferenceModeStore private constructor(
    * [RefModeStoreData].
    *
    * Any referenced IDs that are not yet available in the backing store are returned in the list
-   * of pending [Reference]s. The returned function should not be invoked until all references in
+   * of pending [RawReference]s. The returned function should not be invoked until all references in
    * pendingIds have valid backing in the backing store.
    *
-   * [RawEntity] objects come from the storage proxy, and [Reference] objects come from the
+   * [RawEntity] objects come from the storage proxy, and [RawReference] objects come from the
    * [containerStore].
    */
   @Suppress("UNCHECKED_CAST")
   private suspend fun constructPendingIdsAndModel(
     data: CrdtData
-  ): Pair<List<Reference>, suspend () -> CrdtData> {
-    val pendingIds = mutableListOf<Reference>()
+  ): Pair<List<RawReference>, suspend () -> CrdtData> {
+    val pendingIds = mutableListOf<RawReference>()
 
     // We can use one mechanism to calculate pending values because both CrdtSet.Data and
     // CrdtSingleton.Data's `values` param are maps of ReferenceIds to CrdtSet.DataValue
@@ -505,7 +595,7 @@ class ReferenceModeStore private constructor(
     ) {
       // Find any pending ids given the reference ids of the data values.
       dataValues.forEach { (refId, dataValue) ->
-        val version = (dataValue.value as? Reference)?.version ?: dataValue.versionMap
+        val version = (dataValue.value as? RawReference)?.version ?: dataValue.versionMap
 
         // This object is requested at an empty version, which means that it's new and
         // can be directly constructed rather than waiting for an update.
@@ -513,10 +603,10 @@ class ReferenceModeStore private constructor(
 
         val backingModel = getLocalData(refId)
 
-        // If the version that was requested is newer than what the backing store has,
-        // consider it pending.
-        if (version dominates backingModel.versionMap) {
-          pendingIds += Reference(refId, backingStore.storageKey, version)
+        // if the backing store version is not newer than the version that was requested, consider
+        // it pending.
+        if (backingModel.versionMap doesNotDominate version) {
+          pendingIds += RawReference(refId, backingStore.storageKey, version)
         }
       }
     }
@@ -543,13 +633,13 @@ class ReferenceModeStore private constructor(
     // is intended to be sent to the collectionStore.
     fun collectionFromProxy(
       incoming: Map<ReferenceId, CrdtSet.DataValue<out Referencable>>
-    ): MutableMap<ReferenceId, CrdtSet.DataValue<Reference>> {
-      val outgoing = mutableMapOf<ReferenceId, CrdtSet.DataValue<Reference>>()
+    ): MutableMap<ReferenceId, CrdtSet.DataValue<RawReference>> {
+      val outgoing = mutableMapOf<ReferenceId, CrdtSet.DataValue<RawReference>>()
       incoming.forEach { (refId, value) ->
         val version = value.versionMap
         outgoing[refId] = CrdtSet.DataValue(
           version.copy(),
-          Reference(refId, backingStore.storageKey, version.copy())
+          RawReference(refId, backingStore.storageKey, version.copy())
         )
       }
       return outgoing
@@ -561,7 +651,7 @@ class ReferenceModeStore private constructor(
       is CrdtSingleton.Data<*> -> {
         calculatePendingIds(data.values)
 
-        val containerData = data as? CrdtSingleton.Data<Reference>
+        val containerData = data as? CrdtSingleton.Data<RawReference>
         val proxyData = data as? CrdtSingleton.Data<RawEntity>
         when {
           // If its type is `Reference` it must be coming from the container, so generate
@@ -589,7 +679,7 @@ class ReferenceModeStore private constructor(
       is CrdtSet.Data<*> -> {
         calculatePendingIds(data.values)
 
-        val containerData = data as? CrdtSet.Data<Reference>
+        val containerData = data as? CrdtSet.Data<RawReference>
         val proxyData = data as? CrdtSet.Data<RawEntity>
         when {
           // If its type is `Reference` it must be coming from the container, so generate
@@ -620,8 +710,10 @@ class ReferenceModeStore private constructor(
     return pendingIds to modelGetter
   }
 
-  private fun entityVersionMap(entityId: ReferenceId) =
-    versions[entityId]?.values?.max()?.let { VersionMap(crdtKey to it) } ?: VersionMap()
+  private fun entityVersionMap(entityId: ReferenceId): VersionMap {
+    val version = versions[entityId]?.values?.maxOrNull()
+    return version?.let { VersionMap(crdtKey to it) } ?: VersionMap()
+  }
 
   /**
    * Convert the provided entity to a CRDT Model of the entity. This requires synthesizing
@@ -652,7 +744,7 @@ class ReferenceModeStore private constructor(
       fieldVersionProvider
     ) {
       when (it) {
-        is Reference -> it
+        is RawReference -> it
         is RawEntity -> CrdtEntity.Reference.wrapReferencable(it)
         is ReferencableList<*> -> CrdtEntity.Reference.wrapReferencable(it)
         else -> CrdtEntity.Reference.buildReference(it)
@@ -667,23 +759,39 @@ class ReferenceModeStore private constructor(
     return listOf(
       when (containerModel) {
         is CrdtSet.Data<*> ->
-          CrdtSet.Operation.Clear<Reference>(actor, containerVersion)
+          CrdtSet.Operation.Clear<RawReference>(actor, containerVersion)
         is CrdtSingleton.Data<*> ->
-          CrdtSingleton.Operation.Clear<Reference>(actor, containerVersion)
+          CrdtSingleton.Operation.Clear<RawReference>(actor, containerVersion)
         else -> throw UnsupportedOperationException()
       }
     )
   }
 
   private suspend fun addToHoldQueueFromReferences(
-    refs: Collection<Reference>,
+    refs: Collection<RawReference>,
+    onTimeout: suspend () -> Unit,
     onRelease: suspend () -> Unit
   ): Int {
+    // Start a job that delays for the configured timeout amount, and if still active by the
+    // time the deadline is reached, runs that clears the store to remove potentially stale
+    // references.
+    val timeoutJob = scope.launch {
+      delay(BLOCKING_QUEUE_TIMEOUT_MILLIS)
+      holdQueue.removePendingIds(refs.map { it.id })
+      onTimeout()
+    }
+
     return holdQueue.enqueue(
       refs.map {
         HoldQueue.Entity(it.id, it.version?.copy())
       },
-      onRelease
+      {
+        try {
+          onRelease()
+        } finally {
+          timeoutJob.cancel()
+        }
+      }
     )
   }
 
@@ -707,7 +815,9 @@ class ReferenceModeStore private constructor(
       scope: CoroutineScope,
       driverFactory: DriverFactory,
       writeBackProvider: WriteBackProvider,
-      devTools: DevToolsForStorage?
+      devTools: DevToolsForStorage?,
+      time: Time,
+      analytics: Analytics
     ): ReferenceModeStore {
       val refableOptions =
         requireNotNull(
@@ -750,20 +860,24 @@ class ReferenceModeStore private constructor(
         scope = scope,
         driverFactory = driverFactory,
         writeBackProvider = writeBackProvider,
-        devTools = devTools
+        devTools = devTools,
+        time = time
       )
 
       return ReferenceModeStore(
         refableOptions,
         containerStore,
         backingStore,
-        devTools?.forRefModeStore(options)
+        scope,
+        devTools?.forRefModeStore(options),
+        time,
+        analytics
       ).also { refModeStore ->
         // Since `on` is a suspending method, we need to setup both the container store callback and
         // the backing store callback here in this create method, which is inside of a coroutine.
-        containerStore.on {
+        refModeStore.containerStoreId = containerStore.on {
           refModeStore.receiveQueue.enqueue {
-            refModeStore.handleContainerMessage(it.toReferenceModeMessage())
+            refModeStore.handleContainerMessage(it as ContainerProxyMessage)
           }
         }
         refModeStore.backingStoreId = refModeStore.backingStore.on {

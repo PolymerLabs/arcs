@@ -17,6 +17,10 @@ import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.UntypedDirectStoreMuxer
 import arcs.core.storage.WriteBackProvider
+import arcs.core.util.Time
+import arcs.core.util.statistics.TransactionStatisticsImpl
+import arcs.flags.BuildFlagDisabledError
+import arcs.flags.BuildFlags
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -27,18 +31,25 @@ import kotlinx.coroutines.launch
  */
 class MuxedStorageServiceImpl(
   private val scope: CoroutineScope,
+  private val stats: TransactionStatisticsImpl,
   private val driverFactory: DriverFactory,
   private val writeBackProvider: WriteBackProvider,
-  private val devToolsProxy: DevToolsProxyImpl?
+  private val devToolsProxy: DevToolsProxyImpl?,
+  private val time: Time
 ) : IMuxedStorageService.Stub() {
+  init {
+    if (!BuildFlags.ENTITY_HANDLE_API) {
+      throw BuildFlagDisabledError("ENTITY_HANDLE_API")
+    }
+  }
+
   // TODO(b/162747024): Replace this with an LruCache so its size doesn't grow unbounded.
   private val directStoreMuxers = ConcurrentHashMap<StorageKey, UntypedDirectStoreMuxer>()
 
-  private val stats = BindingContextStatsImpl()
-
   override fun openMuxedStorageChannel(
     encodedStoreOptions: ByteArray,
-    callback: IStorageChannelCallback
+    channelCallback: IStorageChannelCallback,
+    messageCallback: IMessageCallback
   ) {
     val storeOptions = encodedStoreOptions.decodeStoreOptions()
     val directStoreMuxer = directStoreMuxers.computeIfAbsent(storeOptions.storageKey) {
@@ -48,11 +59,14 @@ class MuxedStorageServiceImpl(
         scope = scope,
         driverFactory = driverFactory,
         writeBackProvider = writeBackProvider,
-        devTools = devToolsProxy
+        devTools = devToolsProxy,
+        time = time
       )
     }
     scope.launch {
-      callback.onCreate(MuxedStorageChannelImpl.create(directStoreMuxer, scope, stats, callback))
+      channelCallback.onCreate(
+        MuxedStorageChannelImpl.create(directStoreMuxer, scope, stats, messageCallback)
+      )
     }
   }
 }

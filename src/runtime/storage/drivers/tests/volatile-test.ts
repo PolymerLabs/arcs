@@ -23,7 +23,6 @@ describe('Volatile Driver', async () => {
 
   afterEach(() => {
     memory.entries.clear();
-    Runtime.clearRuntimeForTesting();
   });
 
   it('can be multiply instantiated against the same storage location', () => {
@@ -102,32 +101,35 @@ describe('Volatile Driver', async () => {
 });
 
 describe('VolatileStorageDriverProvider', () => {
-  const runtime = Runtime.newForNodeTesting();
+  let runtime;
+  beforeEach(() => {
+    runtime = new Runtime();
+  });
 
-  it('supports VolatileStorageKeys for the same Arc ID', () => {
-    const arc = runtime.newArc('arc', id => new VolatileStorageKey(id, 'prefix'));
+  it('supports VolatileStorageKeys for the same Arc ID', async () => {
+    const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'arc', storageKeyPrefix: id => new VolatileStorageKey(id, 'prefix')})).id);
     const provider = new VolatileStorageDriverProvider(arc);
     const storageKey = new VolatileStorageKey(arc.id, 'unique');
     assert.isTrue(provider.willSupport(storageKey));
   });
 
-  it('does not support VolatileStorageKeys with a different Arc ID', () => {
-    const arc = runtime.newArc('arc', id => new VolatileStorageKey(id, 'prefix'));
+  it('does not support VolatileStorageKeys with a different Arc ID', async () => {
+    const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'arc', storageKeyPrefix: id => new VolatileStorageKey(id, 'prefix')})).id);
     const provider = new VolatileStorageDriverProvider(arc);
     const storageKey = new VolatileStorageKey(ArcId.newForTest('some-other-arc'), 'unique');
     assert.isFalse(provider.willSupport(storageKey));
   });
 
-  it('does not support RamDiskStorageKeys', () => {
-    const arc = runtime.newArc('arc', id => new VolatileStorageKey(id, 'prefix'));
+  it('does not support RamDiskStorageKeys', async () => {
+    const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'arc', storageKeyPrefix: id => new VolatileStorageKey(id, 'prefix')})).id);
     const provider = new VolatileStorageDriverProvider(arc);
     const storageKey = new RamDiskStorageKey('unique');
     assert.isFalse(provider.willSupport(storageKey));
   });
 
   it('uses separate memory for each arc', async () => {
-    const arc1 = runtime.newArc('arc1', id => new VolatileStorageKey(id, 'prefix'));
-    const arc2 = runtime.newArc('arc2', id => new VolatileStorageKey(id, 'prefix'));
+    const arc1 = runtime.getArcById((await runtime.allocator.startArc({arcName: 'arc1', storageKeyPrefix: id => new VolatileStorageKey(id, 'prefix')})).id);
+    const arc2 = runtime.getArcById((await runtime.allocator.startArc({arcName: 'arc2', storageKeyPrefix: id => new VolatileStorageKey(id, 'prefix')})).id);
     const provider1 = new VolatileStorageDriverProvider(arc1);
     const provider2 = new VolatileStorageDriverProvider(arc2);
     const storageKey1 = new VolatileStorageKey(arc1.id, 'unique');

@@ -17,7 +17,6 @@ arcs_kt_library(
         ":ramdisk",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
-        "//java/arcs/core/crdt/extension",
         "//java/arcs/core/data",
         "//java/arcs/core/data:rawentity",
         "//java/arcs/core/data/util:data-util",
@@ -31,8 +30,9 @@ arcs_kt_library(
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
+        "//java/arcs/flags",
+        "//java/arcs/flags:build_flags",
         "//third_party/java/androidx/annotation",
-        "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
@@ -46,6 +46,7 @@ arcs_kt_library(
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/driver/volatiles",
         "//java/arcs/core/storage/driver/volatiles:volatile_impl",
+        "//third_party/kotlin/kotlinx_atomicfu",
     ],
 )
 
@@ -56,7 +57,6 @@ arcs_kt_library(
     deps = [
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
-        "//java/arcs/core/crdt/extension",
         "//java/arcs/core/data",
         "//java/arcs/core/data:rawentity",
         "//java/arcs/core/data/util:data-util",
@@ -70,6 +70,8 @@ arcs_kt_library(
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
+        "//java/arcs/flags",
+        "//java/arcs/flags:build_flags",
         "//third_party/java/androidx/annotation",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",

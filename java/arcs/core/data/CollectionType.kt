@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -19,8 +19,6 @@ import arcs.core.crdt.CrdtSet.Data
 import arcs.core.crdt.CrdtSet.IOperation
 import arcs.core.type.Tag
 import arcs.core.type.Type
-import arcs.core.type.TypeFactory
-import arcs.core.type.TypeLiteral
 import kotlin.reflect.KClass
 
 /** Extension function to wrap any type in a collection type. */
@@ -40,49 +38,19 @@ data class CollectionType<T : Type>(
     get() = collectionType
   override val entitySchema: Schema?
     get() = (collectionType as? EntitySchemaProviderType)?.entitySchema
-  override val canEnsureResolved: Boolean
-    get() = collectionType.canEnsureResolved
-  override val resolvedType: CollectionType<*>?
-    get() {
-      val collectionResolvedType = collectionType.resolvedType
-      return if (collectionResolvedType !== collectionType) {
-        collectionResolvedType.collectionOf()
-      } else this
-    }
 
   override val crdtModelDataClass: KClass<*> = CrdtSet.DataImpl::class
 
-  override fun maybeEnsureResolved(): Boolean = collectionType.maybeEnsureResolved()
-
   override fun createCrdtModel():
     CrdtModel<Data<Referencable>, IOperation<Referencable>, Set<Referencable>> {
-    return CrdtSet()
-  }
-
-  override fun copy(variableMap: MutableMap<Any, Any>): Type =
-    TypeFactory.getType(Literal(tag, collectionType.copy(variableMap).toLiteral()))
-
-  override fun copyWithResolutions(variableMap: MutableMap<Any, Any>): Type =
-    CollectionType(collectionType.copyWithResolutions(variableMap))
-
-  override fun toLiteral(): TypeLiteral = Literal(tag, collectionType.toLiteral())
-
-  override fun toString(options: Type.ToStringOptions): String {
-    return if (options.pretty) {
-      "${collectionType.toString(options)} Collection"
-    } else {
-      "[${collectionType.toString(options)}]"
+      return CrdtSet()
     }
-  }
 
-  /** [Literal] representation of a [CollectionType]. */
-  data class Literal(override val tag: Tag, override val data: TypeLiteral) : TypeLiteral
-
-  companion object {
-    init {
-      TypeFactory.registerBuilder(Tag.Collection) { literal ->
-        CollectionType(TypeFactory.getType(literal.data))
-      }
+  override fun toStringWithOptions(options: Type.ToStringOptions): String {
+    return if (options.pretty) {
+      "${collectionType.toStringWithOptions(options)} Collection"
+    } else {
+      "[${collectionType.toStringWithOptions(options)}]"
     }
   }
 }

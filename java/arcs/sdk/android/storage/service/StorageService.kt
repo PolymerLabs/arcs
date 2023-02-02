@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -23,27 +23,26 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import androidx.work.Worker
 import arcs.android.common.resurrection.ResurrectorService
-import arcs.android.crdt.toParcelableType
-import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
-import arcs.android.storage.service.BindingContext
-import arcs.android.storage.service.BindingContextStatsImpl
-import arcs.android.storage.service.DeferredStore
 import arcs.android.storage.service.DevToolsProxyImpl
 import arcs.android.storage.service.DevToolsStorageManager
 import arcs.android.storage.service.MuxedStorageServiceImpl
+import arcs.android.storage.service.ReferencedStores
 import arcs.android.storage.service.StorageServiceManager
-import arcs.android.storage.toParcelable
+import arcs.android.storage.service.StorageServiceNgImpl
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
+import arcs.core.analytics.Analytics
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
+import arcs.core.storage.ActiveStore
 import arcs.core.storage.DefaultDriverFactory
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.StoreWriteBack
+import arcs.core.storage.UntypedProxyMessage
 import arcs.core.storage.WriteBackProvider
 import arcs.core.storage.database.name
 import arcs.core.storage.database.persistent
@@ -51,9 +50,12 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.util.TaggedLog
 import arcs.core.util.performance.MemoryStats
 import arcs.core.util.performance.PerformanceStatistics
+import arcs.core.util.statistics.TransactionCounter
+import arcs.core.util.statistics.TransactionStatisticsImpl
+import arcs.flags.BuildFlags
+import arcs.jvm.util.JvmTime
 import java.io.FileDescriptor
 import java.io.PrintWriter
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
@@ -65,12 +67,14 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 /**
  * Implementation of a [Service] which manages [Store]s and exposes the ability to access them via
  * the [IStorageService] interface when bound-to by a client.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 open class StorageService : ResurrectorService() {
   // Can be overridden by subclasses.
   protected open val coroutineContext = Dispatchers.Default + CoroutineName("StorageService")
@@ -82,13 +86,15 @@ open class StorageService : ResurrectorService() {
   protected open val config =
     StorageServiceConfig(ttlJobEnabled = true, garbageCollectionJobEnabled = true)
 
+  protected open val time = JvmTime
+
+  protected open val analytics: Analytics = Analytics.defaultAnalytics
+
   private val driverFactory: DriverFactory
     get() = DefaultDriverFactory.get()
 
-  @ExperimentalCoroutinesApi
-  private val stores = ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>()
   private var startTime: Long? = null
-  private val stats = BindingContextStatsImpl()
+  private val stats = TransactionStatisticsImpl(JvmTime, globalTransactionCounter)
   private val log = TaggedLog { "StorageService" }
   private val workManager: WorkManager by lazy { WorkManager.getInstance(this) }
   private var devToolsProxy: DevToolsProxyImpl? = null
@@ -98,7 +104,20 @@ open class StorageService : ResurrectorService() {
     StoreWriteBack(protocol, Channel.UNLIMITED, false, writeBackScope)
   }
 
-  @ExperimentalCoroutinesApi
+  private val stores by lazy {
+    ReferencedStores(
+      { getScope() },
+      { getFactory() },
+      writeBackProvider,
+      devToolsProxy,
+      time,
+      analytics
+    )
+  }
+
+  /** Return the number of [ActiveStore] instances maintained by the service right now. */
+  suspend fun storeCount() = stores.size()
+
   override fun onCreate() {
     super.onCreate()
     log.debug { "onCreate" }
@@ -115,7 +134,7 @@ open class StorageService : ResurrectorService() {
   private fun scheduleTtlJob(ttlHoursInterval: Long) {
     val periodicCleanupTask =
       PeriodicWorkRequest.Builder(
-        config.cleanupTaskClass.java,
+        PeriodicCleanupTask::class.java,
         ttlHoursInterval,
         TimeUnit.HOURS
       )
@@ -128,14 +147,14 @@ open class StorageService : ResurrectorService() {
     )
   }
 
-  private fun scheduleGcJob(garbageCollectionHoursInterval: Long) {
+  private fun scheduleGcJob(interval: Long, klass: KClass<out Worker>, tag: String) {
     val garbageCollectionTask =
       PeriodicWorkRequest.Builder(
-        config.garbageCollectionTaskClass.java,
-        garbageCollectionHoursInterval,
+        klass.java,
+        interval,
         TimeUnit.HOURS
       )
-        .addTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+        .addTag(tag)
         .setConstraints(
           Constraints.Builder()
             .setRequiresDeviceIdle(true)
@@ -144,7 +163,7 @@ open class StorageService : ResurrectorService() {
         )
         .build()
     workManager.enqueueUniquePeriodicWork(
-      DatabaseGarbageCollectionPeriodicTask.WORKER_TAG,
+      tag,
       ExistingPeriodicWorkPolicy.REPLACE,
       garbageCollectionTask
     )
@@ -157,22 +176,59 @@ open class StorageService : ResurrectorService() {
       workManager.cancelAllWorkByTag(PeriodicCleanupTask.WORKER_TAG)
     }
     if (config.garbageCollectionJobEnabled) {
-      scheduleGcJob(config.garbageCollectionHoursInterval)
+      if (config.useGarbageCollectionTaskV2) {
+        scheduleGcJob(
+          config.garbageCollectionHoursInterval,
+          DatabaseGarbageCollectionPeriodicTaskV2::class,
+          DatabaseGarbageCollectionPeriodicTaskV2.WORKER_TAG
+        )
+        workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+      } else {
+        scheduleGcJob(
+          config.garbageCollectionHoursInterval,
+          DatabaseGarbageCollectionPeriodicTask::class,
+          DatabaseGarbageCollectionPeriodicTask.WORKER_TAG
+        )
+        workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTaskV2.WORKER_TAG)
+      }
     } else {
       workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+      workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTaskV2.WORKER_TAG)
     }
   }
 
-  @ExperimentalCoroutinesApi
   override fun onBind(intent: Intent): IBinder? {
     log.debug { "onBind: $intent" }
 
-    when (intent.action) {
-      MANAGER_ACTION -> {
-        return StorageServiceManager(coroutineContext, driverFactory, stores)
+    if (BuildFlags.ENTITY_HANDLE_API) {
+      if (intent.action == MUXED_STORAGE_SERVICE_ACTION) {
+        return MuxedStorageServiceImpl(
+          storesScope,
+          stats,
+          driverFactory,
+          writeBackProvider,
+          devToolsProxy,
+          time
+        )
       }
-      MUXED_STORAGE_SERVICE_ACTION -> {
-        return MuxedStorageServiceImpl(storesScope, driverFactory, writeBackProvider, devToolsProxy)
+    }
+
+    when (intent.action) {
+      STORAGE_SERVICE_NG_ACTION -> {
+        return StorageServiceNgImpl(
+          storesScope,
+          stats,
+          ::onStorageProxyMessage,
+          stores
+        )
+      }
+      MANAGER_ACTION -> {
+        return StorageServiceManager(
+          storesScope,
+          driverFactory,
+          DatabaseDriverProvider.manager,
+          stores
+        )
       }
       DEVTOOLS_ACTION -> {
         val flags = application?.applicationInfo?.flags ?: 0
@@ -184,36 +240,28 @@ open class StorageService : ResurrectorService() {
         }
         return DevToolsStorageManager(stores, devToolsProxy)
       }
-    }
-
-    // If we got this far, assume we want to bind IStorageService.
-
-    val parcelableOptions = requireNotNull(
-      intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
-    ) { "No StoreOptions found in Intent" }
-
-    val options = parcelableOptions.actual
-    return BindingContext(
-      stores.computeIfAbsent(options.storageKey) {
-        @Suppress("UNCHECKED_CAST")
-        DeferredStore<CrdtData, CrdtOperation, Any>(
-          options,
-          storesScope,
-          driverFactory,
-          writeBackProvider,
-          devToolsProxy
-        )
-      },
-      coroutineContext,
-      stats,
-      devToolsProxy
-    ) { storageKey, message ->
-      when (message) {
-        is ProxyMessage.ModelUpdate<*, *, *>,
-        is ProxyMessage.Operations<*, *, *> -> resurrectClients(storageKey)
-        is ProxyMessage.SyncRequest<*, *, *> -> Unit
+      else -> {
+        throw IllegalArgumentException("Unrecognised intent action: ${intent.action}")
       }
     }
+  }
+
+  private suspend fun onStorageProxyMessage(storageKey: StorageKey, message: UntypedProxyMessage) {
+    when (message) {
+      is ProxyMessage.ModelUpdate<*, *, *>,
+      is ProxyMessage.Operations<*, *, *> -> resurrectClients(storageKey)
+      is ProxyMessage.SyncRequest<*, *, *> -> Unit
+    }
+  }
+
+  override fun onUnbind(intent: Intent?): Boolean {
+    log.debug { "onUnbind: $intent" }
+    if (intent?.action == STORAGE_SERVICE_NG_ACTION) {
+      storesScope.launch {
+        stores.clear()
+      }
+    }
+    return super.onUnbind(intent)
   }
 
   override fun onDestroy() {
@@ -222,10 +270,9 @@ open class StorageService : ResurrectorService() {
     writeBackScope.cancel()
   }
 
-  @ExperimentalCoroutinesApi
   override fun dump(fd: FileDescriptor, writer: PrintWriter, args: Array<out String>) {
     val elapsedTime = System.currentTimeMillis() - (startTime ?: System.currentTimeMillis())
-    val storageKeys = stores.keys.map { it }.toSet()
+    val storageKeys = stores.storageKeys().map { it }.toSet()
 
     val statsPercentiles = stats.roundtripPercentiles
 
@@ -244,8 +291,8 @@ open class StorageService : ResurrectorService() {
                 |  - 90th percentile: ${statsPercentiles.ninetieth}
                 |  - 99th percentile: ${statsPercentiles.ninetyNinth}
                 |Transaction Statistics (level of concurrency):
-                |  - Current: ${stats.transactions.current}
-                |  - Peak: ${stats.transactions.peak}
+                |  - Current: ${stats.currentTransactions}
+                |  - Peak: ${stats.peakTransactions}
             """.trimMargin("|")
     )
 
@@ -311,6 +358,21 @@ open class StorageService : ResurrectorService() {
     dumpRegistrations(writer)
   }
 
+  @Suppress("UNCHECKED_CAST")
+  private suspend fun getStore(
+    options: StoreOptions
+  ): ActiveStore<CrdtData, CrdtOperation, Any> {
+    return stores.getOrPut(options).store as ActiveStore<CrdtData, CrdtOperation, Any>
+  }
+
+  private fun getFactory(): DriverFactory {
+    return driverFactory
+  }
+
+  private fun getScope(): CoroutineScope {
+    return storesScope
+  }
+
   private fun PerformanceStatistics.Snapshot.dump(
     writer: PrintWriter,
     pad: String,
@@ -355,10 +417,7 @@ open class StorageService : ResurrectorService() {
     val ttlHoursInterval: Long = TTL_JOB_INTERVAL_HOURS,
     val garbageCollectionJobEnabled: Boolean,
     val garbageCollectionHoursInterval: Long = GC_JOB_INTERVAL_HOURS,
-    val cleanupTaskClass: KClass<out Worker> =
-      PeriodicCleanupTask::class,
-    val garbageCollectionTaskClass: KClass<out Worker> =
-      DatabaseGarbageCollectionPeriodicTask::class
+    val useGarbageCollectionTaskV2: Boolean = false
   )
 
   companion object {
@@ -374,48 +433,52 @@ open class StorageService : ResurrectorService() {
     const val MUXED_STORAGE_SERVICE_ACTION =
       "arcs.sdk.android.storage.service.MUXED_STORAGE_SERVICE"
 
+    // TODO(b/178332056): Rename after storage service migration.
+    val STORAGE_SERVICE_NG_ACTION: String
+      get() {
+        return "arcs.sdk.android.storage.service.STORAGE_SERVICE_NG"
+      }
+
     // Can be used to cancel all periodic jobs when the service is not running.
     fun cancelAllPeriodicJobs(context: Context) {
       val workManager = WorkManager.getInstance(context)
       workManager.cancelAllWorkByTag(PeriodicCleanupTask.WORKER_TAG)
       workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
     }
+
+    private val globalTransactionCounter = TransactionCounter()
   }
 }
 
 object StorageServiceIntentHelpers {
   /**
-   * A helper to create the [Intent] needed to bind to the storage service for a particular
-   * set of [StoreOptions].
-   *
-   * context an Android [Context] that will be used to create the [Intent]
-   * storeOptions the [StoreOptions] identifying the [ActiveStore] we want to talk to
-   * storageServiceClass an optional implementation class that can be provided if your application
-   *  is using a subclass of [StorageService].
-   */
-  fun storageServiceIntent(
-    context: Context,
-    storeOptions: StoreOptions,
-    storageServiceClass: Class<*> = StorageService::class.java
-  ): Intent = Intent(context, storageServiceClass).apply {
-    action = storeOptions.storageKey.toString()
-    putExtra(
-      StorageService.EXTRA_OPTIONS,
-      storeOptions.toParcelable(storeOptions.type.toParcelableType())
-    )
-  }
-
-  /**
    * A helper to create the [Intent] needed to bind to the manager interface of a [StorageService].
    *
-   * context an Android [Context] that will be used to create the [Intent]
-   * storageServiceClass an optional implementation class that can be provided if your application
-   *  is using a subclass of [StorageService].
+   * @param context an Android [Context] that will be used to create the [Intent]
+   * @param storageServiceClass an optional implementation class that can be provided if your
+   *  application is using a subclass of [StorageService].
    */
   fun managerIntent(
     context: Context,
     storageServiceClass: Class<*> = StorageService::class.java
   ): Intent = Intent(context, storageServiceClass).apply {
     action = StorageService.MANAGER_ACTION
+  }
+
+  /**
+   * A helper to create the [Intent] needed to bind to the StorageServiceNG interface of a
+   * [StorageService].
+   *
+   * @param context an Android [Context] that will be used to create the [Intent]
+   * @param storageServiceClass an optional implementation class that can be provided if your
+   *  application is using a subclass of [StorageService].
+   */
+  fun storageServiceNgIntent(
+    context: Context,
+    storageServiceClass: Class<*> = StorageService::class.java
+  ): Intent {
+    return Intent(context, storageServiceClass).apply {
+      action = StorageService.STORAGE_SERVICE_NG_ACTION
+    }
   }
 }

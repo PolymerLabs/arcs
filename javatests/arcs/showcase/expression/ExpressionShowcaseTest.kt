@@ -12,11 +12,11 @@
 package arcs.showcase.expression
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.integration.IntegrationEnvironment
 import arcs.core.data.expression.EvaluatorParticle
 import arcs.core.host.toRegistration
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
-import arcs.showcase.ShowcaseEnvironment
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -27,12 +27,12 @@ import org.junit.runner.RunWith
 class StatsChecker : AbstractStatsChecker()
 class DataWriter : AbstractDataWriter()
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class ExpressionShowcaseTest {
 
   @get:Rule
-  val env = ShowcaseEnvironment(
+  val env = IntegrationEnvironment(
     ::DataWriter.toRegistration(),
     ::StatsChecker.toRegistration(),
     EvaluatorParticle.toRegistration()

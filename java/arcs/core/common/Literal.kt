@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -18,4 +18,4 @@ package arcs.core.common
 interface Literal
 
 /** A list of [Literal]s that is itself a [Literal]. */
-class LiteralList<T : Literal>(private val items: List<T>) : List<T> by items, Literal
+data class LiteralList<T : Literal>(private val items: List<T>) : List<T> by items, Literal

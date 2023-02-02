@@ -19,7 +19,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.ACTION_RESURRECT
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_REGISTRATION_TARGET_ID
 import arcs.android.common.resurrection.ResurrectionRequest.Companion.EXTRA_RESURRECT_NOTIFIER
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import java.io.PrintWriter
@@ -44,7 +44,7 @@ class ResurrectorServiceTest {
 
   @Before
   fun setUp() {
-    StorageKeyParser.reset(RamDiskStorageKey)
+    StorageKeyManager.GLOBAL_INSTANCE.reset(RamDiskStorageKey)
     context = ApplicationProvider.getApplicationContext<Application>()
     resurrectionRequest = ResurrectionRequest.createDefault(context, storageKeys, "test")
     resurrectionRequestIntent = Intent(context, ResurrectorServiceImpl::class.java)
@@ -83,7 +83,7 @@ class ResurrectorServiceTest {
                       ]
                     ]
                     
-                """.trimIndent()
+        """.trimIndent()
       )
   }
 

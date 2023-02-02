@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -64,6 +64,15 @@ class HoldQueue(
   suspend fun removeFromQueue(enqueueId: Int) = mutex.withLock {
     queue.values.forEach { records ->
       records.removeAll { it.hashCode() == enqueueId }
+    }
+  }
+
+  /**
+   * Removes a pending item from the [HoldQueue] by collection of reference ids.
+   */
+  suspend fun removePendingIds(ids: Collection<ReferenceId>) {
+    mutex.withLock {
+      ids.forEach { queue.remove(it) }
     }
   }
 

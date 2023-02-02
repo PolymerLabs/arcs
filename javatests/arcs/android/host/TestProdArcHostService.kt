@@ -1,18 +1,18 @@
 package arcs.android.host
 
 import android.content.Context
-import arcs.android.host.prod.ProdArcHostService
+import arcs.android.labs.host.prod.ProdArcHostService
+import arcs.core.host.HandleManagerFactory
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.TestingJvmProdHost
-import arcs.core.storage.StorageEndpointManager
+import arcs.jvm.util.JvmTime
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestBindHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class TestProdArcHostService : ProdArcHostService() {
   override val coroutineContext = Dispatchers.Default
   override val arcSerializationCoroutineContext = Dispatchers.Default
@@ -22,23 +22,25 @@ class TestProdArcHostService : ProdArcHostService() {
       scope,
       TestBindHelper(this)
     )
+  val handleManagerFactory = HandleManagerFactory(
+    schedulerProvider,
+    storageEndpointManager,
+    JvmTime
+  )
 
   override val arcHost = TestingAndroidProdHost(
     this,
-    schedulerProvider,
-    storageEndpointManager
+    handleManagerFactory
   )
 
   override val arcHosts = listOf(arcHost)
 
   class TestingAndroidProdHost(
     val context: Context,
-    schedulerProvider: SchedulerProvider,
-    storageEndpointManager: StorageEndpointManager,
+    handleManagerFactory: HandleManagerFactory,
     vararg particles: ParticleRegistration
   ) : TestingJvmProdHost(
-    schedulerProvider,
-    storageEndpointManager,
+    handleManagerFactory,
     *particles
   )
 }

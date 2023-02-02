@@ -8,39 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {StorageProxy} from './storage-proxy.js';
 import {Type, CollectionType, EntityType, ReferenceType, SingletonType, InterfaceType, MuxType} from '../../types/lib-types.js';
 import {CRDTTypeRecord, CRDTSingletonTypeRecord, CRDTCollectionTypeRecord, CRDTEntityTypeRecord, Identified} from '../../crdt/lib-crdt.js';
-import {Ttl} from '../capabilities.js';
 import {SingletonHandle, CollectionHandle, Handle} from './handle.js';
-import {Particle} from '../particle.js';
 import {ActiveStore} from './active-store.js';
 import {Entity, SerializedEntity} from '../entity.js';
-import {Id, IdGenerator} from '../id.js';
 import {ParticleSpec, StorableSerializedParticleSpec} from '../arcs-types/particle-spec.js';
 import {SerializedReference, Reference} from '../reference.js';
-import {StorageKey} from './storage-key.js';
-import {Exists} from './drivers/driver.js';
 import {EntityHandleFactory} from './entity-handle-factory.js';
-import {StorageProxyMuxer} from './storage-proxy-muxer.js';
-import {DirectStoreMuxer} from './direct-store-muxer.js';
-import {StoreInfo} from './store-info.js';
-import {StorageService} from './storage-service.js';
-
-type HandleOptions = {
-  type?: Type;
-  ttl?: Ttl;
-  particle?: Particle;
-  canRead?: boolean;
-  canWrite?: boolean;
-  name?: string;
-};
-
-type ArcLike = {
-  generateID: () => Id;
-  idGenerator: IdGenerator;
-  storageService: StorageService;
-};
 
 export type SingletonEntityType = SingletonType<EntityType>;
 export type CRDTEntitySingleton = CRDTSingletonTypeRecord<SerializedEntity>;
@@ -110,46 +85,4 @@ export type ToHandle<T extends CRDTTypeRecord>
 
 export function handleType<T extends Handle<CRDTTypeRecord>>(handle: T) {
   return handle.type as HandleToType<T>;
-}
-
-export async function newHandle<T extends Type>(
-  storeInfo: StoreInfo<T>,
-  arc: ArcLike,
-  options: HandleOptions = {}
-): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
-  storeInfo.exists = Exists.MayExist;
-  return handleForStoreInfo(storeInfo, arc, options);
-}
-
-export function handleForActiveStore<T extends CRDTTypeRecord>(
-  store: ActiveStore<T>,
-  arc: ArcLike,
-  options: HandleOptions = {}
-): ToHandle<T> {
-  const type = options.type || store.storeInfo.type;
-  const storageKey = store.storeInfo.storageKey.toString();
-
-  const idGenerator = arc.idGenerator;
-  const particle = options.particle || null;
-  const canRead = (options.canRead != undefined) ? options.canRead : true;
-  const canWrite = (options.canWrite != undefined) ? options.canWrite : true;
-  const name = options.name || null;
-  const generateID = arc.generateID ? () => arc.generateID().toString() : () => '';
-  if (store instanceof DirectStoreMuxer) {
-    const proxyMuxer = new StorageProxyMuxer<CRDTMuxEntity>(store, type, storageKey);
-    return new EntityHandleFactory(proxyMuxer) as ToHandle<T>;
-  } else {
-    const proxy = new StorageProxy<T>(store.storeInfo.id, store, type, storageKey, options.ttl);
-    if (type instanceof SingletonType) {
-      // tslint:disable-next-line: no-any
-      return new SingletonHandle(generateID(), proxy as any, idGenerator, particle, canRead, canWrite, name) as ToHandle<T>;
-    } else {
-      // tslint:disable-next-line: no-any
-      return new CollectionHandle(generateID(), proxy as any, idGenerator, particle, canRead, canWrite, name) as ToHandle<T>;
-    }
-  }
-}
-
-export async function handleForStoreInfo<T extends Type>(storeInfo: StoreInfo<T>, arc: ArcLike, options?: HandleOptions): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
-  return handleForActiveStore(await arc.storageService.getActiveStore(storeInfo), arc, options) as ToHandle<TypeToCRDTTypeRecord<T>>;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -12,6 +12,7 @@
 package arcs.core.common
 
 import arcs.core.util.RandomBuilder
+import arcs.core.util.nextVersionMapSafeString
 import arcs.core.util.nextSafeRandomLong
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
@@ -21,7 +22,8 @@ import org.junit.runners.JUnit4
 
 /** Tests for [Id]. */
 @RunWith(JUnit4::class)
-class IdTest {
+class IdTest() {
+
   private val testSessionid = "sessionId"
   private lateinit var testGenerator: Id.Generator
 
@@ -98,5 +100,21 @@ class IdTest {
     val arcId = testGenerator.newArcId("foo")
     assertThat(arcId).isInstanceOf(ArcId::class.java)
     assertThat(arcId.toString()).isEqualTo("!sessionId:foo")
+  }
+
+  @Test
+  fun idGenerator_newStringId_generatesRandomEntityString() {
+    val seed = 0
+    val knownRandom = { kotlin.random.Random(seed) }
+
+    // Set the global random builder.
+    val oldRandomBuilder = RandomBuilder
+    RandomBuilder = { knownRandom() }
+
+    val expectedRandomValue = knownRandom().nextVersionMapSafeString(10)
+    val id = Id.Generator.newSession().newMinimizedId()
+
+    assertThat(id).isEqualTo(expectedRandomValue)
+    RandomBuilder = oldRandomBuilder
   }
 }

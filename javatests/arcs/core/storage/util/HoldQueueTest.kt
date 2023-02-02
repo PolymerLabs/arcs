@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -20,7 +20,7 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
 
 /** Tests for the [HoldQueue]. */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class HoldQueueTest {
   private val holdQueue = HoldQueue(SimpleQueue())
 
@@ -70,6 +70,39 @@ class HoldQueueTest {
       expectedRecords
     )
     Unit
+  }
+
+  @Test
+  fun removeAllPendingIds_byReferenceIdCollection_isEmpty() = runBlockingTest {
+    val versions = VersionMap("alice" to 1, "bob" to 2)
+    val callback = suspend { }
+
+    listOf("foo", "bar", "baz")
+      .map { it.toRef() }
+      .enqueueAll(holdQueue, versions.copy(), callback)
+
+    val queueData = holdQueue.queue
+
+    assertThat(queueData.size).isEqualTo(3)
+    holdQueue.removePendingIds(listOf("foo", "bar", "baz").map { it.toRef().id })
+    assertThat(queueData.size).isEqualTo(0)
+  }
+
+  @Test
+  fun removeSomePendingIds_byReferenceIdCollection_isNotEmpty() = runBlockingTest {
+    val versions = VersionMap("alice" to 1, "bob" to 2)
+    val callback = suspend { }
+
+    listOf("foo", "bar", "baz")
+      .map { it.toRef() }
+      .enqueueAll(holdQueue, versions.copy(), callback)
+
+    val queueData = holdQueue.queue
+
+    assertThat(queueData.size).isEqualTo(3)
+    holdQueue.removePendingIds(listOf("foo", "bar").map { it.toRef().id })
+    assertThat(queueData.size).isEqualTo(1)
+    assertThat(queueData.keys).containsExactly("baz")
   }
 
   @Test

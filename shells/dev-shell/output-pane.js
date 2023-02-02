@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -38,10 +38,10 @@ export class OutputPane extends HTMLElement {
     this.error.clear();
   }
 
-  addArcPanel(arcId) {
+  addArcPanel(arcId, runtime) {
     const arcPanel = document.createElement('arc-panel');
     this.arcs.appendChild(arcPanel);
-    arcPanel.init(this, arcId);
+    arcPanel.init(this, arcId, runtime);
     return arcPanel;
   }
 
@@ -192,8 +192,9 @@ class ArcPanel extends HTMLElement {
     });
   }
 
-  init(host, arcId) {
+  init(host, arcId, runtime) {
     this.host = host;
+    this.runtime = runtime;
     this.arcLabel.textContent = arcId.idTree[0];
   }
 
@@ -206,14 +207,14 @@ class ArcPanel extends HTMLElement {
       this.arcLabel.textContent += ` - "${description.trim()}"`;
     }
     this.serialControl.style.display = 'inline-block';
-    if (this.linkedArc._stores.length > 0) {
+    if (this.linkedArc.stores.length > 0) {
       this.storesControl.style.display = 'inline-block';
-      for (const store of this.linkedArc._stores) {
+      for (const storeInfo of this.linkedArc.stores) {
         const storePanel = document.createElement('store-panel');
         this.stores.appendChild(storePanel);
-        await storePanel.attach(await store.activate(), this.linkedArc);
+        await storePanel.attach(await this.linkedArc.getActiveStore(storeInfo), this.linkedArc, this.runtime);
       }
-      this.storesCollapseAll.enabled = (this.linkedArc._stores.length > 1);
+      this.storesCollapseAll.enabled = (this.linkedArc.stores.length > 1);
     }
   }
 

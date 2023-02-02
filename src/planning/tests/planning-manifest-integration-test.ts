@@ -14,9 +14,9 @@ import {Speculator} from '../speculator.js';
 
 describe('planning manifest integration', () => {
   it('can produce a recipe that can be speculated', async () => {
-    const {arc, recipe} = await manifestTestSetup();
+    const {runtime, arc, recipe} = await manifestTestSetup();
     const hash = ((hash) => hash.substring(hash.length - 4))(await recipe.digest());
-    const {speculativeArc, relevance} = await new Speculator().speculate(arc, recipe, hash);
+    const {speculativeArc, relevance} = await new Speculator(runtime).speculate(arc, recipe, hash);
     assert.strictEqual(relevance.calcRelevanceScore(), 1);
     assert.lengthOf(speculativeArc.recipeDeltas, 1);
   });

@@ -1,0 +1,122 @@
+meta
+  namespace: arcs.core.host
+
+// See ComplexLifecycleTest.kt for a description of this recipe's graph.
+
+particle Ingress1 in '.Ingress1'
+  input: reads {msg: Text, src: Text}
+  c1: writes {msg: Text, src: Text}
+
+particle Ingress2 in '.Ingress2'
+  input: reads {msg: Text, src: Text}
+  c1: writes {msg: Text, src: Text}
+  m1: writes {msg: Text, src: Text}
+  m2: writes {msg: Text, src: Text}
+
+particle Cycle1 in '.Cycle1'
+  i1: reads {msg: Text, src: Text}
+  i2: reads {msg: Text, src: Text}
+  c3: reads {msg: Text, src: Text}
+  fb: reads {msg: Text, src: Text}
+  c2: writes {msg: Text, src: Text}
+  m1: writes {msg: Text, src: Text}
+
+particle Cycle2 in '.Cycle2'
+  c1: reads {msg: Text, src: Text}
+  m1a: reads {msg: Text, src: Text}
+  m1b: reads {msg: Text, src: Text}
+  c3: writes {msg: Text, src: Text}
+
+particle Cycle3 in '.Cycle3'
+  c2: reads {msg: Text, src: Text}
+  c1: writes {msg: Text, src: Text}
+  wo: writes {msg: Text, src: Text}
+  rw: reads writes {msg: Text, src: Text}
+
+particle ReadWriteEgress in '.ReadWriteEgress'
+  fb: writes {msg: Text, src: Text}
+  c3: reads writes {msg: Text, src: Text}
+
+particle Feedback in '.Feedback'
+  rw: reads {msg: Text, src: Text}
+  c1: writes {msg: Text, src: Text}
+
+particle Middle1 in '.Middle1'
+  i2: reads {msg: Text, src: Text}
+  c1: reads {msg: Text, src: Text}
+  c2a: writes {msg: Text, src: Text}
+  c2b: writes {msg: Text, src: Text}
+  m2: reads writes {msg: Text, src: Text}
+
+particle Middle2 in '.Middle2'
+  i2: reads {msg: Text, src: Text}
+  m3r: reads {msg: Text, src: Text}
+  m3w: writes {msg: Text, src: Text}
+  m1: reads writes {msg: Text, src: Text}
+  rf: reads writes {msg: Text, src: Text}
+
+particle Middle3 in '.Middle3'
+  m2r: reads {msg: Text, src: Text}
+  m2w: writes {msg: Text, src: Text}
+  wo: writes {msg: Text, src: Text}
+
+particle Reflect in '.Reflect'
+  m2: reads writes {msg: Text, src: Text}
+
+particle WriteOnlyEgress in '.WriteOnlyEgress'
+  c3: reads {msg: Text, src: Text}
+  m3: reads {msg: Text, src: Text}
+
+recipe ComplexGraphTest
+  Ingress1
+    input: reads input_i1
+    c1: writes i1_c1
+  Ingress2
+    input: reads input_i2
+    c1: writes i2_c1
+    m1: writes i2_m1
+    m2: writes i2_m2
+  Cycle1
+    i1: reads i1_c1
+    i2: reads i2_c1
+    c3: reads c3_c1
+    fb: reads fb_c1
+    c2: writes c1_c2
+    m1: writes c1_m1
+  Cycle2
+    c1: reads c1_c2
+    m1a: reads m1_c2a
+    m1b: reads m1_c2b
+    c3: writes c2_c3
+  Cycle3
+    c2: reads c2_c3
+    c1: writes c3_c1
+    wo: writes c3_wo
+    rw: reads writes c3_rw
+  ReadWriteEgress
+    fb: writes rw_fb
+    c3: reads writes c3_rw
+  Feedback
+    rw: reads rw_fb
+    c1: writes fb_c1
+  Middle1
+    i2: reads i2_m1
+    c1: reads c1_m1
+    c2a: writes m1_c2a
+    c2b: writes m1_c2b
+    m2: reads writes m1_m2
+  Middle2
+    i2: reads i2_m2
+    m3r: reads m3_m2
+    m3w: writes m2_m3
+    m1: reads writes m1_m2
+    rf: reads writes m2_rf
+  Middle3
+    m2r: reads m2_m3
+    m2w: writes m3_m2
+    wo: writes m3_wo
+  Reflect
+    m2: reads writes m2_rf
+  WriteOnlyEgress
+    c3: reads c3_wo
+    m3: reads m3_wo

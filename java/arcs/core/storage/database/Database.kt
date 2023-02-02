@@ -11,10 +11,11 @@
 
 package arcs.core.storage.database
 
+import arcs.core.common.ReferenceId
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
 import kotlin.reflect.KClass
 
@@ -35,6 +36,11 @@ interface Database {
     data: DatabaseData,
     originatingClientId: Int? = null
   ): Boolean
+
+  /**
+   * Updates the data at [storageKey] in the database by applying the given op.
+   */
+  suspend fun applyOp(storageKey: StorageKey, op: DatabaseOp, originatingClientId: Int? = null)
 
   /** Fetches the data at [storageKey] from the database. */
   suspend fun get(
@@ -68,10 +74,12 @@ interface Database {
 
   /*
    * Removes all entities that have a hard reference (in one of its fields) to the given
-   * [backingStorageKey]/[entityId]. If an inline entity references it, the top level entity will also
-   * be removed (as well as all its inline children).
+   * [backingStorageKey]/[entityId]. If an inline entity references it, the top level entity will
+   * also be removed (as well as all its inline children).
+   *
+   * @return the number of top level entities removed.
    */
-  suspend fun removeEntitiesHardReferencing(backingStorageKey: StorageKey, entityId: String)
+  suspend fun removeEntitiesHardReferencing(backingStorageKey: StorageKey, entityId: String): Long
 
   /**
    * Extracts all IDs of any hard reference that points to the given [backingStorageKey].
@@ -142,7 +150,30 @@ sealed class DatabaseData(
   ) : DatabaseData(schema, databaseVersion, versionMap)
 }
 
+/**
+ * Operations that can be applied by the database. They can only be used if the
+ * write_only_storage_stack flag is enabled.
+ */
+sealed class DatabaseOp(open val schema: Schema) {
+  // Add the given element to the collection. If it is already in the collection, this is a no-op.
+  data class AddToCollection(
+    val value: RawReference,
+    override val schema: Schema
+  ) : DatabaseOp(schema)
+
+  // Remove any element with the given id from the collection, no-op if the collection does not
+  // exist or does not contain that id. Also clears the entity corresponding to the id.
+  data class RemoveFromCollection(
+    val id: ReferenceId,
+    override val schema: Schema
+  ) : DatabaseOp(schema)
+
+  // Clear the collection, no-op if the collection does not exist or is empty.  Also clears all the
+  // entities that were in the collection.
+  data class ClearCollection(override val schema: Schema) : DatabaseOp(schema)
+}
+
 data class ReferenceWithVersion(
-  val reference: Reference,
+  val rawReference: RawReference,
   val versionMap: VersionMap
 )

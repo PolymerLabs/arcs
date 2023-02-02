@@ -20,7 +20,6 @@ import {DatabaseStorageKey} from '../runtime/storage/database-storage-key.js';
 import {Handle} from '../runtime/recipe/lib-recipe.js';
 import {digest} from '../platform/digest-web.js';
 import {VolatileStorageKey} from '../runtime/storage/drivers/volatile.js';
-import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 import {StoreInfo} from '../runtime/storage/store-info.js';
 
 export class AllocatorRecipeResolverError extends Error {
@@ -44,9 +43,9 @@ export class AllocatorRecipeResolver {
 
   constructor(context: Manifest, private randomSalt: string, policiesManifest?: Manifest|null) {
     this.runtime = new Runtime({context});
-    DatabaseStorageKey.register();
+    DatabaseStorageKey.register(this.runtime);
     this.ingressValidation = policiesManifest
-        ? new IngressValidation(policiesManifest.policies) : null;
+        ? new IngressValidation(policiesManifest.allPolicies) : null;
   }
 
   /**
@@ -56,6 +55,7 @@ export class AllocatorRecipeResolver {
    * @returns Resolved recipes (with Storage Keys).
    */
   async resolve(): Promise<Recipe[]> {
+    // TODO(b/174815541): Break the `resolve` method into a bunch of smaller methods.
     const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
 
     const originalRecipes = [];
@@ -78,7 +78,7 @@ export class AllocatorRecipeResolver {
     const handleById: {[index: string]: ({handles: Handle[], store?: StoreInfo<Type>})} = {};
     // Find all `create` handles of long running recipes.
     for (const recipe of recipes.filter(r => isLongRunning(r))) {
-      const resolver = new CapabilitiesResolver({arcId: Id.fromString(findLongRunningArcId(recipe))});
+      const resolver = this.runtime.getCapabilitiesResolver(Id.fromString(findLongRunningArcId(recipe)));
       for (const createHandle of recipe.handles.filter(h => h.fate === 'create' && h.id)) {
         if (handleById[createHandle.id]) {
           throw new AllocatorRecipeResolverError(`
@@ -122,16 +122,36 @@ export class AllocatorRecipeResolver {
     for (const handleId of Object.keys(handleById)) {
       const {store, handles} = handleById[handleId];
       const allTypes = handles.map(h => h.type);
+      if (this.ingressValidation) {
+        // For every `create` handle `h`, simulate a phantom reader.  This is
+        // accomplished by adding the max read type corresponding to the type of
+        // the create handle `h` to `allTypes`.
+        handles.forEach(handle => {
+          if (handle.fate !== 'create') return;
+          if (handle.type == null) {
+            throw new AllocatorRecipeResolverError(
+              `No type for handle '${handle.id}'.`);
+          }
+          const errors = [];
+          const maxHandleReadType =
+            this.ingressValidation.getMaxReadType(handle.type, errors);
+          if (maxHandleReadType == null) {
+            throw new AllocatorRecipeResolverError(
+              `Unable to find max read type for handle '${handle.id}': ${errors}.`);
+          }
+          allTypes.push(maxHandleReadType);
+        });
+      }
       if (store) {
         allTypes.push(store.type);
       }
       const restrictedType = this.restrictHandleType(handleId, allTypes);
-      assert(restrictedType.maybeEnsureResolved({restrictToMinBound: true}));
+      assert(restrictedType.maybeResolve({restrictToMinBound: true}));
 
       for (const handle of handles) {
         handle.restrictType(restrictedType);
         for (const connection of handle.connections) {
-          if (!connection.type.maybeEnsureResolved({restrictToMinBound: true})) {
+          if (!connection.type.maybeResolve({restrictToMinBound: true})) {
             throw new AllocatorRecipeResolverError(
               `Cannot resolve type of ${connection.getQualifiedName()} in recipe ${connection.recipe.name}`);
           }
@@ -175,12 +195,12 @@ export class AllocatorRecipeResolver {
   }
 
   async assignStorageKeys(handle: Handle): Promise<void> {
-    assert(handle.type.maybeEnsureResolved({restrictToMinBound: true}));
+    assert(handle.type.maybeResolve({restrictToMinBound: true}));
     if (handle.fate === 'create') {
       if (isLongRunning(handle.recipe) && handle.id) {
         assert(!handle.storageKey); // store's storage key was set, but not the handle's
         const arcId = Id.fromString(findLongRunningArcId(handle.recipe));
-        const resolver = new CapabilitiesResolver({arcId});
+        const resolver = this.runtime.getCapabilitiesResolver(arcId);
         assert(handle.type.isResolved());
         if (handle.type.getEntitySchema() === null) {
           throw new AllocatorRecipeResolverError(`Handle '${handle.id}' was not properly resolved.`);

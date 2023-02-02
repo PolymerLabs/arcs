@@ -19,11 +19,11 @@ import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-me
 import {VolatileStorageKey} from '../../runtime/storage/drivers/volatile.js';
 import {Exists} from '../../runtime/storage/drivers/driver.js';
 import {Reference} from '../../runtime/reference.js';
-import {Arc} from '../../runtime/arc.js';
-import {handleForStoreInfo, CollectionEntityType, SingletonEntityType, SingletonReferenceType, CollectionReferenceType} from '../../runtime/storage/storage.js';
+import {CollectionEntityType, SingletonEntityType, SingletonReferenceType, CollectionReferenceType} from '../../runtime/storage/storage.js';
 import {ReferenceModeStorageKey} from '../../runtime/storage/reference-mode-storage-key.js';
-import {StorageServiceImpl} from '../../runtime/storage/storage-service.js';
 import {StoreInfo} from '../../runtime/storage/store-info.js';
+import {ArcInfo} from '../../runtime/arc-info.js';
+import {MockStorageFrontend} from '../../runtime/storage/testing/test-storage.js';
 
 // Import some service definition files for their side-effects (the services get
 // registered automatically).
@@ -54,7 +54,7 @@ const testMap = {
   'Kotlin': '../../javatests/arcs/sdk/wasm',
 };
 
-async function createBackingEntity(arc: Arc, referenceType: ReferenceType<EntityType>, id: string, entityData: {}): Promise<[string, Reference]> {
+async function createBackingEntity(arc: ArcInfo, referenceType: ReferenceType<EntityType>, id: string, entityData: {}, runtime: Runtime): Promise<[string, Reference]> {
   const referenceModeStorageKey = new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, id+'a'), new VolatileStorageKey(arc.id, id+'b'));
   const baseType = referenceType.getContainedType();
   const referenceModeStore = new StoreInfo({
@@ -64,13 +64,12 @@ async function createBackingEntity(arc: Arc, referenceType: ReferenceType<Entity
     exists: Exists.MayExist
   });
 
-  const backingHandle1 = await handleForStoreInfo(referenceModeStore, arc);
+  const backingHandle1 = await runtime.host.handleForStoreInfo(referenceModeStore, arc);
   const entity = await backingHandle1.setFromData(entityData);
   const entityId = Entity.id(entity);
-  const reference = new Reference({id: entityId, entityStorageKey: referenceModeStorageKey.toString()}, referenceType, null);
+  const reference = new Reference({id: entityId, entityStorageKey: referenceModeStorageKey.toString()}, referenceType, new MockStorageFrontend());
   return [entityId, reference];
 }
-
 
 Object.entries(testMap).forEach(([testLabel, testDir]) => {
   describe(`wasm tests (${testLabel})`, function() {
@@ -94,32 +93,27 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       }
     });
 
-    async function setup(recipeName) {
+    async function setup(planName) {
       const runtime = new Runtime({loader, context: await manifestPromise});
-      const arc = runtime.newArc('wasm-test', storageKeyPrefixForTest());
-
-      const recipe = arc.context.allRecipes.find(r => r.name === recipeName);
-      if (!recipe) {
-        throw new Error(`Test recipe '${recipeName}' not found`);
-      }
-      recipe.normalize();
-      await arc.instantiate(recipe);
+      const slotObserver = new SlotTestObserver();
+      const arcInfo = await runtime.allocator.startArc({
+        arcName: 'wasm-test',
+        storageKeyPrefix: storageKeyPrefixForTest(),
+        planName,
+        slotObserver
+      });
+      const arc = runtime.getArcById(arcInfo.id);
       await arc.idle;
-
       const [info] = arc.loadedParticleInfo.values();
 
-      const slotComposer = arc.peh.slotComposer;
-      const slotObserver = new SlotTestObserver();
-      slotComposer.observeSlots(slotObserver);
-
-      return {arc, stores: info.stores, slotObserver};
+      return {arcInfo, stores: info.stores, slotObserver, runtime};
     }
 
     it('onHandleSync / onHandleUpdate', async () => {
-      const {arc, stores} = await setup('HandleSyncUpdateTest');
-      const sng = await handleForStoreInfo(stores.get('sng') as StoreInfo<SingletonEntityType>, arc);
-      const col = await handleForStoreInfo(stores.get('col') as StoreInfo<CollectionEntityType>, arc);
-      const res = await handleForStoreInfo(stores.get('res') as StoreInfo<CollectionEntityType>, arc);
+      const {arcInfo, stores, runtime} = await setup('HandleSyncUpdateTest');
+      const sng = await runtime.host.handleForStoreInfo(stores.get('sng') as StoreInfo<SingletonEntityType>, arcInfo);
+      const col = await runtime.host.handleForStoreInfo(stores.get('col') as StoreInfo<CollectionEntityType>, arcInfo);
+      const res = await runtime.host.handleForStoreInfo(stores.get('res') as StoreInfo<CollectionEntityType>, arcInfo);
 
       // onHandleSync: txt = 'sync:<handle-name>:<all-synced>'
       // The order in which handles are synchronized isn't guaranteed, so allow for either result.
@@ -136,11 +130,11 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       await sng.set(new sng.entityClass({num: 3}));
       const e = new col.entityClass({num: 7});
       await col.add(e);
-      await arc.idle;
+      await runtime.getArcById(arcInfo.id).idle;
 
       await sng.clear();
       await col.remove(e);
-      await arc.idle;
+      await runtime.getArcById(arcInfo.id).idle;
 
       assert.deepStrictEqual(await res.toList() as {}[], [
         {txt: 'update:sng', num: 3},
@@ -152,9 +146,10 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
     // TODO(sjmiles, #4762): Enable this test.
     it.skip('getTemplate / populateModel / renderSlot', async () => {
-      const {arc, stores, slotObserver} = await setup('RenderTest');
-      const flags = await handleForStoreInfo(stores.get('flags') as StoreInfo<SingletonEntityType>, arc);
+      const {arcInfo, stores, slotObserver, runtime} = await setup('RenderTest');
+      const flags = await runtime.host.handleForStoreInfo(stores.get('flags') as StoreInfo<SingletonEntityType>, arcInfo);
 
+      const arc = runtime.getArcById(arcInfo.id);
       await flags.setFromData({template: false, model: true});
       await arc.idle;
 
@@ -177,11 +172,11 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
     // TODO(sjmiles, #4762): Enable this test.
     it.skip('autoRender', async () => {
-      const {arc, stores, slotObserver} = await setup('AutoRenderTest');
-      const data = await handleForStoreInfo(stores.get('data') as StoreInfo<SingletonEntityType>, arc);
+      const {arcInfo, stores, slotObserver, runtime} = await setup('AutoRenderTest');
+      const data = await runtime.host.handleForStoreInfo(stores.get('data') as StoreInfo<SingletonEntityType>, arcInfo);
 
       await data.setFromData({txt: 'update'});
-      await arc.idle;
+      await runtime.getArcById(arcInfo.id).idle;
 
       // TODO(sjmiles): modify slotTestObserver to capture similar information
       // First renderSlot call is initiated by the runtime, before handles are synced.
@@ -194,10 +189,11 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     it('fireEvent', async () => {
-      const {arc, stores} = await setup('EventsTest');
-      const output = await handleForStoreInfo(stores.get('output') as StoreInfo<SingletonEntityType>, arc);
+      const {arcInfo, stores, runtime} = await setup('EventsTest');
+      const output = await runtime.host.handleForStoreInfo(stores.get('output') as StoreInfo<SingletonEntityType>, arcInfo);
 
-      const particle = arc.activeRecipe.particles[0];
+      const particle = arcInfo.activeRecipe.particles[0];
+      const arc = runtime.getArcById(arcInfo.id);
       arc.peh.sendEvent(particle, 'root', {handler: 'icanhazclick', data: {info: 'fooBar'}});
       await arc.idle;
 
@@ -205,8 +201,8 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     it('serviceRequest / serviceResponse / resolveUrl', async () => {
-      const {arc, stores} = await setup('ServicesTest');
-      const output = await handleForStoreInfo(stores.get('output') as StoreInfo<CollectionEntityType>, arc);
+      const {arcInfo, stores, runtime} = await setup('ServicesTest');
+      const output = await runtime.host.handleForStoreInfo(stores.get('output') as StoreInfo<CollectionEntityType>, arcInfo);
 
       const results = await output.toList();
       assert.lengthOf(results, 4);
@@ -239,8 +235,8 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     }
 
     prefix('entity class API', async () => {
-      const {arc, stores} = await setup('EntityClassApiTest');
-      const errHandle = await handleForStoreInfo(stores.get('errors') as StoreInfo<CollectionEntityType>, arc);
+      const {arcInfo, stores, runtime} = await setup('EntityClassApiTest');
+      const errHandle = await runtime.host.handleForStoreInfo(stores.get('errors') as StoreInfo<CollectionEntityType>, arcInfo);
       const errors = (await errHandle.toList()).map(e => e.msg);
       if (errors.length > 0) {
         assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
@@ -248,8 +244,8 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     prefix('special schema fields', async () => {
-      const {arc, stores} = await setup('SpecialSchemaFieldsTest');
-      const errHandle = await handleForStoreInfo(stores.get('errors') as StoreInfo<CollectionEntityType>, arc);
+      const {arcInfo, stores, runtime} = await setup('SpecialSchemaFieldsTest');
+      const errHandle = await runtime.host.handleForStoreInfo(stores.get('errors') as StoreInfo<CollectionEntityType>, arcInfo);
       const errors = (await errHandle.toList()).map(e => e.msg);
       if (errors.length > 0) {
         assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
@@ -261,8 +257,8 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
         // TODO(alxr, #4763): Enable this test.
         return;
       }
-      const {arc, stores} = await setup('ReferenceClassApiTest');
-      const errHandle = await handleForStoreInfo(stores.get('errors') as StoreInfo<CollectionEntityType>, arc);
+      const {arcInfo, stores, runtime} = await setup('ReferenceClassApiTest');
+      const errHandle = await runtime.host.handleForStoreInfo(stores.get('errors') as StoreInfo<CollectionEntityType>, arcInfo);
       const errors = (await errHandle.toList()).map(e => e.msg);
       if (errors.length > 0) {
         assert.fail(`${errors.length} errors found:\n${errors.join('\n')}`);
@@ -271,15 +267,16 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
     // TODO - check that writing to read-only handles throws and vice versa
     it('singleton storage API', async () => {
-      const {arc, stores} = await setup('SingletonApiTest');
-      const inHandle = await handleForStoreInfo(stores.get('inHandle') as StoreInfo<SingletonEntityType>, arc);
-      const outHandle = await handleForStoreInfo(stores.get('outHandle') as StoreInfo<SingletonEntityType>, arc);
-      const ioHandle = await handleForStoreInfo(stores.get('ioHandle') as StoreInfo<SingletonEntityType>, arc);
-      const errors = await handleForStoreInfo(stores.get('errors') as StoreInfo<CollectionEntityType>, arc);
+      const {arcInfo, stores, runtime} = await setup('SingletonApiTest');
+      const inHandle = await runtime.host.handleForStoreInfo(stores.get('inHandle') as StoreInfo<SingletonEntityType>, arcInfo);
+      const outHandle = await runtime.host.handleForStoreInfo(stores.get('outHandle') as StoreInfo<SingletonEntityType>, arcInfo);
+      const ioHandle = await runtime.host.handleForStoreInfo(stores.get('ioHandle') as StoreInfo<SingletonEntityType>, arcInfo);
+      const errors = await runtime.host.handleForStoreInfo(stores.get('errors') as StoreInfo<CollectionEntityType>, arcInfo);
 
+      const arc = runtime.getArcById(arcInfo.id);
       const sendEvent = async handler => {
         await arc.idle;
-        arc.peh.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
+        arc.peh.sendEvent(arcInfo.activeRecipe.particles[0], 'root', {handler});
         await arc.idle;
       };
 
@@ -312,14 +309,15 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     it('collection storage API', async () => {
-      const {arc, stores} = await setup('CollectionApiTest');
-      const inHandle = await handleForStoreInfo(stores.get('inHandle') as StoreInfo<CollectionEntityType>, arc);
-      const outHandle = await handleForStoreInfo(stores.get('outHandle') as StoreInfo<CollectionEntityType>, arc);
-      const ioHandle = await handleForStoreInfo(stores.get('ioHandle') as StoreInfo<CollectionEntityType>, arc);
+      const {arcInfo, stores, runtime} = await setup('CollectionApiTest');
+      const inHandle = await runtime.host.handleForStoreInfo(stores.get('inHandle') as StoreInfo<CollectionEntityType>, arcInfo);
+      const outHandle = await runtime.host.handleForStoreInfo(stores.get('outHandle') as StoreInfo<CollectionEntityType>, arcInfo);
+      const ioHandle = await runtime.host.handleForStoreInfo(stores.get('ioHandle') as StoreInfo<CollectionEntityType>, arcInfo);
 
+      const arc = runtime.getArcById(arcInfo.id);
       const sendEvent = async handler => {
         await arc.idle;
-        arc.peh.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
+        arc.peh.sendEvent(arcInfo.activeRecipe.particles[0], 'root', {handler});
         await arc.idle;
       };
 
@@ -370,10 +368,10 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
         // TODO(alxr, #4763): Enable this test.
         this.skip();
       }
-      const {arc, stores} = await setup('ReferenceHandlesTest');
-      const sng = await handleForStoreInfo(stores.get('sng') as StoreInfo<SingletonReferenceType>, arc);
-      const col = await handleForStoreInfo(stores.get('col') as StoreInfo<CollectionReferenceType>, arc);
-      const res = await handleForStoreInfo(stores.get('res') as StoreInfo<CollectionEntityType>, arc);
+      const {arcInfo, stores, runtime} = await setup('ReferenceHandlesTest');
+      const sng = await runtime.host.handleForStoreInfo(stores.get('sng') as StoreInfo<SingletonReferenceType>, arcInfo);
+      const col = await runtime.host.handleForStoreInfo(stores.get('col') as StoreInfo<CollectionReferenceType>, arcInfo);
+      const res = await runtime.host.handleForStoreInfo(stores.get('res') as StoreInfo<CollectionEntityType>, arcInfo);
 
       assert.instanceOf(sng.type, SingletonType);
       assert.instanceOf(sng.type.getContainedType(), ReferenceType);
@@ -387,10 +385,11 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
 
       // onHandleUpdate tests populated references handles.
       const referenceType = sng.type.getContainedType() as ReferenceType<EntityType>;
-      const [entityId1, reference1] = await createBackingEntity(arc, referenceType, 'id1', {num: 6, txt: 'ok'});
-      const [entityId2, reference2] = await createBackingEntity(arc, referenceType, 'id2', {num: 7, txt: 'ko'});
+      const [entityId1, reference1] = await createBackingEntity(arcInfo, referenceType, 'id1', {num: 6, txt: 'ok'}, runtime);
+      const [entityId2, reference2] = await createBackingEntity(arcInfo, referenceType, 'id2', {num: 7, txt: 'ko'}, runtime);
 
       // Singleton
+      const arc = runtime.getArcById(arcInfo.id);
       await sng.set(reference1);
       await arc.idle;
       assert.sameMembers((await res.toList()).map(e => e.txt), [
@@ -424,14 +423,14 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
         // TODO(alxr, #4763): Enable this test.
         this.skip();
       }
-      const {arc, stores} = await setup('SchemaReferenceFieldsTest');
-      const input = await handleForStoreInfo(stores.get('input') as StoreInfo<SingletonEntityType>, arc);
-      const output = await handleForStoreInfo(stores.get('output') as StoreInfo<SingletonEntityType>, arc);
-      const res = await handleForStoreInfo(stores.get('res') as StoreInfo<CollectionEntityType>, arc);
+      const {arcInfo, stores, runtime} = await setup('SchemaReferenceFieldsTest');
+      const input = await runtime.host.handleForStoreInfo(stores.get('input') as StoreInfo<SingletonEntityType>, arcInfo);
+      const output = await runtime.host.handleForStoreInfo(stores.get('output') as StoreInfo<SingletonEntityType>, arcInfo);
+      const res = await runtime.host.handleForStoreInfo(stores.get('res') as StoreInfo<CollectionEntityType>, arcInfo);
 
       // Uninitialised reference fields.
       await input.set(new input.entityClass({num: 5}));
-      await arc.idle;
+      await runtime.getArcById(arcInfo.id).idle;
 
       assert.sameMembers((await res.toList()).map(e => e.txt), [
         'before <> !{}',  // no id or entity data; dereference is a no-op (no 'after' output)
@@ -441,11 +440,11 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // Populated reference fields.
       const entityType = input.type.getEntitySchema().fields.ref.getEntityType();  // yikes
       const refType = new ReferenceType(entityType);
-      const [childEntityId, childRef] = await createBackingEntity(arc, refType, 'id1', {val: 'v1'});
+      const [childEntityId, childRef] = await createBackingEntity(arcInfo, refType, 'id1', {val: 'v1'}, runtime);
 
       const parentEntity = new input.entityClass({num: 12, ref: childRef});
       await input.set(parentEntity);
-      await arc.idle;
+      await runtime.getArcById(arcInfo.id).idle;
 
       assert.sameMembers((await res.toList()).map(e => e.txt), [
         `before <${childEntityId}> !{}`,            // before dereferencing: contained entity is empty
@@ -463,16 +462,16 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     it('unicode strings', async () => {
-      const {arc, stores} = await setup('UnicodeTest');
-      const sng = await handleForStoreInfo(stores.get('sng') as StoreInfo<SingletonEntityType>, arc);
-      const col = await handleForStoreInfo(stores.get('col') as StoreInfo<CollectionEntityType>, arc);
-      const res = await handleForStoreInfo(stores.get('res') as StoreInfo<CollectionEntityType>, arc);
+      const {arcInfo, stores, runtime} = await setup('UnicodeTest');
+      const sng = await runtime.host.handleForStoreInfo(stores.get('sng') as StoreInfo<SingletonEntityType>, arcInfo);
+      const col = await runtime.host.handleForStoreInfo(stores.get('col') as StoreInfo<CollectionEntityType>, arcInfo);
+      const res = await runtime.host.handleForStoreInfo(stores.get('res') as StoreInfo<CollectionEntityType>, arcInfo);
 
       // 'pass' tests passthrough of unicode data in entities.
       const pass = 'A:₤⛲ℜ|あ表⏳:Z';
       await sng.set(new sng.entityClass({pass}));
       await col.add(new col.entityClass({pass}));
-      await arc.idle;
+      await runtime.getArcById(arcInfo.id).idle;
 
       // 'src' is set directly by the particle.
       const val = {pass, src: 'åŗċş 🌈'};
@@ -486,19 +485,19 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       // extra fields are correctly ignored.
       const manifest = await manifestPromise;
       const runtime = new Runtime({loader, context: manifest});
-      const arc = runtime.newArc('wasm-test', storageKeyPrefixForTest());
+      const arc = await runtime.allocator.startArc({arcName: 'wasm-test', storageKeyPrefix: storageKeyPrefixForTest()});
 
       const sliceClass = Entity.createEntityClass(manifest.findSchemaByName('Slice'), null);
-      const sngStore = await arc.createStore(new SingletonType(sliceClass.type), undefined, 'test:0');
-      const colStore = await arc.createStore(sliceClass.type.collectionOf(), undefined, 'test:1');
+      const sngStore = await arc.createStoreInfo(new SingletonType(sliceClass.type), {id: 'test:0'});
+      const colStore = await arc.createStoreInfo(sliceClass.type.collectionOf(), {id: 'test:1'});
 
       const resType = manifest.findParticleByName('EntitySlicingTest').getConnectionByName('res').type as CollectionType<EntityType>;
-      const resStore = await arc.createStore(resType, undefined, 'test:2');
+      const resStore = await arc.createStoreInfo(resType, {id: 'test:2'});
 
-      const sng = await handleForStoreInfo(sngStore, arc);
+      const sng = await runtime.host.handleForStoreInfo(sngStore, arc);
       await sng.set(new sng.entityClass({num: 159, txt: 'Charlie', flg: true}));
 
-      const col = await handleForStoreInfo(colStore, arc);
+      const col = await runtime.host.handleForStoreInfo(colStore, arc);
       await col.add(new col.entityClass({num: 30, txt: 'Moe', flg: false}));
       await col.add(new col.entityClass({num: 60, txt: 'Larry', flg: false}));
       await col.add(new col.entityClass({num: 90, txt: 'Curly', flg: true}));
@@ -507,11 +506,10 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       recipe.handles[0].mapToStorage(sngStore);
       recipe.handles[1].mapToStorage(colStore);
       recipe.handles[2].mapToStorage(resStore);
-      recipe.normalize();
-      await arc.instantiate(recipe);
-      await arc.idle;
+      await runtime.allocator.runPlanInArc(arc, recipe);
+      await runtime.getArcById(arc.id).idle;
 
-      const res = await handleForStoreInfo(resStore, arc);
+      const res = await runtime.host.handleForStoreInfo(resStore, arc);
       assert.sameMembers((await res.toList()).map(e => e.val), [
         's1:159',
         's2:159,Charlie',
@@ -534,78 +532,80 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
         this.skip();
       }
 
-      const {arc, stores} = await setup('OnFirstStartTest');
-      const fooHandle = await handleForStoreInfo(stores.get('fooHandle') as StoreInfo<SingletonEntityType>, arc);
+      const {arcInfo, stores, runtime} = await setup('OnFirstStartTest');
+      const fooHandle = await runtime.host.handleForStoreInfo(stores.get('fooHandle') as StoreInfo<SingletonEntityType>, arcInfo);
 
       assert.deepStrictEqual(await fooHandle.fetch() as {}, {txt: 'Created!'});
 
-      const serialization = await arc.serialize();
-      arc.dispose();
+      const serialization = await runtime.getArcById(arcInfo.id).serialize();
+      runtime.allocator.stopArc(arcInfo.id);
 
       const manifest = await manifestPromise;
 
-      const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest, storageService: new StorageServiceImpl()});
-      await arc2.idle;
+      const {driverFactory, storageService, storageKeyParser} = runtime;
+      const arc2 = await runtime.allocator.deserialize({serialization, fileName: ''});
+      await runtime.getArcById(arc2.id).idle;
 
       const fooClass = Entity.createEntityClass(manifest.findSchemaByName('FooHandle'), null);
-      const fooHandle2 = await handleForStoreInfo(arc2.stores.find(StoreInfo.isSingletonEntityStore), arc);
+      const fooHandle2 = await runtime.host.handleForStoreInfo(arc2.stores.find(StoreInfo.isSingletonEntityStore), arcInfo);
       assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({txt: 'Not created!'}));
 
     });
 
     it('multiple handles onUpdate', async function() {
-          if (isCpp) {
-            this.skip();
-          }
-          const {arc, stores} = await setup('CombineUpdatesTest');
-          const handle1 = await handleForStoreInfo(stores.get('handle1') as StoreInfo<SingletonEntityType>, arc);
-          const handle2 = await handleForStoreInfo(stores.get('handle2') as StoreInfo<CollectionEntityType>, arc);
-          const handle3 = await handleForStoreInfo(stores.get('handle3') as StoreInfo<SingletonEntityType>, arc);
-          const handle4 = await handleForStoreInfo(stores.get('handle4') as StoreInfo<SingletonEntityType>, arc);
-          const handle5 = await handleForStoreInfo(stores.get('handle5') as StoreInfo<SingletonEntityType>, arc);
-          const handle6 = await handleForStoreInfo(stores.get('handle6') as StoreInfo<SingletonEntityType>, arc);
-          const handle7 = await handleForStoreInfo(stores.get('handle7') as StoreInfo<SingletonEntityType>, arc);
-          const handle8 = await handleForStoreInfo(stores.get('handle8') as StoreInfo<SingletonEntityType>, arc);
-          const handle9 = await handleForStoreInfo(stores.get('handle9') as StoreInfo<SingletonEntityType>, arc);
-          const handle10 = await handleForStoreInfo(stores.get('handle10') as StoreInfo<SingletonEntityType>, arc);
+      if (isCpp) {
+        this.skip();
+      }
+      const {arcInfo, stores, runtime} = await setup('CombineUpdatesTest');
+      const handle1 = await runtime.host.handleForStoreInfo(stores.get('handle1') as StoreInfo<SingletonEntityType>, arcInfo);
+      const handle2 = await runtime.host.handleForStoreInfo(stores.get('handle2') as StoreInfo<CollectionEntityType>, arcInfo);
+      const handle3 = await runtime.host.handleForStoreInfo(stores.get('handle3') as StoreInfo<SingletonEntityType>, arcInfo);
+      const handle4 = await runtime.host.handleForStoreInfo(stores.get('handle4') as StoreInfo<SingletonEntityType>, arcInfo);
+      const handle5 = await runtime.host.handleForStoreInfo(stores.get('handle5') as StoreInfo<SingletonEntityType>, arcInfo);
+      const handle6 = await runtime.host.handleForStoreInfo(stores.get('handle6') as StoreInfo<SingletonEntityType>, arcInfo);
+      const handle7 = await runtime.host.handleForStoreInfo(stores.get('handle7') as StoreInfo<SingletonEntityType>, arcInfo);
+      const handle8 = await runtime.host.handleForStoreInfo(stores.get('handle8') as StoreInfo<SingletonEntityType>, arcInfo);
+      const handle9 = await runtime.host.handleForStoreInfo(stores.get('handle9') as StoreInfo<SingletonEntityType>, arcInfo);
+      const handle10 = await runtime.host.handleForStoreInfo(stores.get('handle10') as StoreInfo<SingletonEntityType>, arcInfo);
 
-          await handle1.set(new handle1.entityClass({num: 1.0}));
-          await handle2.add(new handle2.entityClass({num: 1.0}));
-          await handle3.set(new handle3.entityClass({num3: 1.0}));
-          await handle4.set(new handle4.entityClass({num4: 1.0}));
-          await handle5.set(new handle5.entityClass({num5: 1.0}));
-          await handle6.set(new handle6.entityClass({num6: 1.0}));
-          await handle7.set(new handle7.entityClass({num7: 1.0}));
-          await handle8.set(new handle8.entityClass({num8: 1.0}));
-          await handle9.set(new handle9.entityClass({num9: 1.0}));
-          await handle10.set(new handle10.entityClass({num10: 1.0}));
+      await handle1.set(new handle1.entityClass({num: 1.0}));
+      await handle2.add(new handle2.entityClass({num: 1.0}));
+      await handle3.set(new handle3.entityClass({num3: 1.0}));
+      await handle4.set(new handle4.entityClass({num4: 1.0}));
+      await handle5.set(new handle5.entityClass({num5: 1.0}));
+      await handle6.set(new handle6.entityClass({num6: 1.0}));
+      await handle7.set(new handle7.entityClass({num7: 1.0}));
+      await handle8.set(new handle8.entityClass({num8: 1.0}));
+      await handle9.set(new handle9.entityClass({num9: 1.0}));
+      await handle10.set(new handle10.entityClass({num10: 1.0}));
 
-          const errHandle = await handleForStoreInfo(stores.get('errors') as StoreInfo<CollectionEntityType>, arc);
+      const errHandle = await runtime.host.handleForStoreInfo(stores.get('errors') as StoreInfo<CollectionEntityType>, arcInfo);
 
-          const sendEvent = async handler => {
-            await arc.idle;
-            arc.peh.sendEvent(arc.activeRecipe.particles[0], 'root', {handler});
-            await arc.idle;
-          };
+      const arc = runtime.getArcById(arcInfo.id);
+      const sendEvent = async handler => {
+        await arc.idle;
+        arc.peh.sendEvent(arcInfo.activeRecipe.particles[0], 'root', {handler});
+        await arc.idle;
+      };
 
-          await sendEvent('checkEvents');
+      await sendEvent('checkEvents');
 
-          const errors = (await errHandle.toList()).map(e => e.msg);
+      const errors = (await errHandle.toList()).map(e => e.msg);
 
-          const expectedErrors = [
-            `Single Handle OnUpdate called 1 times.`,
-            `Calling combineUpdates with 2 Handles called 2 times.`,
-            `Calling combineUpdates with 2 Handles called 2 times.`,
-            `Calling combineUpdates with 3 Handles called 3 times.`,
-            `Calling combineUpdates with 4 Handles called 4 times.`,
-            `Calling combineUpdates with 5 Handles called 5 times.`,
-            `Calling combineUpdates with 6 Handles called 6 times.`,
-            `Calling combineUpdates with 7 Handles called 7 times.`,
-            `Calling combineUpdates with 8 Handles called 8 times.`,
-            `Calling combineUpdates with 9 Handles called 9 times.`,
-            `Calling combineUpdates with 10 Handles called 10 times.`,
-          ];
-          assert.deepStrictEqual(errors, expectedErrors);
-        });
+      const expectedErrors = [
+        `Single Handle OnUpdate called 1 times.`,
+        `Calling combineUpdates with 2 Handles called 2 times.`,
+        `Calling combineUpdates with 2 Handles called 2 times.`,
+        `Calling combineUpdates with 3 Handles called 3 times.`,
+        `Calling combineUpdates with 4 Handles called 4 times.`,
+        `Calling combineUpdates with 5 Handles called 5 times.`,
+        `Calling combineUpdates with 6 Handles called 6 times.`,
+        `Calling combineUpdates with 7 Handles called 7 times.`,
+        `Calling combineUpdates with 8 Handles called 8 times.`,
+        `Calling combineUpdates with 9 Handles called 9 times.`,
+        `Calling combineUpdates with 10 Handles called 10 times.`,
+      ];
+      assert.deepStrictEqual(errors, expectedErrors);
+    });
   });
 });

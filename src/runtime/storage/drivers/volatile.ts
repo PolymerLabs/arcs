@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {StorageDriverProvider, DriverFactory} from './driver-factory.js';
+import {StorageDriverProvider} from './driver-factory.js';
 import {Driver, ReceiveMethod, Exists} from './driver.js';
 import {StorageKey} from '../storage-key.js';
 import {Arc} from '../../arc.js';
@@ -16,10 +16,9 @@ import {ArcId} from '../../id.js';
 import {RamDiskStorageKey} from './ramdisk.js';
 import {Dictionary} from '../../../utils/lib-utils.js';
 import {assert} from '../../../platform/assert-web.js';
-import {StorageKeyParser} from '../storage-key-parser.js';
-import {Capabilities, Persistence, Encryption, Ttl, Queryable, Shareable} from '../../capabilities.js';
-import {CapabilitiesResolver} from '../../capabilities-resolver.js';
+import {Capabilities, Persistence, Shareable} from '../../capabilities.js';
 import {StorageKeyFactory, StorageKeyOptions} from '../../storage-key-factory.js';
+import {StorageRegistry} from '../storage-registry.js';
 
 type VolatileEntry<Data> = {data: Data, version: number, drivers: VolatileDriver<Data>[]};
 type VolatileEntryCollection<Data> = {root: VolatileEntry<Data>, locations: Dictionary<VolatileEntry<Data>>};
@@ -59,8 +58,8 @@ export class VolatileStorageKey extends StorageKey {
     return new VolatileStorageKey(ArcId.fromString(arcId), unique, path);
   }
 
-  static register() {
-    CapabilitiesResolver.registerStorageKeyFactory(new VolatileStorageKeyFactory());
+  static register(storageRegistry: StorageRegistry) {
+    storageRegistry.registerStorageKeyFactory(new VolatileStorageKeyFactory());
   }
 }
 
@@ -265,11 +264,4 @@ export class VolatileStorageDriverProvider implements StorageDriverProvider {
 
     return new VolatileDriver<Data>(storageKey as VolatileStorageKey, exists, this.arc.volatileMemory);
   }
-
-  // QUESTION: This method is never being called, is it needed?
-  static register(arc: Arc) {
-    DriverFactory.register(new VolatileStorageDriverProvider(arc));
-  }
 }
-
-StorageKeyParser.addDefaultParser(VolatileStorageKey.protocol, VolatileStorageKey.fromString);

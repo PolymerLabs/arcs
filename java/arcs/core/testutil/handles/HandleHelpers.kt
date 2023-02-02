@@ -18,6 +18,7 @@ import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadableHandle
 import arcs.core.entity.Reference
+import arcs.core.entity.RemoveQueryCollectionHandle
 import arcs.core.entity.Storable
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
@@ -28,19 +29,19 @@ import kotlinx.coroutines.withContext
 suspend fun <H : Handle> H.dispatchClose() = withContext(dispatcher) { close() }
 
 /** Calls [ReadableHandle.createReference] with the handle's dispatcher context. */
-suspend fun <H : ReadableHandle<T, U>, T, U, E : Entity>
-  H.dispatchCreateReference(entity: E): Reference<E> =
+suspend fun <H : ReadableHandle<V, U>, V, U, E : Entity>
+H.dispatchCreateReference(entity: E): Reference<E> =
   withContext(dispatcher) { createReference(entity) }
 
 /** Calls [ReadSingletonHandle.fetch] with the handle's dispatcher context. */
-suspend fun <H : ReadSingletonHandle<T>, T> H.dispatchFetch(): T? =
+suspend fun <H : ReadSingletonHandle<E>, E> H.dispatchFetch(): E? =
   withContext(dispatcher) { fetch() }
 
 /**
  * Calls [WriteSingletonHandle.store] with the handle's dispatcher context and waits for it to
  * complete (including notifications being sent to other handles reading from the same store).
  */
-suspend fun <H : WriteSingletonHandle<T>, T> H.dispatchStore(element: T) {
+suspend fun <H : WriteSingletonHandle<I>, I> H.dispatchStore(element: I) {
   withContext(dispatcher) { store(element) }.join()
   getProxy().waitForIdle()
 }
@@ -49,25 +50,25 @@ suspend fun <H : WriteSingletonHandle<T>, T> H.dispatchStore(element: T) {
  * Calls [WriteSingletonHandle.clear] with the handle's dispatcher context and waits for it to
  * complete (including notifications being sent to other handles reading from the same store).
  */
-suspend fun <H : WriteSingletonHandle<T>, T> H.dispatchClear() {
+suspend fun <H : WriteSingletonHandle<I>, I> H.dispatchClear() {
   withContext(dispatcher) { clear() }.join()
   getProxy().waitForIdle()
 }
 
 /** Calls [ReadCollectionHandle.size] with the handle's dispatcher context. */
-suspend fun <H : ReadCollectionHandle<T>, T> H.dispatchSize(): Int =
+suspend fun <H : ReadCollectionHandle<E>, E> H.dispatchSize(): Int =
   withContext(dispatcher) { size() }
 
 /** Calls [ReadCollectionHandle.isEmpty] with the handle's dispatcher context. */
-suspend fun <H : ReadCollectionHandle<T>, T> H.dispatchIsEmpty(): Boolean =
+suspend fun <H : ReadCollectionHandle<E>, E> H.dispatchIsEmpty(): Boolean =
   withContext(dispatcher) { isEmpty() }
 
 /** Calls [ReadCollectionHandle.fetchAll] with the handle's dispatcher context. */
-suspend fun <H : ReadCollectionHandle<T>, T> H.dispatchFetchAll(): Set<T> =
+suspend fun <H : ReadCollectionHandle<E>, E> H.dispatchFetchAll(): Set<E> =
   withContext(dispatcher) { fetchAll() }
 
 /** Calls [ReadCollectionHandle.fetchById] with the handle's dispatcher context. */
-suspend fun <H : ReadCollectionHandle<T>, T> H.dispatchFetchById(id: String): T? =
+suspend fun <H : ReadCollectionHandle<E>, E> H.dispatchFetchById(id: String): E? =
   withContext(dispatcher) { fetchById(id) }
 
 /**
@@ -76,7 +77,7 @@ suspend fun <H : ReadCollectionHandle<T>, T> H.dispatchFetchById(id: String): T?
  *
  * This allows multiple elements to be stored and will wait until all the operations are done.
  */
-suspend fun <H : WriteCollectionHandle<T>, T> H.dispatchStore(first: T, vararg rest: T) {
+suspend fun <H : WriteCollectionHandle<I>, I> H.dispatchStore(first: I, vararg rest: I) {
   withContext(dispatcher) {
     listOf(store(first)) + rest.map { store(it) }
   }.joinAll()
@@ -89,7 +90,7 @@ suspend fun <H : WriteCollectionHandle<T>, T> H.dispatchStore(first: T, vararg r
  *
  * This allows multiple elements to be removed and will wait until all the operations are done.
  */
-suspend fun <H : WriteCollectionHandle<T>, T> H.dispatchRemove(first: T, vararg rest: T) {
+suspend fun <H : WriteCollectionHandle<I>, I> H.dispatchRemove(first: I, vararg rest: I) {
   withContext(dispatcher) {
     listOf(remove(first)) + rest.map { remove(it) }
   }.joinAll()
@@ -100,11 +101,17 @@ suspend fun <H : WriteCollectionHandle<T>, T> H.dispatchRemove(first: T, vararg 
  * Calls [WriteCollectionHandle.clear] with the handle's dispatcher context and waits for it to
  * complete (including notifications being sent to other handles reading from the same store).
  */
-suspend fun <H : WriteCollectionHandle<T>, T> H.dispatchClear() {
+suspend fun <H : WriteCollectionHandle<I>, I> H.dispatchClear() {
   withContext(dispatcher) { clear() }.join()
   getProxy().waitForIdle()
 }
 
 /** Calls [QueryCollectionHandle.query] with the handle's dispatcher context. */
-suspend fun <H : QueryCollectionHandle<T, A>, T : Storable, A> H.dispatchQuery(args: A): Set<T> =
+suspend fun <H : QueryCollectionHandle<E, A>, E : Storable, A> H.dispatchQuery(args: A): Set<E> =
   withContext(dispatcher) { query(args) }
+
+/** Calls [RemoveQueryCollectionHandle.removeByQuery] with the handle's dispatcher context. */
+suspend fun <H : RemoveQueryCollectionHandle<A>, A> H.dispatchRemoveByQuery(args: A) {
+  withContext(dispatcher) { removeByQuery(args) }.join()
+  getProxy().waitForIdle()
+}

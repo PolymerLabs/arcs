@@ -51,8 +51,7 @@ def arcs_tool_manifest2proto(name, srcs, outs, deps):
 
 # buildifier: disable=function-docstring
 def arcs_tool_schema2wasm(name, srcs, outs, deps, language_name, language_flag, wasm, test_harness):
-    # TODO: generated header guard should contain whole workspace-relative
-    # path to file.
+    # TODO: generated header guard should contain whole workspace-relative path to file.
     sigh_cmd = "schema2wasm " + language_flag
     if wasm:
         sigh_cmd += " --wasm"
@@ -81,4 +80,14 @@ def arcs_tool_verify_policy(name, manifest_proto):
         data = [
             manifest_proto,
         ],
+    )
+
+def arcs_tool_stopwords(name, regex, apks):
+    """Creates a test to check that the apks do not contain any stopwords."""
+    test_args = ["-r", regex] + ["$(rootpath %s)" % apk for apk in apks]
+    run_test(
+        name = name,
+        test_binary = "//java/arcs/tools:stopwords",
+        test_args = test_args,
+        data = apks,
     )

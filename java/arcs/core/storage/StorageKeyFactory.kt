@@ -15,7 +15,7 @@ import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
 import arcs.core.data.Schema
 
-abstract class StorageKeyFactory(val protocol: String, val capabilities: Capabilities) {
+abstract class StorageKeyFactory(val protocol: StorageKeyProtocol, val capabilities: Capabilities) {
 
   abstract fun create(options: StorageKeyOptions): StorageKey
 
@@ -53,7 +53,7 @@ abstract class StorageKeyFactory(val protocol: String, val capabilities: Capabil
     override val entitySchema: Schema
   ) : StorageKeyOptions {
     override val unique: String = with(entitySchema.name?.name) {
-      if (isNullOrEmpty()) entitySchema.hash else this as String
+      if (isNullOrEmpty()) entitySchema.hash else this
     }
     override val location: String = unique
   }

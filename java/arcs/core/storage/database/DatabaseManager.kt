@@ -13,6 +13,7 @@ package arcs.core.storage.database
 
 import arcs.core.common.collectExceptions
 import arcs.core.storage.StorageKey
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.supervisorScope
 
@@ -25,6 +26,12 @@ import kotlinx.coroutines.supervisorScope
 interface DatabaseManager {
   /** Manifest of [Database]s managed by this [DatabaseManager]. */
   val registry: DatabaseRegistry
+
+  /**
+   * Database Configuration. The config can change at any time, subclasses should get fresh reads of
+   * it every time it's needed.
+   */
+  val databaseConfig: AtomicReference<DatabaseConfig>
 
   /**
    * Gets a [Database] for the given [name].  If [persistent] is `false`, the [Database] should
@@ -78,13 +85,20 @@ interface DatabaseManager {
    * Removes all entities that have a hard reference (in one of its fields) to the given
    * [backingStorageKey]/[entityId]. If an inline entity references it, the top level entity will also
    * be removed (as well as all its inline children).
+   *
+   * @return the number of top level entities removed.
    */
-  suspend fun removeEntitiesHardReferencing(backingStorageKey: StorageKey, entityId: String)
+  suspend fun removeEntitiesHardReferencing(backingStorageKey: StorageKey, entityId: String): Long
 
   /**
    * Extracts all IDs of any hard reference that points to the given [backingStorageKey].
    */
   suspend fun getAllHardReferenceIds(backingStorageKey: StorageKey): Set<String>
+
+  /**
+   * Updates the database configuration.
+   */
+  fun updateDatabaseConfig(databaseConfig: DatabaseConfig) = this.databaseConfig.set(databaseConfig)
 }
 
 /**
@@ -96,7 +110,7 @@ interface DatabaseManager {
  * job throwing an exception. Any exceptions that occurred will be wrapped in a
  * [CompositeException] which will be thrown to the caller.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 suspend fun DatabaseManager.runOnAllDatabases(
   block: suspend (name: String, db: Database) -> Unit
 ) {
@@ -105,6 +119,23 @@ suspend fun DatabaseManager.runOnAllDatabases(
       .map { it.name to getDatabase(it.name, it.isPersistent) }
       .collectExceptions { block(it.first, it.second) }
   }
+}
+
+/**
+ * A helper to use on a DatabaseManager that will run the provided block on all currently
+ * registered databases and sum the results.
+ *
+ * The method will suspend until all operations have run until they complete or throw an exception.
+ */
+suspend fun DatabaseManager.sumOnAllDatabases(
+  filter: (registration: DatabaseRegistration) -> Boolean = { true },
+  block: suspend (db: Database) -> Long
+): Long {
+  return registry
+    .fetchAll()
+    .filter { filter(it) }
+    .map { block(getDatabase(it.name, it.isPersistent)) }
+    .sum()
 }
 
 /** Identifier for an individual [Database] instance. */
@@ -117,3 +148,9 @@ val DatabaseIdentifier.name: String
 /** Whether or not the [Database] should be persisted to disk. */
 val DatabaseIdentifier.persistent: Boolean
   get() = second
+
+/** Database configurations of the runtime flags relevant to the database and their values. */
+data class DatabaseConfig(
+  /** Determines whether to use the diffbased approach when inserting entities into a collection. */
+  val diffbasedEntityInsertion: Boolean = false
+)

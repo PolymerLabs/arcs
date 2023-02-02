@@ -10,7 +10,8 @@
  */
 package arcs.core.storage.referencemode
 
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.embed
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -26,8 +27,8 @@ import org.junit.runners.JUnit4
 class ReferenceModeStorageKeyTest {
 
   @Before
-  fun setup() {
-    StorageKeyParser.reset(
+  fun setUp() {
+    StorageKeyManager.GLOBAL_INSTANCE.reset(
       ReferenceModeStorageKey,
       RamDiskStorageKey
     )
@@ -41,7 +42,8 @@ class ReferenceModeStorageKeyTest {
       ReferenceModeStorageKey(backing, direct)
     }
     assertThat(exception).hasMessageThat().startsWith(
-      "Different protocols (db and ramdisk) in a ReferenceModeStorageKey can cause problems"
+      "Different protocols (${StorageKeyProtocol.Database} and ${StorageKeyProtocol.RamDisk}) in " +
+        "a ReferenceModeStorageKey can cause problems"
     )
   }
 
@@ -52,7 +54,7 @@ class ReferenceModeStorageKeyTest {
     val key = ReferenceModeStorageKey(backing, direct)
 
     assertThat(key.toString())
-      .isEqualTo("${ReferenceModeStorageKey.protocol}://{$backing}{$direct}")
+      .isEqualTo("${StorageKeyProtocol.ReferenceMode.protocol}{$backing}{$direct}")
   }
 
   @Test
@@ -67,7 +69,7 @@ class ReferenceModeStorageKeyTest {
     val embeddedDirect = directReference.embed()
 
     assertThat(parent.toString())
-      .isEqualTo("${ReferenceModeStorageKey.protocol}://{$embeddedBacking}{$embeddedDirect}")
+      .isEqualTo("${StorageKeyProtocol.ReferenceMode.protocol}{$embeddedBacking}{$embeddedDirect}")
   }
 
   @Test
@@ -79,9 +81,20 @@ class ReferenceModeStorageKeyTest {
     val parent = ReferenceModeStorageKey(backingReference, directReference)
 
     // Check the simple case.
-    assertThat(StorageKeyParser.parse(backingReference.toString())).isEqualTo(backingReference)
+    assertThat(
+      StorageKeyManager.GLOBAL_INSTANCE.parse(backingReference.toString())
+    ).isEqualTo(backingReference)
 
     // Check the embedded/nested case.
-    assertThat(StorageKeyParser.parse(parent.toString())).isEqualTo(parent)
+    assertThat(StorageKeyManager.GLOBAL_INSTANCE.parse(parent.toString())).isEqualTo(parent)
+  }
+
+  @Test
+  fun newKeyWithComponent() {
+    val backing = RamDiskStorageKey("backing")
+    val direct = RamDiskStorageKey("direct")
+    val parent = ReferenceModeStorageKey(backing, direct)
+    assertThat(parent.newKeyWithComponent("child"))
+      .isEqualTo(ReferenceModeStorageKey(backing, RamDiskStorageKey("child")))
   }
 }

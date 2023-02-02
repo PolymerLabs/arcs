@@ -17,21 +17,16 @@ import {Entity} from '../../entity.js';
 import {Recipe} from '../lib-recipe.js';
 import {TestVolatileMemoryProvider} from '../../testing/test-volatile-memory-provider.js';
 import {RamDiskStorageDriverProvider} from '../../storage/drivers/ramdisk.js';
-import {DriverFactory} from '../../storage/drivers/driver-factory.js';
+import {Runtime} from '../../runtime.js';
 
 describe('recipe', () => {
-  let memoryProvider;
+  let runtime;
   beforeEach(() => {
-      memoryProvider = new TestVolatileMemoryProvider();
-      RamDiskStorageDriverProvider.register(memoryProvider);
-  });
-
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
+    runtime = new Runtime();
   });
 
   it('normalize errors', async () => {
-    const manifest = await Manifest.parse(`
+    const manifest = await runtime.parse(`
         schema S1
         schema S2
         particle P1
@@ -58,7 +53,7 @@ describe('recipe', () => {
     options.errors.has(recipe.slots[1]);
   });
   it('clones recipe', async () => {
-    const manifest = await Manifest.parse(`
+    const manifest = await runtime.parse(`
         particle Particle1
         recipe MyRecipe
           Particle1
@@ -68,7 +63,7 @@ describe('recipe', () => {
     assert.strictEqual(recipe.toString(), clonedRecipe.toString());
   });
   it('clones recipe with require section', async () => {
-    const manifest = await Manifest.parse(`
+    const manifest = await runtime.parse(`
       particle P1
         details: consumes Slot
       recipe MyRecipe
@@ -85,7 +80,7 @@ describe('recipe', () => {
     assert.isTrue(clonedRecipe.slots[0] === clonedRecipe.requires[0].particles[0].getSlotConnectionByName('root').providedSlots['details'], 'cloned recipe slots don\'t match');
   });
   it('validate handle connection types', async () => {
-    const manifest = await Manifest.parse(`
+    const manifest = await runtime.parse(`
         schema MyType
         schema MySubType extends MyType
         schema OtherType
@@ -236,9 +231,7 @@ describe('recipe', () => {
   });
 
   const getFirstRecipeHash = async manifestContent => {
-    const loader = new Loader();
-    const manifest = await Manifest.parse(manifestContent,
-        {loader, fileName: './manifest.manifest', memoryProvider});
+    const manifest = await runtime.parse(manifestContent, {fileName: 'test.file'});
     const [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
     return recipe.digest();
@@ -406,7 +399,7 @@ describe('recipe', () => {
     assert.isFalse(recipe.isResolved());
   });
   it('considers type resolution as recipe update', async () => {
-    const manifest = await Manifest.parse(`
+    const manifest = await runtime.parse(`
       schema Thing
       particle Generic
         anyA: reads ~a
@@ -422,7 +415,7 @@ describe('recipe', () => {
       resource ThingsJson
         start
         [{}]
-    `, {memoryProvider});
+    `);
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
     recipe.handles[0].id = 'my-things';
@@ -740,7 +733,7 @@ describe('recipe', () => {
   });
 
   it('clones connections with type variables', async () => {
-    const recipe = (await Manifest.parse(`
+    const manifest = await runtime.parse(`
       schema Thing
       resource ThingResource
         start
@@ -757,7 +750,8 @@ describe('recipe', () => {
         P
           inThing: handle0
           outThing: handle1
-    `, {memoryProvider})).recipes[0];
+    `);
+    const recipe = manifest.recipes[0];
     const verifyRecipe = (recipe, errorPrefix) => {
       const errors: string[] = [];
       const resolvedType = recipe.handleConnections[0].type.resolvedType();
@@ -945,5 +939,65 @@ describe('recipe', () => {
     verify(recipe);
 
     verify(recipe.clone());
+  });
+
+  it('tries to resolve unsuccessfully - cannot normalize', async () => {
+    const [recipe] = (await Manifest.parse(`
+      schema S1
+      particle P1
+        s1: writes S1
+      recipe
+        sHandle: map #something
+        P1
+          s1: writes sHandle
+    `)).recipes;
+
+    const errors = new Map();
+    assert.isFalse(recipe.tryResolve({errors}));
+    assert.sameMembers([...errors.values()], [
+      `Invalid fate 'map' for handle 'sHandle: map #something'; it is used for 'writes' P1::s1 connection`
+    ]);
+    assert.isFalse(recipe.isNormalized());
+  });
+
+  it('tries to resolve unsuccessfully - normalizes but fails to resolve', async () => {
+    const [recipe] = (await Manifest.parse(`
+      schema S1
+      particle P1
+        s1: writes S1
+      recipe
+        sHandle: ?
+        P1
+          s1: writes sHandle
+    `)).recipes;
+    assert.isFalse(recipe.isNormalized());
+    const errors = new Map();
+
+    assert.isFalse(recipe.tryResolve({errors}));
+
+    assert.equal(errors.size, 0);
+    assert.isTrue(recipe.isNormalized());
+    const details = [];
+    assert.isFalse(recipe.isResolved({details}));
+    assert.sameMembers(details, ['missing fate']);
+  });
+
+  it('successfully resolves', async () => {
+    const [recipe] = (await Manifest.parse(`
+      schema S1
+      particle P1
+        s1: writes S1
+      recipe
+        sHandle: create
+        P1
+          s1: writes sHandle
+    `)).recipes;
+
+    assert.isTrue(recipe.tryResolve());
+
+    assert.isTrue(recipe.isNormalized());
+    assert.isTrue(recipe.isResolved());
+    // Successfully retries resolving an already resolved recipe.
+    assert.isTrue(recipe.tryResolve());
   });
 });

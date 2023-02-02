@@ -11,6 +11,7 @@
 package arcs.core.data
 
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.StorageKeySpec
 
 /**
@@ -22,14 +23,14 @@ data class CreatableStorageKey(
 
   override fun toKeyString() = nameFromManifest
 
-  override fun childKeyWithComponent(component: String): StorageKey {
+  override fun newKeyWithComponent(component: String): StorageKey {
     throw UnsupportedOperationException("CreatableStorageKey is used as a placeholder only.")
   }
 
   override fun toString(): String = super.toString()
 
   companion object : StorageKeySpec<CreatableStorageKey> {
-    override val protocol = "create"
+    override val protocol = StorageKeyProtocol.Create
 
     private val CREATABLE_STORAGE_KEY_PATTERN =
       ("^([^:^?]*)\$").toRegex()

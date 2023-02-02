@@ -54,6 +54,7 @@ import {Flags} from '../../runtime/flags.js';
 };
 
 const build = buildPath('.', cleanObsolete);
+const buildDbDump = buildPath('./src/tools/db-dump', cleanObsolete);
 const webpack = webpackPkg('webpack');
 const webpackTools = webpackPkg('webpack-tools');
 const webpackStorage = webpackPkg('storage');
@@ -63,37 +64,41 @@ const buildLS = buildPath('./src/tools/language-server', () => {
 });
 const webpackLS = webpackPkg('webpack-languageserver');
 
+const buildShells = () => globalOptions.bazel ? true : buildPkg('shells');
+
 const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]} = {
   peg: [peg, railroad],
-  test: [peg, build, runTestsOrHealthOnCron],
-  testShells: [peg, build, webpack, webpackStorage, devServerAsync, testWdioShells],
+  test: [peg, build, buildShells, runTestsOrHealthOnCron],
+  justTest: [runTestsOrHealthOnCron],
+  testShells: [peg, build, buildShells, webpack, webpackStorage, devServerAsync, testWdioShells],
   testWdioShells: [testWdioShells],
-  webpack: [peg, build, webpack],
+  webpack: [peg, build, buildShells, webpack],
   webpackStorage: [webpackStorage],
   webpackTools: [peg, build, webpackTools],
-  build: [peg, build],
+  build: [peg, build, buildShells],
   watch: [watch],
   buildifier: [buildifier],
   ktlint: [ktlint],
-  lint: [check, peg, build, lint, tslint, ktlint, cycles, buildifier],
+  lint: [check, peg, build, buildShells, lint, tslint, ktlint, cycles, buildifier],
   cycles: [peg, build, cycles],
   check: [check],
   clean: [clean],
   health: [health],
   bundle: runNodeScriptSteps('bundle'),
   schema2wasm: runNodeScriptSteps('schema2wasm'),
+  dbDump: [prepDbDumpDeps, ...runSeparatelyBuiltNodeScriptSteps('dbDump', buildDbDump)],
   manifest2proto: runNodeScriptSteps('manifest2proto'),
   recipe2plan: runNodeScriptSteps('recipe2plan'),
   flowcheck: runNodeScriptSteps('flowcheck'),
   updateCodegenUnitTests: runNodeScriptSteps('updateCodegenUnitTests'),
-  devServer: [peg, build, webpack, devServer],
+  devServer: [peg, build, buildShells, webpack, devServer],
   languageServer: [peg, build, buildLS, webpackLS],
   run: [peg, build, runNodeScript],
   buildWeb: [
-    check, peg, railroad, build, lint, tslint, cycles, webpack, devServerAsync, testWdioShells
+    check, peg, railroad, build, buildShells, lint, tslint, cycles, webpack, devServerAsync, testWdioShells
   ],
   default: [
-    check, peg, railroad, build, lint, tslint, ktlint, buildifier, cycles, runTestsOrHealthOnCron,
+    check, peg, railroad, build, buildShells, lint, tslint, ktlint, buildifier, cycles, runTestsOrHealthOnCron,
     webpack, webpackTools, webpackStorage, devServerAsync, testWdioShells
   ]
 };
@@ -113,6 +118,8 @@ const scripts: {[index: string]: string} = {
   flowcheck: 'build/dataflow/cli/flowcheck.js',
 
   schema2wasm: 'build/tools/schema2wasm.js',
+
+  dbDump: 'build/tools/db-dump/db-dump.js',
 
   /** Serializes a manifest to protobufs. */
   manifest2proto: 'build/tools/manifest2proto-cli.js',
@@ -385,6 +392,7 @@ function cleanObsolete() {
   }
 }
 
+
 function buildPath(path: string, preprocess: () => void): () => boolean {
   const fn = () => {
     preprocess();
@@ -602,6 +610,15 @@ function licenses(): boolean {
   return result.success;
 }
 
+function buildPkg(pkg: string): boolean {
+  const result = saneSpawnSyncWithOutput('npm', ['run', `build:${pkg}`]);
+  if (result.stdout) {
+    sighLog(result.stdout);
+  }
+  return result.success;
+}
+
+
 function webpackPkg(pkg: string): () => boolean {
   const fn = () => {
     const result = saneSpawnSyncWithOutput('npm', ['run', `build:${pkg}`]);
@@ -723,25 +740,16 @@ function runTests(args: string[]): boolean {
   }
 
   const testsInDir = dir => findProjectFiles(dir, buildExclude, fullPath => {
-    // TODO(wkorman): Integrate shell testing more deeply into sigh testing. For
-    // now we skip including shell tests in the normal sigh test flow and intend
-    // to instead run them via a separate 'npm test' command.
-    if (fullPath.startsWith(path.normalize(`${dir}/shell`))) {
-      return false;
-    }
-    // TODO(sjmiles): `artifacts` was moved from `arcs\shell\` to `arcs`, added
-    // this statement to match the above filter.
+    // some old-timey `artifacts` have their own test files that must be excluded
     if (fullPath.startsWith(path.normalize(`${dir}/artifacts/`))) {
       return false;
     }
     if (!/-tests?.js$/.test(fullPath)) {
       return false;
     }
-
     if (options.all) {
       return true;
     }
-
     const isManual = /manual[-_]test/.test(fullPath);
     const isSequence = /sequence[-_]test/.test(fullPath);
     if (options.manual) {
@@ -881,7 +889,7 @@ async function watch(args: string[]): Promise<boolean> {
 
   const command = options._.shift() || 'webpack';
   const watcher = chokidar.watch(options.dir, {
-    ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache}|bundle-cli.js|wasm/|bazel-.*/)`),
+    ignored: new RegExp(`(node_modules|build/|.git|user-test/|test-output/|${eslintCache}|bundle-cli.js|wasm/|dist/|bazel-.*/.log)`),
     persistent: true
   });
   let timeout = null;
@@ -1051,6 +1059,11 @@ function spawnNodeTool(toolPath: string, args: string[]) : ChildProcess {
   return saneSpawn('node', prepNodeToolSpawn(toolPath, args));
 }
 
+function prepDbDumpDeps(args: string[]): boolean {
+  getOptionalDependencies(['better-sqlite3'], 'The dbDump command');
+  return true;
+}
+
 // Single place to put all optional dependencies for the devServer.
 function prepDevServerOptionalDeps() {
   getOptionalDependencies(['chokidar'], 'The devServer command');
@@ -1074,20 +1087,24 @@ function devServerAsync(args: string[]) : boolean {
 }
 
 function testWdioShells(args: string[]) : boolean {
-  return saneSpawnSync('node_modules/.bin/wdio', [
-      '--baseUrl',
-      'http://localhost:8786/',
-      // TODO(sjmiles): `fixPathForWindows` caused this to fail on my
-      // windows machine (`e:/path/` becomes `e:/e:/path/`)
-      //fixPathForWindows(path.resolve('shells/tests/wdio.conf.js'))*/,
-      path.resolve('shells/tests/wdio.conf.js'),
-      ...args,
-      // WebdriverIO reads the spec data from stdin which pipes in the changed
-      // git object within a git hook. Redirects stdin to the null device to
-      // avoid reading from stdin but from the wdio.conf.js directly.
-      // Also see {@link https://github.com/webdriverio/webdriverio/issues/4957}
-      '< /dev/null',
-  ]);
+  const wdio = 'node_modules/.bin/wdio';
+  // TODO(sjmiles): `fixPathForWindows` caused this to fail on my
+  // windows machine (`e:/path/` becomes `e:/e:/path/`)
+  // const conf = fixPathForWindows(path.resolve('shells/tests/wdio.conf.js')),
+  // const conf = path.resolve('shells/tests/wdio.conf.js');
+  const conf = './shells/tests/wdio.conf.js';
+  const sargs = [
+    conf,
+    '--baseUrl',
+    'http://localhost:8786/',
+    ...args,
+    // WebdriverIO reads the spec data from stdin which pipes in the changed
+    // git object within a git hook. Redirects stdin to the null device to
+    // avoid reading from stdin but from the wdio.conf.js directly.
+    // Also see {@link https://github.com/webdriverio/webdriverio/issues/4957}
+    '< /dev/null'
+  ];
+  return saneSpawnSync(wdio, sargs);
 }
 
 /**
@@ -1107,6 +1124,12 @@ function runNodeScript(args: string[]) {
     return false;
   }
   return spawnNodeToolSync(scriptPath, args.slice(1));
+}
+
+function runSeparatelyBuiltNodeScriptSteps(scriptName: string, buildStep: () => boolean) {
+  const runFn = (args: string[]) => runNodeScript([scriptName, ...args]);
+  Object.defineProperty(runFn, 'name', {value: scriptName});
+  return [buildStep, runFn];
 }
 
 /** Returns the series of steps to run the given script. */

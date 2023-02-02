@@ -14,12 +14,12 @@ package arcs.core.data.expression
 import arcs.core.data.expression.Expression.FieldExpression
 import arcs.core.data.expression.Expression.QualifiedExpression
 import arcs.core.data.expression.Expression.Scope
-import arcs.core.util.AnyOfParser
 import arcs.core.util.BigInt
 import arcs.core.util.Grammar
 import arcs.core.util.ParseResult
 import arcs.core.util.Parser
 import arcs.core.util.ParserException
+import arcs.core.util.any
 import arcs.core.util.div
 import arcs.core.util.eof
 import arcs.core.util.many
@@ -80,16 +80,18 @@ object PaxelParser : Grammar<Expression<Any>>() {
   private val colon by -regex("($WS*:$WS*)")
 
   private val units by
-    optional(whitespace +
-      (regex("(millisecond)s?").map { Unit.Millisecond } /
-        regex("(second)s?").map { Unit.Second } /
-        regex("(minute)s?").map { Unit.Minute } /
-        regex("(hour)s?").map { Unit.Hour } /
-        regex("(day)s?").map { Unit.Day }
+  optional(
+    whitespace +
+      (
+        regex("(millisecond)s?").map { Unit.Millisecond } /
+          regex("(second)s?").map { Unit.Second } /
+          regex("(minute)s?").map { Unit.Minute } /
+          regex("(hour)s?").map { Unit.Hour } /
+          regex("(day)s?").map { Unit.Day }
         )
-    ).map {
-      it ?: Unit.Identity
-    }
+  ).map {
+    it ?: Unit.Identity
+  }
 
   private val typeIdentifier by
   token("n").map { DiscreteType.PaxelBigInt } /
@@ -131,11 +133,12 @@ object PaxelParser : Grammar<Expression<Any>>() {
   }
 
   private val functionCall by
-  (ident + -(token("(") + ows) + functionArguments + -(ows + token(")"))).map { (id, args) ->
+  (ident + -token("(") + ows + functionArguments + ows + -token(")")).map { (id, args) ->
     Expression.FunctionExpression<Any>(
       maybeFail("unknown function name $id") {
         GlobalFunction.of(id)
-      }, args
+      },
+      args
     )
   }
 
@@ -200,7 +203,7 @@ object PaxelParser : Grammar<Expression<Any>>() {
 
   @Suppress("UNCHECKED_CAST")
   private val whereExpression: Parser<QualifiedExpression> by
-  -token("where") + (whitespace + refinementExpression).map { expr ->
+  (-token("where") + whitespace + refinementExpression).map { expr ->
     Expression.WhereExpression(
       expr as Expression<Sequence<Scope>>, expr as Expression<Boolean>
     )
@@ -255,7 +258,7 @@ object PaxelParser : Grammar<Expression<Any>>() {
   private val newFieldsDecl by oCurly + newFields + cCurly
 
   private val newExpression: Parser<Expression<Any>> by
-  (-token("new") + (whitespace + schemaNames) + ows + newFieldsDecl).map { (names, fields) ->
+  (-token("new") + whitespace + schemaNames + ows + newFieldsDecl).map { (names, fields) ->
     Expression.NewExpression(names, fields)
   }
 
@@ -263,7 +266,7 @@ object PaxelParser : Grammar<Expression<Any>>() {
 
   @Suppress("UNCHECKED_CAST")
   private val selectExpression: Parser<QualifiedExpression> by
-  -token("select") + (ows + selectExprArg).map { expr ->
+  (-token("select") + ows + selectExprArg).map { expr ->
     Expression.SelectExpression(expr as Expression<Sequence<Scope>>, expr)
   }
 
@@ -271,14 +274,14 @@ object PaxelParser : Grammar<Expression<Any>>() {
   (fromExpression / whereExpression / letExpression / orderByExpression)
 
   private val expressionWithQualifier by
-    (fromExpression + many(ows + qualifiedExpression) + selectExpression)
-      .map { (first, rest, select) ->
-        val all: List<QualifiedExpression> = listOf(first) + rest + listOf(select)
-        val nullQualifier: QualifiedExpression? = null
-        all.fold(nullQualifier) { qualifier: QualifiedExpression?, qualified: QualifiedExpression ->
-          qualified.withQualifier(qualifier)
-        }
+  (fromExpression + many(ows + qualifiedExpression) + (ows + selectExpression))
+    .map { (first, rest, select) ->
+      val all: List<QualifiedExpression> = listOf(first) + rest + listOf(select)
+      val nullQualifier: QualifiedExpression? = null
+      all.fold(nullQualifier) { qualifier: QualifiedExpression?, qualified: QualifiedExpression ->
+        qualified.withQualifier(qualifier)
       }
+    }
 
   @Suppress("UNCHECKED_CAST")
   private val paxelExpression by
@@ -287,7 +290,7 @@ object PaxelParser : Grammar<Expression<Any>>() {
   override val topLevel by paxelExpression + ows + eof
 
   @Suppress("UNCHECKED_CAST")
-  private fun binaryOp(vararg tokens: String) = ows + AnyOfParser(
+  private fun binaryOp(vararg tokens: String) = ows + any(
     tokens.map { token(it) }.toList()
   ).map { token ->
     Expression.BinaryOp.fromToken(token.trim()) as Expression.BinaryOp<Any?, Any?, Any?>

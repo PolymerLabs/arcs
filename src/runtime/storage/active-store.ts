@@ -13,16 +13,13 @@ import {PropagatedException} from '../arc-exceptions.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {Exists} from './drivers/driver.js';
 import {StorageKey} from './storage-key.js';
-import {noAwait} from '../../utils/lib-utils.js';
-import {ChannelConstructor} from '../channel-constructor.js';
 import {CRDTTypeRecordToType} from './storage.js';
 import {StoreInfo} from './store-info.js';
-import {StoreInterface, StorageCommunicationEndpointProvider, StorageMode, StoreConstructorOptions, ProxyMessageType, ProxyCallback, ProxyMessage} from './store-interface.js';
+import {StoreInterface, StorageMode, StoreConstructorOptions, ProxyMessageType, ProxyCallback, ProxyMessage} from './store-interface.js';
 
 // A representation of an active store. Subclasses of this class provide specific
 // behaviour as controlled by the provided StorageMode.
-export abstract class ActiveStore<T extends CRDTTypeRecord>
-    implements StoreInterface<T>, StorageCommunicationEndpointProvider<T> {
+export abstract class ActiveStore<T extends CRDTTypeRecord> implements StoreInterface<T> {
   readonly storageKey: StorageKey;
   exists: Exists;
   readonly type: CRDTTypeRecordToType<T>;
@@ -42,13 +39,11 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
     return Promise.resolve();
   }
 
-  abstract async serializeContents(): Promise<T['data']>;
+  abstract serializeContents(): Promise<T['data']>;
 
-  async cloneFrom(store: ActiveStore<T>): Promise<void> {
+  async cloneFrom(activeStore: ActiveStore<T>): Promise<void> {
     // TODO(shans): work out what ID to use for messages that aren't from an established
     // channel, like these.
-    assert(store instanceof ActiveStore);
-    const activeStore: ActiveStore<T> = store as ActiveStore<T>;
     assert(this.mode === activeStore.mode);
     await this.onProxyMessage({
       type: ProxyMessageType.ModelUpdate,
@@ -63,41 +58,8 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
 
   abstract on(callback: ProxyCallback<T>): number;
   abstract off(callback: number): void;
-  abstract async onProxyMessage(message: ProxyMessage<T>): Promise<void>;
+  abstract onProxyMessage(message: ProxyMessage<T>): Promise<void>;
   abstract reportExceptionInHost(exception: PropagatedException): void;
-
-  getStorageEndpoint() {
-    const store = this;
-    let id: number;
-    return {
-      async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
-        message.id = id!;
-        noAwait(store.onProxyMessage(message));
-      },
-
-      setCallback(callback: ProxyCallback<T>) {
-        id = store.on(callback);
-      },
-      reportExceptionInHost(exception: PropagatedException): void {
-        store.reportExceptionInHost(exception);
-      },
-      getChannelConstructor(): ChannelConstructor {
-        // TODO(shans): implement so that we can use references outside of the PEC.
-        return {
-          generateID() {
-            throw new Error('References not yet supported outside of the PEC');
-          },
-          idGenerator: null,
-          getStorageProxyMuxer() {
-            throw new Error('References not yet supported outside of the PEC');
-          },
-          reportExceptionInHost(exception: PropagatedException): void {
-            store.reportExceptionInHost(exception);
-          }
-        };
-      }
-    };
-  }
 }
 
 export type StoreConstructor = {

@@ -11,13 +11,14 @@ import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.SchemaRegistry
-import arcs.core.entity.DummyEntity
 import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
-import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
-import arcs.core.host.EntityHandleManager
+import arcs.core.entity.testutil.DummyEntity
+import arcs.core.entity.testutil.DummyEntitySlice
+import arcs.core.entity.testutil.InlineDummyEntity
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -124,7 +125,7 @@ class PeriodicCleanupTaskTest {
 
   @Suppress("UNCHECKED_CAST")
   private suspend fun createCollectionHandle() =
-    EntityHandleManager(
+    HandleManagerImpl(
       time = fakeTime,
       scheduler = SimpleSchedulerProvider(Dispatchers.Default)("test"),
       storageEndpointManager = testDatabaseStorageEndpointManager(),
@@ -138,5 +139,5 @@ class PeriodicCleanupTaskTest {
       ),
       collectionKey,
       Ttl.Days(2)
-    ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
+    ).awaitReady() as ReadWriteCollectionHandle<DummyEntity, DummyEntitySlice>
 }

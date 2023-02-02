@@ -22,7 +22,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  * The remote service type evaluates latency/RTT crossing process boundary,
  * stability of storage clients, etc.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class RemoteService : Service() {
   private val storageCore = StorageCore(this)
   private val binder = Binder()

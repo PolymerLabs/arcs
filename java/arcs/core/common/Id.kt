@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -12,6 +12,7 @@
 package arcs.core.common
 
 import arcs.core.util.Random
+import arcs.core.util.nextVersionMapSafeString
 import arcs.core.util.nextSafeRandomLong
 
 /** Convenience extension to convert a string to an [Id]. */
@@ -64,6 +65,12 @@ interface Id {
      */
     fun newChildId(parentId: Id, subComponent: String = ""): Id =
       IdImpl(currentSessionId, parentId.idTree + listOf("$subComponent${nextComponentId++}"))
+
+    /**
+     * Create a random 8-Byte string that can be used as an EntityId. This represents an [Id] with
+     * a root equal to the string and no tree.
+     */
+    fun newMinimizedId(): String = Random.nextVersionMapSafeString(10)
 
     companion object {
       /** Creates a new random session id and returns a [Generator] using it. */

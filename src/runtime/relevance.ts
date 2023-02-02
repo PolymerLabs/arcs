@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Arc} from './arc.js';
+import {ArcInfo} from './arc-info.js';
 import {Recipe, Particle} from './recipe/lib-recipe.js';
 
 export class Relevance {
@@ -19,9 +19,9 @@ export class Relevance {
 
   private constructor() {}
 
-  static create(arc: Arc, recipe: Recipe): Relevance {
+  static create(arcInfo: ArcInfo, recipe: Recipe): Relevance {
     const relevance = new Relevance();
-    const versionByStore = arc.getVersionByStore({includeArc: true, includeContext: true});
+    const versionByStore = arcInfo.getVersionByStore({includeArc: true, includeContext: true});
     recipe.handles.forEach(handle => {
       if (handle.id && versionByStore[handle.id] !== undefined) {
         relevance.versionByStore[handle.id] = versionByStore[handle.id];

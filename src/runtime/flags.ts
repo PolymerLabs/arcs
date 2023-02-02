@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -24,6 +24,12 @@ class FlagDefaults {
   static useSlandles = false;
   static defaultToSlandles = false;
   static fieldRefinementsAllowed = false;
+  // Enables support for recursive & co-recursive schemas. See b/156427820
+  static recursiveSchemasAllowed = false;
+  // Silences unsafe refinement warnings. See b/160879434 for more info.
+  static warnOnUnsafeRefinement = false;
+  // Strict null checking in JS runtime.
+  static enforceStrictNullCheckingInJS = false;
   // TODO(#4843): temporary avoid using reference-mode-store in tests.
   static defaultReferenceMode = false;
 }

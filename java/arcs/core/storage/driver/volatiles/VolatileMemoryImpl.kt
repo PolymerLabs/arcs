@@ -1,7 +1,9 @@
 package arcs.core.storage.driver.volatiles
 
+import arcs.core.crdt.CrdtEntity
 import arcs.core.storage.StorageKey
 import arcs.core.util.Random
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -13,7 +15,11 @@ class VolatileMemoryImpl : VolatileMemory {
   private val entries = mutableMapOf<StorageKey, VolatileEntry<*>>()
   private val listeners = mutableSetOf<(StorageKey, Any?) -> Unit>()
 
-  override var token: String = Random.nextInt().toString()
+  private val _token = atomic(Random.nextInt().toString())
+
+  override var token: String
+    get() = _token.value
+    private set(value) { _token.getAndSet(value) }
 
   override suspend fun contains(key: StorageKey): Boolean =
     lock.withLock { key in entries }
@@ -27,11 +33,23 @@ class VolatileMemoryImpl : VolatileMemory {
     key: StorageKey,
     value: VolatileEntry<Data>
   ): VolatileEntry<Data>? = lock.withLock {
-    val originalValue = entries[key]
-    entries[key] = value
-    token = Random.nextInt().toString()
-    listeners.forEach { it(key, value.data) }
-    return@withLock originalValue as VolatileEntry<Data>?
+    val currentEntry: VolatileEntry<Data>? = entries[key] as VolatileEntry<Data>?
+    val isChanged = currentEntry != value
+    if (isChanged) {
+      entries[key] = value
+      token = Random.nextInt().toString()
+      listeners.forEach {
+        it(key, value.data)
+      }
+    }
+    return@withLock currentEntry
+  }
+
+  override fun countEntities(): Long {
+    return entries.values
+      .filter { it.data is CrdtEntity || it.data is CrdtEntity.Data }
+      .count()
+      .toLong()
   }
 
   @Suppress("UNCHECKED_CAST")

@@ -1,0 +1,38 @@
+<!doctype html>
+
+<!-- could be `import`ed -->
+<!-- <script src="../lib/build/pouchdb.js"></script> -->
+<!-- <script src="../lib/build/firebase.js"></script> -->
+<!-- cannot be `import`ed (tries to use `this`) -->
+<!-- <script src="../../node_modules/sourcemapped-stacktrace/dist/sourcemapped-stacktrace.js"></script> -->
+
+<div slotid="rootslotid-root"></div>
+
+<script type="module">
+  import {App} from './app.js';
+  import {Runtime} from '../../../build/runtime/runtime.js';
+  import {SlotComposer} from '../../../build/runtime/slot-composer.js';
+  import {SlotObserver} from '../../lib/xen-renderer.js';
+
+  const getUrlParam = name => {
+    return new URL(document.location.href).searchParams.get(name);
+  };
+
+  // run
+  (async () => {
+    try {
+      // read intent
+      const manifest = getUrlParam('manifest') || getUrlParam('m') || `Arcs/Login.arcs`;
+      // configure arcs environment
+      const runtime = new Runtime({rootPath: '../../..'});
+      // construct renderer
+      const composer = new SlotComposer();
+      // establish surface
+      composer.observeSlots(new SlotObserver(document.body));
+      // start app
+      await App(runtime, composer, manifest);
+    } catch (x) {
+      console.error(x);
+    }
+  })();
+</script>

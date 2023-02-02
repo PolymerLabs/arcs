@@ -35,15 +35,20 @@ typealias CollectionProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<
  *
  * This class won't be returned directly; instead it will be wrapped in a facade object that
  * exposes only the methods that should be exposed.
+ *
+ * For entity-based handles, [E] is a concrete entity class and [I] is the interface for that.
+ * For reference handles, [E] and [I] are both a [Reference] to a concrete entity class.
  */
-class CollectionHandle<T : Storable, R : Referencable>(
-  config: Config<T, R>
-) : BaseHandle<T>(config), ReadWriteQueryCollectionHandle<T, Any> {
+class CollectionHandle<E : I, I : Storable, R : Referencable>(
+  config: Config<E, I, R>
+) : BaseHandle(config), ReadWriteQueryCollectionHandle<E, I, Any> {
   private val storageProxy = config.proxy
   private val storageAdapter = config.storageAdapter
 
   init {
-    check(spec.containerType == HandleContainerType.Collection)
+    check(spec.containerType == HandleContainerType.Collection) {
+      "Collection containerType required for CollectionHandle $name, but got ${spec.containerType}."
+    }
   }
 
   // Filter out expired models.
@@ -53,8 +58,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
     }
   }
 
-  // region implement ReadCollectionHandle<T>
-
+  // region implement ReadCollectionHandle<E>
   override fun size() = fetchValidModels().size
 
   override fun isEmpty() = fetchValidModels().isEmpty()
@@ -63,30 +67,34 @@ class CollectionHandle<T : Storable, R : Referencable>(
     adaptValues(storageProxy.getParticleViewUnsafe())
   }
 
-  override fun fetchById(entityId: String): T? = checkPreconditions {
+  override fun fetchById(entityId: String): E? = checkPreconditions {
     storageProxy
       .getParticleViewUnsafe()
-      .firstOrNull { it.id == entityId }
-      ?.takeIf { !storageAdapter.isExpired(it) }
+      .filter { it.id == entityId && !storageAdapter.isExpired(it) }
+      .firstOrNull()
       ?.let { storageAdapter.referencableToStorable(it) }
   }
   // endregion
 
-  // region implement QueryCollectionHandle<T, Any>
-  override fun query(args: Any): Set<T> = checkPreconditions {
-    val query = spec.entitySpecs.single().SCHEMA.query ?: return emptySet()
-    val results = storageProxy.getParticleViewUnsafe().filterTo(mutableSetOf()) { entity ->
-      check(entity is RawEntity) { "Queries only work with Entity-typed Handles." }
-      query(entity, args)
-    }
-    adaptValues(results)
+  // region implement QueryCollectionHandle<E, Any>
+  override fun query(args: Any): Set<E> = checkPreconditions {
+    adaptValues(queryResults(args))
   }
   // endregion
 
-  // region implement WriteCollectionHandle<T>
-  override fun store(element: T): Job = storeAll(setOf(element))
+  // region implement RemoveQueryCollectionHandle<I, Any>
+  override fun removeByQuery(args: Any): Job {
+    return checkPreconditions {
+      val ops = queryResults(args).map { removeOp(it.id) }
+      storageProxy.applyOps(ops)
+    }
+  }
+  // endregion
 
-  override fun storeAll(elements: Collection<T>): Job = checkPreconditions {
+  // region implement WriteCollectionHandle<I>
+  override fun store(element: I): Job = storeAll(setOf(element))
+
+  override fun storeAll(elements: Collection<I>): Job = checkPreconditions {
     val versionMap = storageProxy.getVersionMap()
     val ops = elements.map {
       CrdtSet.Operation.Add(
@@ -102,24 +110,18 @@ class CollectionHandle<T : Storable, R : Referencable>(
     storageProxy.applyOp(CrdtSet.Operation.Clear(name, storageProxy.getVersionMap()))
   }
 
-  override fun remove(element: T): Job = checkPreconditions {
+  override fun remove(element: I): Job = checkPreconditions {
     val id = checkNotNull(storageAdapter.getId(element)) { "Cannot remove an item without ID." }
     removeById(id)
   }
 
   override fun removeById(id: String) = checkPreconditions {
-    storageProxy.applyOp(
-      CrdtSet.Operation.Remove(
-        name,
-        storageProxy.getVersionMap(),
-        id
-      )
-    )
+    storageProxy.applyOp(removeOp(id))
   }
   // endregion
 
-  // region implement ReadableHandle<T>
-  override fun onUpdate(action: (CollectionDelta<T>) -> Unit) =
+  // region implement ReadableHandle<E>
+  override fun onUpdate(action: (CollectionDelta<E>) -> Unit) =
     storageProxy.addOnUpdate(callbackIdentifier) { oldValue, newValue ->
       val oldIds = oldValue.mapTo(mutableSetOf()) { it.id }
       val newIds = newValue.mapTo(mutableSetOf()) { it.id }
@@ -157,14 +159,32 @@ class CollectionHandle<T : Storable, R : Referencable>(
   }
   // endregion
 
-  private fun adaptValues(values: Set<R>): Set<T> = values.map() {
-    storageAdapter.referencableToStorable(it)
-  }.filterNotTo(mutableSetOf()) {
-    storageAdapter.isExpired(it)
+  private fun queryResults(args: Any): Set<R> {
+    val query = spec.entitySpecs.single().SCHEMA.query ?: return emptySet()
+    return storageProxy.getParticleViewUnsafe().filterTo(mutableSetOf()) { entity ->
+      check(entity is RawEntity) { "Queries only work with Entity-typed Handles." }
+      query(entity, args)
+    }
+  }
+
+  private fun removeOp(id: String): CrdtSet.IOperation<R> {
+    return CrdtSet.Operation.Remove(
+      name,
+      storageProxy.getVersionMap(),
+      id
+    )
+  }
+
+  private fun adaptValues(values: Set<R>): Set<E> {
+    return values.filterNot {
+      storageAdapter.isExpired(it)
+    }.mapTo(mutableSetOf()) {
+      storageAdapter.referencableToStorable(it)
+    }
   }
 
   /** Configuration required to instantiate a [CollectionHandle]. */
-  class Config<T : Storable, R : Referencable>(
+  class Config<E : I, I : Storable, R : Referencable>(
     /** See [BaseHandleConfig.name]. */
     name: String,
     /** See [BaseHandleConfig.spec]. */
@@ -176,7 +196,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
      */
     val proxy: CollectionProxy<R>,
     /** Will ensure that necessary fields are present on the [RawEntity] before storage. */
-    val storageAdapter: StorageAdapter<T, R>,
+    val storageAdapter: StorageAdapter<E, I, R>,
     /** See [BaseHandleConfig.dereferencerFactory]. */
     dereferencerFactory: EntityDereferencerFactory,
     /** See [BaseHandleConfig.particleId]. */

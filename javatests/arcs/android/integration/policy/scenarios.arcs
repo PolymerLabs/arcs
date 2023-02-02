@@ -1,0 +1,165 @@
+// Copyright 2021 Google LLC.
+//
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+//
+// Code distributed by Google as part of this project is also subject to an additional IP rights
+// grant found at
+// http://polymer.github.io/PATENTS.txt
+
+/// !!!
+/// TODO(b/183554828): Update these tests to make use of compile-time policy
+///   checking when ready!
+/// !!!
+
+meta
+  namespace: arcs.android.integration.policy
+
+import './particles.arcs'
+
+/// Scenario: No data is written
+// // TODO(b/183554828): Ingress restricting should allow the fields mentioned
+// //  in the policy to be persisted.
+// @egressType('GeneralEgress')
+// policy NoDataWrittenPolicy {
+//   @allowedRetention(medium: 'Disk', encryption: false)
+//   from Thing access {
+//     a,
+//     b,
+//     c,
+//     d
+//   }
+// }
+
+// Given a recipe that is compliant with a policy
+// @policy('NoDataWrittenPolicy')
+recipe NoDataWritten
+  // And the recipe ingresses a schema Thing {a, b, c, d}
+  handle1: create
+
+  IngressThing
+    ingress: handle1
+
+  // And the recipe does not egress anything
+
+/// Scenario: A policy-compliant recipe with @persistent handles egresses data
+/// and stores ingress-restricted values to disk that is never deleted
+
+@egressType('GeneralEgress')
+policy SimplePersistencePolicy {
+  @allowedRetention(medium: 'Disk', encryption: false)
+  from Thing access {
+    b,
+    @allowedUsage(label: 'raw', usageType: '*')
+    c
+  }
+}
+
+// Given a recipe is compliant with a policy
+@policy('SimplePersistencePolicy')
+recipe PersistsEgresses
+  // And the recipe's store is marked @persistent
+  handle1: create @persistent
+
+  // And the recipe ingresses a schema Thing {a, b, c, d}
+  IngressThing
+    ingress: handle1
+
+  // And the recipe egresses Thing {a, b}
+  EgressAB
+    egress: handle1
+
+/// Scenario: A policy-compliant recipe with @ttl handles egresses data and
+/// stores ingress-restricted values to RAM that are deleted when the TTL expires
+/// and at the runtime’s end.
+
+@egressType('GeneralEgress')
+policy SimpleTtlPolicy {
+  @allowedRetention(medium: 'Ram', encryption: false)
+  from Thing access {
+    a,
+    b
+  }
+}
+
+// Given a recipe is compliant with a policy
+@policy('SimplePersistencePolicy')
+recipe TtlEgresses
+  // And the recipe's stores are marked @ttl('2h') and @ttl('5d')
+  handle1: create @ttl('2h')
+  handle2: create @ttl('5d')
+
+  // And the recipe ingresses a schema Thing {a, b, c, d}
+  IngressThing
+    ingress: handle1
+  IngressThing
+    ingress: handle2
+
+  // And the recipe egresses Thing {a, b}
+  EgressAB
+    egress: handle1
+
+  // And the recipe egresses Thing {b, c}
+  EgressBC
+    egress: handle2
+
+/// Scenario: A policy-complaint recipe writes ingress-restricted volatile data
+/// that is egressed and is deleted at end of Arc
+
+@egressType('GeneralEgress')
+policy SimpleVolatilePolicy {
+  from Thing access {
+    a,
+    b
+  }
+}
+
+// Given a recipe is compliant with a policy
+@policy('SimpleVolatilePolicy')
+recipe VolatileEgresses
+  // And the recipe's store is volatile
+  handle1: create 'volatile'
+
+  // And the recipe ingresses a schema Thing {a, b, c, d}
+  IngressThing
+    ingress: handle1
+
+  // And the recipe egresses Thing {a, b}
+  EgressAB
+    egress: handle1
+
+/// Scenario: A policy-compliant recipe with @persistent handles egresses data
+/// after labeling and stores ingress-restricted values to disk that is never
+/// deleted.
+
+@egressType('GeneralEgress')
+policy LabeledPersistencePolicy {
+  @allowedRetention(medium: 'Disk', encryption: false)
+  from Thing access {
+    @allowedUsage(label: 'redacted', usageType: '*')
+    a,
+    @allowedUsage(label: 'redacted', usageType: '*')
+    b
+  }
+}
+
+// Given a recipe is compliant with a policy
+@policy('LabeledPersistencePolicy')
+recipe PersistsLabeledEgresses
+  // And the recipe's stores are marked '@persistent'
+  handle1: create @persistent
+  handle2: create @persistent
+
+  // And the recipe ingresses a schema Thing {a, b, c, d}
+  IngressThing
+    ingress: handle1
+
+  // And the recipe includes a redactor particle that claims Thing {a, b} is
+  // redacted
+  RedactAB
+    input: handle1
+    output: handle2
+
+  // And the recipe egresses Thing {a, b}
+  EgressAB
+    egress: handle2

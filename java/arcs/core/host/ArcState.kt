@@ -21,13 +21,19 @@ class DeserializedException(message: String) : Exception(message)
  * The current state of an [Arc] for a given [ArcHost]. An [Arc] may be in a different state
  * on each [ArcHost] at various times.
  */
-data class ArcState private constructor(val state: State, val cause: Exception? = null) {
+data class ArcState private constructor(val state: State, val cause: Throwable? = null) {
 
+  /**
+   * Only consider [state] as important for equals(), ignoring [cause].
+   */
   override fun equals(other: Any?): Boolean = when (other) {
     is ArcState -> this.state === other.state
     else -> false
   }
 
+  /**
+   * Only consider [state] as important for hashCode(), ignoring [cause].
+   */
   override fun hashCode(): Int {
     return state.hashCode()
   }
@@ -87,7 +93,7 @@ data class ArcState private constructor(val state: State, val cause: Exception? 
      * will still be considered equal, both to each other and to the singleton Error defined
      * above.
      */
-    fun errorWith(cause: Exception? = null) = ArcState(State.Error, cause)
+    fun errorWith(cause: Throwable? = null) = ArcState(State.Error, cause)
 
     /**
      * Creates an ArcState instance from the given string. For the Error case, this may have

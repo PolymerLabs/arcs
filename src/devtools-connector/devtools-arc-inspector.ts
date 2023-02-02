@@ -58,7 +58,7 @@ class DevtoolsArcInspector implements ArcInspector {
         });
       }
 
-      this.arcDevtoolsChannel = devtoolsChannel.forArc(arc);
+      this.arcDevtoolsChannel = devtoolsChannel.forArc(arc.arcInfo);
 
       this.storesFetcher = new ArcStoresFetcher(arc, this.arcDevtoolsChannel);
 

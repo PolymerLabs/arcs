@@ -4,14 +4,17 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import arcs.android.sdk.host.ArcHostHelper
-import arcs.android.sdk.host.ResurrectableHost
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Shareable
+import arcs.core.host.HandleManagerFactory
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.TestingHost
+import arcs.core.storage.StorageKeyManager
+import arcs.jvm.util.testutil.FakeTime
+import arcs.sdk.android.labs.host.ArcHostHelper
+import arcs.sdk.android.labs.host.ResurrectableHost
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.service.BindHelper
@@ -22,7 +25,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 abstract class TestExternalArcHostService : Service() {
   protected val scope: CoroutineScope = MainScope()
 
@@ -30,8 +33,11 @@ abstract class TestExternalArcHostService : Service() {
 
   val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
 
+  // TODO(b/174432505): Don't use the GLOBAL_INSTANCE, use a test-specific instance.
+  private val storageKeyManager = StorageKeyManager.GLOBAL_INSTANCE
+
   private val arcHostHelper: ArcHostHelper by lazy {
-    ArcHostHelper(this, arcHost)
+    ArcHostHelper(this, storageKeyManager, arcHost)
   }
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -47,25 +53,27 @@ abstract class TestExternalArcHostService : Service() {
     scope.cancel()
   }
 
-  @ExperimentalCoroutinesApi
+  @OptIn(ExperimentalCoroutinesApi::class)
   abstract class TestingAndroidHost(
     context: Context,
     scope: CoroutineScope,
     schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
   ) : TestingHost(
-    schedulerProvider,
-    AndroidStorageServiceEndpointManager(
-      scope,
-      testBindHelper ?: DefaultBindHelper(context)
+    handleManagerFactory = HandleManagerFactory(
+      schedulerProvider = schedulerProvider,
+      storageEndpointManager = AndroidStorageServiceEndpointManager(
+        scope,
+        testBindHelper ?: DefaultBindHelper(context)
+      ),
+      platformTime = FakeTime()
     ),
+    arcHostContextCapabilities = testingCapability,
     *particles
   ),
     ResurrectableHost {
     override val resurrectionHelper: ResurrectionHelper =
-      ResurrectionHelper(context, ::onResurrected)
-
-    override val arcHostContextCapability = testingCapability
+      ResurrectionHelper(context)
   }
 
   companion object {

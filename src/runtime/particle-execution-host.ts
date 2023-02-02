@@ -20,6 +20,9 @@ import {SlotComposer} from './slot-composer.js';
 import {Type, EntityType, ReferenceType, InterfaceType, SingletonType, MuxType} from '../types/lib-types.js';
 import {Services} from './services.js';
 import {Arc} from './arc.js';
+import {ArcInfo} from './arc-info.js';
+import {Allocator} from './allocator.js';
+import {ArcHost} from './arc-host.js';
 import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
 import {ProxyMessage} from './storage/store-interface.js';
 import {VolatileStorageKey} from './storage/drivers/volatile.js';
@@ -28,13 +31,15 @@ import {Client, getClientClass} from '../tracelib/systrace-clients.js';
 import {Exists} from './storage/drivers/driver.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {CRDTMuxEntity} from './storage/storage.js';
-import {StorageService} from './storage/storage-service.js';
 import {StoreInfo} from './storage/store-info.js';
+import {Consumer} from '../utils/lib-utils.js';
 
 export type ParticleExecutionHostOptions = Readonly<{
   slotComposer: SlotComposer;
   arc: Arc;
   ports: MessagePort[];
+  host: ArcHost;
+  allocator: Allocator;
 }>;
 
 @SystemTrace
@@ -49,19 +54,24 @@ export class ParticleExecutionHost {
   private idlePromise: Promise<Map<Particle, number[]>> | undefined;
   private idleResolve: ((relevance: Map<Particle, number[]>) => void) | undefined;
   public readonly particles: Particle[] = [];
+  readonly allocator: Allocator;
+  readonly host: ArcHost;
 
-  constructor({slotComposer, arc, ports}: ParticleExecutionHostOptions) {
+  constructor({slotComposer, arc, ports, allocator, host}: ParticleExecutionHostOptions) {
     this.close = () => {
       this.apiPorts.forEach(apiPort => apiPort.close());
     };
     this.arc = arc;
     this.slotComposer = slotComposer;
     this.apiPorts = ports.map(port => new PECOuterPortImpl(port, arc));
+    this.allocator = allocator;
+    this.host = host;
+    assert(this.allocator && this.host);
   }
 
   private choosePortForParticle(particle: Particle): PECOuterPort {
     assert(!this._portByParticle.has(particle), `port already found for particle '${particle.spec.name}'`);
-    const port = this.apiPorts.find(port => particle.isExternalParticle() === port.supportsExternalParticle());
+    const port = this.apiPorts[0];
     assert(!!port, `No port found for '${particle.spec.name}'`);
     this._portByParticle.set(particle, port);
     return this.getPort(particle);
@@ -101,17 +111,15 @@ export class ParticleExecutionHost {
     for (const [name, store] of stores) {
       apiPort.DefineHandle(
           store,
-          store.type.resolvedType(),
+          store,
           name,
-          store.storageKey.toString(),
           particle.getConnectionByName(name).handle.getTtl());
     }
     for (const [name, storeMuxer] of storeMuxers) {
       apiPort.DefineHandleFactory(
         storeMuxer,
-        storeMuxer.type.resolvedType(),
+        storeMuxer,
         name,
-        storeMuxer.storageKey.toString(),
         particle.getConnectionByName(name).handle.getTtl()
       );
     }
@@ -157,7 +165,8 @@ class PECOuterPortImpl extends PECOuterPort {
 
     const clientClass = getClientClass();
     if (clientClass) {
-      this.systemTraceClient = new clientClass();
+      // tslint:disable-next-line: no-any
+      this.systemTraceClient = new (clientClass as any)();
     }
   }
 
@@ -168,23 +177,23 @@ class PECOuterPortImpl extends PECOuterPort {
   }
 
   async onRegister(store: StoreInfo<Type>, messagesCallback: number, idCallback: number) {
-    this.arc.storageService.onRegister(store,
-        this.SimpleCallback.bind(this, messagesCallback),
-        this.SimpleCallback.bind(this, idCallback));
+    return this.arc.storageService.onRegister(store,
+      this.SimpleCallback.bind(this, messagesCallback),
+      this.SimpleCallback.bind(this, idCallback));
   }
 
   async onDirectStoreMuxerRegister(store: StoreInfo<Type>, messagesCallback: number, idCallback: number) {
-    this.arc.storageService.onDirectStoreMuxerRegister(store,
+    return this.arc.storageService.onRegister(store,
       this.SimpleCallback.bind(this, messagesCallback),
       this.SimpleCallback.bind(this, idCallback));
   }
 
   async onProxyMessage(store: StoreInfo<Type>, message: ProxyMessage<CRDTTypeRecord>) {
-    this.arc.storageService.onProxyMessage(store, message);
+    return this.arc.storageService.onProxyMessage(store, message);
   }
 
   async onStorageProxyMuxerMessage(store: StoreInfo<Type>, message: ProxyMessage<CRDTMuxEntity>) {
-    this.arc.storageService.onStorageProxyMuxerMessage(store, message);
+    return this.arc.storageService.onProxyMessage(store, message);
   }
 
   onIdle(version: number, relevance: Map<Particle, number[]>) {
@@ -196,32 +205,34 @@ class PECOuterPortImpl extends PECOuterPort {
       // TODO(shanestephens): What should we do here?!
       throw new Error(`Don't know how to invent new storage keys for new storage stack when we only have type information`);
     }
-    const key = StorageKeyParser.parse(storageKey);
+    const key = this.arc.storageKeyParser.parse(storageKey);
     const store = new StoreInfo({id: storageKey, exists: Exists.MayExist, type, storageKey: key});
-    this.GetDirectStoreMuxerCallback(store, callback, type, type.toString(), storageKey, storageKey);
+    this.GetDirectStoreMuxerCallback(store, store, callback, type.toString(), storageKey);
   }
 
-  onConstructInnerArc(callback: number, particle: Particle) {
-    const arc = this.arc.createInnerArc(particle);
-    this.ConstructArcCallback(callback, arc);
+  async onConstructInnerArc(callback: number, particle: Particle) {
+    const arcInfo = await this.arc.peh.allocator.startArc({arcName: 'inner', outerArcId: this.arc.arcInfo.id});
+    this.arc.arcInfo.addInnerArc(particle, arcInfo);
+    this.ConstructArcCallback(callback, arcInfo);
   }
 
-  async onArcCreateHandle(callback: number, arc: Arc, type: Type, name: string) {
+  async onArcCreateHandle(callback: number, arcInfo: ArcInfo, type: Type, name: string) {
     // At the moment, inner arcs are not persisted like their containers, but are instead
     // recreated when an arc is deserialized. As a consequence of this, dynamically
     // created handles for inner arcs must always be volatile to prevent storage
     // in firebase.
-    const storageKey = new VolatileStorageKey(arc.id, String(Math.random()));
+    const storageKey = new VolatileStorageKey(arcInfo.id, String(Math.random()));
 
     // TODO(shanestephens): Remove this once singleton types are expressed directly in recipes.
     if (type instanceof EntityType || type instanceof ReferenceType || type instanceof InterfaceType) {
       type = new SingletonType(type);
     }
 
-    const store = await arc.createStore(type, name, null, [], storageKey);
+    const store = await arcInfo.createStoreInfo(type, {name, storageKey});
+
     // Store belongs to the inner arc, but the transformation particle,
     // which itself is in the outer arc gets access to it.
-    this.CreateHandleCallback(store, callback, store.type, name, store.id);
+    this.CreateHandleCallback(store, store, callback, name, store.id);
   }
 
   onArcMapHandle(callback: number, arc: Arc, handle: Handle) {
@@ -230,17 +241,17 @@ class PECOuterPortImpl extends PECOuterPort {
     this.MapHandleCallback({}, callback, handle.id);
   }
 
-  onArcCreateSlot(callback: number, arc: Arc, transformationParticle: Particle, transformationSlotName: string, handleId: string) {
+  onArcCreateSlot(callback: number, arcInfo: ArcInfo, transformationParticle: Particle, transformationSlotName: string, handleId: string) {
     let hostedSlotId;
     if (this.arc.peh.slotComposer) {
-      hostedSlotId = this.arc.peh.slotComposer.createHostedSlot(arc, transformationParticle, transformationSlotName, handleId);
+      hostedSlotId = this.arc.peh.slotComposer.createHostedSlot(arcInfo, transformationParticle, transformationSlotName, handleId);
     }
     this.CreateSlotCallback({}, callback, hostedSlotId);
   }
 
-  async onArcLoadRecipe(arc: Arc, recipe: string, callback: number) {
+  async onArcLoadRecipe(arcInfo: ArcInfo, recipe: string, callback: number) {
     try {
-      const manifest = await Manifest.parse(recipe, {loader: arc.loader, fileName: ''});
+      const manifest = await Manifest.parse(recipe, {loader: this.arc.loader, fileName: ''});
       const successResponse = {
         providedSlotIds: {}
       };
@@ -250,7 +261,7 @@ class PECOuterPortImpl extends PECOuterPort {
       let recipe0: Recipe = manifest.recipes[0];
       if (recipe0) {
         for (const slot of recipe0.slots) {
-          slot.id = slot.id || arc.generateID('slot').toString();
+          slot.id = slot.id || arcInfo.generateID('slot').toString();
           if (slot.sourceConnection) {
             const particlelocalName = slot.sourceConnection.particle.localName;
             if (particlelocalName) {
@@ -271,7 +282,7 @@ class PECOuterPortImpl extends PECOuterPort {
         if (missingHandles.length > 0) {
           let recipeToResolve = recipe0;
           // We're resolving both against the inner and the outer arc.
-          for (const resolver of [new RecipeResolver(arc /* inner */), new RecipeResolver(this.arc /* outer */)]) {
+          for (const resolver of [new RecipeResolver(arcInfo /* inner */), new RecipeResolver(this.arc.arcInfo /* outer */)]) {
             recipeToResolve = await resolver.resolve(recipeToResolve) || recipeToResolve;
           }
           if (recipeToResolve === recipe0) {
@@ -289,25 +300,25 @@ class PECOuterPortImpl extends PECOuterPort {
               // Map handles from the external environment that aren't yet in the inner arc.
               // TODO(shans): restrict these to only the handles that are listed on the particle.
               for (const handle of recipe0.handles) {
-                if (!arc.findStoreById(handle.id)) {
+                if (!arcInfo.findStoreById(handle.id)) {
                   let type = handle.type;
                   // TODO(shanestephens): Remove this once singleton types are expressed directly in recipes.
                   if (type instanceof EntityType || type instanceof InterfaceType || type instanceof ReferenceType) {
                     type = new SingletonType(type);
                   }
-                  await arc.createStore(type, handle.localName, handle.id, handle.tags, handle.storageKey);
+                  await arcInfo.createStoreInfo(type, {name: handle.localName, id: handle.id, tags: handle.tags, storageKey: handle.storageKey});
                 }
               }
 
               // TODO: pass tags through too, and reconcile with similar logic
               // in Arc.deserialize.
               for (const store of manifest.stores) {
-                await this.arc._registerStore(store, []);
+                await this.arc.arcInfo.registerStore(store, []);
               }
               // TODO: Awaiting this promise causes tests to fail...
               const instantiateAndCaptureError = async () => {
                 try {
-                  await arc.instantiate(recipe0);
+                  await this.arc.peh.allocator.runPlanInArc(arcInfo, recipe0);
                 } catch (e) {
                   this.SimpleCallback(callback, {error: e.message + e.stack});
                 }

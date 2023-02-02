@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -9,18 +9,15 @@
  */
 
 import {logsFactory} from '../../../build/platform/logs-factory.js';
-import {Runtime} from '../../../build/runtime/runtime.js';
 import {devtoolsArcInspectorFactory} from '../../../build/devtools-connector/devtools-arc-inspector.js';
 
 const {log, warn, error} = logsFactory('ArcHost', '#cade57');
 
 export class ArcHost {
-  constructor(context, storage, composer, storageservice, portFactories) {
-    this.context = context;
+  constructor(runtime, storage, composer) {
+    this.runtime = runtime;
     this.storage = storage;
     this.composer = composer;
-    this.portFactories = portFactories;
-    this.storageservice = storageservice;
   }
   disposeArc() {
     if (this.arc) {
@@ -32,12 +29,11 @@ export class ArcHost {
   async spawn(config) {
     log('spawning arc', config);
     this.config = config;
-    const context = this.context || await Runtime.parse(``);
     const storage = config.storage || this.storage;
     this.serialization = await this.computeSerialization(config, storage);
     // TODO(sjmiles): weird consequence of re-using composer, which we probably should not do anymore
     this.composer.arc = null;
-    this.arc = await this._spawn(context, this.composer, storage, config.id, this.serialization, this.portFactories, this.storageservice);
+    this.arc = await this._spawn(storage, config.id, this.serialization);
     if (config.manifest && !this.serialization) {
       await this.instantiateDefaultRecipe(this.arc, config.manifest);
     }
@@ -72,27 +68,27 @@ export class ArcHost {
     }
     return serialization;
   }
-  async _spawn(context, composer, storage, id, serialization, portFactories, storageservice) {
-    return Runtime.spawnArc({
-      id,
-      context,
-      composer,
-      serialization,
-      storage: `${storage}/${id}`,
-      portFactories,
-      inspectorFactory: devtoolsArcInspectorFactory,
-      storageService: storageservice,
+  async _spawn(storage, id, serialization, inspectorFactory) {
+    const arcInfo = serialization
+      ? await this.runtime.allocator.deserialize({
+        serialization,
+        slotObserver: this.composer['slotObserver'],
+        inspectorFactory: devtoolsArcInspectorFactory,
+      })
+      : await this.runtime.allocator.startArc({
+        arcName: id,
+        storage: `${storage}/${id}`, // should be StorageKey instead
+        slotObserver: this.composer['slotObserver'],
+        inspectorFactory: devtoolsArcInspectorFactory
     });
+    return this.runtime.getArcById(arcInfo.id);
   }
   async instantiateDefaultRecipe(arc, manifest) {
     log('instantiateDefaultRecipe');
     try {
-      manifest = await Runtime.parse(manifest);
+      manifest = await this.runtime.parse(manifest);
       const recipe = manifest.allRecipes[0];
-      const plan = await Runtime.resolveRecipe(arc, recipe);
-      if (plan) {
-        await this.instantiatePlan(arc, plan);
-      }
+      await this.instantiatePlan(arc, recipe);
     } catch (x) {
       error(x);
     }
@@ -101,11 +97,8 @@ export class ArcHost {
     log('instantiatePlan');
     // TODO(sjmiles): pass suggestion all the way from web-shell
     // and call suggestion.instantiate(arc).
-    if (!plan.isResolved()) {
-      log(`plan ${plan.toString({showUnresolved: true})} is not resolved.`);
-    }
     try {
-      await arc.instantiate(plan);
+      await this.runtime.allocator.runPlanInArc(arc.arcInfo, plan);
     } catch (x) {
       error(x);
       //console.error(plan.toString());

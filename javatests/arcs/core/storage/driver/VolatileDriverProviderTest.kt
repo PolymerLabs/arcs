@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -12,13 +12,17 @@
 package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
+import arcs.core.crdt.CrdtEntity
+import arcs.core.data.RawEntity
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.type.Tag
 import arcs.core.type.Type
+import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -26,22 +30,16 @@ import org.junit.runners.JUnit4
 /** Tests for [VolatileDriverProvider]. */
 @RunWith(JUnit4::class)
 class VolatileDriverProviderTest {
-  private lateinit var arcIdFoo: ArcId
-  private lateinit var arcIdBar: ArcId
-  private lateinit var providerFactory: VolatileDriverProviderFactory
+  @get:Rule
+  val logRule = LogRule()
 
-  @Before
-  fun setup() {
-    arcIdFoo = ArcId.newForTest("foo")
-    arcIdBar = ArcId.newForTest("bar")
-    providerFactory = VolatileDriverProviderFactory()
-  }
+  private val providerFactory = VolatileDriverProvider()
 
   @Test
   fun willSupport_requiresVolatileStorageKey() {
-    class NonVolatileKey : StorageKey("nonvolatile") {
+    class NonVolatileKey : StorageKey(StorageKeyProtocol.Dummy) {
       override fun toKeyString() = "blah"
-      override fun childKeyWithComponent(component: String) = NonVolatileKey()
+      override fun newKeyWithComponent(component: String) = NonVolatileKey()
     }
 
     assertThat(providerFactory.willSupport(NonVolatileKey())).isFalse()
@@ -51,19 +49,145 @@ class VolatileDriverProviderTest {
   fun getDriver_getsDriverForStorageKey() = runBlocking {
     val driver =
       providerFactory.getDriver(
-        VolatileStorageKey(arcIdFoo, "myfoo"),
+        DUMMY_STORAGE_KEY_1,
         Int::class,
         DummyType
       )
 
     assertThat(driver).isNotNull()
-    assertThat(driver.storageKey).isEqualTo(VolatileStorageKey(arcIdFoo, "myfoo"))
+    assertThat(driver.storageKey).isEqualTo(DUMMY_STORAGE_KEY_1)
+  }
+
+  @Test
+  fun getDriver_forDifferentStorageKey_providesDifferentInstance() = runBlocking {
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_2, Int::class, DummyType)
+
+    assertThat(driver1).isNotSameInstanceAs(driver2)
+  }
+
+  @Test
+  fun getDriver_forSameStorageKey_providesDifferentInstance() = runBlocking {
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
+
+    assertThat(driver1).isNotSameInstanceAs(driver2)
+  }
+
+  @Test
+  fun getDriver_forSameStorageKey_afterClosingFirst_providesDifferentInstance() = runBlocking {
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
+    driver1.close()
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
+
+    assertThat(driver1).isNotSameInstanceAs(driver2)
+  }
+
+  @Test
+  fun getDriver_forDifferentStorageKey_usesDifferentVolatileMemory() = runBlocking {
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
+    // Initialize some data in the memory via first driver
+    driver1.send(DUMMY_DATA, 1)
+
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_2, Int::class, DummyType)
+    // This should fail, driver2 is a different memory, not affected by driver1.send
+    val version2Success = driver2.send(data = DUMMY_DATA + 1, version = 2)
+    // This should succeed, driver1 is still waiting for its first version
+    val version1Success = driver2.send(data = DUMMY_DATA + 1, version = 1)
+
+    assertThat(version1Success).isTrue()
+    assertThat(version2Success).isFalse()
+  }
+
+  @Test
+  fun getDriver_forSameStorageKey_usesSameVolatileMemory() = runBlocking {
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
+    // Initialize some data in the memory via first driver
+    driver1.send(DUMMY_DATA, 1)
+
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
+    // This should fail, as the driver is already at version 1
+    val version1Success = driver2.send(data = DUMMY_DATA + 1, version = 1)
+    // This should succeed, the driver is at version 1 from the driver1.send
+    val version2Success = driver2.send(data = DUMMY_DATA + 1, version = 2)
+
+    assertThat(version1Success).isFalse()
+    assertThat(version2Success).isTrue()
+  }
+
+  @Test
+  fun getDriver_forSameStorageKey_afterFirstOneClosed_usesDifferentVolatileMemory() = runBlocking {
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
+    // Initialize some data in the memory via first driver
+    driver1.send(DUMMY_DATA, 1)
+    driver1.close()
+
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
+    // This should fail, driver2 is for the same storage key, but since driver1 was closed, no
+    // more drivers were using the volatile memory; it should have  been released.
+    val version2Success = driver2.send(data = DUMMY_DATA + 1, version = 2)
+    // This should succeed, driver1 is still waiting for its first version
+    val version1Success = driver2.send(data = DUMMY_DATA + 1, version = 1)
+
+    assertThat(version1Success).isTrue()
+    assertThat(version2Success).isFalse()
+  }
+
+  @Test
+  fun getEntitiesCount_inMemory_nonEntities_returnsZero() = runBlocking {
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, Int::class, DummyType)
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_2, Int::class, DummyType)
+    // Initialize some data in the memory via first driver
+    driver1.send(DUMMY_DATA, 1)
+    // Initialize some data in the memory via second driver
+    driver2.send(DUMMY_DATA, 1)
+
+    assertThat(providerFactory.getEntitiesCount(inMemory = true)).isEqualTo(0L)
+  }
+
+  @Test
+  fun getEntitiesCount_inMemory_onlyEntities_returnsTotal() = runBlocking {
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, CrdtEntity.Data::class, DummyType)
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_2, CrdtEntity::class, DummyType)
+    // Initialize some data in the memory via first driver
+    driver1.send(DUMMY_ENTITY_DATA, 1)
+    // Initialize some data in the memory via second driver
+    driver2.send(DUMMY_ENTITY, 1)
+
+    assertThat(providerFactory.getEntitiesCount(inMemory = true)).isEqualTo(2L)
+  }
+
+  @Test
+  fun getEntitiesCount_notInMemory_returnsZero() = runBlocking {
+    val driver1 = providerFactory.getDriver(DUMMY_STORAGE_KEY_1, CrdtEntity.Data::class, DummyType)
+    val driver2 = providerFactory.getDriver(DUMMY_STORAGE_KEY_2, CrdtEntity::class, DummyType)
+    // Initialize some data in the memory via first driver
+    driver1.send(DUMMY_ENTITY_DATA, 1)
+    // Initialize some data in the memory via second driver
+    driver2.send(DUMMY_ENTITY, 1)
+
+    assertThat(providerFactory.getEntitiesCount(inMemory = false)).isEqualTo(0L)
+  }
+
+  @Test
+  fun getEntitiesCount_inMemory_startsFromZero() = runBlocking {
+    assertThat(providerFactory.getEntitiesCount(inMemory = true)).isEqualTo(0L)
   }
 
   companion object {
+    const val DUMMY_DATA = 42
+
+    private val DUMMY_ARCID_1 = ArcId.newForTest("foo")
+    private val DUMMY_ARCID_2 = ArcId.newForTest("bar")
+
+    private val DUMMY_ENTITY_DATA = CrdtEntity.Data()
+    private val DUMMY_ENTITY = CrdtEntity.newWithEmptyEntity(RawEntity())
+
+    private val DUMMY_STORAGE_KEY_1 = VolatileStorageKey(DUMMY_ARCID_1, "myfoo")
+    private val DUMMY_STORAGE_KEY_2 = VolatileStorageKey(DUMMY_ARCID_2, "mybar")
+
     object DummyType : Type {
       override val tag = Tag.Count
-      override fun toLiteral() = throw UnsupportedOperationException("")
     }
   }
 }

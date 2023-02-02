@@ -6,21 +6,29 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SchemaRegistry
+import arcs.core.entity.SingletonProperty
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.sdk.Entity
 import arcs.sdk.EntityBase
 import arcs.sdk.EntitySpec
+
+interface TestEntitySlice : Entity {
+  var text: String
+  var number: Double
+  var boolean: Boolean
+}
 
 class TestEntity(
   text: String = "",
   number: Double = 0.0,
   boolean: Boolean = false
-) : EntityBase("TestEntity", SCHEMA) {
+) : EntityBase("TestEntity", SCHEMA), TestEntitySlice {
 
-  var text: String by SingletonProperty()
-  var number: Double by SingletonProperty()
-  var boolean: Boolean by SingletonProperty()
+  override var text: String by SingletonProperty(this)
+  override var number: Double by SingletonProperty(this)
+  override var boolean: Boolean by SingletonProperty(this)
 
   init {
     this.text = text
@@ -59,10 +67,9 @@ class TestEntity(
     val singletonPersistentStorageKey = ReferenceModeStorageKey(
       backingKey = DatabaseStorageKey.Persistent(
         "singleton_reference",
-        schemaHash,
         "arcs_test"
       ),
-      storageKey = DatabaseStorageKey.Persistent("singleton", schemaHash, "arcs_test")
+      storageKey = DatabaseStorageKey.Persistent("singleton", "arcs_test")
     )
 
     val collectionInMemoryStorageKey = ReferenceModeStorageKey(
@@ -73,10 +80,9 @@ class TestEntity(
     val collectionPersistentStorageKey = ReferenceModeStorageKey(
       backingKey = DatabaseStorageKey.Persistent(
         "collection_reference",
-        schemaHash,
         "arcs_test"
       ),
-      storageKey = DatabaseStorageKey.Persistent("collection", schemaHash, "arcs_test")
+      storageKey = DatabaseStorageKey.Persistent("collection", "arcs_test")
     )
 
     const val text = "Test Text"

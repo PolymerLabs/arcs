@@ -25,11 +25,52 @@ import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.Reference as StorageReference
+import arcs.core.storage.RawReference
+import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
 import arcs.core.util.Time
 import kotlin.reflect.KProperty
+
+/**
+ * This is a convenience for exposing singleton entity fields conveniently in subclasses of
+ * [EntityBase] and other helper classes.
+ *
+ * It will delegate the getter/setter of the property to the `getSingletonValue` and
+ * `setSingletonValue` methods of EntityBase.
+ *
+ * ```kotlin
+ *   var myProperty: String by SingletonProperty(entity)
+ * ```
+ */
+@Suppress("UNCHECKED_CAST")
+class SingletonProperty<T>(private val entity: EntityBase) {
+  operator fun getValue(thisRef: Any?, property: KProperty<*>) =
+    entity.getSingletonValue(property.name) as T
+
+  operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) =
+    entity.setSingletonValue(property.name, value)
+}
+
+/**
+ * This is a convenience for exposing collection entity fields conveniently in subclasses of
+ * [EntityBase] and other helper classes.
+ *
+ * It will delegate the getter/setter of the property to the `getCollectionValue` and
+ * `setCollectionValue` methods of EntityBase.
+ *
+ * ```kotlin
+ *   var myProperty: Set<String> by CollectionProperty(entity)
+ * ```
+ */
+@Suppress("UNCHECKED_CAST")
+class CollectionProperty<T>(private val entity: EntityBase) {
+  operator fun getValue(thisRef: Any?, property: KProperty<*>) =
+    entity.getCollectionValue(property.name) as Set<T>
+
+  operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Set<T>) =
+    entity.setCollectionValue(property.name, value as Set<Any>)
+}
 
 open class EntityBase(
   private val entityClassName: String,
@@ -58,46 +99,6 @@ open class EntityBase(
   // it will not be considered a valid field for the entity.
   init {
     reset()
-  }
-
-  /**
-   * This is a convenience for exposing singleton entity fields conveniently in subclasses of
-   * [EntityBase].
-   *
-   * It will delegate the getter/setter of the property to the `getSingletonValue` and
-   * `setSingletonValue` methods.
-   *
-   * ```kotlin
-   *   var myProperty: String by SingletonProperty()
-   * ```
-   */
-  @Suppress("UNCHECKED_CAST")
-  protected inner class SingletonProperty<T> {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>) =
-      getSingletonValue(property.name) as T
-
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) =
-      setSingletonValue(property.name, value)
-  }
-
-  /**
-   * This is a convenience for exposing collection entity fields conveniently in subclasses of
-   * [EntityBase].
-   *
-   * It will delegate the getter/setter of the property to the `getCollectionValue` and
-   * `setCollectionValue` methods.
-   *
-   * ```kotlin
-   *   var myProperty: Set<String> by CollectionProperty()
-   * ```
-   */
-  @Suppress("UNCHECKED_CAST")
-  protected inner class CollectionProperty<T> {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>) =
-      getCollectionValue(property.name) as Set<T>
-
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Set<T>) =
-      setCollectionValue(property.name, value as Set<Any>)
   }
 
   /** Returns the value for the given singleton field. */
@@ -161,7 +162,8 @@ open class EntityBase(
   /** Checks that the given value is of the expected type. */
   private fun checkType(field: String, value: Any?, type: FieldType, context: String = "") {
     if (value == null) {
-      // Null values always pass.
+      // TODO(b/174115805): Null values should not always pass unless they are nullable.
+      // Currently a lot of values are actually nullable but shouldn't be...
       return
     }
 
@@ -187,6 +189,9 @@ open class EntityBase(
         }
         PrimitiveType.Long -> require(value is Long) {
           "Expected Long for $context$entityClassName.$field, but received $value."
+        }
+        PrimitiveType.Duration -> require(value is ArcsDuration) {
+          "Expected Duration for $context$entityClassName.$field, but received $value."
         }
         PrimitiveType.Instant -> require(value is ArcsInstant) {
           "Expected Instant for $context$entityClassName.$field, but received $value."
@@ -226,6 +231,10 @@ open class EntityBase(
         }
         value.forEach { checkType(field, it, type.primitiveType, "member of ") }
       }
+      is FieldType.NullableOf -> {
+        // TODO(b/174115805): Null values should pass if they are nullable.
+        checkType(field, value, type.innerType, "non-null value of ")
+      }
       is FieldType.InlineEntity -> {
         require(value is EntityBase) {
           "Expected EntityBase for $context#entityClassName.$field, but received $value."
@@ -250,29 +259,34 @@ open class EntityBase(
   }
 
   override fun serialize(storeSchema: Schema?): RawEntity {
-    val serializationFields = storeSchema?.fields ?: schema.fields
+    var singletonFields = schema.fields.singletons.keys
+    var collectionFields = schema.fields.collections.keys
+    if (storeSchema != null && storeSchema != schema) {
+      // A different set of fields was requested; only use the fields present in both.
+      singletonFields = singletonFields intersect storeSchema.fields.singletons.keys
+      collectionFields = collectionFields intersect storeSchema.fields.collections.keys
+    }
+
     val serialization = RawEntity(
       id = entityId ?: NO_REFERENCE_ID,
-      singletons = serializationFields.singletons.keys.intersect(
-        schema.fields.singletons.keys
-      ).map { field ->
-        field to getSingletonValue(field)?.let {
+      singletons = singletonFields.associateWith { field ->
+        getSingletonValue(field)?.let {
           toReferencable(it, getSingletonType(field))
         }
-      }.toMap(),
-      collections = serializationFields.collections.keys.intersect(
-        schema.fields.collections.keys
-      ).map { field ->
+      },
+      collections = collectionFields.associateWith { field ->
         val type = getCollectionType(field)
-        field to getCollectionValue(field).map { toReferencable(it, type) }.toSet()
-      }.toMap(),
+        getCollectionValue(field).mapTo(mutableSetOf()) {
+          requireNotNull(toReferencable(it, type)) {
+            "Expected non-nullable value but found null in collection $field"
+          }
+        }
+      },
       creationTimestamp = creationTimestamp,
       expirationTimestamp = expirationTimestamp
     )
-    /**
-     * Inline entities should have value equality, but we use the id to determine
-     * equality when adding entities to CRDT collections/singletons.
-     */
+    // Inline entities should have value equality, but we use the id to determine
+    // equality when adding entities to CRDT collections/singletons.
     if (isInlineEntity) {
       return serialization.copy(id = serialization.hashCode().toString())
     }
@@ -321,7 +335,7 @@ open class EntityBase(
     ttl: Ttl
   ) {
     if (entityId == null) {
-      entityId = idGenerator.newChildId(Id.fromString(handleName)).toString()
+      entityId = getEntityId(idGenerator, handleName)
     }
     val now = time.currentTimeMillis
     if (creationTimestamp == UNINITIALIZED_TIMESTAMP) {
@@ -334,6 +348,9 @@ open class EntityBase(
       "Cannot set a future creationTimestamp=$creationTimestamp."
     }
   }
+
+  private fun getEntityId(idGenerator: Id.Generator, handleName: String): String =
+    idGenerator.newMinimizedId()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -354,6 +371,8 @@ open class EntityBase(
     result = 31 * result + entityId.hashCode()
     result = 31 * result + singletons.hashCode()
     result = 31 * result + collections.hashCode()
+    result = 31 * result + creationTimestamp.hashCode()
+    result = 31 * result + expirationTimestamp.hashCode()
     return result
   }
 
@@ -374,8 +393,12 @@ class EntityBaseSpec(
     SchemaRegistry.register(SCHEMA)
   }
 
-  override fun deserialize(data: RawEntity): EntityBase =
-    EntityBase("EntityBase", SCHEMA).apply { deserialize(data) }
+  override fun deserialize(data: RawEntity) = EntityBase("EntityBase", SCHEMA).apply {
+    deserialize(data, mapOf(SCHEMA.hash to this@EntityBaseSpec))
+  }
+
+  fun deserialize(data: RawEntity, nestedEntitySpecs: Map<SchemaHash, EntitySpec<out Entity>>) =
+    EntityBase("EntityBase", SCHEMA).apply { deserialize(data, nestedEntitySpecs) }
 }
 
 class InvalidFieldNameException(
@@ -387,7 +410,7 @@ class InvalidFieldNameException(
     "called \"$field\"."
 )
 
-private fun toReferencable(value: Any, type: FieldType): Referencable = when (type) {
+private fun toReferencable(value: Any?, type: FieldType): Referencable? = when (type) {
   is FieldType.Primitive -> when (type.primitiveType) {
     PrimitiveType.Boolean -> (value as Boolean).toReferencable()
     PrimitiveType.Number -> (value as Double).toReferencable()
@@ -396,6 +419,7 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
     PrimitiveType.Short -> (value as Short).toReferencable()
     PrimitiveType.Int -> (value as Int).toReferencable()
     PrimitiveType.Long -> (value as Long).toReferencable()
+    PrimitiveType.Duration -> (value as ArcsDuration).toReferencable()
     PrimitiveType.Instant -> (value as ArcsInstant).toReferencable()
     PrimitiveType.Char -> (value as Char).toReferencable()
     PrimitiveType.Float -> (value as Float).toReferencable()
@@ -408,9 +432,12 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
     throw NotImplementedError("[FieldType.Tuple]s cannot be converted to references.")
   is FieldType.ListOf ->
     (value as List<*>).map {
-      toReferencable(it!!, type.primitiveType)
+      requireNotNull(toReferencable(it, type.primitiveType)) {
+        "Expected non-nullable value but found null in ordered list"
+      }
     }.toReferencable(type)
   is FieldType.InlineEntity -> (value as EntityBase).serialize()
+  is FieldType.NullableOf -> value?.let { toReferencable(value, type.innerType) }
 }
 
 private fun fromReferencable(
@@ -428,8 +455,8 @@ private fun fromReferencable(
       }
     }
     is FieldType.EntityRef -> {
-      require(referencable is StorageReference) {
-        "Expected Reference but was $referencable."
+      require(referencable is RawReference) {
+        "Expected RawReference but was $referencable."
       }
       val entitySpec = requireNotNull(nestedEntitySpecs[type.schemaHash]) {
         "Unknown schema with hash ${type.schemaHash}."
@@ -448,6 +475,7 @@ private fun fromReferencable(
       }
       referencable.value.map { fromReferencable(it, type.primitiveType, nestedEntitySpecs) }
     }
+    is FieldType.NullableOf -> fromReferencable(referencable, type.innerType, nestedEntitySpecs)
     is FieldType.InlineEntity -> {
       require(referencable is RawEntity) {
         "Expected RawEntity but was $referencable."

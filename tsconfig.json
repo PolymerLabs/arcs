@@ -12,6 +12,7 @@
   },
   "exclude": [
     "src/tools/language-server/**/*",
+    "src/tools/db-dump/**/*",
     "src/tools/vscode-language-client/**/*"
   ]
 }

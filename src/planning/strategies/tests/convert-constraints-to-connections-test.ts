@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
-import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Modality} from '../../../runtime/arcs-types/modality.js';
@@ -18,9 +17,9 @@ import {ArcId} from '../../../runtime/id.js';
 import {Runtime} from '../../../runtime/runtime.js';
 
 describe('ConvertConstraintsToConnections', () => {
-  const newArc = (manifest: Manifest) => {
+  const startArc = async (manifest: Manifest) => {
     const runtime = new Runtime({loader: new Loader(), context: manifest});
-    return runtime.newArc('test-plan-arc');
+    return runtime.allocator.startArc({arcName: 'test-plan-arc'});
   };
 
   it('fills out an empty constraint', async () => {
@@ -33,7 +32,7 @@ describe('ConvertConstraintsToConnections', () => {
       recipe
         A.b: writes C.d`);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -57,7 +56,7 @@ describe('ConvertConstraintsToConnections', () => {
       recipe
         A.b: writes C.d`);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.isEmpty(results);
   });
@@ -74,7 +73,7 @@ describe('ConvertConstraintsToConnections', () => {
         handle0: map
         A.b: C.d`);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
   });
@@ -96,7 +95,7 @@ describe('ConvertConstraintsToConnections', () => {
       const manifest = await parseManifest(constraint1, constraint2);
       const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
 
-      const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+      const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
       const results = await cctc.generateFrom(generated);
       assert.lengthOf(results, 1, `Failed to resolve ${constraint1} & ${constraint2}`);
     };
@@ -126,7 +125,7 @@ describe('ConvertConstraintsToConnections', () => {
         A.b: writes C.d
         C`);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -151,7 +150,7 @@ describe('ConvertConstraintsToConnections', () => {
         A.b: writes C.d
         A`);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -177,7 +176,7 @@ describe('ConvertConstraintsToConnections', () => {
         C
         A`);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -205,7 +204,7 @@ describe('ConvertConstraintsToConnections', () => {
           d: reads writes handle1
         A`);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -233,7 +232,7 @@ describe('ConvertConstraintsToConnections', () => {
         A
           b: handle1`);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -262,7 +261,7 @@ describe('ConvertConstraintsToConnections', () => {
         A
           b: reads writes handle1`);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const {result, score} = results[0];
@@ -297,7 +296,7 @@ describe('ConvertConstraintsToConnections', () => {
 
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}, {result: manifest.recipes[1], score: 1, derivation: [], hash: '0', valid: true}];
     const runtime = new Runtime({loader: new Loader(), context: manifest});
-    const cctc = new ConvertConstraintsToConnections(runtime.newArc('test-plan-arc', null, {modality: Modality.vr}));
+    const cctc = new ConvertConstraintsToConnections(await runtime.allocator.startArc({arcName: 'test-plan-arc', modality: Modality.vr}));
 
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
@@ -316,7 +315,7 @@ describe('ConvertConstraintsToConnections', () => {
         h: writes B.i
     `);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -341,7 +340,7 @@ describe('ConvertConstraintsToConnections', () => {
         B
     `);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -367,7 +366,7 @@ describe('ConvertConstraintsToConnections', () => {
         B
     `);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -394,7 +393,7 @@ describe('ConvertConstraintsToConnections', () => {
         B
     `);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -420,7 +419,7 @@ describe('ConvertConstraintsToConnections', () => {
       #trashbag: reads B.i
     `);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -446,7 +445,7 @@ describe('ConvertConstraintsToConnections', () => {
       B
     `);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -474,7 +473,7 @@ describe('ConvertConstraintsToConnections', () => {
         i: writes handle0
     `);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
@@ -495,7 +494,7 @@ describe('ConvertConstraintsToConnections', () => {
       A: writes B
     `);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
@@ -521,7 +520,7 @@ describe('ConvertConstraintsToConnections', () => {
       A: writes B
     `);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;
@@ -547,7 +546,7 @@ describe('ConvertConstraintsToConnections', () => {
       A: reads writes B
     `);
     const generated = [{result: manifest.recipes[0], score: 1, derivation: [], hash: '0', valid: true}];
-    const cctc = new ConvertConstraintsToConnections(newArc(manifest));
+    const cctc = new ConvertConstraintsToConnections(await startArc(manifest));
     const results = await cctc.generateFrom(generated);
     assert.lengthOf(results, 1);
     const recipe = results[0].result;

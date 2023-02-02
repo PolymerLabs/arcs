@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -12,15 +12,15 @@
 package arcs.core.storage
 
 import arcs.core.analytics.Analytics
+import arcs.core.common.ArcId
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation
-import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
-import arcs.core.storage.StorageProxy.CallbackIdentifier
 import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.storage.StorageProxyImpl.ProxyState
-import arcs.core.storage.keys.Protocols
+import arcs.core.storage.keys.DatabaseStorageKey
+import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
 import arcs.core.util.ArcsStrictMode
@@ -28,7 +28,6 @@ import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.Truth.assertWithMessage
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
@@ -46,7 +45,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
@@ -58,20 +56,20 @@ import org.junit.runners.JUnit4
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class StorageProxyImplTest {
   @get:Rule
   val log = LogRule()
 
-  private val fakeStoreEndpoint = StoreEndpointFake<CrdtData, CrdtOperationAtTime, String>()
+  private val fakeStoreEndpoint = StoreEndpointFake<CrdtData, CrdtOperation, String>()
   private val fakeStorageEndpointManager = FakeStorageEndpointManager(fakeStoreEndpoint)
 
   @Mock
-  private lateinit var mockCrdtOperation: CrdtOperationAtTime
+  private lateinit var mockCrdtOperation: CrdtOperation
 
   @Mock
-  private lateinit var mockCrdtModel: CrdtModel<CrdtData, CrdtOperationAtTime, String>
+  private lateinit var mockCrdtModel: CrdtModel<CrdtData, CrdtOperation, String>
 
   @Mock
   private lateinit var mockCrdtData: CrdtData
@@ -575,120 +573,6 @@ class StorageProxyImplTest {
   }
 
   @Test
-  fun getParticleViewReturnsSyncedState() = runTest {
-    val proxy = mockProxy()
-    val notifyChannel = Channel<StorageEvent>(Channel.BUFFERED)
-    proxy.registerForStorageEvents(callbackId) {
-      runBlocking { notifyChannel.send(it) }
-    }
-    proxy.prepareForSync()
-    proxy.maybeInitiateSync()
-
-    proxy.awaitOutgoingMessageQueueDrain()
-    fakeStoreEndpoint.waitFor(ProxyMessage.SyncRequest(null))
-    fakeStoreEndpoint.clearProxyMessages()
-
-    proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
-    scheduler.waitForIdle()
-    assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.READY)
-    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
-
-    withContext(proxy.dispatcher) {
-      assertThat(proxy.getParticleView()).isEqualTo("data")
-    }
-    assertThat(fakeStoreEndpoint.getProxyMessages()).isEmpty()
-  }
-
-  @Test
-  fun getParticleViewWhenNotSyncingFails() = runTest {
-    val proxy = mockProxy()
-    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.NO_SYNC)
-
-    val exception = assertFailsWith<IllegalStateException> {
-      @Suppress("DeferredResultUnused")
-      proxy.getParticleViewAsync()
-    }
-    assertThat(exception).hasMessageThat()
-      .isEqualTo("getParticleView not valid on non-readable StorageProxy")
-  }
-
-  @Test
-  fun getParticleViewWhenReadyToSyncQueuesAndRequestsSync() = runTest {
-    val proxy = mockProxy()
-    val notifyChannel = Channel<StorageEvent>()
-    proxy.registerForStorageEvents(callbackId) {
-      runBlocking { notifyChannel.send(it) }
-    }
-    proxy.prepareForSync()
-    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.READY_TO_SYNC)
-
-    val future1 = proxy.getParticleViewAsync()
-    assertThat(future1.isCompleted).isFalse()
-    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.AWAITING_SYNC)
-
-    // Test that multiple futures can be returned and resolved.
-    val future2 = proxy.getParticleViewAsync()
-    assertThat(future2.isCompleted).isFalse()
-
-    // Syncing the proxy should resolve the futures after triggering a READY StorageEvent.
-    proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
-    assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.READY)
-
-    proxy.awaitOutgoingMessageQueueDrain()
-    assertWithMessage("Store should've received only one sync request the whole time")
-      .that(fakeStoreEndpoint.getProxyMessages())
-      .containsExactly(
-        ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
-      )
-
-    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
-    assertThat(future1.await()).isEqualTo("data")
-    assertThat(future2.await()).isEqualTo("data")
-  }
-
-  @Test
-  fun getParticleViewWhenDesyncedQueues() = runTest {
-    val proxy = mockProxy()
-    val notifyChannel = Channel<StorageEvent>(Channel.BUFFERED)
-    proxy.registerForStorageEvents(callbackId) {
-      runBlocking { notifyChannel.send(it) }
-    }
-    proxy.prepareForSync()
-    proxy.maybeInitiateSync()
-
-    proxy.awaitOutgoingMessageQueueDrain()
-    fakeStoreEndpoint.waitFor(ProxyMessage.SyncRequest(null))
-    fakeStoreEndpoint.clearProxyMessages()
-
-    proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
-    assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.READY)
-    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
-
-    whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(false)
-    proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
-    assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.DESYNC)
-    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.DESYNC)
-
-    proxy.awaitOutgoingMessageQueueDrain()
-    fakeStoreEndpoint.waitFor(ProxyMessage.SyncRequest(null))
-    fakeStoreEndpoint.clearProxyMessages()
-
-    val future = proxy.getParticleViewAsync()
-    assertThat(future.isCompleted).isFalse()
-
-    proxy.awaitOutgoingMessageQueueDrain()
-    assertThat(fakeStoreEndpoint.getProxyMessages()).isEmpty()
-
-    // Syncing the proxy should resolve the future.
-    proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
-    assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.RESYNC)
-
-    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
-    assertThat(future.isCompleted).isTrue()
-    assertThat(future.await()).isEqualTo("data")
-  }
-
-  @Test
   fun getVersionMap() = runTest {
     val proxy = mockProxy()
     val versionMap = VersionMap(mapOf("x" to 7))
@@ -707,6 +591,58 @@ class StorageProxyImplTest {
     proxy.close()
     assertThat(fakeStoreEndpoint.closed).isTrue()
     assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.CLOSED)
+  }
+
+  @Test
+  fun proxyIgnoresModelUpdatesInNoSyncState() = runTest {
+    val proxy = mockProxy()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.NO_SYNC)
+
+    // Send an update before the proxy been asked to prepare for sync; the
+    // underlying model should *not* have merge called.
+    proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+    scheduler.waitForIdle()
+
+    proxy.prepareForSync()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.READY_TO_SYNC)
+    scheduler.waitForIdle()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.READY_TO_SYNC)
+    verify(mockCrdtModel, never()).merge(any())
+    // Move the proxy to AWAITING_SYNC; it is now expecting to receive a sync.
+    proxy.maybeInitiateSync()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.AWAITING_SYNC)
+
+    // Send the sync. The model should be merged.
+    proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+    scheduler.waitForIdle()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
+    verify(mockCrdtModel).merge(eq(mockCrdtData))
+  }
+
+  @Test
+  fun proxyIgnoresModelUpdatesInReadyToSyncState() = runTest {
+    val proxy = mockProxy()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.NO_SYNC)
+
+    proxy.prepareForSync()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.READY_TO_SYNC)
+
+    // Send an update before the proxy has been told to send a sync request; the
+    // underlying model should *not* have merge called.
+    proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+    scheduler.waitForIdle()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.READY_TO_SYNC)
+    verify(mockCrdtModel, never()).merge(any())
+
+    // Move the proxy to AWAITING_SYNC; it is now expecting to receive a sync.
+    proxy.maybeInitiateSync()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.AWAITING_SYNC)
+
+    // Send the sync. The model should be merged.
+    proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+    scheduler.waitForIdle()
+    assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
+    verify(mockCrdtModel).merge(eq(mockCrdtData))
   }
 
   @Test
@@ -789,17 +725,8 @@ class StorageProxyImplTest {
   }
 
   @Test
-  fun syncRequestToModelUpdate_NormalStorageKey_logged() = runTest {
-    val volatileStorageKey =
-      object : StorageKey(Protocols.VOLATILE_DRIVER) {
-        override fun toKeyString(): String {
-          return Protocols.VOLATILE_DRIVER
-        }
-
-        override fun childKeyWithComponent(component: String): StorageKey {
-          return mockStorageKey
-        }
-      }
+  fun syncRequestToModelUpdate_normalStorageKey_logged() = runTest {
+    val volatileStorageKey = VolatileStorageKey(ArcId.newForTest("arcId"), "unique")
 
     val proxy = StorageProxyImpl.create(
       StoreOptions(
@@ -835,28 +762,9 @@ class StorageProxyImplTest {
   }
 
   @Test
-  fun syncRequestToModelUpdate_ReferenceModeStorageKey_logged() = runTest {
-    val dbBackingStorageKey =
-      object : StorageKey(Protocols.DATABASE_DRIVER) {
-        override fun toKeyString(): String {
-          return Protocols.DATABASE_DRIVER
-        }
-
-        override fun childKeyWithComponent(component: String): StorageKey {
-          return mockStorageKey
-        }
-      }
-
-    val dbStorageKey =
-      object : StorageKey(Protocols.DATABASE_DRIVER) {
-        override fun toKeyString(): String {
-          return Protocols.DATABASE_DRIVER
-        }
-
-        override fun childKeyWithComponent(component: String): StorageKey {
-          return mockStorageKey
-        }
-      }
+  fun syncRequestToModelUpdate_referenceModeStorageKey_logged() = runTest {
+    val dbBackingStorageKey = DatabaseStorageKey.Persistent("backing", "abc")
+    val dbStorageKey = DatabaseStorageKey.Persistent("unique", "abc")
 
     val dbReferenceModeStorageKey =
       ReferenceModeStorageKey(dbBackingStorageKey, dbStorageKey)
@@ -935,7 +843,7 @@ class StorageProxyImplTest {
 
   private suspend fun addAllActions(
     id: StorageProxy.CallbackIdentifier,
-    proxy: StorageProxyImpl<CrdtData, CrdtOperationAtTime, String>
+    proxy: StorageProxyImpl<CrdtData, CrdtOperation, String>
   ): ActionMocks {
     val channels = ActionChannels()
     val mocks = ActionMocks(channels = channels).also { mocks ->

@@ -4,6 +4,8 @@ meta
 schema PlanHandle
   storageKey: Text
   type: Text
+  // Serialized schema
+  schema: Text
   // TODO(b/161818630): add annotations to serialization.
 
 // Represents a Plan.HandleConnection
@@ -18,6 +20,8 @@ schema HandleConnection
   // Ttl object's count field in minutes
   ttl: Number
   expression: Text
+  // Serialized schema
+  schema: Text
 
 // Represents a ParticleContext and Plan.Particle
 schema ParticleSchema

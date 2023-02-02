@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {registerSystemExceptionHandler, removeSystemExceptionHandler, defaultSystemExceptionHandler} from '../arc-exceptions.js';
-import {DriverFactory} from '../storage/drivers/driver-factory.js';
+import {Runtime} from '../runtime.js';
 
 let exceptions: Error[] = [];
 
@@ -24,5 +24,4 @@ afterEach(function() {
     // Error function not yet included in mocha typescript declarations...
     this.test['error'](exception);
   }
-  DriverFactory.clearRegistrationsForTesting();
 });

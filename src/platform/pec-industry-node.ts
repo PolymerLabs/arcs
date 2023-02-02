@@ -10,11 +10,12 @@
 import {ParticleExecutionContext} from '../runtime/particle-execution-context.js';
 import {MessageChannel} from '../runtime/message-channel.js';
 import {Id, IdGenerator} from '../runtime/id.js';
+import {StorageKeyParser} from '../runtime/storage/storage-key-parser.js';
 
 export const pecIndustry = loader => {
-  return (pecId: Id, idGenerator: IdGenerator) => {
+  return (pecId: Id, idGenerator: IdGenerator, storageKeyParser: StorageKeyParser) => {
     const channel = new MessageChannel();
-    const _throwAway = new ParticleExecutionContext(channel.port1, pecId, idGenerator, loader);
+    const _throwAway = new ParticleExecutionContext(channel.port1, pecId, idGenerator, storageKeyParser, loader);
     return channel.port2;
   };
 };

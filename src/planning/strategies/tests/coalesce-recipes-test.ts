@@ -8,33 +8,20 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-
 import {assert} from '../../../platform/chai-web.js';
-import {Manifest} from '../../../runtime/manifest.js';
-import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
-import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ramdisk.js';
 import {CoalesceRecipes} from '../../strategies/coalesce-recipes.js';
-
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
-import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
+import {Runtime} from '../../../runtime/runtime.js';
 
 describe('CoalesceRecipes', () => {
-  let memoryProvider;
-  beforeEach(() => {
-      memoryProvider = new TestVolatileMemoryProvider();
-      RamDiskStorageDriverProvider.register(memoryProvider);
-  });
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
   async function tryCoalesceRecipes(manifestStr: string) {
-    const manifest = await Manifest.parse(manifestStr, {memoryProvider});
+    const runtime = new Runtime();
+    const manifest = await runtime.parse(manifestStr);
     const recipes = manifest.recipes;
     assert.isTrue(recipes.every(recipe => recipe.normalize()));
     assert.isFalse(recipes.every(recipe => recipe.isResolved()));
-    const arc = StrategyTestHelper.createTestArc(manifest);
-    const strategy = new CoalesceRecipes(arc, StrategyTestHelper.createTestStrategyArgs(arc));
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(manifest);
+    const strategy = new CoalesceRecipes(arcInfo, StrategyTestHelper.createTestStrategyArgs(arcInfo));
     const inputParams = {generated: [], terminal: recipes.map(recipe => ({result: recipe, score: 1}))};
     return strategy.generate(inputParams);
   }

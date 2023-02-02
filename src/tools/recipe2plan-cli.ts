@@ -28,7 +28,7 @@ Usage
   $ tools/sigh recipe2plan [options] path/to/manifest.arcs
 
 Description
-  Generates Kotlin plans from recipes in a manifest. 
+  Generates Kotlin plans from recipes in a manifest.
 
 Options
   --outfile, -f  output filename; required
@@ -70,12 +70,12 @@ const outFormat = (() => {
 
 void Flags.withDefaultReferenceMode(async () => {
   try {
-    Runtime.init('../..', PATHS);
+    const runtime = new Runtime({rootPath: '../..', urlMap: PATHS});
     fs.mkdirSync(opts.outdir, {recursive: true});
 
-    const manifest = await Runtime.parseFile(opts._[0]);
+    const manifest = await runtime.parseFile(opts._[0]);
     const policiesManifest =
-        opts.policies ? await Runtime.parseFile(opts.policies) : null;
+        opts.policies ? await runtime.parseFile(opts.policies) : null;
     const plans = await recipe2plan(manifest, outFormat, policiesManifest, opts.recipe);
 
     const outPath = path.join(opts.outdir, opts.outfile);

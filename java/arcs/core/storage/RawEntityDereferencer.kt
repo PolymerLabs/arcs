@@ -21,12 +21,13 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
- * [Dereferencer] to use when de-referencing a [Reference] to an [Entity].
+ * [Dereferencer] to use when de-referencing a [RawReference] to an [Entity].
  *
- * [Handle] implementations should inject this into any [Reference] objects they encounter.
+ * [Handle] implementations should inject this into any [RawReference] objects they encounter.
  *
  * TODO(jasonwyatt): Use the [Scheduler] here when dereferencing.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class RawEntityDereferencer(
   private val schema: Schema,
   private val storageEndpointManager: StorageEndpointManager,
@@ -35,11 +36,10 @@ class RawEntityDereferencer(
   // TODO(#5551): Consider including a hash of schema.names for easier tracking.
   private val log = TaggedLog { "RawEntityDereferencer" }
 
-  @ExperimentalCoroutinesApi
-  override suspend fun dereference(reference: Reference): RawEntity? {
-    log.verbose { "De-referencing $reference" }
+  override suspend fun dereference(rawReference: RawReference): RawEntity? {
+    log.verbose { "De-referencing $rawReference" }
 
-    val storageKey = reference.referencedStorageKey()
+    val storageKey = rawReference.referencedStorageKey()
 
     val options = StoreOptions(
       storageKey,
@@ -67,7 +67,7 @@ class RawEntityDereferencer(
 
       // Only return the item if we've actually managed to pull it out of storage, and
       // that it matches the schema we wanted.
-      val entity = deferred.await()?.takeIf { it matches schema }?.copy(id = reference.id)
+      val entity = deferred.await()?.takeIf { it matches schema }?.copy(id = rawReference.id)
       referenceCheckFun?.invoke(schema, entity)
       entity
     } finally {

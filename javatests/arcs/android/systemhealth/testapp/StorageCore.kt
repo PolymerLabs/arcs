@@ -24,8 +24,8 @@ import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.awaitReady
-import arcs.core.host.EntityHandleManager
-import arcs.core.storage.Reference
+import arcs.core.host.HandleManagerImpl
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -95,7 +95,7 @@ private typealias Settings = SystemHealthData.Settings
 private typealias TaskEventQueue<T> = Pair<ReadWriteLock, MutableList<T>>
 
 /** System health test core for performance, power, memory footprint and stability. */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class StorageCore(val context: Context) {
   /** Query the last record of system-health stats */
   val statsBulletin: String
@@ -186,7 +186,7 @@ class StorageCore(val context: Context) {
                 closeHandle(it.handle, it.coroutineContext)
                 it.handle = null
                 launchIfContext(it.coroutineContext) {
-                  it.handleManager.close()
+                  it.handleManagerImpl.close()
                 }
               } catch (e: Exception) {
                 log.error { "#$id: failed to close handle, reason: $e" }
@@ -257,7 +257,7 @@ class StorageCore(val context: Context) {
     }
   }
 
-  @ExperimentalCoroutinesApi
+  @OptIn(ExperimentalCoroutinesApi::class)
   private fun execute(settings: Settings) {
     earlyExit = false
     val numOfTasks =
@@ -292,7 +292,7 @@ class StorageCore(val context: Context) {
       )
 
       TaskHandle(
-        EntityHandleManager(
+        HandleManagerImpl(
           time = JvmTime,
           // Per-task single-threaded Scheduler being cascaded with Watchdog capabilities
           scheduler = TestSchedulerProvider(taskCoroutineContext)("sysHealthStorageCore"),
@@ -378,7 +378,7 @@ class StorageCore(val context: Context) {
 
   @Suppress("UNCHECKED_CAST")
   private suspend fun setUpCleanerHandle(taskHandle: TaskHandle, settings: Settings) {
-    val handle = taskHandle.handleManager.createHandle(
+    val handle = taskHandle.handleManagerImpl.createHandle(
       HandleSpec(
         "CleanerHandle",
         HandleMode.Write,
@@ -389,7 +389,7 @@ class StorageCore(val context: Context) {
         StorageMode.PERSISTENT -> TestEntity.clearEntitiesPersistentStorageKey
         else -> TestEntity.clearEntitiesMemoryDatabaseStorageKey
       }
-    ) as WriteCollectionHandle<TestEntity>
+    ) as WriteCollectionHandle<TestEntitySlice>
 
     val elapsedTime = measureTimeMillis { handle.awaitReady() }
     if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
@@ -411,7 +411,7 @@ class StorageCore(val context: Context) {
     settings: Settings
   ) = when (settings.handleType) {
     HandleType.SINGLETON -> {
-      val handle = taskHandle.handleManager.createHandle(
+      val handle = taskHandle.handleManagerImpl.createHandle(
         HandleSpec(
           "singletonHandle$taskId",
           HandleMode.ReadWrite,
@@ -423,7 +423,7 @@ class StorageCore(val context: Context) {
           StorageMode.MEMORY_DATABASE -> TestEntity.singletonMemoryDatabaseStorageKey
           else -> TestEntity.singletonInMemoryStorageKey
         }
-      ) as ReadWriteSingletonHandle<TestEntity>
+      ) as ReadWriteSingletonHandle<TestEntity, TestEntitySlice>
 
       val elapsedTime = measureTimeMillis { handle.awaitReady() }
       if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
@@ -456,7 +456,7 @@ class StorageCore(val context: Context) {
       // The very first SingletonHandle is responsible for writing an entity
       // to storage then creating its reference.
       if (taskId == 0) {
-        SystemHealthTestEntity.entityReference = withContext(handle.dispatcher) {
+        SystemHealthTestEntity.entityRawReference = withContext(handle.dispatcher) {
           handle.store(SystemHealthTestEntity.referencedEntity).join()
           handle.createReference(SystemHealthTestEntity.referencedEntity).toReferencable()
         }
@@ -464,7 +464,7 @@ class StorageCore(val context: Context) {
       taskHandle.handle = handle
     }
     HandleType.COLLECTION -> {
-      val handle = taskHandle.handleManager.createHandle(
+      val handle = taskHandle.handleManagerImpl.createHandle(
         HandleSpec(
           "collectionHandle$taskId",
           HandleMode.ReadWrite,
@@ -476,7 +476,7 @@ class StorageCore(val context: Context) {
           StorageMode.MEMORY_DATABASE -> TestEntity.collectionMemoryDatabaseStorageKey
           else -> TestEntity.collectionInMemoryStorageKey
         }
-      ) as ReadWriteCollectionHandle<TestEntity>
+      ) as ReadWriteCollectionHandle<TestEntity, TestEntitySlice>
 
       val elapsedTime = measureTimeMillis { handle.awaitReady() }
       if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
@@ -509,7 +509,7 @@ class StorageCore(val context: Context) {
       // The very first CollectionHandle is responsible for writing an entity
       // to storage then creating its reference.
       if (taskId == 0) {
-        SystemHealthTestEntity.entityReference = withContext(handle.dispatcher) {
+        SystemHealthTestEntity.entityRawReference = withContext(handle.dispatcher) {
           handle.store(SystemHealthTestEntity.referencedEntity).join()
           handle.createReference(SystemHealthTestEntity.referencedEntity).toReferencable()
         }
@@ -545,10 +545,10 @@ class StorageCore(val context: Context) {
   ) {
     val timestampStart = System.currentTimeMillis()
     when (val handle = taskHandle.handle) {
-      is ReadWriteSingletonHandle<*> -> withContext(handle.dispatcher) {
+      is ReadWriteSingletonHandle<*, *> -> withContext(handle.dispatcher) {
         handle.fetch()
       }
-      is ReadWriteCollectionHandle<*> -> withContext(handle.dispatcher) {
+      is ReadWriteCollectionHandle<*, *> -> withContext(handle.dispatcher) {
         handle.fetchAll()
       }
     }
@@ -560,7 +560,7 @@ class StorageCore(val context: Context) {
         )
       }
 
-      SystemHealthTestEntity.entityReference?.let {
+      SystemHealthTestEntity.entityRawReference?.let {
         val elapsedTime = measureTimeMillis { it.dereference() }
         tasksEvents[taskController.taskId]?.writer?.withLock {
           tasksEvents[taskController.taskId]?.queue?.add(
@@ -589,15 +589,15 @@ class StorageCore(val context: Context) {
     }
 
     when (val handle = taskHandle.handle) {
-      is ReadWriteSingletonHandle<*> ->
+      is ReadWriteSingletonHandle<*, *> ->
         (
-          handle as? ReadWriteSingletonHandle<TestEntity>
+          handle as? ReadWriteSingletonHandle<TestEntity, TestEntitySlice>
           )?.let {
           withContext(it.dispatcher) { it.store(entity) }.join()
         }
-      is ReadWriteCollectionHandle<*> ->
+      is ReadWriteCollectionHandle<*, *> ->
         (
-          handle as? ReadWriteCollectionHandle<TestEntity>
+          handle as? ReadWriteCollectionHandle<TestEntity, TestEntitySlice>
           )?.let {
           withContext(it.dispatcher) { it.store(entity) }.join()
         }
@@ -610,7 +610,7 @@ class StorageCore(val context: Context) {
     taskHandle: TaskHandle,
     taskController: TaskController,
     settings: Settings
-  ) = (taskHandle.handle as? WriteCollectionHandle<TestEntity>)?.let { handle ->
+  ) = (taskHandle.handle as? WriteCollectionHandle<TestEntitySlice>)?.let { handle ->
     val entities = List(settings.clearedEntities) {
       SystemHealthTestEntity(settings.dataSizeInBytes)
     }
@@ -743,7 +743,7 @@ class StorageCore(val context: Context) {
       // TODO: remove this when terminated() works to clean up?
       handles.forEach {
         runBlocking {
-          it.handleManager.close()
+          it.handleManagerImpl.close()
           it.coroutineContext.cancel()
         }
       }
@@ -1080,7 +1080,6 @@ class StorageCore(val context: Context) {
   private inner class StorageKeyGenerator(val settings: Settings) {
     val key: ReferenceModeStorageKey
       get() = keys.next()
-    private val entitySchemaHash = "arcsscra"
     private val seqNo = atomic(0)
     private val keys = sequence {
       while (true) {
@@ -1095,12 +1094,10 @@ class StorageCore(val context: Context) {
                     ReferenceModeStorageKey(
                       backingKey = DatabaseStorageKey.Persistent(
                         "singleton${id}_reference",
-                        entitySchemaHash,
                         "arcs_test"
                       ),
                       storageKey = DatabaseStorageKey.Persistent(
                         "singleton$id",
-                        entitySchemaHash,
                         "arcs_test"
                       )
                     )
@@ -1121,12 +1118,10 @@ class StorageCore(val context: Context) {
                     ReferenceModeStorageKey(
                       backingKey = DatabaseStorageKey.Persistent(
                         "collection${id}_reference",
-                        entitySchemaHash,
                         "arcs_test"
                       ),
                       storageKey = DatabaseStorageKey.Persistent(
                         "collection$id",
-                        entitySchemaHash,
                         "arcs_test"
                       )
                     )
@@ -1178,7 +1173,7 @@ class StorageCore(val context: Context) {
   )
 
   private data class TaskHandle(
-    val handleManager: EntityHandleManager,
+    val handleManagerImpl: HandleManagerImpl,
     val storageEndpointManager: StorageEndpointManager,
     val coroutineContext: CoroutineContext,
     var handle: Any? = null
@@ -1237,7 +1232,7 @@ object SystemHealthTestEntity {
   private val seqNo = atomic(0)
   private val allChars: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
 
-  /** For benchmarking [Reference] latency. */
+  /** For benchmarking [RawReference] latency. */
   val referencedEntity = TestEntity(
     text = "__unused__",
     number = 0.0,
@@ -1245,7 +1240,7 @@ object SystemHealthTestEntity {
     inlineText = "__unused__",
     id = "foo"
   )
-  var entityReference: Reference? = null
+  var entityRawReference: RawReference? = null
 
   operator fun invoke(size: Int = 64) = TestEntity(
     text = BASE_TEXT,
@@ -1254,7 +1249,7 @@ object SystemHealthTestEntity {
     // The atomic number is also treated as unique data id to pair round-trips.
     number = BASE_SEQNO + seqNo.getAndIncrement().toDouble() * 10,
     boolean = BASE_BOOLEAN,
-    reference = entityReference
+    rawReference = entityRawReference
   )
 }
 

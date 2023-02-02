@@ -4,9 +4,9 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "define_kt_toolchain")
 
 define_kt_toolchain(
     name = "kotlin_toolchain",
-    api_version = "1.3",
+    api_version = "1.4",
     jvm_target = "1.8",
-    language_version = "1.3",
+    language_version = "1.4",
 )
 
 exports_files([

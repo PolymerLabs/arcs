@@ -11,7 +11,7 @@
 import fs from 'fs';
 import {Manifest} from '../../runtime/manifest.js';
 import {Flags} from '../../runtime/flags.js';
-import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
+import {Runtime} from '../../runtime/runtime.js';
 
 type Test = {
   name: string;
@@ -95,7 +95,6 @@ export abstract class ManifestCodegenUnitTest extends CodegenUnitTest {
  */
 export async function runCompute(testCase: CodegenUnitTest, test: Test): Promise<string[]> {
   Flags.reset();
-  DriverFactory.clearRegistrationsForTesting();
   const result = await testCase.compute(test.input, test.options, test);
   return Array.isArray(result) ? result : [result];
 }

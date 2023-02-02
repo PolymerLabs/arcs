@@ -12,7 +12,7 @@ import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {newRecipe, newSearch} from '../../../runtime/recipe/lib-recipe.js';
-import {StorageServiceImpl} from '../../../runtime/storage/storage-service.js';
+import {Runtime} from '../../../runtime/runtime.js';
 
 describe('suggestion', () => {
   function createSuggestion(hash, descriptionText) {
@@ -64,7 +64,8 @@ describe('suggestion', () => {
   });
 
   it('deserialize empty', async () => {
-    const envOptions = {loader: new Loader(), context: new Manifest({id: 'test'}), storageService: new StorageServiceImpl()};
+    const runtime = new Runtime();
+    const envOptions = {loader: runtime.loader, context: new Manifest({id: 'test'}), storageService: runtime.storageService};
     const plan = newRecipe();
     const suggestion1 = await Suggestion.fromLiteral({plan: plan.toString(), hash: '123', rank: 1}, envOptions);
     assert.isTrue(Boolean(suggestion1.plan));

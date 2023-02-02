@@ -1,34 +1,32 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
 import './file-pane.js';
 import './output-pane.js';
 import '../configuration/whitelisted.js';
 import '../lib/platform/loglevel-web.js';
 
-import {Runtime} from '../../build/runtime/runtime.js';
-import {RamDiskStorageDriverProvider} from '../../build/runtime/storage/drivers/ramdisk.js';
-import {SimpleVolatileMemoryProvider} from '../../build/runtime/storage/drivers/volatile.js';
-import {Loader} from '../../build/platform/loader.js';
 import {Arc} from '../../build/runtime/arc.js';
+import {Runtime} from '../../build/runtime/runtime.js';
 import {IdGenerator} from '../../build/runtime/id.js';
-import {pecIndustry} from '../../build/platform/pec-industry-web.js';
-import {RecipeResolver} from '../../build/runtime/recipe/recipe-resolver.js';
+import {RecipeResolver} from '../../build/runtime/recipe-resolver.js';
 import {devtoolsArcInspectorFactory} from '../../build/devtools-connector/devtools-arc-inspector.js';
-import {SlotComposer} from '../../build/runtime/slot-composer.js';
 import {SlotObserver} from '../lib/xen-renderer.js';
 
-import '../../build/services/ml5-service.js';
-import '../../build/services/random-service.js';
-
+// how to reach arcs root from our URL/CWD
 const root = '../..';
-const urlMap = Runtime.mapFromRootPath(root);
+
+// extra params for created arcs
+const extraArcParams = {
+  inspectorFactory: devtoolsArcInspectorFactory
+};
 
 // import DOM node references
 const {
@@ -41,20 +39,19 @@ const {
   helpButton
 } = window;
 
-let memoryProvider;
 init();
 
 function init() {
-  memoryProvider = new SimpleVolatileMemoryProvider();
-  RamDiskStorageDriverProvider.register(memoryProvider);
+  // prepare ui
   filePane.init(execute, toggleFilesButton, exportFilesButton);
   executeButton.addEventListener('click', execute);
   helpButton.addEventListener('click', showHelp);
   popupContainer.addEventListener('click', () => popupContainer.style.display = 'none');
-
+  // scan window parameters
   const params = new URLSearchParams(window.location.search);
+  // set logLevel
   window.logLevel = (params.get('log') !== null) ? 1 : 0;
-
+  // seed manifest as requested
   const manifestParam = params.get('m') || params.get('manifest');
   if (manifestParam) {
     filePane.seedManifest(manifestParam.split(';').map(m => `import '${m}'`));
@@ -75,101 +72,74 @@ recipe
   h0: copy DataStore
   P
     data: reads h0`;
-
     const exampleParticle = `\
 defineParticle(({SimpleParticle, html, log}) => {
   return class extends SimpleParticle {
     get template() {
       log(\`Add '?log' to the URL to enable particle logging\`);
-      return html\`<span>{{num}}</span> : <span>{{str}}</span>\`;
+      return \`<div style="padding: 8px;"><span>{{num}}</span> : <span>{{str}}</span></div>\`;
     }
     render({data}) {
       return data ? {num: data.num, str: data.txt} : {};
     }
   };
 });`;
-
     filePane.seedExample(exampleManifest, exampleParticle);
   }
 }
 
 function execute() {
-  wrappedExecute().catch(e => outputPane.showError('Unhandled exception', e.stack));
+  wrappedExecute().catch(e => {
+    outputPane.showError('Unhandled exception', e.stack);
+    console.error(e);
+  });
 }
 
 async function wrappedExecute() {
+  // clear ui
   document.dispatchEvent(new Event('clear-arcs-explorer'));
   outputPane.reset();
-
-  const loader = new Loader(urlMap, filePane.getFileMap());
-  // TODO(sjmiles): should be a static method
-  loader.flushCaches();
-
-  const pecFactory = pecIndustry(loader);
-
-  let manifest;
+  // establish a runtime using custom parameters
+  const runtime = new Runtime({rootPath: root, staticMap: filePane.getFileMap()});
+  runtime.loader.flushCaches();
+  // attempt to parse the context manifest
   try {
-    const options = {loader, fileName: './manifest', throwImportErrors: true, memoryProvider};
-    manifest = await Runtime.parseManifest(filePane.getManifest(), options);
+    runtime.context = await runtime.parse(filePane.getManifest(), {fileName: './manifest', throwImportErrors: true});
   } catch (e) {
     outputPane.showError('Error in Manifest.parse', e);
     return;
   }
-
-  if (manifest.allRecipes.length == 0) {
+  // check for existence of recipes
+  if (runtime.context.allRecipes.length == 0) {
     outputPane.showError('No recipes found in Manifest.parse');
   }
-
+  // instantiate an arc for each recipe in context
   let arcIndex = 1;
-  for (const recipe of manifest.allRecipes) {
-    const id = IdGenerator.newSession().newArcId('arc' + arcIndex++);
-    const arcPanel = outputPane.addArcPanel(id);
-
-    const errors = new Map();
-    if (!recipe.normalize({errors})) {
-      arcPanel.showError('Error in recipe.normalize', [...errors.values()].join('\n'));
-      continue;
-    }
-
-    const slotComposer = new SlotComposer();
-    slotComposer.observeSlots(new SlotObserver(arcPanel.shadowRoot));
-
-    const arc = new Arc({
-      id,
-      context: manifest,
-      pecFactories: [pecFactory],
-      slotComposer,
-      loader,
-      inspectorFactory: devtoolsArcInspectorFactory
-    });
-    arcPanel.attachArc(arc);
-
-    recipe.normalize();
-
-    let resolvedRecipe = null;
-    if (recipe.isResolved()) {
-      resolvedRecipe = recipe;
-    } else {
-      const resolver = new RecipeResolver(arc);
-      const options = {errors: new Map()};
-      resolvedRecipe = await resolver.resolve(recipe, options);
-      if (!resolvedRecipe) {
-        arcPanel.showError('Error in RecipeResolver', `${
-          [...options.errors.entries()].join('\n')
-        }.\n${recipe.toString()}`);
-        continue;
-      }
-    }
-
-    try {
-      await arc.instantiate(resolvedRecipe);
-    } catch (e) {
-      arcPanel.showError('Error in arc.instantiate', e);
-      continue;
-    }
-    const description = await Runtime.getArcDescription(arc);
-    await arcPanel.arcInstantiated(description);
+  for (const recipe of runtime.context.allRecipes) {
+    createRecipeArc(recipe, runtime, arcIndex++);
   }
+}
+
+async function createRecipeArc(recipe, runtime, index) {
+  const arcId = IdGenerator.newSession().newArcId(`arc${index}`);
+  // establish a UI Surface
+  const arcPanel = outputPane.addArcPanel(arcId, runtime);
+  // attach arc to bespoke shell ui
+  const slotObserver = new SlotObserver(arcPanel.shadowRoot);
+  // construct the arc
+  const arcInfo = await runtime.allocator.startArc({arcId, slotObserver, ...extraArcParams});
+  const arc = runtime.getArcById(arcInfo.id);
+  arcPanel.attachArc(arc);
+  arc.arcPanel = arcPanel;
+  try {
+    const plan = await runtime.resolveRecipe(arcInfo, recipe);
+    await runtime.allocator.runPlanInArc(arcInfo, plan);
+  } catch (x) {
+    arcPanel.showError('recipe error', x);
+    return;
+  }
+  // display description
+  await arcPanel.arcInstantiated(await runtime.getArcDescription(arcInfo.id));
 }
 
 function showHelp() {

@@ -44,11 +44,13 @@ class ExpressionEvaluator(
   }
 
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): Any? =
-    (if (expr.qualifier == null) {
-      ctx
-    } else {
-      expr.qualifier.accept(this, ctx) as Scope?
-    }).apply {
+    (
+      if (expr.qualifier == null) {
+        ctx
+      } else {
+        expr.qualifier.accept(this, ctx) as Scope?
+      }
+      ).apply {
       @Suppress("SENSELESS_COMPARISON") if (this == null && !expr.nullSafe) {
         throw IllegalArgumentException("Field '${expr.field}' not looked up on null scope")
       }
@@ -208,7 +210,7 @@ sealed class GlobalFunction(val name: String) {
   /** Find the maximum of a [Sequence]. */
   object Max : GlobalFunction("max") {
     override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
-      toSequence<Comparable<Comparable<*>>>(args[0]).max()
+      toSequence<Comparable<Comparable<*>>>(args[0]).maxOrNull()
 
     override fun inferredType(
       expr: Expression<*>,
@@ -222,7 +224,7 @@ sealed class GlobalFunction(val name: String) {
   /** Find the minimum of a [Sequence]. */
   object Min : GlobalFunction("min") {
     override fun invoke(evaluator: ExpressionEvaluator, args: List<Any?>) =
-      toSequence<Comparable<Comparable<*>>>(args[0]).min()
+      toSequence<Comparable<Comparable<*>>>(args[0]).minOrNull()
 
     override fun inferredType(
       expr: Expression<*>,

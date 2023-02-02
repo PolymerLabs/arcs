@@ -1,5 +1,6 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_android_library",
     "arcs_kt_android_test_suite",
 )
 
@@ -10,17 +11,27 @@ package(default_visibility = ["//java/arcs:allowed-packages"])
 arcs_kt_android_test_suite(
     name = "database",
     size = "medium",
+    srcs = glob(
+        ["*.kt"],
+        exclude = [
+            "DatabaseImplTest.kt",
+            "DatabaseImplInvariants.kt",
+        ],
+    ),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.android.storage.database",
     deps = [
+        ":test-util",
         "//java/arcs/android/common",  # buildcleaner: keep
         "//java/arcs/android/storage/database",
-        "//java/arcs/core/common",
+        "//java/arcs/android/storage/database/testutil:generators",
+        "//java/arcs/android/util/testutil",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity",
+        "//java/arcs/core/entity/testutil",
         "//java/arcs/core/host",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:reference",
@@ -35,10 +46,9 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/util",
         "//java/arcs/core/util:utils-platform-dependencies",
         "//java/arcs/core/util/testutil",
-        "//java/arcs/jvm/host",
-        "//java/arcs/jvm/util",
+        "//java/arcs/flags:build_flags",
+        "//java/arcs/flags/testing",
         "//java/arcs/jvm/util/testutil",
-        "//javatests/arcs/core/entity:lib",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/androidx/work",
@@ -49,5 +59,62 @@ arcs_kt_android_test_suite(
         "//third_party/kotlin/kotlin:kotlin_test",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
+    ],
+)
+
+arcs_kt_android_test_suite(
+    name = "database_impl",
+    size = "medium",
+    srcs = ["DatabaseImplTest.kt"],
+    manifest = "//java/arcs/android/common:AndroidManifest.xml",
+    package = "arcs.android.storage.database",
+    shard_count = 10,
+    deps = [
+        "//java/arcs/android/common",  # buildcleaner: keep
+        "//java/arcs/android/storage/database",
+        "//java/arcs/android/util/testutil",
+        "//java/arcs/core/common",
+        "//java/arcs/core/crdt",
+        "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
+        "//java/arcs/core/data/util:data-util",
+        "//java/arcs/core/entity/testutil",
+        "//java/arcs/core/storage:reference",
+        "//java/arcs/core/storage:storage_key",
+        "//java/arcs/core/storage/database",
+        "//java/arcs/core/storage/testutil",
+        "//java/arcs/core/testutil",
+        "//java/arcs/core/util",
+        "//java/arcs/core/util:utils-platform-dependencies",
+        "//java/arcs/flags",
+        "//java/arcs/flags:build_flags",
+        "//java/arcs/flags/testing",
+        "//java/arcs/jvm/util",
+        "//third_party/android/androidx_test/core",
+        "//third_party/android/androidx_test/ext/junit",
+        "//third_party/java/androidx/work",
+        "//third_party/java/androidx/work:testing",
+        "//third_party/java/junit:junit-android",
+        "//third_party/java/robolectric",
+        "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlin:kotlin_test",
+        "//third_party/kotlin/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
+    ],
+)
+
+arcs_kt_android_library(
+    name = "test-util",
+    testonly = 1,
+    srcs = [
+        "DatabaseImplInvariants.kt",
+    ],
+    deps = [
+        "//java/arcs/android/storage/database",
+        "//java/arcs/core/storage:reference",
+        "//java/arcs/core/storage:storage_key",
+        "//java/arcs/core/storage/database",
+        "//java/arcs/core/testutil",
+        "//third_party/java/truth:truth-android",
     ],
 )

@@ -11,6 +11,7 @@
 import {parse} from '../gen/runtime/manifest-parser.js';
 import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
+import {Flags} from './flags.js';
 import {Id, IdGenerator} from './id.js';
 import {MuxType, Schema, FieldType, Refinement, BigCollectionType, CollectionType, EntityType, InterfaceInfo,
         InterfaceType, ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType,
@@ -19,7 +20,7 @@ import {Dictionary, Runnable, compareComparables} from '../utils/lib-utils.js';
 import {Loader} from '../platform/loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-types/manifest-ast-nodes.js';
-import {ParticleSpec} from './arcs-types/particle-spec.js';
+import {ParticleSpec, SerializedHandleConnectionSpec} from './arcs-types/particle-spec.js';
 import {connectionMatchesHandleDirection} from './arcs-types/direction-util.js';
 import {Recipe, Slot, HandleConnection, Handle, Particle, effectiveTypeForHandle, newRecipe, newHandleEndPoint,
         newParticleEndPoint, newTagEndPoint, constructImmediateValueHandle, newSearch} from './recipe/lib-recipe.js';
@@ -27,7 +28,6 @@ import {TypeChecker} from './type-checker.js';
 import {ClaimIsTag} from './arcs-types/claim.js';
 import {StorageKey} from './storage/storage-key.js';
 import {Exists} from './storage/drivers/driver.js';
-import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {VolatileMemoryProvider, VolatileStorageKey} from './storage/drivers/volatile.js';
 import {RamDiskStorageKey} from './storage/drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
@@ -38,7 +38,7 @@ import {canonicalManifest} from './canonical-manifest.js';
 import {Policy} from './policy/policy.js';
 import {resolveFieldPathType} from './field-path.js';
 import {StoreInfo, StoreClaims} from './storage/store-info.js';
-import {CRDTTypeRecord} from '../crdt/lib-crdt.js';
+import {StorageKeyParser} from './storage/storage-key-parser.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -123,6 +123,7 @@ export interface ManifestParseOptions {
   memoryProvider?: VolatileMemoryProvider;
   context?: Manifest;
   throwImportErrors?: boolean;
+  storageKeyParser?: StorageKeyParser;
 }
 
 interface ManifestLoadOptions {
@@ -258,7 +259,7 @@ export class Manifest {
       type: Type,
       name: string,
       id: string,
-      storageKey: string | StorageKey,
+      storageKey: StorageKey,
       tags: string[],
       claims?: StoreClaims,
       originalId?: string,
@@ -274,10 +275,7 @@ export class Manifest {
       this.storeManifestUrls.set(opts.id, this.fileName);
     }
 
-    let storageKey = opts.storageKey;
-    if (typeof storageKey === 'string') {
-      storageKey = StorageKeyParser.parse(storageKey);
-    }
+    const storageKey = opts.storageKey;
     const store = new StoreInfo({...opts, storageKey, exists: Exists.MayExist});
     return this._addStore(store, opts.tags);
   }
@@ -410,7 +408,7 @@ export class Manifest {
 
   static async parse(content: string, options: ManifestParseOptions = {}): Promise<Manifest> {
     // allow `context` for including an existing manifest in the import list
-    let {fileName, loader, registry, context, memoryProvider} = options;
+    let {fileName, loader, registry, context, memoryProvider, storageKeyParser} = options;
     registry = registry || {};
     const id = `manifest:${fileName}:`;
 
@@ -465,7 +463,8 @@ export class Manifest {
         } else {
           preamble = `Post-parse processing ${severity} caused by`;
         }
-        message = `${preamble} '${fileName}' line ${e.location.start.line}.
+        const fileNameStr = fileName ? `'${fileName}'` : '<no filename>';
+        message = `${preamble} ${fileNameStr} line ${e.location.start.line}.
 ${e.message}
   ${line}
   ${highlight}`;
@@ -545,9 +544,11 @@ ${e.message}
       await processItems('schema', item => Manifest._processSchema(manifest, item));
       await processItems('interface', item => Manifest._processInterface(manifest, item));
       await processItems('particle', item => Manifest._processParticle(manifest, item, loader));
-      await processItems('store', item => Manifest._processStore(manifest, item, loader, memoryProvider));
+      await processItems('store', item => Manifest._processStore(manifest, item, loader, memoryProvider, storageKeyParser));
       await processItems('policy', item => Manifest._processPolicy(manifest, item));
       await processItems('recipe', item => Manifest._processRecipe(manifest, item));
+
+      Manifest._checkValidityOfRecursiveSchemas(manifest);
     } catch (e) {
       dumpErrors(manifest);
       throw processError(e, false);
@@ -633,6 +634,7 @@ ${e.message}
                 throw new ManifestError(node.location, `Could not infer type of '${name}' field`);
               }
               fields[name] = type;
+              // TODO(b/174612477): This doesn't correctly handle nullable and other non-primitive types.
               typeData[name] = type.type;
             }
             const refinement = node.refinement && Refinement.fromAst(node.refinement, typeData);
@@ -715,6 +717,35 @@ ${e.message}
     visitor.traverse(items);
   }
 
+  private static _checkValidityOfRecursiveSchemas(manifest: Manifest) {
+    if (Flags.recursiveSchemasAllowed) {
+      return; // No further checking needed
+    }
+    for (const schema of Object.values(manifest.schemas)) {
+      const referenced: Set<string> = new Set();
+      const visit = (schema: Schema) => {
+        // visit fields
+        for (const field of Object.values(schema.fields)) {
+          const entityType = field.getEntityType();
+          if (entityType == null) {
+            // ignore Primitive types
+            continue;
+          }
+          const fieldType = entityType.getEntitySchema();
+          if (referenced.has(fieldType.name)) {
+            return; // already visited
+          }
+          referenced.add(fieldType.name);
+          visit(fieldType);
+        }
+      };
+      visit(schema);
+      if (referenced.has(schema.name)) {
+        throw new ManifestError(schema.location, `Recursive schemas are unsuported, unstable support can be enabled via the 'recursiveSchemasAllowed' flag: ${schema.name}`);
+      }
+    }
+  }
+
   private static _discoverSchema(manifest: Manifest, schemaItem) {
     const names = [...schemaItem.names];
     const name = schemaItem.alias || names[0];
@@ -723,7 +754,9 @@ ${e.message}
         schemaItem.location,
         `Schema defined without name or alias`);
     }
-    manifest._schemas[name] = new Schema(names, {}, {});
+    const schema = new Schema(names, {}, {});
+    schema.location = schemaItem.location;
+    manifest._schemas[name] = schema;
   }
 
   private static _processSchema(manifest: Manifest, schemaItem) {
@@ -787,6 +820,7 @@ ${e.message}
     const annotations: AnnotationRef[] = Manifest._buildAnnotationRefs(manifest, schemaItem.annotationRefs);
     manifest._schemas[name] = schema;
     const updatedSchema = new Schema(names, fields, {description, annotations});
+    updatedSchema.location = schemaItem.location;
     if (schemaItem.alias) {
       updatedSchema.isAlias = true;
     }
@@ -808,7 +842,7 @@ ${e.message}
       annotationItem.allowMultiple, annotationItem.doc);
   }
 
-  private static _processParticle(manifest: Manifest, particleItem, loader?: LoaderBase) {
+  private static _processParticle(manifest: Manifest, particleItem: AstNode.Particle, loader?: LoaderBase) {
     // TODO: we should be producing a new particleSpec, not mutating
     //       particleItem directly.
     // TODO: we should require both of these and update failing tests...
@@ -817,9 +851,9 @@ ${e.message}
       particleItem.args = [];
     }
 
-    if (particleItem.hasParticleArgument) {
+    if (particleItem.hasDeprecatedParticleArgument) {
       const warning = new ManifestWarning(particleItem.location, `Particle uses deprecated argument body`);
-      warning.key = 'hasParticleArgument';
+      warning.key = 'hasDeprecatedParticleArgument';
       manifest.errors.push(warning);
     }
 
@@ -833,47 +867,57 @@ ${e.message}
     }
 
     // TODO: loader should not be optional.
-    if (particleItem.implFile && loader) {
+    if (particleItem.implFile /*&& loader*/) {
       if (!Loader.isJvmClasspath(particleItem.implFile)) {
-        particleItem.implFile = loader.join(manifest.fileName, particleItem.implFile);
+        particleItem.implFile = (loader || Loader).join(manifest.fileName, particleItem.implFile);
       }
     }
 
-    const processArgTypes = args => {
+    const processArgTypes = (args: AstNode.ParticleHandleConnection[]) => {
+      const newArgs: SerializedHandleConnectionSpec[] = [];
       for (const arg of args) {
+        const model: Type = arg.type['model'];
+        // TOOD(sjmiles): extremely noisy warning here, since many canonical schemas
+        // still use deprecated syntax.
         if (arg.type && arg.type.kind === 'type-name'
             // For now let's focus on entities, we should do interfaces next.
-            && arg.type.model && arg.type.model.tag === 'Entity') {
+            && model && model.tag === 'Entity') {
           const warning = new ManifestWarning(arg.location, `Particle uses deprecated external schema`);
           warning.key = 'externalSchemas';
           manifest.errors.push(warning);
         }
-        arg.type = arg.type.model;
-        if (arg.type.getEntitySchema()) {
-          const manifestSchema = manifest.findSchemaByName(arg.type.getEntitySchema().name);
-          const fields = arg.type.getEntitySchema().fields;
+        if (model.getEntitySchema()) {
+          // TODO(github.com/PolymerLabs/arcs/issues/6903): This should be done as a single pass over all annotation sets.
+          const manifestSchema = manifest.findSchemaByName(model.getEntitySchema().name);
+          const fields = model.getEntitySchema().fields;
           for (const name of Object.keys(fields)) {
             // If we have an external schema, annotations were already converted.
             if (!manifestSchema || !manifestSchema.fields[name]) {
-              fields[name].annotations = Manifest._buildAnnotationRefs(manifest, fields[name].annotations);
+              fields[name].annotations = Manifest._buildAnnotationRefs(manifest, (fields[name].annotations as unknown) as AstNode.AnnotationRefNode[]);
             }
           }
         }
-        processArgTypes(arg.dependentConnections);
-        arg.annotations = Manifest._buildAnnotationRefs(manifest, arg.annotations);
-
-        // TODO: Validate that the type of the expression matches the declared type.
-        arg.expression = arg.expression && arg.expression.unparsedPaxelExpression;
+        const dependentConnections = processArgTypes(arg.dependentConnections);
+        const newArg: SerializedHandleConnectionSpec = {
+          ...arg,
+          dependentConnections,
+          type: model.toLiteral(),
+          annotations: Manifest._buildAnnotationRefs(manifest, arg.annotations),
+          // TODO: Validate that the type of the expression matches the declared type.
+          expression: arg.expression && arg.expression.unparsedPaxelExpression,
+        };
+        newArgs.push(newArg);
       }
+      return newArgs;
     };
     if (particleItem.implFile && particleItem.args.some(arg => !!arg.expression)) {
       const arg = particleItem.args.find(arg => !!arg.expression);
       throw new ManifestError(arg.expression.location, `A particle with implementation cannot use result expressions.`);
     }
-    processArgTypes(particleItem.args);
-    particleItem.annotations = Manifest._buildAnnotationRefs(manifest, particleItem.annotationRefs);
-    particleItem.manifestNamespace = manifest.meta.namespace;
-    manifest._particles[particleItem.name] = new ParticleSpec(particleItem);
+    const args = processArgTypes(particleItem.args);
+    const annotations = Manifest._buildAnnotationRefs(manifest, particleItem.annotationRefs);
+    const manifestNamespace = manifest.meta.namespace;
+    manifest._particles[particleItem.name] = new ParticleSpec({...particleItem, manifestNamespace, annotations, args});
   }
 
   // TODO: Move this to a generic pass over the AST and merge with resolveTypeName.
@@ -904,7 +948,7 @@ ${e.message}
   }
 
   private static _processPolicy(manifest: Manifest, policyItem: AstNode.Policy) {
-    const buildAnnotationRefs = (refs: AstNode.AnnotationRef[]) => Manifest._buildAnnotationRefs(manifest, refs);
+    const buildAnnotationRefs = (refs: AstNode.AnnotationRefNode[]) => Manifest._buildAnnotationRefs(manifest, refs);
     const findTypeByName = (name: string) => manifest.findTypeByName(name);
     const policy = Policy.fromAstNode(policyItem, buildAnnotationRefs, findTypeByName);
     if (manifest._policies.some(p => p.name === policy.name)) {
@@ -1369,7 +1413,7 @@ ${e.message}
     return new RamDiskStorageKey(this.generateID('local-data').toString());
   }
 
-  private static _buildAnnotationRefs(manifest: Manifest, annotationRefItems: AstNode.AnnotationRef[]): AnnotationRef[] {
+  private static _buildAnnotationRefs(manifest: Manifest, annotationRefItems: AstNode.AnnotationRefNode[]): AnnotationRef[] {
     const annotationRefs: AnnotationRef[] = [];
     for (const aRefItem of annotationRefItems) {
       const annotation = manifest.findAnnotationByName(aRefItem.name);
@@ -1409,7 +1453,7 @@ ${e.message}
     return annotationRefs;
   }
 
-  private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: LoaderBase, memoryProvider?: VolatileMemoryProvider) {
+  private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: LoaderBase, memoryProvider?: VolatileMemoryProvider, storageKeyParser?: StorageKeyParser) {
     const {name, originalId, description, version, origin} = item;
     let id = item.id;
     let type = item.type['model'];  // Model added in _augmentAstWithTypes.
@@ -1436,7 +1480,7 @@ ${e.message}
     // we generate storage stubs that contain the relevant information.
     if (item.origin === 'storage') {
       return manifest.newStore({
-        type, name, id, storageKey: item.source, tags,
+        type, name, id, storageKey: storageKeyParser.parse(item.source), tags,
         originalId, claims, description, version, origin
       });
     }
@@ -1460,7 +1504,7 @@ ${e.message}
       entities = this.inlineEntitiesToSerialisedFormat(manifest, item.entities);
     }
 
-    const storageKey = item['storageKey'] || manifest.createLocalDataStorageKey();
+    const storageKey = item['storageKey'] ? storageKeyParser.parse(item['storageKey']) : manifest.createLocalDataStorageKey();
     if (storageKey instanceof RamDiskStorageKey) {
       if (!memoryProvider) {
         throw new ManifestError(item.location, `Creating ram disk stores requires having a memory provider.`);

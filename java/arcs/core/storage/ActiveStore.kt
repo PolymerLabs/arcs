@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -15,6 +15,12 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.type.Type
 
+/** An [ActiveStore] that accepts any data type. */
+typealias UntypedActiveStore = ActiveStore<CrdtData, CrdtOperation, Any?>
+
+/** Token generated upon registering to a store. */
+typealias CallbackToken = Int
+
 /**
  * Representation of an *active* store.
  *
@@ -22,14 +28,13 @@ import arcs.core.type.Type
  * within the [StoreOptions].
  */
 abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
-  options: StoreOptions
+  val options: StoreOptions
 ) : IStore<Data, Op, ConsumerData> {
   override val storageKey: StorageKey = options.storageKey
   override val type: Type = options.type
-  open val versionToken: String? = options.versionToken
 
   /** Suspends until all pending operations are complete. */
-  open suspend fun idle() = Unit
+  abstract suspend fun idle()
 
   /**
    * Registers a [ProxyCallback] with the store and returns a token which can be used to
@@ -44,5 +49,5 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
   abstract suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>)
 
   /** Performs any operations that are needed to release resources held by this [ActiveStore]. */
-  open fun close() = Unit
+  abstract fun close()
 }

@@ -9,54 +9,54 @@
  */
 
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
-import {StorageCommunicationEndpointProvider, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint} from './store-interface.js';
+import {ProxyMessage, ProxyCallback, StorageCommunicationEndpoint} from './store-interface.js';
 import {PropagatedException} from '../arc-exceptions.js';
-import {ChannelConstructor} from '../channel-constructor.js';
 import {StorageProxy} from './storage-proxy.js';
 import {Dictionary, BiMap, noAwait} from '../../utils/lib-utils.js';
 import {Type} from '../../types/lib-types.js';
 import {assert} from '../../platform/assert-web.js';
+import {StoreInfo} from './store-info.js';
+import {CRDTTypeRecordToType} from './storage.js';
+import {StorageFrontend} from './storage-frontend.js';
 
 export class StorageProxyMuxer<T extends CRDTTypeRecord> {
   private readonly storageProxies = new BiMap<string, StorageProxy<T>>();
   private readonly callbacks: Dictionary<ProxyCallback<T>> = {};
-  private readonly storageEndpoint: StorageCommunicationEndpoint<T>;
   private readonly storageKey: string;
   private readonly type: Type;
 
-  constructor(storeProvider: StorageCommunicationEndpointProvider<T>, type: Type, storageKey: string) {
-    this.storageEndpoint = storeProvider.getStorageEndpoint(this);
-    this.storageKey = storageKey;
-    this.type = type;
+  constructor(private readonly storageEndpoint: StorageCommunicationEndpoint<T>) {
+    this.storageKey = this.storageEndpoint.storeInfo.storageKey.toString();
+    this.type = this.storageEndpoint.storeInfo.type;
   }
+
+  get storeInfo(): StoreInfo<CRDTTypeRecordToType<T>> { return this.storageEndpoint.storeInfo; }
 
   getStorageProxy(muxId: string): StorageProxy<T> {
     this.storageEndpoint.setCallback(this.onMessage.bind(this));
     if (!this.storageProxies.hasL(muxId)) {
-      const storageCommunicationEndpointProvider = this.createStorageCommunicationEndpointProvider(muxId, this.storageEndpoint, this);
-      this.storageProxies.set(muxId, new StorageProxy(muxId, storageCommunicationEndpointProvider, this.type.getContainedType(), this.storageKey));
+      this.storageProxies.set(muxId, new StorageProxy(this.createStorageCommunicationEndpoint(muxId, this.storageEndpoint, this)));
     }
     return this.storageProxies.getL(muxId);
   }
 
-  createStorageCommunicationEndpointProvider(muxId: string, storageEndpoint: StorageCommunicationEndpoint<T>, storageProxyMuxer: StorageProxyMuxer<T>): StorageCommunicationEndpointProvider<T> {
+  private createStorageCommunicationEndpoint(muxId: string, storageEndpoint: StorageCommunicationEndpoint<T>, storageProxyMuxer: StorageProxyMuxer<T>): StorageCommunicationEndpoint<T> {
     return {
-      getStorageEndpoint(): StorageCommunicationEndpoint<T> {
-        return {
-          async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
-            message.muxId = muxId;
-            await storageEndpoint.onProxyMessage(message);
-          },
-          setCallback(callback: ProxyCallback<T>): void {
-            storageProxyMuxer.callbacks[muxId] = callback;
-          },
-          reportExceptionInHost(exception: PropagatedException): void {
-            storageEndpoint.reportExceptionInHost(exception);
-          },
-          getChannelConstructor(): ChannelConstructor {
-            return storageEndpoint.getChannelConstructor();
-          }
-        };
+      get storeInfo(): StoreInfo<CRDTTypeRecordToType<T>> {
+        return storageEndpoint.storeInfo;
+      },
+      async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
+        message.muxId = muxId;
+        await storageEndpoint.onProxyMessage(message);
+      },
+      setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
+        storageProxyMuxer.callbacks[muxId] = callback;
+      },
+      reportExceptionInHost(exception: PropagatedException): void {
+        storageEndpoint.reportExceptionInHost(exception);
+      },
+      getStorageFrontend(): StorageFrontend {
+        return storageEndpoint.getStorageFrontend();
       }
     };
   }

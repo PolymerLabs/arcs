@@ -12,7 +12,7 @@ particle T
   h1: reads Thing {num: Number}
 -----[results]-----
 
-        var num: Double
+        override var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("num", _value)
         
@@ -29,7 +29,7 @@ particle T
   h1: reads Thing {num: List<Number>}
 -----[results]-----
 
-        var num: List<Double>
+        override var num: List<Double>
             get() = super.getSingletonValue("num") as List<Double>? ?: emptyList()
             private set(_value) = super.setSingletonValue("num", _value)
         
@@ -48,7 +48,7 @@ particle T
   h1: reads Thing {other: &Other {name: Text}}
 -----[results]-----
 
-        var other: arcs.sdk.Reference<Other>?
+        override var other: arcs.sdk.Reference<Other>?
             get() = super.getSingletonValue("other") as arcs.sdk.Reference<Other>?
             private set(_value) = super.setSingletonValue("other", _value)
         
@@ -67,7 +67,7 @@ particle T
   h1: reads Thing {other: List<&Other {name: Text}>}
 -----[results]-----
 
-        var other: List<arcs.sdk.Reference<Other>>
+        override var other: List<arcs.sdk.Reference<Other>>
             get() = super.getSingletonValue("other") as List<arcs.sdk.Reference<Other>>? ?: emptyList()
             private set(_value) = super.setSingletonValue("other", _value)
         
@@ -86,7 +86,7 @@ particle T
   h1: reads Thing {num: Number}
 -----[results]-----
 
-        var num = num
+        override var num = num
             get() = field
             private set(_value) {
                 field = _value

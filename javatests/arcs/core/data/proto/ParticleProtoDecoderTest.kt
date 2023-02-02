@@ -29,16 +29,18 @@ class ParticleProtoDecoderTest {
   )
   val thingTypeProto = parseTypeProtoText(
     """
-          entity {
-            schema {
-              names: "Thing"
-              fields {
-                key: "name"
-                value: { primitive: TEXT }
-              }
-            }
-          }
-        """.trimIndent()
+    entity {
+      schema {
+        names: "Thing"
+        fields {
+          key: "name"
+          value: { primitive: TEXT }
+        }
+        refinement: "true"
+        query: "true"
+      }
+    }
+    """.trimIndent()
   )
   val thingType = EntityType(
     Schema(
@@ -50,10 +52,10 @@ class ParticleProtoDecoderTest {
       hash = ""
     )
   )
-  val readConnectionSpec = HandleConnectionSpec("data", HandleMode.Read, TypeVariable("data"))
-  val readerSpec = ParticleSpec("Reader", mapOf("data" to readConnectionSpec), "ReaderLocation")
-  val writeConnectionSpec = HandleConnectionSpec("data", HandleMode.Write, TypeVariable("data"))
-  val writerSpec = ParticleSpec("Writer", mapOf("data" to writeConnectionSpec), "WriterLocation")
+  val readConnectionSpec = HandleConnectionSpec("read", HandleMode.Read, TypeVariable("data"))
+  val readerSpec = ParticleSpec("Reader", mapOf("read" to readConnectionSpec), "ReaderLocation")
+  val writeConnectionSpec = HandleConnectionSpec("write", HandleMode.Write, TypeVariable("data"))
+  val writerSpec = ParticleSpec("Writer", mapOf("write" to writeConnectionSpec), "WriterLocation")
   val readerWriterSpec = ParticleSpec(
     "ReaderWriter",
     mapOf(
@@ -72,10 +74,10 @@ class ParticleProtoDecoderTest {
   )
 
   @Test
-  fun decodesHandleConnnection() {
+  fun decodesHandleConnection() {
     var handleConnectionProto = HandleConnectionProto
       .newBuilder()
-      .setName("data")
+      .setName("read")
       .setHandle("thing")
       .setType(thingTypeProto)
       .build()
@@ -84,6 +86,18 @@ class ParticleProtoDecoderTest {
     assertThat(readConnection.spec).isEqualTo(readConnectionSpec)
     assertThat(readConnection.handle).isEqualTo(thingHandle)
     assertThat(readConnection.type).isEqualTo(thingType)
+  }
+
+  @Test
+  fun roundTripHandleConnection() {
+    var handleConnectionProto = HandleConnectionProto
+      .newBuilder()
+      .setName("read")
+      .setHandle("thing")
+      .setType(thingTypeProto)
+      .build()
+    // When decoded as part of readerSpec, the mode is [HandleMode.Read].
+    assertRoundTrip(handleConnectionProto, context, readerSpec)
   }
 
   @Test
@@ -106,7 +120,7 @@ class ParticleProtoDecoderTest {
   fun decodeHandleConnectionDetectsMissingHandle() {
     val proto = HandleConnectionProto
       .newBuilder()
-      .setName("data")
+      .setName("write")
       .setHandle("unknown")
       .setType(thingTypeProto)
       .build()
@@ -122,7 +136,7 @@ class ParticleProtoDecoderTest {
   fun decodeHandleConnectionDetectsMissingType() {
     val proto = HandleConnectionProto
       .newBuilder()
-      .setName("data")
+      .setName("read")
       .setHandle("thing")
       .build()
 
@@ -138,7 +152,7 @@ class ParticleProtoDecoderTest {
   fun decodesParticleProto() {
     val readConnectionProto = HandleConnectionProto
       .newBuilder()
-      .setName("data")
+      .setName("read")
       .setHandle("thing")
       .setType(thingTypeProto)
       .build()
@@ -154,6 +168,23 @@ class ParticleProtoDecoderTest {
         listOf(Particle.HandleConnection(readConnectionSpec, thingHandle, thingType))
       )
     }
+  }
+
+  @Test
+  fun roundTripParticleProto() {
+    val readConnectionProto = HandleConnectionProto
+      .newBuilder()
+      .setName("read")
+      .setHandle("thing")
+      .setType(thingTypeProto)
+      .build()
+    val particleProto = ParticleProto
+      .newBuilder()
+      .setSpecName("Reader")
+      .addConnections(readConnectionProto)
+      .build()
+    assertRoundTrip(readConnectionProto, context, readerSpec)
+    assertRoundTrip(particleProto, context)
   }
 
   @Test
@@ -188,6 +219,32 @@ class ParticleProtoDecoderTest {
   }
 
   @Test
+  fun roundTripParticleProtoWithMultipleConnections() {
+    val readConnectionProto = HandleConnectionProto
+      .newBuilder()
+      .setName("read")
+      .setHandle("thing")
+      .setType(thingTypeProto)
+      .build()
+    val writeConnectionProto = HandleConnectionProto
+      .newBuilder()
+      .setName("write")
+      .setHandle("thing")
+      .setType(thingTypeProto)
+      .build()
+    val particleProto = ParticleProto
+      .newBuilder()
+      .setSpecName("ReaderWriter")
+      .addConnections(readConnectionProto)
+      .addConnections(writeConnectionProto)
+      .build()
+
+    assertRoundTrip(readConnectionProto, context, readerWriterSpec)
+    assertRoundTrip(writeConnectionProto, context, readerWriterSpec)
+    assertRoundTrip(particleProto, context)
+  }
+
+  @Test
   fun decodesParticleProtoWithNoConnections() {
     val emptyParticleProto = ParticleProto
       .newBuilder()
@@ -200,6 +257,15 @@ class ParticleProtoDecoderTest {
   }
 
   @Test
+  fun roundTripParticleProtoWithNoConnections() {
+    val emptyParticleProto = ParticleProto
+      .newBuilder()
+      .setSpecName("Reader")
+      .build()
+    assertRoundTrip(emptyParticleProto, context)
+  }
+
+  @Test
   fun decodeParticleDetectsMissingSpecs() {
     val particleProto = ParticleProto
       .newBuilder()
@@ -209,5 +275,20 @@ class ParticleProtoDecoderTest {
       particleProto.decode(context)
     }
     assertThat(exception).hasMessageThat().contains("ParticleSpec 'NonExistent' not found")
+  }
+
+  companion object {
+
+    private fun assertRoundTrip(proto: ParticleProto, context: DecodingContext) {
+      assertThat(proto.decode(context).encode()).isEqualTo(proto)
+    }
+
+    private fun assertRoundTrip(
+      proto: HandleConnectionProto,
+      context: DecodingContext,
+      spec: ParticleSpec
+    ) {
+      assertThat(proto.decode(spec, context).encode()).isEqualTo(proto)
+    }
   }
 }

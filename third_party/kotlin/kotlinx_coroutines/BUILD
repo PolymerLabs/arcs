@@ -27,3 +27,8 @@ alias(
     name = "kotlinx_coroutines_test",
     actual = "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_test",
 )
+
+alias(
+    name = "kotlinx_coroutines_debug",
+    actual = "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_debug",
+)

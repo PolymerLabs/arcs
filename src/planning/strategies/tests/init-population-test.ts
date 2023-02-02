@@ -10,7 +10,6 @@
 
 
 import {assert} from '../../../platform/chai-web.js';
-import {Arc} from '../../../runtime/arc.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Loader} from '../../../platform/loader.js';
 import {InitPopulation} from '../../strategies/init-population.js';
@@ -39,17 +38,17 @@ describe('InitPopulation', () => {
     const recipe = manifest.recipes[0];
     assert(recipe.normalize());
     const runtime = new Runtime({loader, context: manifest});
-    const arc = runtime.newArc('test-plan-arc');
+    const arcInfo = await runtime.allocator.startArc({arcName: 'test-plan-arc'});
 
     async function scoreOfInitPopulationOutput() {
-      const results = await new InitPopulation(arc, StrategyTestHelper.createTestStrategyArgs(
-          arc, {contextual: false})).generate({generation: 0});
+      const results = await new InitPopulation(arcInfo, StrategyTestHelper.createTestStrategyArgs(
+          arcInfo, {contextual: false})).generate({generation: 0});
       assert.lengthOf(results, 1);
       return results[0].score;
     }
 
     assert.strictEqual(await scoreOfInitPopulationOutput(), 1);
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arcInfo, recipe);
     assert.strictEqual(await scoreOfInitPopulationOutput(), 0);
   });
 
@@ -66,9 +65,9 @@ describe('InitPopulation', () => {
       'A.js': 'defineParticle(({Particle}) => class extends Particle {})'
     });
     const runtime = new Runtime({loader, context: new Manifest({id: ArcId.newForTest('test')})});
-    const arc = runtime.newArc('test-plan-arc');
+    const arc = runtime.getArcById((await runtime.allocator.startArc({arcName: 'test-plan-arc'})).id);
 
-    const results = await new InitPopulation(arc, {contextual: false,
+    const results = await new InitPopulation(arc.arcInfo, {contextual: false,
         recipeIndex: {recipes: manifest.recipes}}).generate({generation: 0});
     assert.lengthOf(results, 1);
     assert.strictEqual(results[0].result.toString(), recipe.toString());
@@ -125,30 +124,30 @@ describe('InitPopulation', () => {
           burger: writes burger
     `);
 
-    const arc = StrategyTestHelper.createTestArc(manifest);
+    const arcInfo = await StrategyTestHelper.createTestArcInfo(manifest);
 
     async function openRestaurantWith(foodType: string) {
       const restaurant = manifest.recipes.find(recipe => recipe.name === `${foodType}Restaurant`);
       restaurant.normalize();
-      restaurant.mergeInto(arc.activeRecipe);
+      restaurant.mergeInto(arcInfo.activeRecipe);
     }
 
-    let results = await new InitPopulation(arc, StrategyTestHelper.createTestStrategyArgs(
-        arc, {contextual: true})).generate({generation: 0});
+    let results = await new InitPopulation(arcInfo, StrategyTestHelper.createTestStrategyArgs(
+      arcInfo, {contextual: true})).generate({generation: 0});
     assert.lengthOf(results, 0, 'Initially nothing is available to eat');
 
     await openRestaurantWith('Burrito');
 
-    results = await new InitPopulation(arc, StrategyTestHelper.createTestStrategyArgs(
-        arc, {contextual: true})).generate({generation: 0});
+    results = await new InitPopulation(arcInfo, StrategyTestHelper.createTestStrategyArgs(
+        arcInfo, {contextual: true})).generate({generation: 0});
     assert.sameMembers(results.map(r => r.result.name), [
       'FillsTortilla',
       'EatBurrito'
     ], 'After a Burrito restaurant opened, tortilla wrapped goodness can be consumed');
 
     await openRestaurantWith('Burger');
-    results = await new InitPopulation(arc, StrategyTestHelper.createTestStrategyArgs(
-        arc, {contextual: true})).generate({generation: 0});
+    results = await new InitPopulation(arcInfo, StrategyTestHelper.createTestStrategyArgs(
+        arcInfo, {contextual: true})).generate({generation: 0});
     assert.lengthOf(results, 4, );
     assert.sameMembers(results.map(r => r.result.name), [
       'FillsTortilla',
@@ -157,8 +156,8 @@ describe('InitPopulation', () => {
       'EatBurger'
     ], 'Eventually both a burrito and a burger can be enjoyed');
 
-    results = await new InitPopulation(arc, StrategyTestHelper.createTestStrategyArgs(
-        arc, {contextual: true})).generate({generation: 1});
+    results = await new InitPopulation(arcInfo, StrategyTestHelper.createTestStrategyArgs(
+        arcInfo, {contextual: true})).generate({generation: 1});
     assert.lengthOf(results, 0, 'Food is only served once');
   });
 });

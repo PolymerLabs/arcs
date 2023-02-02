@@ -9,10 +9,12 @@
  */
 
 import {Entity} from './entity.js';
+import {Flags} from './flags.js';
 import {Reference} from './reference.js';
-import {ReferenceType, Schema, FieldType} from '../types/lib-types.js';
+import {ReferenceType, Schema, FieldType, NullableField} from '../types/lib-types.js';
 import {TypeChecker} from './type-checker.js';
-import {ChannelConstructor} from './channel-constructor.js';
+import {StorageFrontend} from './storage/storage-frontend.js';
+import {SchemaFieldKind} from './manifest-ast-types/manifest-ast-nodes.js';
 
 function convertToJsType(primitiveType, schemaName: string) {
   switch (primitiveType.type) {
@@ -44,10 +46,18 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
     throw new Error(`Can't set field ${name}; not in schema ${schema.name}`);
   }
   if (value === undefined || value === null) {
-    return;
+    if (fieldType.kind === SchemaFieldKind.Nullable) {
+      return; // Value is optional and therefore correct.
+    }
+    if (!Flags.enforceStrictNullCheckingInJS) {
+      return; // Allow null values.
+    }
+    throw new Error(`Can't set field ${name} to ${value}; It is non-nullable in ${schema.name}`);
   }
 
   switch (fieldType.kind) {
+    case 'schema-nullable':
+      return validateFieldAndTypes(name, value, schema, (fieldType as NullableField).schema);
     case 'schema-primitive': {
       if (valueType(value) !== convertToJsType(fieldType, schema.name)) {
         throw new TypeError(`Type mismatch setting field ${name} (type ${fieldType.getType()}); ` +
@@ -119,7 +129,7 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
   }
 }
 
-function sanitizeEntry(type: FieldType, value, name, context: ChannelConstructor) {
+function sanitizeEntry(type: FieldType, value, name, frontend: StorageFrontend) {
   if (!type) {
     // If there isn't a field type for this, the proxy will pick up
     // that fact and report a meaningful error.
@@ -136,7 +146,7 @@ function sanitizeEntry(type: FieldType, value, name, context: ChannelConstructor
       // Setting value from raw data (Channel side).
       // TODO(shans): This can't enforce type safety here as there isn't any type data available.
       // Maybe this is OK because there's type checking on the other side of the channel?
-      return new Reference(value as {id, creationTimestamp, entityStorageKey}, new ReferenceType(type.getEntityType()), context);
+      return new Reference(value as {id, creationTimestamp, entityStorageKey}, new ReferenceType(type.getEntityType()), frontend);
     } else {
       throw new TypeError(`Cannot set reference ${name} with non-reference '${value}'`);
     }
@@ -147,7 +157,7 @@ function sanitizeEntry(type: FieldType, value, name, context: ChannelConstructor
     if (value.constructor.name === 'Set') {
       return value;
     } else if (value instanceof Object && 'length' in value) {
-      return new Set(value.map(v => sanitizeEntry(type.getFieldType(), v, name, context)));
+      return new Set(value.map(v => sanitizeEntry(type.getFieldType(), v, name, frontend)));
     } else {
       throw new TypeError(`Cannot set collection ${name} with non-collection '${value}'`);
     }

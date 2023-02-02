@@ -10,6 +10,7 @@
  */
 package arcs.core.entity
 
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.storage.keys.ForeignStorageKey
@@ -17,7 +18,7 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import kotlinx.coroutines.CoroutineDispatcher
 
 /** Base functionality common to all read/write singleton and collection handles. */
-abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
+abstract class BaseHandle(config: BaseHandleConfig) : Handle {
   override val name: String = config.name
 
   override val mode: HandleMode = config.spec.mode
@@ -73,13 +74,14 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
    * entity is actually stored in the handle before calling this internal method.
    */
   @Suppress("UNCHECKED_CAST")
-  protected fun <E : Entity> createReferenceInternal(entity: E): Reference<E> {
+  // VisibleForTesting
+  fun <E : Entity> createReferenceInternal(entity: E): Reference<E> {
     val storageKey = requireNotNull(storageProxy.storageKey as? ReferenceModeStorageKey) {
       "ReferenceModeStorageKey required in order to create references."
     }
     return Reference(
       spec.entitySpecs.single(),
-      arcs.core.storage.Reference(entity.entityId!!, storageKey.backingKey, null).also {
+      RawReference(entity.entityId!!, storageKey.backingKey, null).also {
         it.dereferencer = dereferencerFactory.create(spec.entitySpecs.single().SCHEMA)
       }
     ) as Reference<E>
@@ -91,7 +93,7 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
   ): Reference<E>? {
     val reference = Reference(
       spec,
-      arcs.core.storage.Reference(id, ForeignStorageKey(spec.SCHEMA), null).also {
+      RawReference(id, ForeignStorageKey(spec.SCHEMA), null).also {
         dereferencerFactory.injectDereferencers(spec.SCHEMA, it)
       }
     )

@@ -125,6 +125,11 @@ class SchemaFieldsTest {
   }
 
   @Test
+  fun nullableOf_nullableValueSupportFlagEnabled_doesNotThrowException() {
+    FieldType.NullableOf(FieldType.Text)
+  }
+
+  @Test
   fun primitiveTypeIsWellStructured() {
     val seenValues = PrimitiveType.values().map { it.id }.toSet()
     for (i in 0..seenValues.size - 1) {

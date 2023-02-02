@@ -147,12 +147,10 @@ recipe UnicodeTest
     res: writes h3
 
 // -----------------------------------------------------------------------------------------------
-schema FooHandle
-  txt: Text
 
 particle OnFirstStartTest in '$module.wasm'
   root: consumes Slot
-  fooHandle: reads writes FooHandle
+  fooHandle: reads writes {txt: Text}
 
 recipe OnFirstStartTest
   s1: slot 'rootslotid-root'

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -15,6 +15,7 @@ import {EntityType, Schema} from '../../types/lib-types.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ConCap} from '../../testing/test-util.js';
 import {Ttl} from '../capabilities.js';
+import {MockStorageFrontend} from '../storage/testing/test-storage.js';
 
 describe('Entity', () => {
 
@@ -40,7 +41,7 @@ describe('Entity', () => {
         inner2: inline ExternalInline
     `);
     schema = manifest.findSchemaByName('Foo');
-    entityClass = Entity.createEntityClass(schema, null);
+    entityClass = Entity.createEntityClass(schema, new MockStorageFrontend());
   });
 
   it('behaves like a regular object except writing to any field fails', () => {

@@ -11,7 +11,7 @@
 
 package arcs.core.data
 
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.type.Type
 
 /** Representation of recipe in an Arcs manifest. */
@@ -30,12 +30,26 @@ data class Recipe(
     val spec: ParticleSpec,
     val handleConnections: List<HandleConnection>
   ) {
+    private val hashCode by lazy { 31 * spec.hashCode() + handleConnections.hashCode() }
+
     /** Representation of a handle connection in a particle. */
     data class HandleConnection(
       val spec: HandleConnectionSpec,
       val handle: Handle,
       val type: Type
     )
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other !is Particle) return false
+
+      if (spec != other.spec) return false
+      if (handleConnections != other.handleConnections) return false
+
+      return true
+    }
+
+    override fun hashCode(): Int = hashCode
   }
 
   /** Definition of a handle in a recipe. */
@@ -53,10 +67,40 @@ data class Recipe(
       CREATE, USE, MAP, COPY, JOIN
     }
 
+    private val hashCode by lazy {
+      var result = name.hashCode()
+      result = 31 * result + fate.hashCode()
+      result = 31 * result + type.hashCode()
+      result = 31 * result + (storageKey?.hashCode() ?: 0)
+      result = 31 * result + annotations.hashCode()
+      result = 31 * result + associatedHandles.hashCode()
+      result = 31 * result + id.hashCode()
+      result = 31 * result + tags.hashCode()
+      result
+    }
+
     val capabilities: Capabilities
       get() {
         return Capabilities.fromAnnotations(annotations)
       }
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other !is Handle) return false
+
+      if (name != other.name) return false
+      if (fate != other.fate) return false
+      if (type != other.type) return false
+      if (storageKey != other.storageKey) return false
+      if (annotations != other.annotations) return false
+      if (associatedHandles != other.associatedHandles) return false
+      if (id != other.id) return false
+      if (tags != other.tags) return false
+
+      return true
+    }
+
+    override fun hashCode(): Int = hashCode
   }
 }
 
@@ -70,7 +114,7 @@ fun Recipe.toPlan() = Plan(
 /** Translates a [Recipe.Handle] into a [Plan.Handle] */
 fun Recipe.Handle.toPlanHandle() = Plan.Handle(
   type = type,
-  storageKey = StorageKeyParser.parse(requireNotNull(storageKey)),
+  storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse(requireNotNull(storageKey)),
   annotations = annotations
 )
 
@@ -99,6 +143,6 @@ fun Recipe.Particle.HandleConnection.toPlanHandleConnection() = Plan.HandleConne
 
 /** Translates a [Recipe.Handle] into a [StorageKey] */
 fun Recipe.Handle.toStorageKey() = when {
-  storageKey != null -> StorageKeyParser.parse(storageKey)
+  storageKey != null -> StorageKeyManager.GLOBAL_INSTANCE.parse(storageKey)
   else -> CreatableStorageKey(name)
 }

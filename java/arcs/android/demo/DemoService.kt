@@ -7,14 +7,14 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import androidx.lifecycle.Lifecycle
 import android.content.Context
-import arcs.android.sdk.host.AndroidHost
-import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.ArcHost
+import arcs.core.host.HandleManagerFactory
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
 import arcs.jvm.util.JvmTime
+import arcs.sdk.android.labs.host.AndroidHost
+import arcs.sdk.android.labs.host.ArcHostService
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.DefaultBindHelper
 import kotlinx.coroutines.Dispatchers
@@ -25,17 +25,26 @@ import kotlinx.coroutines.launch
 /**
  * Service which wraps an ArcHost.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class DemoService : ArcHostService() {
 
   private val coroutineContext = Job() + Dispatchers.Main
 
   private lateinit var notificationManager: NotificationManager
 
+  private val storageEndpointManager = AndroidStorageServiceEndpointManager(
+    scope,
+    DefaultBindHelper(this)
+  )
+
   override val arcHost = MyArcHost(
     this,
     this.lifecycle,
-    SimpleSchedulerProvider(coroutineContext),
+    HandleManagerFactory(
+      schedulerProvider = SimpleSchedulerProvider(coroutineContext),
+      storageEndpointManager = storageEndpointManager,
+      platformTime = JvmTime
+    ),
     ::ReadPerson.toRegistration(),
     ::WritePerson.toRegistration()
   )
@@ -56,28 +65,20 @@ class DemoService : ArcHostService() {
     )
   }
 
-  private val storageEndpointManager = AndroidStorageServiceEndpointManager(
-    scope,
-    DefaultBindHelper(this)
-  )
-
-  @ExperimentalCoroutinesApi
+  @OptIn(ExperimentalCoroutinesApi::class)
   inner class MyArcHost(
     context: Context,
     lifecycle: Lifecycle,
-    schedulerProvider: SchedulerProvider,
+    handleManagerFactory: HandleManagerFactory,
     vararg initialParticles: ParticleRegistration
   ) : AndroidHost(
     context = context,
     lifecycle = lifecycle,
     coroutineContext = Dispatchers.Default,
     arcSerializationContext = Dispatchers.Default,
-    schedulerProvider = schedulerProvider,
-    storageEndpointManager = storageEndpointManager,
-    particles = *initialParticles
-  ) {
-    override val platformTime = JvmTime
-  }
+    handleManagerFactory = handleManagerFactory,
+    particles = initialParticles
+  )
 
   inner class ReadPerson : AbstractReadPerson() {
     override fun onReady() {

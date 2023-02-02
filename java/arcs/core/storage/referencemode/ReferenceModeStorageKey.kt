@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -12,6 +12,7 @@
 package arcs.core.storage.referencemode
 
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.StorageKeySpec
 import arcs.core.storage.StorageKeyUtils
 import arcs.core.storage.embed
@@ -35,15 +36,15 @@ data class ReferenceModeStorageKey(
     }
   }
 
-  override fun childKeyWithComponent(component: String): StorageKey =
-    ReferenceModeStorageKey(backingKey, storageKey.childKeyWithComponent(component))
+  override fun newKeyWithComponent(component: String): StorageKey =
+    ReferenceModeStorageKey(backingKey, storageKey.newKeyWithComponent(component))
 
   override fun toKeyString(): String = "{${backingKey.embed()}}{${storageKey.embed()}}"
 
   override fun toString(): String = super.toString()
 
   companion object : StorageKeySpec<ReferenceModeStorageKey> {
-    override val protocol = "reference-mode"
+    override val protocol = StorageKeyProtocol.ReferenceMode
     override fun parse(rawKeyString: String): ReferenceModeStorageKey {
       val invalidFormatMessage: () -> String =
         { "Invalid format for ReferenceModeStorageKey" }

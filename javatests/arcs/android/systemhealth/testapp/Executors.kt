@@ -18,7 +18,7 @@ import java.util.concurrent.Executors
 object Executors {
   /**
    * A [Scheduler] is per-arc-per-archost single-threaded.
-   * Each of them is managed directly by the [JvmSchedulerProvider] on JVM builds.
+   * Each of them is managed directly by the [SchedulerProvider].
    * Can be overridden as the globally-single-threaded design by:
    *     iterator { while (true) yield(someExecutor) }
    */

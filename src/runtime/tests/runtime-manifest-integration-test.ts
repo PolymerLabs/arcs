@@ -10,20 +10,18 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {manifestTestSetup} from '../testing/manifest-integration-test-setup.js';
-import {handleForStoreInfo, SingletonEntityType} from '../storage/storage.js';
+import {SingletonEntityType} from '../storage/storage.js';
 import {StoreInfo} from '../storage/store-info.js';
 
 describe('runtime manifest integration', () => {
   it('can produce a recipe that can be instantiated in an arc', async () => {
-    const {arc, recipe} = await manifestTestSetup();
-    await arc.instantiate(recipe);
-    await arc.idle;
+    const {runtime, arc, recipe} = await manifestTestSetup();
+    await runtime.allocator.runPlanInArc(arc, recipe);
+    await runtime.getArcById(arc.id).idle;
     const type = recipe.handles[0].type;
     const storeInfo = arc.findStoresByType(type)[0] as StoreInfo<SingletonEntityType>;
 
-    const handle = await handleForStoreInfo(storeInfo, arc);
-    // TODO: This should not be necessary.
-    type.maybeEnsureResolved();
+    const handle = await runtime.host.handleForStoreInfo(storeInfo, arc);
     const result = await handle.fetch();
     assert.strictEqual(result['value'], 'Hello, world!');
   });

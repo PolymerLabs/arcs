@@ -18,16 +18,25 @@ sealed class Capability(val tag: String) {
   enum class Comparison { LessStrict, Equivalent, Stricter }
 
   open fun isEquivalent(other: Capability): Boolean {
-    return compare(other) == Comparison.Equivalent
+    return when (other) {
+      is Range -> toRange().isEquivalent(other)
+      else -> compare(other) == Comparison.Equivalent
+    }
   }
 
-  open fun contains(other: Capability) = isEquivalent(other)
+  open fun contains(other: Capability): Boolean {
+    return when (other) {
+      is Range -> toRange().contains(other)
+      else -> isEquivalent(other)
+    }
+  }
   fun isLessStrict(other: Capability) = compare(other) == Comparison.LessStrict
   fun isSameOrLessStrict(other: Capability) = compare(other) != Comparison.Stricter
   fun isStricter(other: Capability) = compare(other) == Comparison.Stricter
   fun isSameOrStricter(other: Capability) = compare(other) != Comparison.LessStrict
 
   fun compare(other: Capability): Comparison {
+    if (tag != other.tag) throw IllegalArgumentException("Cannot compare different Capabilities")
     return when (this) {
       is Persistence -> compare(other as Persistence)
       is Encryption -> compare(other as Encryption)
@@ -82,14 +91,28 @@ sealed class Capability(val tag: String) {
         val kinds = mutableSetOf<Kind>()
         for (annotation in annotations) {
           when (annotation.name) {
-            "onDisk", "persistent" -> kinds.add(Kind.OnDisk)
-            "inMemory", "tiedToArc", "tiedToRuntime" -> kinds.add(Kind.InMemory)
+            "onDisk", "persistent" -> {
+              if (annotation.params.size > 0) {
+                throw IllegalArgumentException(
+                  "Unexpected parameter for $annotation.name capability annotation"
+                )
+              }
+              kinds.add(Kind.OnDisk)
+            }
+            "inMemory", "tiedToArc", "tiedToRuntime" -> {
+              if (annotation.params.size > 0) {
+                throw IllegalArgumentException(
+                  "Unexpected parameter for $annotation.name capability annotation"
+                )
+              }
+              kinds.add(Kind.InMemory)
+            }
           }
         }
         return when (kinds.size) {
           0 -> null
           1 -> Persistence(kinds.elementAt(0))
-          else -> throw IllegalStateException(
+          else -> throw IllegalArgumentException(
             "Containing multiple persistence capabilities: $annotations"
           )
         }
@@ -104,15 +127,15 @@ sealed class Capability(val tag: String) {
       is Minutes -> 1
       is Hours -> 60
       is Days -> 60 * 24
-      is Infinite -> -1
+      is Infinite -> 1 // returns -1 because Infinite `count` is -1.
     }
 
     /** Number of milliseconds for retention, or -1 for infinite. */
     val millis: Long = if (this is Infinite) -1 else minutes * MILLIS_IN_MIN
 
     init {
-      require(count >= 0 || isInfinite) {
-        "must be either non-negative count or infinite, " +
+      require(count > 0 || isInfinite) {
+        "must be either positive count or infinite, " +
           "but got count=$count and isInfinite=$isInfinite"
       }
     }
@@ -142,8 +165,7 @@ sealed class Capability(val tag: String) {
       const val TTL_INFINITE = -1
       const val MILLIS_IN_MIN = 60 * 1000L
 
-      val ZERO = Ttl.Minutes(0)
-      val ANY = Range(Ttl.Infinite(), Ttl.ZERO)
+      val ANY = Range(Ttl.Infinite(), Ttl.Minutes(1))
 
       private val TTL_PATTERN =
         "^([0-9]+)[ ]*(day[s]?|hour[s]?|minute[s]?|[d|h|m])$".toRegex()
@@ -159,13 +181,23 @@ sealed class Capability(val tag: String) {
           "m", "minute", "minutes" -> Ttl.Minutes(count.toInt())
           "h", "hour", "hours" -> Ttl.Hours(count.toInt())
           "d", "day", "days" -> Ttl.Days(count.toInt())
-          else -> throw IllegalStateException("Invalid TTL units $units")
+          else -> throw IllegalStateException("Invalid TTL units: $units")
         }
       }
 
       fun fromAnnotations(annotations: List<Annotation>): Ttl? {
-        return annotations.find { it.name == "ttl" }?.let {
-          Capability.Ttl.fromString(it.getStringParam("value"))
+        val ttls = annotations.filter { it.name == "ttl" }
+        return when (ttls.size) {
+          0 -> null
+          1 -> {
+            if (ttls.elementAt(0).params.size > 1) {
+              throw IllegalArgumentException("Unexpected parameter for Ttl Capability annotation")
+            }
+            Capability.Ttl.fromString(ttls.elementAt(0).getStringParam("value"))
+          }
+          else -> throw IllegalArgumentException(
+            "Containing multiple ttl capabilities: $annotations"
+          )
         }
       }
     }
@@ -186,8 +218,18 @@ sealed class Capability(val tag: String) {
       val ANY = Range(Encryption(false), Encryption(true))
 
       fun fromAnnotations(annotations: List<Annotation>): Encryption? {
-        return annotations.find { it.name == "encrypted" }?.let {
-          Capability.Encryption(true)
+        val filtered = annotations.filter { it.name == "encrypted" }
+        return when (filtered.size) {
+          0 -> null
+          1 -> {
+            if (filtered.elementAt(0).params.size > 0) {
+              throw IllegalArgumentException("Unexpected parameter for Encryption annotation")
+            }
+            Capability.Encryption(true)
+          }
+          else -> throw IllegalArgumentException(
+            "Containing multiple encryption capabilities: $annotations"
+          )
         }
       }
     }
@@ -208,8 +250,18 @@ sealed class Capability(val tag: String) {
       val ANY = Range(Queryable(false), Queryable(true))
 
       fun fromAnnotations(annotations: List<Annotation>): Queryable? {
-        return annotations.find { it.name == "queryable" }?.let {
-          Capability.Queryable(true)
+        val filtered = annotations.filter { it.name == "queryable" }
+        return when (filtered.size) {
+          0 -> null
+          1 -> {
+            if (filtered.elementAt(0).params.size > 0) {
+              throw IllegalArgumentException("Unexpected parameter for Queryable annotation")
+            }
+            Capability.Queryable(true)
+          }
+          else -> throw IllegalArgumentException(
+            "Containing multiple queryable capabilities: $annotations"
+          )
         }
       }
     }
@@ -230,9 +282,21 @@ sealed class Capability(val tag: String) {
       val ANY = Range(Shareable(false), Shareable(true))
 
       fun fromAnnotations(annotations: List<Annotation>): Shareable? {
-        return annotations.find {
+        val filtered = annotations.filter {
           arrayOf("shareable", "tiedToRuntime").contains(it.name)
-        }?.let { Capability.Shareable(true) }
+        }
+        return when (filtered.size) {
+          0 -> null
+          1 -> {
+            if (filtered.elementAt(0).params.size > 0) {
+              throw IllegalArgumentException("Unexpected parameter for Shareable annotation")
+            }
+            Capability.Shareable(true)
+          }
+          else -> throw IllegalArgumentException(
+            "Containing multiple shareable capabilities: $annotations"
+          )
+        }
       }
     }
   }

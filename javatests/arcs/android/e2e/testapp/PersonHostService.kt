@@ -16,14 +16,14 @@ package arcs.android.e2e.testapp
 import androidx.lifecycle.Lifecycle
 import android.content.Context
 import android.content.Intent
-import arcs.android.sdk.host.AndroidHost
-import arcs.android.sdk.host.ArcHostService
 import arcs.core.data.Plan
+import arcs.core.host.HandleManagerFactory
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
 import arcs.jvm.util.JvmTime
+import arcs.sdk.android.labs.host.AndroidHost
+import arcs.sdk.android.labs.host.ArcHostService
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.DefaultBindHelper
 import kotlinx.coroutines.CoroutineScope
@@ -34,41 +34,44 @@ import kotlinx.coroutines.Job
 /**
  * Service which wraps an ArcHost containing person.arcs related particles.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class PersonHostService : ArcHostService() {
 
   private val coroutineContext = Job() + Dispatchers.Main
 
+  private val handleManagerFactory = HandleManagerFactory(
+    SimpleSchedulerProvider(coroutineContext),
+    AndroidStorageServiceEndpointManager(
+      CoroutineScope(Dispatchers.Default),
+      DefaultBindHelper(this)
+    ),
+    JvmTime
+  )
+
   override val arcHost = MyArcHost(
     this,
     this.lifecycle,
-    SimpleSchedulerProvider(coroutineContext),
+    handleManagerFactory,
     ::ReadPerson.toRegistration(),
     ::WritePerson.toRegistration()
   )
 
   override val arcHosts = listOf(arcHost)
 
-  @ExperimentalCoroutinesApi
+  @OptIn(ExperimentalCoroutinesApi::class)
   inner class MyArcHost(
     context: Context,
     lifecycle: Lifecycle,
-    schedulerProvider: SchedulerProvider,
+    handleManagerFactory: HandleManagerFactory,
     vararg initialParticles: ParticleRegistration
   ) : AndroidHost(
     context = context,
     lifecycle = lifecycle,
     coroutineContext = Dispatchers.Default,
     arcSerializationContext = Dispatchers.Default,
-    schedulerProvider = schedulerProvider,
-    storageEndpointManager = AndroidStorageServiceEndpointManager(
-      CoroutineScope(Dispatchers.Default),
-      DefaultBindHelper(this)
-    ),
-    particles = *initialParticles
+    handleManagerFactory = handleManagerFactory,
+    particles = initialParticles
   ) {
-    override val platformTime = JvmTime
-
     override suspend fun stopArc(partition: Plan.Partition) {
       super.stopArc(partition)
       if (isArcHostIdle()) {

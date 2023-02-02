@@ -15,6 +15,7 @@ import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -29,6 +30,11 @@ class TimerTest {
     timer = Timer(JvmTime)
   }
 
+  @After
+  fun tearDown() {
+    TimingMeasurements.reset()
+  }
+
   @Test
   fun time_calculatesRuntime_andReturnsResult() {
     val (result, durationNanos) = timer.time {
@@ -41,7 +47,7 @@ class TimerTest {
   }
 
   @Test
-  fun time_suspending_calculatesRuntime_andReturnsResult() = runBlocking {
+  fun timeSuspending_calculatesRuntime_andReturnsResult() = runBlocking {
     val (result, durationNanos) = timer.timeSuspending {
       delay(500)
       return@timeSuspending 5
@@ -49,5 +55,29 @@ class TimerTest {
 
     assertThat(result).isEqualTo(5)
     assertThat(durationNanos).isAtLeast(500 * 1000 * 1000)
+  }
+
+  @Test
+  fun timeAndLog_recordsTime() {
+    val result = timer.timeAndLog("x") {
+      Thread.sleep(500)
+      return@timeAndLog 5
+    }
+
+    assertThat(result).isEqualTo(5)
+    assertThat(TimingMeasurements.get().keys).containsExactly("x")
+    assertThat(TimingMeasurements.get().getValue("x").single()).isAtLeast(500L)
+  }
+
+  @Test
+  fun timeAndLogSuspending_recordsTime() = runBlocking<Unit> {
+    val result = timer.timeAndLogSuspending("x") {
+      delay(500)
+      return@timeAndLogSuspending 5
+    }
+
+    assertThat(result).isEqualTo(5)
+    assertThat(TimingMeasurements.get().keys).containsExactly("x")
+    assertThat(TimingMeasurements.get().getValue("x").single()).isAtLeast(500L)
   }
 }

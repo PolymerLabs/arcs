@@ -3,7 +3,7 @@ package arcs.core.host
 import arcs.jvm.host.TargetHost
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @TargetHost(TestingJvmProdHost::class)
 class PurePerson : AbstractPurePerson() {
   override fun onStart() {

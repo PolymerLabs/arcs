@@ -395,7 +395,7 @@ export class DescriptionFormatter {
     if (value.valueDescription) {
       let valueDescription = value.valueDescription;
       let matches;
-      while (matches = valueDescription.match(/\${([a-zA-Z0-9.]+)}/)) {
+      while ((matches = valueDescription.match(/\${([a-zA-Z0-9.]+)}/))) {
         valueDescription = valueDescription.replace(matches[0], entityValue[matches[1]]);
       }
       return valueDescription;

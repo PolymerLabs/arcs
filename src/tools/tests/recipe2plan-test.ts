@@ -14,14 +14,20 @@ import {Flags} from '../../runtime/flags.js';
 import {ManifestProto} from '../manifest-proto.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 
-const inputManifestPath = 'java/arcs/core/data/testdata/WriterReaderExample.arcs';
-const policiesManifestPath = 'java/arcs/core/data/testdata/WriterReaderPoliciesExample.arcs';
-const readManifest = async (manifestPath) => Runtime.parseFile(manifestPath);
 
 describe('recipe2plan', () => {
+  const inputManifestPath = 'java/arcs/core/data/testdata/WriterReaderExample.arcs';
+  const policiesManifestPath = 'java/arcs/core/data/testdata/WriterReaderPoliciesExample.arcs';
+
+  let runtime;
+  const readManifest = async (manifestPath) => runtime.parseFile(manifestPath);
+
+  beforeEach(() => {
+    runtime = new Runtime({rootPath: '../..'});
+  });
+
   it('generates Kotlin plans from recipes in a manifest', Flags.withDefaultReferenceMode(async () => {
     const writerReaderExample = await recipe2plan(await readManifest(inputManifestPath),
         OutputFormat.Kotlin, await readManifest(policiesManifestPath));
@@ -460,7 +466,6 @@ policy PolicyBarBr2Br3 {
   const assertSuccess = async (recipeStr) => verifyRecipeIngress(recipeStr, true);
   const assertFailure = async (recipeStr) => verifyRecipeIngress(recipeStr, false);
   const verifyRecipeIngress = async (recipeStr: string, expectedSuccess: boolean) => {
-    DriverFactory.clearRegistrationsForTesting();
     const recipesManifest = await Manifest.parse(`
 ${manifestMetaAndParticleSpecs}
 ${recipeStr}

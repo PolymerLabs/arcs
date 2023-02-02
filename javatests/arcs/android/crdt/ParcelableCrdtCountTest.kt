@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -48,7 +48,7 @@ class ParcelableCrdtCountTest {
 
   @Test
   fun incrementOperation_parcelableRoundTrip_works() {
-    val op = CrdtCount.Operation.Increment("alice", 0 to 1)
+    val op = CrdtCount.Operation.Increment("alice", VersionMap("alice" to 1))
 
     val marshalled = with(Parcel.obtain()) {
       writeOperation(op)
@@ -66,7 +66,7 @@ class ParcelableCrdtCountTest {
 
   @Test
   fun multiIncrementOperation_parcelableRoundTrip_works() {
-    val op = CrdtCount.Operation.MultiIncrement("alice", 0 to 1000, delta = 1000)
+    val op = CrdtCount.Operation.MultiIncrement("alice", VersionMap("alice" to 1), delta = 1000)
 
     val marshalled = with(Parcel.obtain()) {
       writeOperation(op)

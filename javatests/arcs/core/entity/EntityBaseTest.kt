@@ -14,13 +14,21 @@ package arcs.core.entity
 import arcs.core.common.Id
 import arcs.core.crdt.VersionMap
 import arcs.core.data.Capability.Ttl
+import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaRegistry
+import arcs.core.data.testutil.RawEntitySubject.Companion.assertThat
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.Reference as StorageReference
+import arcs.core.entity.testutil.DummyEntity
+import arcs.core.entity.testutil.DummyVariableEntity
+import arcs.core.entity.testutil.InlineDummyEntity
+import arcs.core.storage.RawReference
 import arcs.core.storage.testutil.DummyStorageKey
+import arcs.core.util.ArcsDuration
+import arcs.core.util.ArcsInstant
+import arcs.core.util.BigInt
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
@@ -90,6 +98,224 @@ class EntityBaseTest {
   }
 
   @Test
+  fun singletonFields_byte() {
+    assertThat(entity.byte).isNull()
+    entity.byte = 8
+    assertThat(entity.byte).isEqualTo(8)
+    assertThat(entity.byte).isInstanceOf(java.lang.Byte::class.java)
+
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("byte", "abc")
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Byte for DummyEntity.byte, but received abc."
+      )
+    }
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("byte", 12.0)
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Byte for DummyEntity.byte, but received 12.0."
+      )
+    }
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("byte", 500)
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Byte for DummyEntity.byte, but received 500."
+      )
+    }
+  }
+
+  @Test
+  fun singletonFields_short() {
+    assertThat(entity.short).isNull()
+    entity.short = 16
+    assertThat(entity.short).isEqualTo(16)
+    assertThat(entity.short).isInstanceOf(java.lang.Short::class.java)
+
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("short", "abc")
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Short for DummyEntity.short, but received abc."
+      )
+    }
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("short", 12.0)
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Short for DummyEntity.short, but received 12.0."
+      )
+    }
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("short", Short.MAX_VALUE + 1)
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Short for DummyEntity.short, but received ${Short.MAX_VALUE + 1}."
+      )
+    }
+  }
+
+  @Test
+  fun singletonFields_int() {
+    assertThat(entity.int).isNull()
+    entity.int = 16
+    assertThat(entity.int).isEqualTo(16)
+    assertThat(entity.int).isInstanceOf(java.lang.Integer::class.java)
+
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("int", "abc")
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Int for DummyEntity.int, but received abc."
+      )
+    }
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("int", 12.0)
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Int for DummyEntity.int, but received 12.0."
+      )
+    }
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("int", Int.MAX_VALUE + 1L)
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Int for DummyEntity.int, but received ${Int.MAX_VALUE + 1L}."
+      )
+    }
+  }
+
+  @Test
+  fun singletonFields_long() {
+    assertThat(entity.long).isNull()
+    entity.long = 16L
+    assertThat(entity.long).isEqualTo(16L)
+    assertThat(entity.long).isInstanceOf(java.lang.Long::class.java)
+
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("long", "abc")
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Long for DummyEntity.long, but received abc."
+      )
+    }
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("long", 12.0)
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Long for DummyEntity.long, but received 12.0."
+      )
+    }
+  }
+
+  @Test
+  fun singletonFields_instant() {
+    val millis = 1600000L
+    assertThat(entity.instant).isNull()
+    entity.instant = ArcsInstant.ofEpochMilli(millis)
+    assertThat(entity.instant).isEqualTo(ArcsInstant.ofEpochMilli(millis))
+    assertThat(entity.instant).isInstanceOf(ArcsInstant::class.java)
+
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("instant", "abc")
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Instant for DummyEntity.instant, but received abc."
+      )
+    }
+  }
+
+  @Test
+  fun singletonFields_char() {
+    assertThat(entity.char).isNull()
+    entity.char = 'b'
+    assertThat(entity.char).isEqualTo('b')
+    assertThat(entity.char).isInstanceOf(java.lang.Character::class.java)
+
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("char", "abc")
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Char for DummyEntity.char, but received abc."
+      )
+    }
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("char", false)
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Char for DummyEntity.char, but received false."
+      )
+    }
+  }
+
+  @Test
+  fun singletonFields_float() {
+    assertThat(entity.float).isNull()
+    entity.float = 16.0f
+    assertThat(entity.float).isEqualTo(16.0f)
+    assertThat(entity.float).isInstanceOf(java.lang.Float::class.java)
+
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("float", "abc")
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Float for DummyEntity.float, but received abc."
+      )
+    }
+  }
+
+  @Test
+  fun singletonFields_double() {
+    assertThat(entity.double).isNull()
+    entity.double = 16.0
+    assertThat(entity.double).isEqualTo(16.0)
+    assertThat(entity.double).isInstanceOf(java.lang.Double::class.java)
+
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("double", "abc")
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Double for DummyEntity.double, but received abc."
+      )
+    }
+  }
+
+  @Test
+  fun singletonFields_bigInt() {
+    val int = BigInt.valueOf("999912345678901234567890")
+    assertThat(entity.bigInt).isNull()
+    entity.bigInt = int
+    assertThat(entity.bigInt).isEqualTo(int)
+    assertThat(entity.bigInt).isInstanceOf(BigInt::class.java)
+
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("bigInt", "abc")
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected BigInt for DummyEntity.bigInt, but received abc."
+      )
+    }
+  }
+
+  @Test
+  fun singletonFields_duration() {
+    val duration = ArcsDuration.ofMillis(99991234)
+    assertThat(entity.duration).isNull()
+    entity.duration = duration
+    assertThat(entity.duration).isEqualTo(duration)
+
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("duration", "abc")
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Duration for DummyEntity.duration, but received abc."
+      )
+    }
+  }
+
+  @Test
   fun singletonFields_ref() {
     assertThat(entity.ref).isNull()
     val ref = createReference("foo")
@@ -102,6 +328,21 @@ class EntityBaseTest {
     assertThat(e).hasMessageThat().isEqualTo(
       "Expected Reference for DummyEntity.ref, but received true."
     )
+
+    val id = "ImproperFoo"
+    val improperRef = Reference<InlineDummyEntity>(
+      InlineDummyEntity.Companion,
+      RawReference(id, DummyStorageKey(id), VersionMap("id" to 1))
+    )
+
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("ref", improperRef)
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected Reference type to have schema hash ${DummyEntity.Companion.SCHEMA_HASH} " +
+          "but had schema hash ${InlineDummyEntity.Companion.SCHEMA_HASH}."
+      )
+    }
   }
 
   @Test
@@ -158,6 +399,35 @@ class EntityBaseTest {
   }
 
   @Test
+  fun singletonFields_inlineEntity() {
+    val inlineDummy = InlineDummyEntity()
+    assertThat(inlineDummy.text).isNull()
+    inlineDummy.text = "foobar"
+    assertThat(inlineDummy.text).isEqualTo("foobar")
+
+    assertThat(entity.inlineEntity).isNull()
+    entity.inlineEntity = inlineDummy
+    assertThat(entity.inlineEntity).isEqualTo(inlineDummy)
+    assertThat(entity.inlineEntity).isInstanceOf(InlineDummyEntity::class.java)
+
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("inlineEntity", "abc")
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected EntityBase for #entityClassName.inlineEntity, but received abc."
+      )
+    }
+    assertFailsWith<IllegalArgumentException> {
+      entity.setSingletonValueForTest("inlineEntity", DummyEntity())
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected EntityBase type to have schema hash ${InlineDummyEntity.SCHEMA_HASH} but had " +
+          "schema hash ${DummyEntity.SCHEMA_HASH}."
+      )
+    }
+  }
+
+  @Test
   fun singletonFields_getInvalidFieldName() {
     val e = assertFailsWith<InvalidFieldNameException> {
       entity.getSingletonValueForTest("not_a_real_field")
@@ -175,6 +445,12 @@ class EntityBaseTest {
     assertThat(e).hasMessageThat().isEqualTo(
       "DummyEntity does not have a singleton field called \"not_a_real_field\"."
     )
+  }
+
+  @Test
+  fun singletonField_hasField() {
+    assertThat(entity.hasSingletonFieldForTest("char")).isTrue()
+    assertThat(entity.hasSingletonFieldForTest("not_a_real_field")).isFalse()
   }
 
   @Test
@@ -256,14 +532,36 @@ class EntityBaseTest {
   }
 
   @Test
+  fun collectionFields_hasField() {
+    assertThat(entity.hasCollectionFieldForTest("bools")).isTrue()
+    assertThat(entity.hasCollectionFieldForTest("not_a_real_field")).isFalse()
+  }
+
+  @Test
   fun serializeRoundTrip() {
+    val inlineDummyEntity = InlineDummyEntity().apply { text = "foobar" }
     with(entity) {
       text = "abc"
       num = 12.0
+      byte = 8
+      short = 12
+      int = 16
+      long = 16L
+      instant = ArcsInstant.ofEpochMilli(6666666666)
+      duration = ArcsDuration.ofMillis(6666666666)
+      char = 'p'
+      float = 12.0f
+      double = 16.0
+      bigInt = BigInt.valueOf("6666666666666666666666666666666")
       bool = true
+      nullableBool = true
+      nullableDouble = null
       ref = createReference("foo")
       primList = listOf(1.0, 4.0, 4.0, 1.0)
       refList = listOf(createReference("foo"), createReference("bar"), createReference("foo"))
+      inlineEntity = inlineDummyEntity
+      inlineList = listOf(inlineDummyEntity)
+      inlines = setOf(inlineDummyEntity)
       texts = setOf("aa", "bb")
       nums = setOf(1.0, 2.0)
       bools = setOf(true, false)
@@ -276,6 +574,7 @@ class EntityBaseTest {
 
     assertThat(deserialized).isEqualTo(entity)
     assertThat(deserialized.serialize()).isEqualTo(rawEntity)
+    assertThat(deserialized.inlineEntity).isEqualTo(inlineDummyEntity)
   }
 
   @Test
@@ -314,7 +613,7 @@ class EntityBaseTest {
       DummyEntity().deserializeForTest(rawEntity)
     }
     assertThat(e).hasMessageThat().isEqualTo(
-      "Expected Reference but was Primitive(def)."
+      "Expected RawReference but was Primitive(def)."
     )
   }
 
@@ -322,7 +621,7 @@ class EntityBaseTest {
   fun deserialize_unknownHash() {
     val rawEntity = RawEntity(
       singletons = mapOf(
-        "ref" to StorageReference("id", DummyStorageKey("key"), version = null)
+        "ref" to RawReference("id", DummyStorageKey("key"), version = null)
       ),
       collections = mapOf()
     )
@@ -330,6 +629,62 @@ class EntityBaseTest {
     val e = assertFailsWith<IllegalArgumentException> {
       // Call deserialize super method, and don't give the right nestedEntitySpecs map.
       DummyEntity().deserialize(rawEntity, nestedEntitySpecs = emptyMap())
+    }
+    assertThat(e).hasMessageThat().isEqualTo(
+      "Unknown schema with hash abcdef."
+    )
+  }
+
+  @Test
+  fun deserialize_referencablePrimitive_wrongType() {
+    val rawEntity = RawEntity(
+      singletons = mapOf(
+        "num" to listOf(5.0.toReferencable()).toReferencable(FieldType.ListOf(FieldType.Number))
+      ),
+      collections = mapOf()
+    )
+
+    assertFailsWith<IllegalArgumentException> {
+      DummyEntity().deserialize(rawEntity, nestedEntitySpecs = emptyMap())
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Expected ReferencablePrimitive but was List([Primitive(5.0)])."
+      )
+    }
+  }
+
+  @Test
+  fun deserialize_list() {
+    val rawEntity = RawEntity(
+      singletons = mapOf(
+        "primList" to 5.0.toReferencable()
+      ),
+      collections = mapOf()
+    )
+
+    val e = assertFailsWith<IllegalArgumentException> {
+      DummyEntity().deserialize(rawEntity, nestedEntitySpecs = emptyMap())
+    }
+    assertThat(e).hasMessageThat().isEqualTo(
+      "Expected ReferencableList but was Primitive(5.0)."
+    )
+  }
+
+  @Test
+  fun deserialize_nestedInlineEntitySpecs_wrongMap() {
+    val rawEntity = RawEntity(
+      singletons = mapOf(
+        "ref" to RawReference("id", DummyStorageKey("key"), version = null)
+      ),
+      collections = mapOf()
+    )
+
+    val e = assertFailsWith<IllegalArgumentException> {
+      // Call deserialize super method, and don't give the right nestedEntitySpecs map.
+      DummyEntity().deserialize(
+        rawEntity,
+        nestedEntitySpecs = mapOf(InlineDummyEntity.SCHEMA_HASH to InlineDummyEntity.Companion)
+      )
     }
     assertThat(e).hasMessageThat().isEqualTo(
       "Unknown schema with hash abcdef."
@@ -357,6 +712,65 @@ class EntityBaseTest {
     // Different ID.
     entity2.ensureEntityFields(Id.Generator.newForTest("session"), "handle", FakeTime())
     assertThat(entity1).isNotEqualTo(entity2)
+
+    // Different Creation Times
+    val entity3 = EntityBase(
+      "Foo",
+      DummyEntity.SCHEMA,
+      creationTimestamp = 1605222647172
+    )
+    val entity4 = EntityBase("Foo", DummyEntity.SCHEMA)
+    assertThat(entity3).isNotEqualTo(entity4)
+
+    // Different Expiration Times
+    val entity5 = EntityBase(
+      "Foo",
+      DummyEntity.SCHEMA,
+      expirationTimestamp = 1605222647172
+    )
+    val entity6 = EntityBase("Foo", DummyEntity.SCHEMA)
+    assertThat(entity5).isNotEqualTo(entity6)
+  }
+
+  @Test
+  fun hashCode_equality() {
+    val entity1 = EntityBase("Foo", DummyEntity.SCHEMA)
+    val entity2 = EntityBase("Foo", DummyEntity.SCHEMA)
+    assertThat(entity1.hashCode()).isEqualTo(entity1.hashCode())
+    assertThat(entity1.hashCode()).isEqualTo(entity2.hashCode())
+
+    // Different name.
+    assertThat(entity1.hashCode()).isNotEqualTo(EntityBase("Bar", DummyEntity.SCHEMA).hashCode())
+
+    // Different schema.
+    assertThat(entity1.hashCode()).isNotEqualTo(
+      EntityBase(
+        "Foo",
+        Schema(emptySet(), SchemaFields(emptyMap(), emptyMap()), "hash")
+      ).hashCode()
+    )
+
+    // Different ID.
+    entity2.ensureEntityFields(Id.Generator.newForTest("session"), "handle", FakeTime())
+    assertThat(entity1.hashCode()).isNotEqualTo(entity2.hashCode())
+
+    // Different Creation Times
+    val entity3 = EntityBase(
+      "Foo",
+      DummyEntity.SCHEMA,
+      creationTimestamp = 1605222647172
+    )
+    val entity4 = EntityBase("Foo", DummyEntity.SCHEMA)
+    assertThat(entity3.hashCode()).isNotEqualTo(entity4.hashCode())
+
+    // Different Expiration Times
+    val entity5 = EntityBase(
+      "Foo",
+      DummyEntity.SCHEMA,
+      expirationTimestamp = 1605222647172
+    )
+    val entity6 = EntityBase("Foo", DummyEntity.SCHEMA)
+    assertThat(entity5.hashCode()).isNotEqualTo(entity6.hashCode())
   }
 
   @Test
@@ -440,15 +854,157 @@ class EntityBaseTest {
       bools = setOf(true, false)
     }
     assertThat(entity.toString()).isEqualTo(
-      "DummyEntity(bool = true, bools = [true, false], hardRef = null, " +
-        "inlineEntity = null, inlineList = null, inlines = [], num = 12.0, " +
-        "nums = [1.0, 2.0], primList = [1.0, 1.0], ref = null, refList = null, " +
-        "refs = [], text = abc, texts = [aa, bb])"
+      "DummyEntity(bigInt = null, bool = true, bools = [true, false], byte = null, char = null, " +
+        "double = null, duration = null, float = null, hardRef = null, inlineEntity = null, " +
+        "inlineList = null, inlines = [], instant = null, int = null, long = null, " +
+        "nullableBool = null, nullableDouble = null, num = 12.0, nums = [1.0, 2.0], " +
+        "primList = [1.0, 1.0], ref = null, refList = null, refs = [], short = null, " +
+        "text = abc, texts = [aa, bb])"
     )
+  }
+
+  @Test
+  fun entityBaseSpec_registersSchema() {
+    SchemaRegistry.clearForTest()
+
+    EntityBaseSpec(DummyEntity.SCHEMA)
+
+    val schema = SchemaRegistry.getSchema(DummyEntity.SCHEMA_HASH)
+
+    assertThat(schema).isEqualTo(DummyEntity.SCHEMA)
+  }
+
+  @Test
+  fun entityBaseSpec_deserialize() {
+    with(entity) {
+      text = "abc"
+      num = 12.0
+      byte = 8
+      short = 12
+      int = 16
+      long = 16L
+      instant = ArcsInstant.ofEpochMilli(6666666666)
+      duration = ArcsDuration.ofMillis(6666666666)
+      char = 'p'
+      float = 12.0f
+      double = 16.0
+      bigInt = BigInt.valueOf("6666666666666666666666666666666")
+      bool = true
+      ref = createReference("foo")
+      primList = listOf(1.0, 4.0, 4.0, 1.0)
+      refList = listOf(createReference("foo"), createReference("bar"), createReference("foo"))
+      texts = setOf("aa", "bb")
+      nums = setOf(1.0, 2.0)
+      bools = setOf(true, false)
+      refs = setOf(createReference("ref1"), createReference("ref2"))
+    }
+
+    val rawEntity = entity.serialize()
+    val deserialized = EntityBaseSpec(DummyEntity.SCHEMA).deserialize(rawEntity)
+
+    assertThat(deserialized.serialize()).isEqualTo(entity.serialize())
+  }
+
+  @Test
+  fun entityBaseSpec_deserializeInlineEntities() {
+    val inlineDummyEntity = InlineDummyEntity().apply { text = "foobar" }
+    with(entity) {
+      text = "abc"
+      num = 12.0
+      byte = 8
+      short = 12
+      int = 16
+      long = 16L
+      instant = ArcsInstant.ofEpochMilli(6666666666)
+      duration = ArcsDuration.ofMillis(6666666666)
+      char = 'p'
+      float = 12.0f
+      double = 16.0
+      bigInt = BigInt.valueOf("6666666666666666666666666666666")
+      bool = true
+      ref = createReference("foo")
+      primList = listOf(1.0, 4.0, 4.0, 1.0)
+      refList = listOf(createReference("foo"), createReference("bar"), createReference("foo"))
+      inlineEntity = inlineDummyEntity
+      inlineList = listOf(inlineDummyEntity)
+      inlines = setOf(inlineDummyEntity)
+      texts = setOf("aa", "bb")
+      nums = setOf(1.0, 2.0)
+      bools = setOf(true, false)
+      refs = setOf(createReference("ref1"), createReference("ref2"))
+    }
+
+    val rawEntity = entity.serialize()
+    val deserialized = EntityBaseSpec(DummyEntity.SCHEMA).deserialize(
+      rawEntity,
+      mapOf(
+        DummyEntity.SCHEMA_HASH to DummyEntity.Companion,
+        InlineDummyEntity.SCHEMA_HASH to InlineDummyEntity.Companion
+      )
+    )
+
+    assertThat(deserialized.serialize()).isEqualTo(entity.serialize())
+  }
+
+  @Test
+  fun entityBaseSpec_deserializeInlineEntities_throwsError() {
+    val inlineDummyEntity = InlineDummyEntity()
+    inlineDummyEntity.text = "foobar"
+    entity.inlineEntity = inlineDummyEntity
+
+    val rawEntity = entity.serialize()
+
+    assertFailsWith<IllegalArgumentException> {
+      EntityBaseSpec(DummyEntity.SCHEMA).deserialize(rawEntity)
+    }.also {
+      assertThat(it).hasMessageThat().isEqualTo(
+        "Unknown schema with hash ${InlineDummyEntity.SCHEMA_HASH}."
+      )
+    }
+  }
+
+  @Test
+  fun propertyDelegationForHelperClasses() {
+    val entity1 = testWrapper(
+      DummyEntity().apply {
+        text = "abc"
+        nums = setOf(5.0)
+        int = 6
+      }
+    )
+    assertThat(entity1.text).isEqualTo("abc!!")
+    assertThat(entity1.nums).isEqualTo(setOf(5.0, 8.0))
+    assertThat(entity1.int).isEqualTo(6)
+
+    val entity2 = testWrapper(
+      DummyVariableEntity().apply {
+        text = "abc"
+        nums = setOf(5.0)
+        bools = setOf(true)
+      }
+    )
+    assertThat(entity2.text).isEqualTo("abc!!")
+    assertThat(entity2.nums).isEqualTo(setOf(5.0, 8.0))
+    assertThat(entity2.bools).isEqualTo(setOf(true))
+  }
+
+  class Wrapper(val e: EntityBase) {
+    var text: String by SingletonProperty(e)
+    var nums: Set<Double> by CollectionProperty(e)
+  }
+
+  // Tests that the Wrapper class can read and modify the underlying entity via field accessors.
+  private fun <T : EntityBase> testWrapper(entity: T): T {
+    val w = Wrapper(entity)
+    w.text += "!!"
+    w.nums += 8.0
+    assertThat(w.text).isEqualTo("abc!!")
+    assertThat(w.nums).isEqualTo(setOf(5.0, 8.0))
+    return entity
   }
 
   private fun createReference(id: String) = Reference(
     DummyEntity,
-    StorageReference(id, DummyStorageKey(id), VersionMap("id" to 1))
+    RawReference(id, DummyStorageKey(id), VersionMap("id" to 1))
   )
 }

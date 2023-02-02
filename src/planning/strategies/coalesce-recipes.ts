@@ -9,12 +9,12 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Arc} from '../../runtime/arc.js';
 import {ConsumeSlotConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {Recipe, Particle, effectiveTypeForHandle, matchesRecipe} from '../../runtime/recipe/lib-recipe.js';
 import {TypeVariable} from '../../types/lib-types.js';
 import {RecipeIndex} from '../recipe-index.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
+import {ArcInfo} from '../../runtime/arc-info.js';
 
 // This strategy coalesces unresolved terminal recipes (i.e. those that cannot
 // be modified by any strategy apart from this one) by finding unresolved
@@ -23,8 +23,8 @@ import {StrategizerWalker, Strategy} from '../strategizer.js';
 export class CoalesceRecipes extends Strategy {
   private recipeIndex: RecipeIndex;
 
-  constructor(arc: Arc, {recipeIndex}) {
-    super(arc);
+  constructor(arcInfo: ArcInfo, {recipeIndex}) {
+    super(arcInfo);
     this.recipeIndex = recipeIndex;
   }
 
@@ -34,7 +34,7 @@ export class CoalesceRecipes extends Strategy {
   }
 
   async generate(inputParams) {
-    const arc = this.arc;
+    const arcInfo = this.arcInfo;
     const index = this.recipeIndex;
     await index.ready;
 
@@ -47,7 +47,7 @@ export class CoalesceRecipes extends Strategy {
           // Don't grow recipes above 10 particles, otherwise we might never stop.
           if (recipe.particles.length + providedSlot.recipe.particles.length > 10) continue;
 
-          if (matchesRecipe(arc.activeRecipe, providedSlot.recipe)) {
+          if (matchesRecipe(arcInfo.activeRecipe, providedSlot.recipe)) {
             // skip candidate recipe, if matches the shape of the arc's active recipe
             continue;
           }
@@ -97,7 +97,7 @@ export class CoalesceRecipes extends Strategy {
           // Don't grow recipes above 10 particles, otherwise we might never stop.
           if (recipe.particles.length + providedSlot.recipe.particles.length > 10) continue;
 
-          if (matchesRecipe(arc.activeRecipe, providedSlot.recipe)) {
+          if (matchesRecipe(arcInfo.activeRecipe, providedSlot.recipe)) {
             // skip candidate recipe, if matches the shape of the arc's active recipe
             continue;
           }
@@ -143,7 +143,7 @@ export class CoalesceRecipes extends Strategy {
           // Don't grow recipes above 10 particles, otherwise we might never stop.
           if (recipe.particles.length + recipeParticle.recipe.particles.length > 10) continue;
 
-          if (matchesRecipe(arc.activeRecipe, recipeParticle.recipe)) {
+          if (matchesRecipe(arcInfo.activeRecipe, recipeParticle.recipe)) {
             // skip candidate recipe, if matches the shape of the arc's active recipe
             continue;
           }
@@ -225,7 +225,7 @@ export class CoalesceRecipes extends Strategy {
             if (resolved instanceof TypeVariable && !resolved.canReadSubset) continue;
           }
 
-          if (matchesRecipe(arc.activeRecipe, otherHandle.recipe)) {
+          if (matchesRecipe(arcInfo.activeRecipe, otherHandle.recipe)) {
             // skip candidate recipe, if matches the shape of the arc's active recipe
             continue;
           }

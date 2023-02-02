@@ -13,7 +13,8 @@ package arcs.core.storage.keys
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.StorageKeyProtocol
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test
@@ -23,24 +24,24 @@ import org.junit.runners.JUnit4
 /** Tests for [VolatileStorageKey]. */
 @RunWith(JUnit4::class)
 class ForeignStorageKeyTest {
+
   @Before
-  fun setup() {
-    StorageKeyParser.reset(ForeignStorageKey)
+  fun setUp() {
+    StorageKeyManager.GLOBAL_INSTANCE.reset(ForeignStorageKey)
   }
 
   @Test
   fun toString_rendersCorrectly() {
     val key = ForeignStorageKey("foo")
-    assertThat(key.toString()).isEqualTo("foreign://foo")
-    assertThat(StorageKeyParser.parse(key.toString())).isEqualTo(key)
+    assertThat(key.toString()).isEqualTo("${StorageKeyProtocol.Foreign.protocol}foo")
+    assertThat(StorageKeyManager.GLOBAL_INSTANCE.parse(key.toString())).isEqualTo(key)
   }
 
   @Test
-  fun childKeyWithComponent_isCorrect() {
+  fun newKeyWithComponent_isCorrect() {
     val parent = ForeignStorageKey("parent")
-    val child = parent.childKeyWithComponent("child")
-    assertThat(child.toString())
-      .isEqualTo("foreign://parent/child")
+    val child = parent.newKeyWithComponent("child")
+    assertThat(child.toString()).isEqualTo("${StorageKeyProtocol.Foreign.protocol}parent/child")
   }
 
   @Test
@@ -51,6 +52,18 @@ class ForeignStorageKeyTest {
       "abcd"
     )
     val key = ForeignStorageKey(schema)
-    assertThat(key.toString()).isEqualTo("foreign://schemaName")
+    assertThat(key.toString()).isEqualTo("${StorageKeyProtocol.Foreign.protocol}schemaName")
+  }
+
+  @Test
+  fun parse_validString_correctly() {
+    val key = ForeignStorageKey.parse("123@abc/whatever")
+    assertThat(key.toKeyString()).isEqualTo("123@abc/whatever")
+  }
+
+  @Test
+  fun parse_validUnicodeString_correctly() {
+    val key = ForeignStorageKey.parse("Туктамышева")
+    assertThat(key.toKeyString()).isEqualTo("Туктамышева")
   }
 }

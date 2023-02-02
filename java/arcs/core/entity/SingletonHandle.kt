@@ -34,10 +34,13 @@ typealias SingletonProxy<T> = StorageProxy<SingletonData<T>, SingletonOp<T>, T?>
  *
  * This class won't be returned directly; instead it will be wrapped in a facade object that
  * exposes only the methods that should be exposed.
+ *
+ * For entity-based handles, [E] is a concrete entity class and [I] is the interface for that.
+ * For reference handles, [E] and [I] are both a [Reference] to a concrete entity class.
  */
-class SingletonHandle<T : Storable, R : Referencable>(
-  config: Config<T, R>
-) : BaseHandle<T>(config), ReadWriteSingletonHandle<T> {
+class SingletonHandle<E : Storable, I : Storable, R : Referencable>(
+  config: Config<E, I, R>
+) : BaseHandle(config), ReadWriteSingletonHandle<E, I> {
   private val storageProxy = config.proxy
   private val storageAdapter = config.storageAdapter
 
@@ -45,14 +48,14 @@ class SingletonHandle<T : Storable, R : Referencable>(
     check(spec.containerType == HandleContainerType.Singleton)
   }
 
-  // region implement ReadSingletonHandle<T>
+  // region implement ReadSingletonHandle<E>
   override fun fetch() = checkPreconditions {
     adaptValue(storageProxy.getParticleViewUnsafe())
   }
   // endregion
 
-  // region implement WriteSingletonHandle<T>
-  override fun store(element: T): Job = checkPreconditions {
+  // region implement WriteSingletonHandle<I>
+  override fun store(element: I): Job = checkPreconditions {
     storageProxy.applyOp(
       CrdtSingleton.Operation.Update(
         name,
@@ -72,8 +75,8 @@ class SingletonHandle<T : Storable, R : Referencable>(
   }
   // endregion
 
-  // region implement ReadableHandle<T>
-  override fun onUpdate(action: (SingletonDelta<T>) -> Unit) =
+  // region implement ReadableHandle<E>
+  override fun onUpdate(action: (SingletonDelta<E>) -> Unit) =
     storageProxy.addOnUpdate(callbackIdentifier) { oldValue, newValue ->
       action(SingletonDelta(adaptValue(oldValue), adaptValue(newValue)))
     }
@@ -89,34 +92,39 @@ class SingletonHandle<T : Storable, R : Referencable>(
       "Entity must have an ID before it can be referenced."
     }
     adaptValue(storageProxy.getParticleViewUnsafe()).let {
-      require(it is Entity && it.entityId == entityId) {
-        "Entity is not stored in the Singleton."
+      require(it is Entity) {
+        "Cannot createReference on Reference handles."
+      }
+      require(it.entityId == entityId) {
+        "Cannot createReference for unmatching entity id."
       }
     }
     return createReferenceInternal(entity)
   }
   // endregion
 
-  private fun adaptValue(value: R?): T? = value?.let {
-    storageAdapter.referencableToStorable(it)
-  }?.takeUnless {
-    storageAdapter.isExpired(it)
+  private fun adaptValue(value: R?): E? {
+    return value?.takeUnless {
+      storageAdapter.isExpired(it)
+    }?.let {
+      storageAdapter.referencableToStorable(it)
+    }
   }
 
   /** Configuration required to instantiate a [SingletonHandle]. */
-  class Config<T : Storable, R : Referencable>(
+  class Config<E : Storable, I : Storable, R : Referencable>(
     /** See [BaseHandleConfig.name]. */
     name: String,
     /** See [BaseHandleConfig.spec]. */
     spec: HandleSpec,
     /**
-     * Interface to storage for [RawEntity] objects backing an `entity: T`.
+     * Interface to storage for [RawEntity] objects backing an `entity: E`.
      *
      * See [BaseHandleConfig.storageProxy].
      */
     val proxy: SingletonProxy<R>,
     /** Will ensure that necessary fields are present on the [RawEntity] before storage. */
-    val storageAdapter: StorageAdapter<T, R>,
+    val storageAdapter: StorageAdapter<E, I, R>,
     /** See [BaseHandleConfig.dereferencerFactory]. */
     dereferencerFactory: EntityDereferencerFactory,
     /** See [BaseHandleConfig.particleId]. */

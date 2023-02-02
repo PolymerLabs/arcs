@@ -42,7 +42,7 @@ data class ParcelableHandleConnection(
         "No Handle found in Parcel"
       }
       val type = requireNotNull(parcel.readType()) {
-        "No name found in Parcel"
+        "No type found in Parcel"
       }
 
       val handleModeOrdinal = requireNotNull(parcel.readInt()) {

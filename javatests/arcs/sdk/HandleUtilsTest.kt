@@ -18,7 +18,7 @@ import arcs.core.entity.ForeignReferenceCheckerImpl
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
-import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManagerImpl
 import arcs.core.host.HandleMode
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -46,8 +46,9 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 private typealias Person = ReadSdkPerson_Person
+private typealias PersonSlice = ReadSdkPerson_Person_Slice
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 @Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
 class HandleUtilsTest {
@@ -55,14 +56,14 @@ class HandleUtilsTest {
   val log = LogRule()
 
   private lateinit var scheduler: Scheduler
-  private lateinit var manager: EntityHandleManager
+  private lateinit var managerImpl: HandleManagerImpl
 
   @Before
   fun setUp() = runBlocking {
     RamDisk.clear()
     DriverAndKeyConfigurator.configure(null)
     scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher() + Job())
-    manager = EntityHandleManager(
+    managerImpl = HandleManagerImpl(
       arcId = "testArc",
       hostId = "testHost",
       time = FakeTime(),
@@ -75,7 +76,7 @@ class HandleUtilsTest {
   @After
   fun tearDown() = runBlocking {
     scheduler.waitForIdle()
-    manager.close()
+    managerImpl.close()
     scheduler.cancel()
   }
 
@@ -339,7 +340,7 @@ class HandleUtilsTest {
 
   private suspend fun createCollectionHandle(
     storageKey: StorageKey
-  ) = manager.createHandle(
+  ) = managerImpl.createHandle(
     HandleSpec(
       READ_WRITE_HANDLE,
       HandleMode.ReadWriteQuery,
@@ -347,11 +348,11 @@ class HandleUtilsTest {
       Person
     ),
     storageKey
-  ).awaitReady() as ReadWriteQueryCollectionHandle<Person, *>
+  ).awaitReady() as ReadWriteQueryCollectionHandle<Person, PersonSlice, *>
 
   private suspend fun createSingletonHandle(
     storageKey: StorageKey
-  ) = manager.createHandle(
+  ) = managerImpl.createHandle(
     HandleSpec(
       READ_WRITE_HANDLE,
       HandleMode.ReadWrite,
@@ -359,7 +360,7 @@ class HandleUtilsTest {
       Person
     ),
     storageKey
-  ).awaitReady() as ReadWriteSingletonHandle<Person>
+  ).awaitReady() as ReadWriteSingletonHandle<Person, PersonSlice>
 
   private companion object {
     private const val READ_WRITE_HANDLE = "readWriteHandle"

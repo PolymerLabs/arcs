@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../../platform/chai-web.js';
-import {Arc} from '../../../runtime/arc.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
@@ -18,29 +17,17 @@ import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {floatingPromiseToAudit} from '../../../utils/lib-utils.js';
-import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 import {storageKeyPrefixForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
-import {MockFirebaseStorageKey} from '../../../runtime/storage/testing/mock-firebase.js';
-import {StorageServiceImpl} from '../../../runtime/storage/storage-service.js';
 
 describe('planificator', () => {
-  it('constructs suggestion and search storage keys for fb arc', async () => {
+  it('constructs suggestion and search storage keys for an arc', async () => {
     const runtime = new Runtime();
-    const arcStorageKey = () => new MockFirebaseStorageKey('location');
-    const arc = runtime.newArc('demo', arcStorageKey);
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo'});
+    const arc = runtime.getArcById(arcInfo.id);
+    const planificator = await Planificator.create(arc, {runtime, onlyConsumer: true, debug: false});
 
-    const verifySuggestion = (storageKeyBase) => {
-      const key = Planificator.constructSuggestionKey(arc, storageKeyBase);
-      assert(key && key.protocol,
-            `Cannot construct key for '${storageKeyBase}' planificator storage key base`);
-      assert(key.protocol.length > 0,
-            `Invalid protocol in key for '${storageKeyBase}' planificator storage key base`);
-    };
-
-    verifySuggestion(storageKeyForTest(arc.id));
-    verifySuggestion(new MockFirebaseStorageKey('planificator location'));
-
-    assert.isTrue(Planificator.constructSearchKey(arc).toString().length > 0);
+    assert.equal(arc.storageKey.protocol, planificator.result.store.storageKey.protocol);
+    assert.equal(arc.storageKey.protocol, planificator.searchStore.storageKey.protocol);
   });
 });
 
@@ -48,46 +35,40 @@ describe('planificator', () => {
 describe.skip('remote planificator', () => {
   // TODO: support arc storage key be in PouchDB as well.
   let arcStorageKey;
+  let runtime;
 
-  let memoryProvider;
   beforeEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
     arcStorageKey = storageKeyPrefixForTest();
-    memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
+    runtime = new Runtime();
   });
 
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
-  async function createArc(options, storageKey) {
+  async function createArc(options, storageKeyPrefix) {
     const {manifestString, manifestFilename} = options;
-    const loader = new Loader();
-    const context = manifestString
-        ? await Manifest.parse(manifestString, {loader, fileName: '', memoryProvider})
-        : await Manifest.load(manifestFilename, loader, {memoryProvider});
-    const runtime = new Runtime({loader, context, memoryProvider, storageService: new StorageServiceImpl()});
-    return runtime.newArc('demo', storageKey);
+    runtime.context = manifestString
+        ? await runtime.parse(manifestString)
+        : await runtime.parseFile(manifestFilename);
+    return runtime.getArcById(await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix}));
   }
+
   async function createConsumePlanificator(manifestFilename) {
     const arc = await createArc({manifestFilename}, arcStorageKey);
     const storageKeyBase = storageKeyForTest(arc.id);
-    return Planificator.create(arc, {storageKeyBase, onlyConsumer: true, debug: false});
+    return Planificator.create(arc, {runtime, storageKeyBase, onlyConsumer: true, debug: false});
   }
 
   function createPlanningResult(arc, store) {
-    return new PlanningResult({context: arc.context, loader: arc.loader, storageService: arc.storageService}, store);
+    return new PlanningResult({context: arc.context, loader: arc.loader, storageService: runtime.storageService}, store);
   }
 
   async function createProducePlanificator(manifestFilename, store, searchStore) {
     const arc = await createArc({manifestFilename}, arcStorageKey);
-    return new Planificator(arc, createPlanningResult(arc, store), searchStore);
+    const searchHandle = await runtime.host.handleForStoreInfo(searchStore.storeInfo, arc.arcInfo);
+    return new Planificator(arc, runtime, createPlanningResult(arc, store), searchStore, searchHandle);
   }
 
   async function instantiateAndReplan(consumePlanificator, producePlanificator, suggestionIndex) {
     const suggestion = consumePlanificator.consumer.result.suggestions[suggestionIndex];
-    await consumePlanificator.arc.instantiate(suggestion.plan);
+    await runtime.allocator.runPlanInArc(consumePlanificator.arc.id, suggestion.plan);
     const serialization = await consumePlanificator.arc.serialize();
     //
     producePlanificator.arc.dispose();
@@ -97,19 +78,15 @@ describe.skip('remote planificator', () => {
     await consumePlanificator.setSearch(null);
     await consumePlanificator.consumer.result.clear();
     //
-    const deserializedArc = await Arc.deserialize({serialization,
-      slotComposer: new SlotComposer(),
-      loader: new Loader(),
-      fileName: '',
-      pecFactories: undefined,
-      context: consumePlanificator.arc.context,
-      storageService: new StorageServiceImpl()
-    });
+    const deserializedArc = runtime.getArcById(await runtime.allocator.deserialize({slotComposer: new SlotComposer(), fileName: ''}));
     //
+    const searchHandle = await runtime.host.handleForStoreInfo(consumePlanificator.searchStore.storeInfo, deserializedArc.arcInfo);
     producePlanificator = new Planificator(
       deserializedArc,
+      runtime,
       createPlanningResult(consumePlanificator.arc, consumePlanificator.result.store),
       consumePlanificator.searchStore,
+      searchHandle,
       /* onlyConsumer= */ false,
       /* debug= */ false);
     producePlanificator.requestPlanning({contextual: true});
@@ -215,7 +192,7 @@ import './src/runtime/tests/artifacts/Products/Products.recipes'
     `;
     const showProductsDescription = 'Show products from your browsing context';
     const productsPlanificator = await Planificator.create(
-        await createArc({manifestString: productsManifestString}, arcStorageKey), {debug: false});
+        await createArc({manifestString: productsManifestString}, arcStorageKey), {runtime, debug: false});
     await productsPlanificator.requestPlanning({contextual: false});
     await verifyReplanning(productsPlanificator, 1, [showProductsDescription]);
 
@@ -232,8 +209,10 @@ particle ShowProduct in 'show-product.js'
   `;
     const restaurantsPlanificator = new Planificator(
         await createArc({manifestString: restaurantsManifestString}, arcStorageKey),
+        runtime,
         createPlanningResult(productsPlanificator.arc, productsPlanificator.result.store),
-        productsPlanificator.searchStore);
+        productsPlanificator.searchStore,
+        productsPlanificator.searchHandle);
     assert.isTrue(restaurantsPlanificator.producer.result.contextual);
     await restaurantsPlanificator.loadSuggestions();
     assert.isFalse(restaurantsPlanificator.producer.result.contextual);

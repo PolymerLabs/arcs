@@ -27,6 +27,15 @@ fun HandleProto.Fate.decode() = when (this) {
     throw IllegalArgumentException("Invalid HandleProto.Fate value.")
 }
 
+/** Converts [Handle.Fate] into [HandleProto.Fate] enum. */
+fun Handle.Fate.encode(): HandleProto.Fate = when (this) {
+  Handle.Fate.CREATE -> HandleProto.Fate.CREATE
+  Handle.Fate.USE -> HandleProto.Fate.USE
+  Handle.Fate.MAP -> HandleProto.Fate.MAP
+  Handle.Fate.COPY -> HandleProto.Fate.COPY
+  Handle.Fate.JOIN -> HandleProto.Fate.JOIN
+}
+
 /**
  * Converts [HandleProto] into [Handle].
  *
@@ -43,3 +52,19 @@ fun HandleProto.decode(knownHandles: Map<String, Handle> = emptyMap()) = Handle(
   annotations = annotationsList.map { it.decode() },
   associatedHandles = associatedHandlesList.map { requireNotNull(knownHandles[it]) }
 )
+
+/** Converts a [Handle] to a [HandleProto]. */
+fun Handle.encode(): HandleProto {
+  val builder = HandleProto.newBuilder()
+    .setName(name)
+    .setId(id)
+    .setFate(fate.encode())
+    .addAllTags(tags)
+    .setType(type.encode())
+    .addAllAnnotations(annotations.map { it.encode() })
+    .addAllAssociatedHandles(associatedHandles.map { it.name })
+
+  storageKey?.let { builder.setStorageKey(it) }
+
+  return builder.build()
+}

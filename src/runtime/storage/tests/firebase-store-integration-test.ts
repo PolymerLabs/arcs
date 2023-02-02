@@ -11,7 +11,6 @@
 import {assert} from '../../../platform/chai-web.js';
 import {ProxyMessageType} from '../store-interface.js';
 import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../../crdt/lib-crdt.js';
-import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
 import {Runtime} from '../../runtime.js';
 import {MockFirebaseStorageDriverProvider, MockFirebaseStorageKey} from '../testing/mock-firebase.js';
@@ -19,24 +18,20 @@ import {CountType} from '../../../types/lib-types.js';
 import {StorageKey} from '../storage-key.js';
 import {StoreInfo} from '../store-info.js';
 import {ActiveStore} from '../active-store.js';
-import {StorageServiceImpl} from '../storage-service.js';
-
-async function createStore(storageKey: StorageKey, exists: Exists): Promise<ActiveStore<CRDTCountTypeRecord>> {
-  return (await new StorageServiceImpl().getActiveStore(new StoreInfo({
-      storageKey, type: new CountType(), exists, id: 'an-id'}))) as ActiveStore<CRDTCountTypeRecord>;
-}
+import {DirectStorageEndpointManager} from '../direct-storage-endpoint-manager.js';
 
 describe('Firebase + Store Integration', async () => {
   let runtime;
   beforeEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
     runtime = new Runtime();
-    MockFirebaseStorageDriverProvider.register(runtime.getCacheService());
+    MockFirebaseStorageDriverProvider.register(runtime, runtime.getCacheService());
   });
 
-  after(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
+  async function createStore(storageKey: StorageKey, exists: Exists): Promise<ActiveStore<CRDTCountTypeRecord>> {
+    const info = new StoreInfo({storageKey, type: new CountType(), exists, id: 'an-id'});
+    const endpoints = new DirectStorageEndpointManager(runtime.driverFactory, runtime.storageKeyParser);
+    return await endpoints.getActiveStore(info) as ActiveStore<CRDTCountTypeRecord>;
+  }
 
   it('will store a sequence of model and operation updates as models', async () => {
     const storageKey = new MockFirebaseStorageKey('location');

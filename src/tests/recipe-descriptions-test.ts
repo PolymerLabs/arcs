@@ -10,22 +10,17 @@
 
 import {assert} from '../platform/chai-web.js';
 import {Loader} from '../platform/loader.js';
-import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
-import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
-import {RamDiskStorageDriverProvider} from '../runtime/storage/drivers/ramdisk.js';
 import {VolatileStorageKey} from '../runtime/storage/drivers/volatile.js';
 import {ArcId} from '../runtime/id.js';
 import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {newRecipe} from '../runtime/recipe/lib-recipe.js';
-import {DriverFactory} from '../runtime/storage/drivers/driver-factory.js';
 
 describe('recipe descriptions test', () => {
   // Avoid initialising non-POD variables globally, since they would be constructed even when
   // these tests are not going to be executed (i.e. another test file uses 'only').
   let loader;
-  let memoryProvider;
   beforeEach(() => {
     loader = new Loader(null, {
       'test.js': `defineParticle(({Particle}) => {
@@ -34,14 +29,7 @@ describe('recipe descriptions test', () => {
         }
       });`
     });
-    memoryProvider = new TestVolatileMemoryProvider();
-    RamDiskStorageDriverProvider.register(memoryProvider);
   });
-
-  afterEach(() => {
-    DriverFactory.clearRegistrationsForTesting();
-  });
-
 
   function createManifestString(options) {
     options = options || {};
@@ -122,16 +110,16 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   }
 
   async function generateRecipeDescription(options) {
-    const context =  await Manifest.parse(
-        options.manifestString || createManifestString(options),
-        {loader, memoryProvider, fileName: 'foo.js'});
-    const runtime = new Runtime({loader, context, memoryProvider});
-    const key = (id: ArcId) => new VolatileStorageKey(id, '');
-    const arc = runtime.newArc('demo', key);
-
-    const suggestions = await StrategyTestHelper.planForArc(arc);
+    const runtime = new Runtime({loader});
+    runtime.context = await runtime.parse(
+      options.manifestString || createManifestString(options),
+      {fileName: 'foo.js'}
+    );
+    const storageKeyPrefix = (id: ArcId) => new VolatileStorageKey(id, '');
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix});
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
     assert.lengthOf(suggestions, 1);
-    const result = suggestions[0].getDescription(arc.modality.names[0]);
+    const result = suggestions[0].getDescription(arcInfo.modality.names[0]);
     return result;
   }
   async function testRecipeDescription(options, expectedDescription) {
@@ -182,7 +170,8 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   });
 
   it('fails generating recipe description with duplicate particles', async () => {
-    const context =  await Manifest.parse(`
+    const runtime = new Runtime({loader});
+    runtime.context = await runtime.parse(`
         schema Foo
         particle ShowFoo in 'test.js'
           foo: writes Foo
@@ -193,11 +182,10 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
           ShowFoo
             foo: writes fooHandle
           description \`cannot show duplicate \${ShowFoo.foo}\`
-      `, {loader, fileName: '', memoryProvider});
-    const runtime = new Runtime({loader, context, memoryProvider});
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest());
+      `, {fileName: ''});
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest()});
 
-    await StrategyTestHelper.planForArc(arc).then(() => assert('expected exception for duplicate particles'))
+    await StrategyTestHelper.planForArc(runtime, arcInfo).then(() => assert('expected exception for duplicate particles'))
       .catch((err) => assert.strictEqual(
           err.message, 'Cannot reference duplicate particle \'ShowFoo\' in recipe description.'));
   });
@@ -224,7 +212,8 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   });
 
   it('generates recipe description with duplicate particles', async () => {
-    const context =  await Manifest.parse(`
+    const runtime = new Runtime({loader});
+    runtime.context =  await runtime.parse(`
       schema Foo
       particle ShowFoo in 'test.js'
         foo: writes Foo
@@ -242,27 +231,27 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
           foo: writes fooHandle
         Dummy
         description \`show \${ShowFoo.foo} with dummy\`
-    `, {loader, fileName: '', memoryProvider});
-    const runtime = new Runtime({loader, context, memoryProvider});
-    const key = (id: ArcId) => new VolatileStorageKey(id, '');
-    const arc = runtime.newArc('demo', key);
+    `, {fileName: ''});
+    const storageKeyPrefix = (id: ArcId) => new VolatileStorageKey(id, '');
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix});
     // Plan for arc
-    const suggestions0 = await StrategyTestHelper.planForArc(arc);
+    const suggestions0 = await StrategyTestHelper.planForArc(runtime, arcInfo);
     assert.lengthOf(suggestions0, 2);
     assert.strictEqual('Show foo.', suggestions0[0].descriptionText);
 
     // Instantiate suggestion
-    await suggestions0[0].instantiate(arc);
-    await arc.idle;
+    await runtime.allocator.runPlanInArc(arcInfo, suggestions0[0].plan);
+    await runtime.getArcById(arcInfo.id).idle;
 
     // Plan again.
-    const suggestions1 = await StrategyTestHelper.planForArc(arc);
+    const suggestions1 = await StrategyTestHelper.planForArc(runtime, arcInfo);
     assert.lengthOf(suggestions1, 1);
     assert.strictEqual('Show foo with dummy.', suggestions1[0].descriptionText);
   });
 
   it('joins recipe descriptions', async () => {
-    const context =  await Manifest.parse(`
+    const runtime = new Runtime({loader});
+    runtime.context = await runtime.parse(`
       particle A in 'test.js'
       particle B in 'test.js'
       particle C in 'test.js'
@@ -276,12 +265,11 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
       recipe
         C
         description \`do C\`
-    `, {loader, fileName: '', memoryProvider});
-    const runtime = new Runtime({loader, context, memoryProvider});
-    const key = (id: ArcId) => new VolatileStorageKey(id, '');
-    const arc = runtime.newArc('demo', key);
+    `, {fileName: ''});
+    const storageKeyPrefix = (id: ArcId) => new VolatileStorageKey(id, '');
+    const arcInfo = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix});
 
-    const suggestions = await StrategyTestHelper.planForArc(arc);
+    const suggestions = await StrategyTestHelper.planForArc(runtime, arcInfo);
 
     assert.lengthOf(suggestions, 3);
     const recipe1 = newRecipe();

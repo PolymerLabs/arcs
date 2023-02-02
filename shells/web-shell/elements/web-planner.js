@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -19,7 +19,7 @@ const log = Xen.logFactory('WebPlanner', '#104a91');
 
 class WebPlanner extends Xen.Debug(Xen.Async, log) {
   static get observedAttributes() {
-    return ['config', 'arc', 'search'];
+    return ['config', 'arc', 'runtime', 'search'];
   }
   getInitialState() {
     return {
@@ -46,6 +46,7 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
   async _createPlanificator(config, arc) {
     const options = {
       userid: 'user',
+      runtime: this.runtime,
       storageKeyBase: new RamDiskStorageKey(''),
       //storageKeyBase: StorageKeyParser.parse(config.plannerStorage),
       onlyConsumer: config.plannerOnlyConsumer,

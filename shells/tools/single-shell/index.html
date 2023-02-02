@@ -1,0 +1,60 @@
+<!--
+@license
+Copyright (c) 2018 Google Inc. All rights reserved.
+This code may only be used under the BSD style license found at
+http://polymer.github.io/LICENSE.txt
+Code distributed by Google as part of this project is also
+subject to an additional IP rights grant found at
+http://polymer.github.io/PATENTS.txt
+-->
+<!doctype html>
+
+<title>Recipe Taster</title>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#ffffff"/>
+
+<link rel="manifest" href="../configuration/manifest.json"/>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700">
+<link rel="shortcut icon" href="../configuration/logo_64.png">
+
+<style>
+  body {
+    font-family: sans-serif;
+  }
+</style>
+
+<div slotid="toproot"></div>
+<div slotid="root"></div>
+<div slotid="modal"></div>
+
+<script>window.logLevel = 2;</script>
+
+<script type="module">
+  import '../services/ml5-service.js';
+  import '../configuration/whitelisted.js';
+  import {Runtime} from '../../build/runtime/runtime.js';
+  import {DomSlotComposer} from '../lib/components/dom-slot-composer.js';
+  import {App} from './app.js';
+
+  const getUrlParam = name => {
+    return new URL(document.location.href).searchParams.get(name);
+  }
+  const runtime = new Runtime({rootPath: '../..'});
+
+  const composer = new DomSlotComposer({
+    rootContainer: document.body
+  });
+
+  const manifest = getUrlParam('manifest') || `Arcs/Login.arcs`;
+
+  (async () => {
+    try {
+      window.arc = await App(composer, manifest);
+    } catch (x) {
+      console.error(x);
+    }
+  })();
+</script>

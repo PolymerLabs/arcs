@@ -30,6 +30,19 @@ class PolicyVerifier {
   fun verifyPolicy(recipe: Recipe, policy: Policy): Boolean {
     checkPolicyName(recipe, policy)
 
+    val policyViolations = findPolicyViolations(recipe, policy)
+    if (policyViolations.isNotEmpty()) {
+      throw PolicyViolation.ChecksViolated(policy, policyViolations)
+    }
+
+    // No violations.
+    return true
+  }
+
+  /**
+   * Checks the [recipe] against the [policy], returning any failed [Checks][Check].
+   */
+  fun findPolicyViolations(recipe: Recipe, policy: Policy): List<Check> {
     // TODO(b/162083814): This should be moved to the compilation step.
     val graph = RecipeGraph(recipe)
     val policyConstraints = translatePolicy(policy)
@@ -55,17 +68,10 @@ class PolicyVerifier {
       particle.spec to checks
     }
     val analysisResult = InformationFlow.computeLabels(graph, ingresses, egressChecks)
-    val violations = analysisResult.checks.flatMap { (particle, checks) ->
+    return analysisResult.checks.flatMap { (particle, checks) ->
       checks.filterNot { check -> analysisResult.verify(particle, check) }
         .map { it }
     }
-
-    if (violations.isNotEmpty()) {
-      throw PolicyViolation.ChecksViolated(policy, violations)
-    }
-
-    // No violations.
-    return true
   }
 
   /**

@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Arc} from '../runtime/arc.js';
+import {ArcInfo} from '../runtime/arc-info.js';
 import {Recipe} from '../runtime/recipe/lib-recipe.js';
 import {RecipeWalker} from '../runtime/recipe/lib-recipe.js';
 import {Dictionary, WalkerTactic, Action, GenerateParams, Descendant} from '../utils/lib-utils.js';
@@ -249,7 +249,7 @@ export type StrategyParams = GenerateParams<Recipe>;
 
 // TODO: Doc call convention, incl strategies are stateful.
 export abstract class Strategy extends Action<Recipe> {
-  constructor(protected readonly arc?: Arc, args?) {
+  constructor(protected readonly arcInfo?: ArcInfo, args?) {
     super(args);
   }
 

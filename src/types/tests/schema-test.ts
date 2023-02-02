@@ -12,14 +12,18 @@
 // tslint:disable: variable-name
 // tslint:disable: no-unused-expression
 
-import {EntityType, ReferenceType, Schema, PrimitiveField} from '../lib-types.js';
+import {EntityType, ReferenceType, Schema, PrimitiveField, ReferenceField, InlineField,
+        CollectionField} from '../lib-types.js';
 import {assert} from '../../platform/chai-web.js';
+import {assertThrowsAsync} from '../../testing/test-util.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Reference} from '../../runtime/reference.js';
 import {Loader} from '../../platform/loader.js';
 import {Entity} from '../../runtime/entity.js';
 import {ConCap} from '../../testing/test-util.js';
 import {Flags} from '../../runtime/flags.js';
+import {deleteFieldRecursively} from '../../utils/lib-utils.js';
+import {MockStorageFrontend} from '../../runtime/storage/testing/test-storage.js';
 
 function getSchemaFromManifest(manifest: Manifest, handleName: string, particleIndex: number = 0): Schema {
   return manifest.particles[particleIndex].handleConnectionMap.get(handleName).type.getEntitySchema();
@@ -234,14 +238,15 @@ describe('schema', () => {
         one: &ReferencedOne
         two: &ReferencedTwo`);
 
-    const References = Entity.createEntityClass(manifest.findSchemaByName('References'), null);
+    const storageFrontend = new MockStorageFrontend();
+    const References = Entity.createEntityClass(manifest.findSchemaByName('References'), storageFrontend);
 
     const ReferencedOneSchema = manifest.findSchemaByName('ReferencedOne');
     const now = new Date();
     const storageKey = 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}';
     assert.doesNotThrow(() => {
       new References({
-        one: new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(new EntityType(ReferencedOneSchema)), null),
+        one: new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(new EntityType(ReferencedOneSchema)), storageFrontend),
         two: null
       });
     });
@@ -249,7 +254,7 @@ describe('schema', () => {
     assert.throws(() => {
       new References({
         one: null,
-        two: new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(new EntityType(ReferencedOneSchema)), null)
+        two: new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(new EntityType(ReferencedOneSchema)), storageFrontend)
       });
     }, TypeError, `Cannot set reference two with value '[object Object]' of mismatched type`);
     assert.throws(() => {
@@ -262,19 +267,19 @@ describe('schema', () => {
       schema Collections
         collection: [&Foo {value: Text}]
     `);
-
-    const Collections = Entity.createEntityClass(manifest.findSchemaByName('Collections'), null);
+    const storageFrontend = new MockStorageFrontend();
+    const Collections = Entity.createEntityClass(manifest.findSchemaByName('Collections'), storageFrontend);
     const FooType = EntityType.make(['Foo'], {value: 'Text'});
     const BarType = EntityType.make(['Bar'], {value: 'Text'});
     new Collections({collection: new Set()});
     const now = new Date();
     const storageKey = 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}';
     new Collections({
-      collection: new Set([new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(FooType), null)])
+      collection: new Set([new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(FooType), storageFrontend)])
     });
     assert.throws(() => {
       new Collections({collection:
-        new Set([new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(BarType), null)])
+        new Set([new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(BarType), storageFrontend)])
       });
     }, TypeError, `Cannot set reference collection with value '[object Object]' of mismatched type`);
   });
@@ -363,6 +368,9 @@ describe('schema', () => {
     const Thing = manifest.findSchemaByName('Thing');
     const Product = manifest.findSchemaByName('Product');
 
+    deleteFieldRecursively(Product, 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(Thing, 'location', {replaceWithNulls: true});
+
     assert.deepEqual(Schema.intersect(Product, Thing), Thing);
     assert.deepEqual(Schema.intersect(Thing, Product), Thing);
   });
@@ -432,6 +440,29 @@ describe('schema', () => {
       schema Person extends Base
         jobTitle: Text
         age: Number
+
+      particle P
+        person: reads Person {name, age, custom: Bytes}`);
+
+    const particle = manifest.particles[0];
+    const connection = particle.handleConnections[0];
+    const schema = connection.type.getEntitySchema();
+
+    assert.deepEqual(schema.names, ['Person']);
+    assert.hasAllKeys(schema.fields, ['name', 'age', 'custom']);
+    assert.strictEqual(schema.fields.name.getType(), 'Text');
+    assert.strictEqual(schema.fields.age.getType(), 'Number');
+    assert.strictEqual(schema.fields.custom.getType(), 'Bytes');
+  });
+
+  it('handles Kotlin style Schema syntax', async () => {
+    const manifest = await Manifest.parse(`
+      alias schema * as Base { name: Text, phoneNumber: Text, website: URL }
+
+      schema Person extends Base {
+        jobTitle: Text
+        age: Number
+      }
 
       particle P
         person: reads Person {name, age, custom: Bytes}`);
@@ -599,6 +630,160 @@ describe('schema', () => {
     assert.deepEqual(intersection.fields, schema3.fields);
     assert.deepEqual(intersection.refinement, schema3.refinement);
   }));
+
+  const verifyUnionOfTypes = async (type1: string, type2: string) => {
+    const manifest = await Manifest.parse(`
+            schema A
+              foo: ${type1}
+
+            schema B
+              foo: ${type2}
+            `);
+    const aType = manifest.findSchemaByName('A');
+    const bType = manifest.findSchemaByName('B');
+
+    deleteFieldRecursively(aType, 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(bType, 'location', {replaceWithNulls: true});
+
+    const aTypeLit = aType.toLiteral();
+    const bTypeLit = bType.toLiteral();
+
+    // Union the names
+    const unionT = aType.toLiteral();
+    unionT.names = ['A', 'B'];
+
+    const unionAB = Schema.union(aType, bType);
+    assert.isNotNull(unionAB, 'union of A and B should exist');
+    assert.deepEqual(unionAB.toLiteral(), unionT);
+    assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
+    assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
+
+    unionT.names = ['B', 'A'];
+    const unionBA = Schema.union(bType, aType);
+    assert.isNotNull(unionBA, 'union of B and A should exist');
+    assert.deepEqual(unionBA.toLiteral(), unionT);
+    assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
+    assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
+  };
+  const verifyUnionOf = async (typeBuilder: (type: string) => string) => {
+    await verifyUnionOfTypes(`${typeBuilder(`Foo {a: Text, b: Text}`)}`, `${typeBuilder(`Foo {a: Text}`)}`);
+  };
+  const verifyIntersectOfTypes = async (type1: string, type2: string) => {
+    const manifest = await Manifest.parse(`
+            schema A
+              foo: ${type1}
+
+            schema B
+              foo: ${type2}
+            `);
+    const aType = manifest.findSchemaByName('A');
+    const bType = manifest.findSchemaByName('B');
+
+    deleteFieldRecursively(aType, 'location', {replaceWithNulls: true});
+    deleteFieldRecursively(bType, 'location', {replaceWithNulls: true});
+
+    const aTypeLit = aType.toLiteral();
+    const bTypeLit = bType.toLiteral();
+
+    // Intersect the names
+    const intersectT = bType.toLiteral();
+    intersectT.names = [];
+
+    const intersectionAB = Schema.intersect(aType, bType);
+    assert.isNotNull(intersectionAB, 'intersection of A and B should exist');
+    assert.deepEqual(intersectionAB.toLiteral(), intersectT);
+    assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
+    assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
+
+    const intersectionBA = Schema.intersect(bType, aType);
+    assert.isNotNull(intersectionBA, 'intersection of B and A should exist');
+    assert.deepEqual(intersectionBA.toLiteral(), intersectT);
+    assert.deepEqual(aType.toLiteral(), aTypeLit, 'input (a) to intersection should not be modified');
+    assert.deepEqual(bType.toLiteral(), bTypeLit, 'input (b) to intersection should not be modified');
+  };
+  const verifyIntersectOf = async (typeBuilder: (type: string) => string) => {
+    await verifyIntersectOfTypes(`${typeBuilder(`Foo {a: Text, b: Text}`)}`, `${typeBuilder(`Foo {a: Text}`)}`);
+  };
+  it('tests schema union, with nullable and non-nullable ints', async () => {
+    await verifyUnionOfTypes(`Int`, `Int?`);
+  });
+  it('tests schema union, with nullable ints', async () => {
+    await verifyUnionOfTypes(`Int?`, `Int?`);
+  });
+  it('tests schema union, with nullable and non-nullable text', async () => {
+    await verifyUnionOfTypes(`Text`, `Text?`);
+  });
+  it('tests schema union, with nullable text', async () => {
+    await verifyUnionOfTypes(`Text?`, `Text?`);
+  });
+  it('tests schema union, with nullable inline entities', async () => {
+    await verifyUnionOfTypes(`inline Foo {a: Text, b: Text}?`, `inline Foo {a: Text}?`);
+  });
+  it('tests schema union, with nullable and non-nullable inline entities', async () => {
+    await verifyUnionOfTypes(`inline Foo {a: Text, b: Text}`, `inline Foo {a: Text}?`);
+  });
+  it('tests schema union, with inline entities', async () => {
+    await verifyUnionOf((type: string) => `inline ${type}`);
+  });
+  it('tests schema union, with referenced entities', async () => {
+    await verifyUnionOf((type: string) => `&${type}`);
+  });
+  it('tests schema union, with collections of entities', async () => {
+    await verifyUnionOf((type: string) => `[inline ${type}]`);
+    await verifyUnionOf((type: string) => `[&${type}]`);
+  });
+  it('tests schema union, with ordered lists of entities', async () => {
+    await verifyUnionOf((type: string) => `List<inline ${type}>`);
+    await verifyUnionOf((type: string) => `List<&${type}>`);
+  });
+  it.skip('tests schema union, with tuples of entities', async () => {
+    // See b/175821052
+    await verifyUnionOf((type: string) => `(inline ${type}, inline ${type})`);
+    await verifyUnionOf((type: string) => `(inline ${type}, &${type})`);
+    await verifyUnionOf((type: string) => `(&${type}, inline ${type})`);
+    await verifyUnionOf((type: string) => `(&${type}, &${type})`);
+  });
+
+  it('tests schema intersection, with inline entities', async () => {
+  it('tests schema intersection, with nullable and non-nullable ints', async () => {
+    await verifyIntersectOfTypes(`Int`, `Int?`);
+  });
+  it('tests schema intersection, with nullable ints', async () => {
+    await verifyIntersectOfTypes(`Int?`, `Int?`);
+  });
+  it('tests schema intersection, with nullable and non-nullable text', async () => {
+    await verifyIntersectOfTypes(`Text`, `Text?`);
+  });
+  it('tests schema intersection, with nullable text', async () => {
+    await verifyIntersectOfTypes(`Text?`, `Text?`);
+  });
+  it('tests schema intersection, with nullable inline entities', async () => {
+    await verifyIntersectOfTypes(`inline Foo {a: Text, b: Text}?`, `inline Foo {a: Text}?`);
+  });
+  it('tests schema intersection, with nullable and non-nullable inline entities', async () => {
+    await verifyIntersectOfTypes(`inline Foo {a: Text, b: Text}`, `inline Foo {a: Text}?`);
+  });
+    await verifyIntersectOf((type: string) => `inline ${type}`);
+  });
+  it('tests schema intersection, with referenced entities', async () => {
+    await verifyIntersectOf((type: string) => `&${type}`);
+  });
+  it('tests schema intersection, with collections of entities', async () => {
+    await verifyIntersectOf((type: string) => `[inline ${type}]`);
+    await verifyIntersectOf((type: string) => `[&${type}]`);
+  });
+  it('tests schema intersection, with ordered lists of entities', async () => {
+    await verifyIntersectOf((type: string) => `List<inline ${type}>`);
+    await verifyIntersectOf((type: string) => `List<&${type}>`);
+  });
+  it.skip('tests schema intersection, with tuples of entities', async () => {
+    // See b/175821052
+    await verifyIntersectOf((type: string) => `(inline ${type}, inline ${type})`);
+    await verifyIntersectOf((type: string) => `(inline ${type}, &${type})`);
+    await verifyIntersectOf((type: string) => `(&${type}, inline ${type})`);
+    await verifyIntersectOf((type: string) => `(&${type}, &${type})`);
+  });
+
   it('tests schema union', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
@@ -620,6 +805,80 @@ describe('schema', () => {
       particle Foo
         schema1: reads X {y: inline Y {a: Text, b: Text}, z: Number}
         schema2: reads X {y: inline Y {a: Text, c: Text}, w: Number, z: Number}
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].getFieldType().getEntityType().entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
+  it('tests schema union for inlines with mixed (internal and external) schema', async () => {
+    const manifest = await Manifest.parse(`
+      schema X
+        y: inline Y {a: Text, b: Text, c: Text}
+        w: Number
+        z: Number
+      particle Foo
+        schema1: reads X {y: inline Y {a: Text, b: Text}, z}
+        schema2: reads X {y: inline Y {a: Text, c: Text}, w, z}
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].getFieldType().getEntityType().entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
+  it('tests schema union fails for inlines declared implicitly', async () => {
+    // Note: This tests that the schema 'X' doesn't declare the 'Y' schema to ensure that only
+    // top level schemas can be used by particles (this is a form of namespacing).
+    assertThrowsAsync(async () => {
+      await Manifest.parse(`
+        schema X
+          y: inline Y {a: Text, b: Text, c: Text}
+          w: Number
+          z: Number
+        particle Foo
+          schema1: reads X {y: inline Y {a, b}, z}
+          schema2: reads X {y: inline Y {a, c}, w, z}
+      `);
+    }, `Could not infer type of 'a' field`);
+  });
+  it('tests schema union for inlines with external schema', async () => {
+    const manifest = await Manifest.parse(`
+      schema Y
+        a: Text
+        b: Text
+        c: Text
+      schema X
+        y: inline Y {a, b, c}
+        w: Number
+        z: Number
+      particle Foo
+        schema1: reads X {y: inline Y {a, b}, z}
+        schema2: reads X {y: inline Y {a, c}, w, z}
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].getFieldType().getEntityType().entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
+  it('tests schema union for inlines with external schema for kotlin style schemas', async () => {
+    const manifest = await Manifest.parse(`
+      schema Y
+        a: Text
+        b: Text
+        c: Text
+      schema X
+        y: inline Y {a, b, c}
+        w: Number
+        z: Number
+      particle Foo
+        schema1: reads X {y: inline Y {a, b}, z}
+        schema2: reads X {y: inline Y {a, c}, w, z}
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
@@ -654,12 +913,89 @@ describe('schema', () => {
     assert.deepEqual(Object.keys(union.fields['y'].getFieldType().getEntityType().entitySchema.fields),
         ['a', 'b', 'c']);
   });
-
+  it('tests schema union for inline fields of kotlin style schemas', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {
+          y: inline Y {
+            a: Text
+            b: Text
+          },
+          z: Number
+        }
+        schema2: reads X {
+          y: inline Y {
+            a: Text
+            c: Text
+          },
+          w: Number
+          z: Number
+        }
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].getFieldType().getEntityType().entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
   it('tests schema union for reference fields', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {y: &Y {a: Text, b: Text}, z: Number}
         schema2: reads X {y: &Y {a: Text, c: Text}, w: Number, z: Number}
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].getFieldType().getEntityType().entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
+  it('tests schema union for reference fields of kotlin style schemas', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {
+          y: &Y {
+            a: Text,
+            b: Text
+          },
+          z: Number
+        }
+        schema2: reads X {
+          y: &Y {
+            a: Text
+            c: Text,
+          },
+          w: Number
+          z: Number
+        }
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].getFieldType().getEntityType().entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
+  it('tests schema union for inline fields of kotlin style schemas', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {
+          y: inline Y {
+            a: Text,
+            b: Text
+          },
+          z: Number
+        }
+        schema2: reads X {
+          y: inline Y {
+            a: Text
+            c: Text,
+          },
+          w: Number
+          z: Number
+        }
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
@@ -751,7 +1087,7 @@ describe('schema', () => {
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
     assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2));
   });
-  it('tests warning when refinement specificity is unknown', async () => {
+  it('tests warning when refinement specificity is unknown', Flags.withFlags({warnOnUnsafeRefinement: true}, async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number} [a*a+a > 20]
@@ -760,8 +1096,22 @@ describe('schema', () => {
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
     const refWarning = ConCap.capture(() => assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2)));
-    assert.match(refWarning.warn[0][0], /Unable to ascertain if/);
-  });
+    for (const warn of refWarning.warn) {
+      assert.match(warn[0], /Unable to ascertain if .* is at least as specific as .*/);
+    }
+    assert.lengthOf(refWarning.warn, 1);
+  }));
+  it('tests warning when refinement specificity is unknown', Flags.withFlags({warnOnUnsafeRefinement: false}, async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {a: Number} [a*a+a > 20]
+        schema2: reads X {a: Number} [a > 10]
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const refWarning = ConCap.capture(() => assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2)));
+    assert.lengthOf(refWarning.warn, 0);
+  }));
   it('tests to inline schema string for kt types', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
@@ -903,5 +1253,75 @@ describe('schema', () => {
 
     // These should not be equal!
     assert.notEqual(await manifest1.schemas['Outer'].hash(), await manifest2.schemas['Outer'].hash());
+  });
+  describe('recursive schemas', async () => {
+    it('handles recursive Schemas syntax', Flags.withFlags({recursiveSchemasAllowed: true}, async () => {
+      const manifest = await Manifest.parse(`
+        schema GraphNode
+          name: Text
+          neighbors: [&GraphNode]`);
+
+      const schema = manifest.schemas['GraphNode'];
+      assert.deepEqual(schema.names, ['GraphNode']);
+      assert.hasAllKeys(schema.fields, ['name', 'neighbors']);
+      assert.strictEqual(schema.fields.name.getType(), 'Text');
+      const neighbors = schema.fields.neighbors as CollectionField;
+      assert.strictEqual(neighbors.kind, 'schema-collection');
+      const ref = neighbors.schema as ReferenceField;
+      assert.strictEqual(ref.kind, 'schema-reference');
+      const inline = ref.schema as InlineField;
+      assert.strictEqual(inline.kind, 'schema-inline');
+      const model = inline.model;
+      const recursiveSchema = model.entitySchema;
+      assert.deepEqual(recursiveSchema.names, ['GraphNode']);
+      assert.hasAllKeys(recursiveSchema.fields, ['name', 'neighbors']);
+      assert.strictEqual(recursiveSchema.fields.name.getType(), 'Text');
+    }));
+    it('catches disallowed recursive Schemas syntax', Flags.withFlags({recursiveSchemasAllowed: false}, async () => {
+      assertThrowsAsync(async () => {
+        await Manifest.parse(`
+          schema GraphNode
+            name: Text
+            neighbors: [&GraphNode]`);
+      }, `Recursive schemas are unsuported, unstable support can be enabled via the 'recursiveSchemasAllowed' flag: GraphNode`);
+    }));
+    it('catches disallowed co-recursive (2 steps) Schemas syntax', Flags.withFlags({recursiveSchemasAllowed: false}, async () => {
+      assertThrowsAsync(async () => {
+        await Manifest.parse(`
+          schema Edge
+            name: Text
+            from: &Node
+            to: &Node
+          schema Node
+            name: Text
+            edges: [&Edge]`);
+      }, /Recursive schemas are unsuported, unstable support can be enabled via the 'recursiveSchemasAllowed' flag: (Node|Edge)/);
+    }));
+    it('catches disallowed co-recursive (3 steps) Schemas syntax', Flags.withFlags({recursiveSchemasAllowed: false}, async () => {
+      assertThrowsAsync(async () => {
+        await Manifest.parse(`
+          schema Edges
+            edges: [&Edge]
+          schema Edge
+            name: Text
+            from: &Node
+            to: &Node
+          schema Node
+            name: Text
+            edges: &Edges`);
+      }, /Recursive schemas are unsuported, unstable support can be enabled via the 'recursiveSchemasAllowed' flag: (Node|Edge|Edges)/);
+    }));
+    it('catches disallowed co-recursive inline (2 steps) Schemas syntax', Flags.withFlags({recursiveSchemasAllowed: false}, async () => {
+      assertThrowsAsync(async () => {
+        await Manifest.parse(`
+          schema Edge
+            name: Text
+            from: inline Node
+            to: inline Node
+          schema Node
+            name: Text
+            edges: [&Edge]`);
+      }, /Recursive schemas are unsuported, unstable support can be enabled via the 'recursiveSchemasAllowed' flag: (Node|Edge)/);
+    }));
   });
 });

@@ -30,6 +30,7 @@ import {
 } from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {Dictionary} from '../../utils/lib-utils.js';
 import {Storable} from '../../runtime/storable.js';
+import {Flags} from '../../runtime/flags.js';
 
 export enum AtLeastAsSpecific {
   YES = 'YES',
@@ -146,7 +147,9 @@ export class Refinement {
       const rangeB = NumberRange.fromExpression(b.expression, textToNum);
       return rangeA.isSubsetOf(rangeB) ? AtLeastAsSpecific.YES : AtLeastAsSpecific.NO;
     } catch (e) {
-      console.warn(`Unable to ascertain if ${a} is at least as specific as ${b}.`);
+      if (Flags.warnOnUnsafeRefinement) {
+        console.warn(`Unable to ascertain if ${a} is at least as specific as ${b}.`);
+      }
       return AtLeastAsSpecific.UNKNOWN;
     }
   }
@@ -271,6 +274,8 @@ abstract class RefinementExpression {
       case 'Long':
       case 'BigInt':
       case 'Instant':
+        return new DiscretePrimitive(value, [], this.evalType);
+      case 'Duration':
         return new DiscretePrimitive(value, [], this.evalType);
       case 'Number':
         return new NumberPrimitive(value, []);
@@ -2405,7 +2410,7 @@ export class BigIntTerm {
   static fromKey(key: string): BigIntTerm {
     const data = JSON.parse(key);
     for (const [indeterminate, power] of Object.entries(data)) {
-      data[indeterminate] = BigInt(power);
+      data[indeterminate] = BigInt(power as any);
     }
     return new BigIntTerm(data);
   }

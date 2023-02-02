@@ -14,11 +14,11 @@ import {StrategizerWalker, Strategy} from '../strategizer.js';
 
 export class MapSlots extends Strategy {
   async generate(inputParams) {
-    const arc = this.arc;
+    const arcInfo = this.arcInfo;
 
     return StrategizerWalker.over(this.getResults(inputParams), new class extends StrategizerWalker {
       onPotentialSlotConnection(recipe: Recipe, particle: Particle, slotSpec: ConsumeSlotConnectionSpec) {
-        const {local, remote} = findAllSlotCandidates(particle, slotSpec, arc);
+        const {local, remote} = findAllSlotCandidates(particle, slotSpec, arcInfo);
         // ResolveRecipe handles one-slot case.
         if (local.length + remote.length < 2) {
           return undefined;
@@ -55,7 +55,7 @@ export class MapSlots extends Strategy {
         const slotSpec = slotConnection.getSlotSpec();
         const particle = slotConnection.particle;
 
-        const {local, remote} = findAllSlotCandidates(particle, slotSpec, arc);
+        const {local, remote} = findAllSlotCandidates(particle, slotSpec, arcInfo);
         if (local.length + remote.length < 2) {
           return undefined;
         }

@@ -102,7 +102,9 @@ data class HandleSpec(
     get() = when (type) {
       is CollectionType<*> -> HandleContainerType.Collection
       is SingletonType<*> -> HandleContainerType.Singleton
-      else -> throw IllegalStateException("Handle type should be a Collection or a Singleton")
+      else -> throw IllegalStateException(
+        "Handle type ${type.tag} for handle $baseName should be a Collection or a Singleton"
+      )
     }
 
   val dataType: HandleDataType
@@ -117,7 +119,7 @@ data class HandleSpec(
       is CollectionType<*> -> type.collectionType
       is SingletonType<*> -> type.containedType
       else -> throw IllegalStateException(
-        "Handle type $type for handle $baseName should be a Collection or a Singleton"
+        "Handle type ${type.tag} for handle $baseName should be a Collection or a Singleton"
       )
     }
 }
@@ -173,26 +175,32 @@ data class CollectionDelta<T : Storable>(
   val removed: Set<T> = setOf()
 )
 
-/** A singleton handle with read access. */
-interface ReadSingletonHandle<T : Storable> : ReadableHandle<T?, SingletonDelta<T>> {
+/** A singleton handle with read access. [E] is a concrete entity class. */
+interface ReadSingletonHandle<E : Storable> : ReadableHandle<E?, SingletonDelta<E>> {
   /** Returns the value of the singleton. */
-  fun fetch(): T?
+  fun fetch(): E?
 }
 
-/** A singleton handle with write access. */
-interface WriteSingletonHandle<T : Storable> : Handle {
+/**
+ * A singleton handle with write access. [I] is the interface for an entity class.
+ *
+ * Write operations return a Job that will be completed once the op has been sent to the backing
+ * store for this handle.
+ */
+interface WriteSingletonHandle<I : Storable> : Handle {
   /** Sets the value of the singleton. */
-  fun store(element: T): Job
+  fun store(element: I): Job
 
   /** Clears the value of the singleton. */
   fun clear(): Job
 }
 
 /** A singleton handle with read and write access. */
-interface ReadWriteSingletonHandle<T : Storable> : ReadSingletonHandle<T>, WriteSingletonHandle<T>
+interface ReadWriteSingletonHandle<E : Storable, I : Storable> :
+  ReadSingletonHandle<E>, WriteSingletonHandle<I>
 
-/** A collection handle with read access. */
-interface ReadCollectionHandle<T : Storable> : ReadableHandle<Set<T>, CollectionDelta<T>> {
+/** A collection handle with read access. [E] is a concrete entity class. */
+interface ReadCollectionHandle<E : Storable> : ReadableHandle<Set<E>, CollectionDelta<E>> {
   /** The number of elements in the collection. */
   fun size(): Int
 
@@ -200,51 +208,62 @@ interface ReadCollectionHandle<T : Storable> : ReadableHandle<Set<T>, Collection
   fun isEmpty(): Boolean
 
   /** Returns a set with all the entities in the collection. */
-  fun fetchAll(): Set<T>
+  fun fetchAll(): Set<E>
 
   /** Return the entity with the provided [entityId]. */
-  fun fetchById(entityId: String): T?
+  fun fetchById(entityId: String): E?
 }
 
-/** A collection handle with write access. */
-interface WriteCollectionHandle<T : Storable> : Handle {
+/**
+ * A collection handle with write access. [I] is the interface for an entity class.
+ *
+ * Write operations return a Job that will be completed once the op has been sent to the backing
+ * store for this handle.
+ */
+interface WriteCollectionHandle<I : Storable> : Handle {
   /** Adds the given [element] to the collection. */
-  fun store(element: T): Job
+  fun store(element: I): Job
 
   /** Adds the given [elements] to the collection. */
-  fun storeAll(elements: Collection<T>): Job
+  fun storeAll(elements: Collection<I>): Job
 
   /** Removes everything from the collection. */
   fun clear(): Job
 
   /** Removes the given [element] from the collection. It is equivalent to deleting by the id of the
    * provided entity (all other fields are ignored). */
-  fun remove(element: T): Job
+  fun remove(element: I): Job
 
   /** Removes the element with the given [id] from the collection. */
   fun removeById(id: String): Job
 }
 
-/** A collection handle with query access. */
-interface QueryCollectionHandle<T : Storable, QueryArgs> : Handle {
+/** A collection handle with query access. [E] is a concrete entity class. */
+interface QueryCollectionHandle<E : Storable, QueryArgs> : Handle {
   /** Returns a set with all the entities in the collection that match the associated query. */
-  fun query(args: QueryArgs): Set<T>
+  fun query(args: QueryArgs): Set<E>
+}
+
+/** A collection handle with remove-by-query access. */
+interface RemoveQueryCollectionHandle<QueryArgs> : Handle {
+  /** Removes all the entities from the collection that match the associated query. */
+  fun removeByQuery(args: QueryArgs): Job
 }
 
 /** A collection handle with read and write access. */
-interface ReadWriteCollectionHandle<T : Storable> :
-  ReadCollectionHandle<T>, WriteCollectionHandle<T>
+interface ReadWriteCollectionHandle<E : Storable, I : Storable> :
+  ReadCollectionHandle<E>, WriteCollectionHandle<I>
 
 /** A collection handle with read and query access. */
-interface ReadQueryCollectionHandle<T : Storable, QueryArgs> :
-  ReadCollectionHandle<T>, QueryCollectionHandle<T, QueryArgs>
+interface ReadQueryCollectionHandle<E : Storable, QueryArgs> :
+  ReadCollectionHandle<E>, QueryCollectionHandle<E, QueryArgs>
 
-/** A collection handle with write and query access. */
-interface WriteQueryCollectionHandle<T : Storable, QueryArgs> :
-  WriteCollectionHandle<T>, QueryCollectionHandle<T, QueryArgs>
+/** A collection handle with write and remove-by-query access. */
+interface WriteQueryCollectionHandle<I : Storable, QueryArgs> :
+  WriteCollectionHandle<I>, RemoveQueryCollectionHandle<QueryArgs>
 
 /** A collection handle with read, write and query access. */
-interface ReadWriteQueryCollectionHandle<T : Storable, QueryArgs> :
-  ReadWriteCollectionHandle<T>,
-  WriteQueryCollectionHandle<T, QueryArgs>,
-  ReadQueryCollectionHandle<T, QueryArgs>
+interface ReadWriteQueryCollectionHandle<E : Storable, I : Storable, QueryArgs> :
+  ReadWriteCollectionHandle<E, I>,
+  WriteQueryCollectionHandle<I, QueryArgs>,
+  ReadQueryCollectionHandle<E, QueryArgs>

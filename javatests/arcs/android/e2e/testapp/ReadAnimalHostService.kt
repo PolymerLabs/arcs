@@ -16,14 +16,14 @@ package arcs.android.e2e.testapp
 import androidx.lifecycle.Lifecycle
 import android.content.Context
 import android.content.Intent
-import arcs.android.sdk.host.AndroidHost
-import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.ArcHost
+import arcs.core.host.HandleManagerFactory
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
-import arcs.core.storage.StorageEndpointManager
+import arcs.jvm.util.JvmTime
+import arcs.sdk.android.labs.host.AndroidHost
+import arcs.sdk.android.labs.host.ArcHostService
 import arcs.sdk.android.storage.AndroidStorageServiceEndpointManager
 import arcs.sdk.android.storage.service.DefaultBindHelper
 import kotlinx.coroutines.Dispatchers
@@ -33,39 +33,42 @@ import kotlinx.coroutines.MainScope
 /**
  * Service wrapping an ArcHost which hosts a particle writing data to a handle.
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class ReadAnimalHostService : ArcHostService() {
 
   private val coroutineScope = MainScope()
 
-  override val arcHost: ArcHost = MyArcHost(
-    this,
-    this.lifecycle,
+  private val handleManagerFactory = HandleManagerFactory(
     SimpleSchedulerProvider(coroutineScope.coroutineContext),
     AndroidStorageServiceEndpointManager(
       coroutineScope,
       DefaultBindHelper(this)
     ),
+    JvmTime
+  )
+
+  override val arcHost: ArcHost = MyArcHost(
+    this,
+    this.lifecycle,
+    handleManagerFactory,
     ::ReadAnimal.toRegistration()
   )
 
   override val arcHosts = listOf(arcHost)
 
-  @ExperimentalCoroutinesApi
+  @OptIn(ExperimentalCoroutinesApi::class)
   class MyArcHost(
     context: Context,
     lifecycle: Lifecycle,
-    schedulerProvider: SchedulerProvider,
-    storageEndpointManager: StorageEndpointManager,
+    handleManagerFactory: HandleManagerFactory,
     vararg initialParticles: ParticleRegistration
   ) : AndroidHost(
     context = context,
     lifecycle = lifecycle,
     coroutineContext = Dispatchers.Default,
     arcSerializationContext = Dispatchers.Default,
-    schedulerProvider = schedulerProvider,
-    storageEndpointManager = storageEndpointManager,
-    particles = *initialParticles
+    handleManagerFactory = handleManagerFactory,
+    particles = initialParticles
   )
 
   inner class ReadAnimal : AbstractReadAnimal() {

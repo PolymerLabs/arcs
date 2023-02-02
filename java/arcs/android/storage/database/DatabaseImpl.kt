@@ -17,12 +17,13 @@ import android.database.Cursor
 import android.database.DatabaseUtils
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Base64
 import androidx.annotation.VisibleForTesting
+import arcs.android.common.MAX_PLACEHOLDERS
 import arcs.android.common.batchDelete
 import arcs.android.common.forEach
 import arcs.android.common.forSingleResult
 import arcs.android.common.getBoolean
+import arcs.android.common.getNullableArcsDuration
 import arcs.android.common.getNullableArcsInstant
 import arcs.android.common.getNullableBoolean
 import arcs.android.common.getNullableByte
@@ -35,8 +36,6 @@ import arcs.android.common.getNullableString
 import arcs.android.common.map
 import arcs.android.common.transaction
 import arcs.android.crdt.VersionMapProto
-import arcs.android.crdt.fromProto
-import arcs.android.crdt.toProto
 import arcs.core.common.Referencable
 import arcs.core.crdt.VersionMap
 import arcs.core.data.FieldName
@@ -49,32 +48,37 @@ import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.Reference
+import arcs.core.storage.RawReference
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
+import arcs.core.storage.database.DatabaseConfig
 import arcs.core.storage.database.DatabaseData
+import arcs.core.storage.database.DatabaseOp
 import arcs.core.storage.database.DatabasePerformanceStatistics
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.embed
 import arcs.core.util.ArcsDuration
 import arcs.core.util.ArcsInstant
 import arcs.core.util.BigInt
+import arcs.core.util.Random
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
+import arcs.core.util.nextVersionMapSafeString
 import arcs.core.util.performance.Counters
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
+import arcs.flags.BuildFlags
 import arcs.jvm.util.JvmTime
-import com.google.protobuf.InvalidProtocolBufferException
 import kotlin.coroutines.coroutineContext
-import kotlin.math.roundToLong
 import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.updateAndGet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
@@ -101,14 +105,25 @@ typealias CollectionId = Long
 /** The ID of an entity reference. */
 typealias ReferenceId = Long
 
+/**
+ * A [RuntimeException] that is generated when the database is in a transient inconsistent
+ * state due to data deletion (GC or TTL expiry).
+ *
+ * [InconsistentStateException] should only be used when the error is transient & recoverable via a
+ * retry.
+ */
+class InconsistentStateException(message: String) : RuntimeException(message)
+
 /** Implementation of [Database] for Android using SQLite. */
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 @Suppress("Recycle", "EXPERIMENTAL_API_USAGE")
 // Our helper extension methods close Cursors correctly.
 class DatabaseImpl(
   context: Context,
+  private val storageKeyManager: StorageKeyManager,
   databaseName: String,
   persistent: Boolean = true,
+  @VisibleForTesting val databaseConfigGetter: () -> DatabaseConfig,
   val onDatabaseClose: suspend () -> Unit = {}
 ) : Database, SQLiteOpenHelper(
   context,
@@ -190,7 +205,9 @@ class DatabaseImpl(
       rawQuery(
         "SELECT name FROM sqlite_master WHERE type = 'table'",
         emptyArray()
-      ).map { "DROP TABLE ${it.getString(0)}" }.forEach(db::execSQL)
+      ).map { it.getString(0) }
+        .filterNot { SYSTEM_TABLES.contains(it) }
+        .forEach { db.execSQL("DROP TABLE $it") }
 
       initializeDatabase(this)
       Unit
@@ -204,25 +221,15 @@ class DatabaseImpl(
   private fun initializeDatabase(db: SQLiteDatabase) {
     db.transaction {
       CREATE.forEach(db::execSQL)
-      initializePrimitiveTypes(db)
+      initializeTypesTable(db)
     }
   }
 
-  /* Initializes the [PrimitiveType] values. */
-  private fun initializePrimitiveTypes(db: SQLiteDatabase) {
-    // Populate the 'types' table with the primitive types. The id of the enum will be
-    // the Type ID used in the database.
-    val content = ContentValues().apply {
-      put("is_primitive", true)
-    }
-    PrimitiveType.values().forEach {
-      content.apply {
-        put("id", it.id)
-        put("name", it.name)
-      }
-      db.insertOrThrow(TABLE_TYPES, null, content)
-    }
-
+  /* Initializes the types table values. */
+  private fun initializeTypesTable(db: SQLiteDatabase) {
+    // We used to keep primitive types in the table, and used the sentinel to distinguish between
+    // primitive and entity types.
+    // Now we only keep entity types here, but the sentinel is kept for backwards compatibility.
     val sentinel = ContentValues().apply {
       put("is_primitive", true)
       put("id", REFERENCE_TYPE_SENTINEL)
@@ -240,7 +247,11 @@ class DatabaseImpl(
     clients.remove(identifier)
     if (clients.isEmpty()) {
       onDatabaseClose()
-      // TODO: track bulk deletes, and if none is in progress we can close the connection.
+      /**
+       * TODO: track bulk deletes, and if none is in progress we can close the connection and
+       * remove this instance from the AndroidSqliteDatabaseManager dbCache (we cannot remove from
+       * the cache if the connection is still open - see b/183670485).
+       */
     }
     Unit
   }
@@ -267,13 +278,44 @@ class DatabaseImpl(
     }
   }
 
-  @VisibleForTesting
-  @Suppress("UNCHECKED_CAST")
-  fun getEntity(
+  /*
+   * Retry getEntity exactly once if terminated due to an InconsistentStateException; this gives
+   * any running GC or TTL process an opportunity to finish, which renders getEntity safe to retry.
+   */
+  private suspend fun getEntity(
     storageKey: StorageKey,
     schema: Schema,
     counters: Counters? = null
-  ): DatabaseData.Entity? = readableDatabase.transaction {
+  ): DatabaseData.Entity? {
+    if (!BuildFlags.TRANSACTION_FREE_READS) {
+      return readableDatabase.transaction { getEntityImpl(storageKey, schema, counters) }
+    }
+    var retryPosition = 0
+    while (retryPosition <= GET_ENTITY_RETRY_DURATIONS.size) {
+      try {
+        return getEntityImpl(storageKey, schema, counters).also {
+          if (retryPosition > 0) {
+            log.debug { "getEntity succeeded for $storageKey after $retryPosition retries" }
+          }
+        }
+      } catch (e: InconsistentStateException) {
+        if (retryPosition == GET_ENTITY_RETRY_DURATIONS.size) {
+          log.debug { "getEntity failed after $retryPosition retries with $e" }
+          throw e
+        }
+      }
+      delay(GET_ENTITY_RETRY_DURATIONS[retryPosition++])
+    }
+    // This should not be reached
+    throw RuntimeException("Reached state that should be unreachable")
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun getEntityImpl(
+    storageKey: StorageKey,
+    schema: Schema,
+    counters: Counters? = null
+  ): DatabaseData.Entity? = with(readableDatabase) {
     val db = this
     // Fetch the entity's type by storage key.
     counters?.increment(DatabaseCounters.GET_ENTITY_TYPE_BY_STORAGEKEY)
@@ -399,6 +441,7 @@ class DatabaseImpl(
             BigInt(it.getString(4)).toReferencable()
           }
         PrimitiveType.Instant.id -> it.getNullableArcsInstant(4)?.toReferencable()
+        PrimitiveType.Duration.id -> it.getNullableArcsDuration(4)?.toReferencable()
         else ->
           if (
             isCollection == FieldClass.InlineEntity ||
@@ -429,12 +472,19 @@ class DatabaseImpl(
               dbCollections.forEach { (fieldName, value) ->
                 rawCollections[fieldName] = value
               }
+              if (entityId == null) {
+                // Null entityIds are (most likely) a transient state caused by GC or TTL
+                // removing the entity in a manner that is interleaved with retrieving the
+                // entity. Throwing an InconsistentStateException here gives the getEntity
+                // function the opportunity of retrying retrieval, which should succeed once
+                // GC/TTL is finished with this entity.
+                throw InconsistentStateException(
+                  "entity data exists against storage_key_id $inlineStorageKeyId without " +
+                    "matching ID from entities table"
+                )
+              }
               RawEntity(
-                id = requireNotNull(entityId) {
-                  "DB in an inconsistent state: entity data exists against " +
-                    "storage_key_id $inlineStorageKeyId without matching ID from " +
-                    "entities table"
-                },
+                id = entityId!!,
                 singletons = rawSingletons,
                 collections = rawCollections
               )
@@ -442,9 +492,9 @@ class DatabaseImpl(
           } else if (it.isNull(6)) {
             null
           } else {
-            Reference(
+            RawReference(
               id = it.getString(6),
-              storageKey = StorageKeyParser.parse(it.getString(7)),
+              storageKey = storageKeyManager.parse(it.getString(7)),
               version = it.getVersionMap(8),
               _creationTimestamp = it.getLong(9),
               _expirationTimestamp = it.getLong(10),
@@ -491,8 +541,7 @@ class DatabaseImpl(
     return singletons to collections
   }
 
-  @VisibleForTesting
-  fun getCollection(
+  private fun getCollection(
     storageKey: StorageKey,
     schema: Schema,
     counters: Counters? = null
@@ -513,8 +562,7 @@ class DatabaseImpl(
     )
   }
 
-  @VisibleForTesting
-  fun getSingleton(
+  private fun getSingleton(
     storageKey: StorageKey,
     schema: Schema,
     counters: Counters? = null
@@ -532,11 +580,184 @@ class DatabaseImpl(
     }
     val value = values.singleOrNull()
     DatabaseData.Singleton(
-      value?.let { ReferenceWithVersion(value.reference, value.versionMap) },
+      value?.let { ReferenceWithVersion(value.rawReference, value.versionMap) },
       schema,
       versionNumber,
       versionMap
     )
+  }
+
+  /**
+   * Retrieves existing metadata for this storage key if it exists, otherwise create an empty
+   * collection.
+   */
+  private suspend fun getOrCreateCollectionMetadata(
+    storageKey: StorageKey,
+    schema: Schema,
+    dataType: DataType,
+    counters: Counters?,
+    db: SQLiteDatabase
+  ): CollectionMetadata {
+    return getCollectionMetadata(storageKey, dataType, db) ?: createEmptyCollection(
+      storageKey,
+      VersionMap(),
+      schema,
+      databaseVersion = 0,
+      dataType,
+      counters,
+      db
+    )
+  }
+
+  /**
+   * Applies the given [AddToCollection] operation to the collection found at [storageKey]. If the
+   * collection does not exist, an empty one will be created.
+   */
+  private suspend fun addToCollection(
+    storageKey: StorageKey,
+    op: DatabaseOp.AddToCollection,
+    counters: Counters
+  ) = writableDatabase.transaction {
+    // Retrieve existing metadata for this storage key if it exists, otherwise create an empty
+    // collection.
+    val metadata = getOrCreateCollectionMetadata(
+      storageKey,
+      op.schema,
+      DataType.Collection,
+      counters,
+      this
+    )
+    val referenceId = getEntityReferenceId(op.value, this)
+    // Check if the entry is already in the collection, if so return early.
+    rawQuery(
+      "SELECT count(*) FROM collection_entries WHERE collection_id = ? AND value_id = ?",
+      arrayOf(metadata.collectionId.toString(), referenceId.toString())
+    ).forSingleResult {
+      if (it.getInt(0) > 0) return@transaction
+    }
+    // If not, we create it.
+    val versionMap = metadata.versionMap.increment(DATABASE_CRDT_ACTOR).toLiteral()
+
+    update(
+      TABLE_COLLECTIONS,
+      ContentValues().apply {
+        put("version_map", versionMap)
+        put("version_number", metadata.versionNumber + 1)
+      },
+      "id = ?",
+      arrayOf(metadata.collectionId.toString())
+    )
+    insertOrThrow(
+      TABLE_COLLECTION_ENTRIES,
+      null,
+      ContentValues().apply {
+        put("collection_id", metadata.collectionId)
+        put("value_id", referenceId)
+        put("version_map", versionMap)
+      }
+    )
+  }
+
+  /**
+   * Clears the collection at [storageKey], calls [clearEntities] for any entity that was in the
+   * collection. If the collection does not exist or is empty, this is a no-op.
+   */
+  private suspend fun clearCollection(storageKey: StorageKey, clientId: Int?) {
+    writableDatabase.transaction {
+      // Load collection id. If the collection cannot be found, return.
+      val collectionId =
+        getCollectionMetadata(storageKey, DataType.Collection, this)?.collectionId?.toString()
+          ?: return
+
+      // Clear all entities contained in the collection. It is important to do this before we clear
+      // the collection entries themselves.
+      clearEntities(
+        """
+        SELECT storage_keys.id, storage_keys.storage_key
+        FROM collection_entries
+        LEFT JOIN entity_refs ON entity_refs.id = collection_entries.value_id
+        INNER JOIN storage_keys ON storage_keys.storage_key = entity_refs.entity_storage_key
+        WHERE collection_entries.collection_id = ?
+        """,
+        args = arrayOf(collectionId),
+        clientId = clientId
+      )
+
+      // Clear the collection entries.
+      delete(
+        TABLE_COLLECTION_ENTRIES,
+        "collection_id = ?",
+        arrayOf(collectionId)
+      )
+    }
+  }
+
+  /**
+   * Removes any element with the given id from the collection at [storageKey], and calls
+   * [clearEntities] for the entity. If the collection does not exist or does not contain that id,
+   * this is a no-op.
+   */
+  private suspend fun removeFromCollection(storageKey: StorageKey, id: String, clientId: Int?) {
+    writableDatabase.transaction {
+      // Load collection id. If the collection cannot be found, return.
+      val collectionId =
+        getCollectionMetadata(storageKey, DataType.Collection, this)?.collectionId?.toString()
+          ?: return
+      // Extract the id and entity_storage_key of the reference.
+      val references = rawQuery(
+        """
+        SELECT entity_refs.id, entity_refs.entity_storage_key
+        FROM collection_entries
+        LEFT JOIN entity_refs ON entity_refs.id = collection_entries.value_id
+        WHERE collection_entries.collection_id = ?
+        AND entity_refs.entity_id = ?
+        """.trimIndent(),
+        arrayOf(collectionId, id)
+      ).map { it.getLong(0) to it.getString(1) }
+      if (references.isEmpty()) {
+        // Item not in the collection, return.
+        return@transaction
+      }
+      check(references.size == 1) { "Duplicate reference $id in collection." }
+      val (referenceId, entityStorageKey) = references.single()
+      // Clear the entity.
+      clearEntities(
+        """
+        SELECT id, storage_key
+        FROM storage_keys
+        WHERE storage_key = ?
+        """.trimIndent(),
+        args = arrayOf(entityStorageKey),
+        clientId = clientId
+      )
+      // Clear the collection entry.
+      delete(
+        TABLE_COLLECTION_ENTRIES,
+        "collection_id = ? AND value_id = ?",
+        arrayOf(collectionId, referenceId.toString())
+      )
+    }
+  }
+
+  override suspend fun applyOp(storageKey: StorageKey, op: DatabaseOp, originatingClientId: Int?) {
+    stats.insertUpdate.timeSuspending { counters ->
+      // Use an assignment to make the when-expression required to be exhaustive.
+      @Suppress("UNUSED_VARIABLE")
+      val unused = when (op) {
+        is DatabaseOp.AddToCollection -> addToCollection(storageKey, op, counters)
+        is DatabaseOp.RemoveFromCollection ->
+          removeFromCollection(storageKey, op.id, originatingClientId)
+        is DatabaseOp.ClearCollection -> clearCollection(storageKey, originatingClientId)
+      }
+      notifyClients(storageKey) { client ->
+        // If there is anyone listening, notify of the new data. There could be no data if the
+        // collection has never been written (eg a clear operation on a collection that does not
+        // yet exists).
+        get(storageKey, DatabaseData.Collection::class, op.schema)?.also {
+          client.onDatabaseUpdate(it, it.databaseVersion, originatingClientId)
+        }
+      }
+    }
   }
 
   override suspend fun insertOrUpdate(
@@ -682,7 +903,7 @@ class DatabaseImpl(
               )
             }
             else -> {
-              require(fieldValue is Reference) {
+              require(fieldValue is RawReference) {
                 "Expected field value to be a Reference but was $fieldValue."
               }
               getEntityReferenceId(fieldValue, db, counters)
@@ -779,7 +1000,7 @@ class DatabaseImpl(
         }
       else ->
         elements.map {
-          require(it is Reference) {
+          require(it is RawReference) {
             "Expected element in collection to be a Reference but was $it."
           }
           getEntityReferenceId(it, db, counters)
@@ -795,6 +1016,54 @@ class DatabaseImpl(
     collectionId
   }
 
+  private suspend fun createEmptyCollection(
+    storageKey: StorageKey,
+    versionMap: VersionMap,
+    schema: Schema,
+    databaseVersion: Int,
+    dataType: DataType,
+    counters: Counters?,
+    db: SQLiteDatabase
+  ): CollectionMetadata = db.transaction {
+    // Create a new collection ID and storage key ID.
+    when (dataType) {
+      DataType.Collection ->
+        counters?.increment(DatabaseCounters.INSERT_COLLECTION_RECORD)
+      DataType.Singleton ->
+        counters?.increment(DatabaseCounters.INSERT_SINGLETON_RECORD)
+      else -> Unit
+    }
+    // Fetch/create the entity's type ID.
+    val schemaTypeId = getSchemaTypeId(schema, db, counters)
+    val collectionId = insertOrThrow(
+      TABLE_COLLECTIONS,
+      null,
+      ContentValues().apply {
+        put("type_id", schemaTypeId)
+        put("version_map", versionMap.toLiteral())
+        put("version_number", databaseVersion)
+      }
+    )
+
+    when (dataType) {
+      DataType.Collection ->
+        counters?.increment(DatabaseCounters.INSERT_COLLECTION_STORAGEKEY)
+      DataType.Singleton ->
+        counters?.increment(DatabaseCounters.INSERT_SINGLETON_STORAGEKEY)
+      else -> Unit
+    }
+    insertOrThrow(
+      TABLE_STORAGE_KEYS,
+      null,
+      ContentValues().apply {
+        put("storage_key", storageKey.toString())
+        put("data_type", dataType.ordinal)
+        put("value_id", collectionId)
+      }
+    )
+    CollectionMetadata(collectionId, versionMap, databaseVersion)
+  }
+
   @VisibleForTesting
   suspend fun insertOrUpdateCollection(
     storageKey: StorageKey,
@@ -803,9 +1072,6 @@ class DatabaseImpl(
     counters: Counters?
   ): Boolean = writableDatabase.transaction {
     val db = this
-
-    // Fetch/create the entity's type ID.
-    val schemaTypeId = getSchemaTypeId(data.schema, db, counters)
 
     when (dataType) {
       DataType.Collection ->
@@ -818,41 +1084,51 @@ class DatabaseImpl(
     // Retrieve existing collection ID for this storage key, if one exists.
     val metadata = getCollectionMetadata(storageKey, dataType, db)
 
-    val collectionId = if (metadata == null) {
-      // Create a new collection ID and storage key ID.
-      when (dataType) {
-        DataType.Collection ->
-          counters?.increment(DatabaseCounters.INSERT_COLLECTION_RECORD)
-        DataType.Singleton ->
-          counters?.increment(DatabaseCounters.INSERT_SINGLETON_RECORD)
-        else -> Unit
+    fun insertReferencesIntoCollection(
+      refsWithVersion: Set<ReferenceWithVersion>,
+      collectionId: CollectionId
+    ) {
+      val content = ContentValues().apply {
+        put("collection_id", collectionId)
       }
-      val collectionId = insertOrThrow(
-        TABLE_COLLECTIONS,
-        null,
-        ContentValues().apply {
-          put("type_id", schemaTypeId)
-          put("version_map", data.versionMap.toProtoLiteral())
-          put("version_number", data.databaseVersion)
+
+      refsWithVersion
+        .map {
+          getEntityReferenceId(it.rawReference, db) to it.versionMap
         }
-      )
-      when (dataType) {
-        DataType.Collection ->
-          counters?.increment(DatabaseCounters.INSERT_COLLECTION_STORAGEKEY)
-        DataType.Singleton ->
-          counters?.increment(DatabaseCounters.INSERT_SINGLETON_STORAGEKEY)
-        else -> Unit
-      }
-      insertOrThrow(
-        TABLE_STORAGE_KEYS,
-        null,
-        ContentValues().apply {
-          put("storage_key", storageKey.toString())
-          put("data_type", dataType.ordinal)
-          put("value_id", collectionId)
+        .forEach { (referenceId, versionMap) ->
+          when (dataType) {
+            DataType.Collection ->
+              counters?.increment(DatabaseCounters.INSERT_COLLECTION_ENTRY)
+            DataType.Singleton ->
+              counters?.increment(DatabaseCounters.INSERT_SINGLETON_ENTRY)
+            else -> Unit
+          }
+          insertOrThrow(
+            TABLE_COLLECTION_ENTRIES,
+            null,
+            content.apply {
+              put("value_id", referenceId)
+              put("version_map", versionMap.toLiteral())
+            }
+          )
         }
-      )
-      collectionId
+    }
+
+    if (metadata == null) {
+      // Collection doesn't exist. Create the collection and insert all values from the provided
+      // data into the new collection.
+      val collectionId = createEmptyCollection(
+        storageKey,
+        data.versionMap,
+        data.schema,
+        data.databaseVersion,
+        dataType,
+        counters,
+        db
+      ).collectionId
+
+      insertReferencesIntoCollection(data.values, collectionId)
     } else {
       // Collection already exists; delete all existing entries.
       val collectionId = metadata.collectionId
@@ -860,60 +1136,66 @@ class DatabaseImpl(
         return@transaction false
       }
 
-      // TODO(#4889): Don't blindly delete everything and re-insert: only insert/remove the
-      // diff.
-      when (dataType) {
-        DataType.Collection ->
-          counters?.increment(DatabaseCounters.DELETE_COLLECTION_ENTRIES)
-        DataType.Singleton ->
-          counters?.increment(DatabaseCounters.DELETE_SINGLETON_ENTRY)
-        else -> Unit
-      }
-      delete(
-        TABLE_COLLECTION_ENTRIES,
-        "collection_id = ?",
-        arrayOf(collectionId.toString())
-      )
-
       // Updated collection metadata.
       update(
         TABLE_COLLECTIONS,
         ContentValues().apply {
-          put("version_map", data.versionMap.toProtoLiteral())
+          put("version_map", data.versionMap.toLiteral())
           put("version_number", data.databaseVersion)
         },
         "id = ?",
         arrayOf(collectionId.toString())
       )
-      collectionId
-    }
 
-    // Insert all elements into the collection.
-    val content = ContentValues().apply {
-      put("collection_id", collectionId)
-    }
-    // TODO(#4889): Don't do this one-by-one.
-    data.values
-      .map {
-        getEntityReferenceId(it.reference, db) to it.versionMap
-      }
-      .forEach { (referenceId, versionMap) ->
+      if (databaseConfigGetter().diffbasedEntityInsertion) {
+        // toBeRemoved initially contains all the references in the collection. The references that
+        // remain in the collection are removed from the toBeRemoved map, resulting in only the
+        // references that need to be removed from the collection.
+        val toBeRemoved = getCollectionReferencesWithValueId(collectionId, db)
+        val toBeInserted = mutableSetOf<ReferenceWithVersion>()
+        for (refWithVersion in data.values) {
+          val removed = toBeRemoved.remove(refWithVersion.rawReference)
+          if (removed == null) {
+            // The reference does not exist in the collection so it will need to be inserted.
+            toBeInserted.add(refWithVersion)
+          }
+        }
+
+        val collectionIdString = collectionId.toString()
+
+        // delete the entities to be removed from the collections table
+        toBeRemoved.forEach {
+          when (dataType) {
+            DataType.Collection ->
+              counters?.increment(DatabaseCounters.DELETE_COLLECTION_ENTRIES)
+            DataType.Singleton ->
+              counters?.increment(DatabaseCounters.DELETE_SINGLETON_ENTRY)
+            else -> Unit
+          }
+          delete(
+            TABLE_COLLECTION_ENTRIES,
+            "collection_id = ? AND value_id = ?",
+            arrayOf(collectionIdString, it.value)
+          )
+        }
+
+        insertReferencesIntoCollection(toBeInserted, collectionId)
+      } else {
         when (dataType) {
           DataType.Collection ->
-            counters?.increment(DatabaseCounters.INSERT_COLLECTION_ENTRY)
+            counters?.increment(DatabaseCounters.DELETE_COLLECTION_ENTRIES)
           DataType.Singleton ->
-            counters?.increment(DatabaseCounters.INSERT_SINGLETON_ENTRY)
+            counters?.increment(DatabaseCounters.DELETE_SINGLETON_ENTRY)
           else -> Unit
         }
-        insertOrThrow(
+        delete(
           TABLE_COLLECTION_ENTRIES,
-          null,
-          content.apply {
-            put("value_id", referenceId)
-            put("version_map", versionMap.toProtoLiteral())
-          }
+          "collection_id = ?",
+          arrayOf(collectionId.toString())
         )
+        insertReferencesIntoCollection(data.values, collectionId)
       }
+    }
     true
   }
 
@@ -950,6 +1232,12 @@ class DatabaseImpl(
     db: SQLiteDatabase
   ): Unit = stats.delete.timeSuspending { counters ->
     db.transaction {
+      if (storageKey is InlineStorageKey) {
+        throw UnsupportedOperationException(
+          "Invalid attempt to delete inline storage key $storageKey." +
+            " Inline entities should not be removed using delete()."
+        )
+      }
       counters.increment(DatabaseCounters.GET_STORAGE_KEY_ID)
       // Select the given storage key, and also all descendant keys (all keys of inline entities
       // contained in the top level entity).
@@ -957,12 +1245,16 @@ class DatabaseImpl(
         """
                     SELECT id, data_type, value_id
                     FROM storage_keys
-                    WHERE storage_key = ? OR storage_key LIKE ?
+                    WHERE storage_key = ? OR storage_key LIKE ? OR storage_key LIKE ?
         """.trimIndent(),
         // We need a '}' immediately after the storageKey to ensure it really is a child key, but
         // not immediately before to pick up all the levels of nesting (for example
         // 'inline://{inline://{{db://...').
-        arrayOf(storageKey.toString(), "inline://{%$storageKey}%")
+        arrayOf(
+          storageKey.toString(),
+          "inline://{%$storageKey}%",
+          "i|{%$storageKey}%"
+        )
       ).forEach {
         val dataType = DataType.values()[it.getInt(1)]
         var collectionId: Long? = null
@@ -1050,12 +1342,13 @@ class DatabaseImpl(
                     GROUP BY storage_key_id, storage_key, orphan
                     HAVING entities.creation_timestamp < $twoDaysAgo
                     AND storage_keys.storage_key NOT LIKE 'inline%'
+                    AND storage_keys.storage_key NOT LIKE 'i|%'
                     AND (orphan OR noRef)
         """.trimIndent(),
         arrayOf()
       ).forEach {
         val storageKeyId = it.getLong(0)
-        val storageKey = StorageKeyParser.parse(it.getString(1))
+        val storageKey = storageKeyManager.parse(it.getString(1))
         val orphan = it.getNullableBoolean(2) ?: false
         val noRef = it.getBoolean(3)
         if (orphan && noRef) {
@@ -1102,9 +1395,11 @@ class DatabaseImpl(
 
   /** Deletes everything from the database. */
   override fun reset() {
-    writableDatabase.transaction { TABLES.forEach { execSQL("DELETE FROM $it") } }
-    initializePrimitiveTypes(writableDatabase)
-    schemaTypeMap.lazySet(loadTypes())
+    writableDatabase.transaction {
+      TABLES.forEach { execSQL("DROP TABLE $it") }
+      initializeDatabase(this)
+      schemaTypeMap.lazySet(loadTypes())
+    }
   }
 
   override suspend fun getAllHardReferenceIds(backingStorageKey: StorageKey): Set<String> {
@@ -1117,8 +1412,8 @@ class DatabaseImpl(
   override suspend fun removeEntitiesHardReferencing(
     backingStorageKey: StorageKey,
     entityId: String
-  ) {
-    writableDatabase.transaction {
+  ): Long {
+    return writableDatabase.transaction {
       // Find all fields of reference type, which point to the given backing storage key and
       // entity id, and extract their entity_storage_key_id (entity which contains these
       // fields).
@@ -1137,7 +1432,10 @@ class DatabaseImpl(
                     ON fields.is_collection IN $COLLECTION_FIELDS
                     AND collection_entries.collection_id = field_values.value_id
                 LEFT JOIN entity_refs
+                    -- exclude primitive fields
                     ON fields.type_id > $LARGEST_PRIMITIVE_TYPE_ID
+                    -- exclude inline-entity fields, leaving references fields only.
+                    AND fields.is_collection NOT IN $INLINE_ENTITIES_FIELDS
                     AND entity_refs.id = field_value_id
                 WHERE entity_refs.backing_storage_key = ?
                 AND entity_refs.entity_id = ?
@@ -1147,14 +1445,15 @@ class DatabaseImpl(
       ).map { it.getInt(0) }
 
       // Clear regular entities as usual.
-      clearEntities(
+      val entitiesRemovedFirstPass = clearEntities(
         """
                 SELECT id, storage_key
                 FROM storage_keys
                 WHERE id IN (${storageKeyIds.joinToString()})
                 AND storage_key NOT LIKE 'inline%'
+                AND storage_key NOT LIKE 'i|%'
                 """
-      )
+      ).toLong()
 
       // For inline entities, we find the root entity first, and clear starting from those.
       val topLevelStorageKeys = rawQuery(
@@ -1162,21 +1461,28 @@ class DatabaseImpl(
                 SELECT storage_key
                 FROM storage_keys
                 WHERE id IN (${storageKeyIds.joinToString()})
-                AND storage_key LIKE 'inline%'
+                AND (storage_key LIKE 'inline%' OR storage_key LIKE 'i|%')
         """.trimIndent(),
         arrayOf()
-      ).map { InlineStorageKey.getTopLevelKey(it.getString(0)) }.toSet().toTypedArray()
+      ).map { InlineStorageKey.getTopLevelKey(it.getString(0)) }.toSet()
 
-      // TODO(b/171412439): make sure this query respect the sqlite paramater size limit.
-      val questionMarks = topLevelStorageKeys.joinToString { "?" }
-      clearEntities(
-        """
+      // Make sure we respect the sqlite parameter size limit.
+      val entitiesRemovedSecondPass = topLevelStorageKeys.chunked(MAX_PLACEHOLDERS).map { chunk ->
+        clearEntities(
+          """
                 SELECT id, storage_key
                 FROM storage_keys
-                WHERE storage_key IN ($questionMarks)
+                WHERE storage_key IN (${chunk.joinToString { "?" }})
                 """,
-        args = topLevelStorageKeys
-      )
+          args = chunk.toTypedArray()
+        )
+      }.sum()
+
+      // Make sure we remove also the corresponding entity_refs entries, to remove every copy of the
+      // ID.
+      removeUnusedRefs(this)
+
+      entitiesRemovedSecondPass + entitiesRemovedFirstPass
     }
   }
 
@@ -1190,6 +1496,7 @@ class DatabaseImpl(
             LEFT JOIN storage_keys
                 ON entities.storage_key_id = storage_keys.id
             WHERE storage_keys.storage_key NOT LIKE 'inline%'
+            AND storage_keys.storage_key NOT LIKE 'i|%'
             """
     )
   }
@@ -1204,6 +1511,7 @@ class DatabaseImpl(
             WHERE creation_timestamp >= $startTimeMillis
             AND creation_timestamp <= $endTimeMillis
             AND storage_keys.storage_key NOT LIKE 'inline%'
+            AND storage_keys.storage_key NOT LIKE 'i|%'
             """
     )
   }
@@ -1232,6 +1540,7 @@ class DatabaseImpl(
                 ON entities.storage_key_id = storage_keys.id
             WHERE expiration_timestamp > -1 AND expiration_timestamp < $nowMillis
             AND storage_keys.storage_key NOT LIKE 'inline%'
+            AND storage_keys.storage_key NOT LIKE 'i|%'
         """
     clearEntities(query)
   }
@@ -1241,13 +1550,16 @@ class DatabaseImpl(
    * (storage_key_id, storage_key) from the storage_keys table. This method will delete all fields
    * for those entities and remove references pointing to them. It also notifies client listening
    * for any updated storage key.
+   *
+   * @return the number of entities removed.
    */
   private suspend fun clearEntities(
     query: String,
     entitiesAreTopLevel: Boolean = true,
-    args: Array<String> = arrayOf()
-  ) {
-    writableDatabase.transaction {
+    args: Array<String> = arrayOf(),
+    clientId: Int? = null
+  ): Int {
+    return writableDatabase.transaction {
       val db = this
       // Query the storage_keys table with the given query.
       val storageKeyIdsPairs = rawQuery(query.trimIndent(), args)
@@ -1353,8 +1665,10 @@ class DatabaseImpl(
         // Find all collections with missing entries (collections that were updated).
         val updatedContainersStorageKeys = rawQuery(
           """
-                        SELECT storage_keys.storage_key
+                        SELECT storage_keys.storage_key, collection_id, version_number
                         FROM storage_keys
+                        LEFT JOIN collections
+                            ON storage_keys.value_id = collections.id
                         LEFT JOIN collection_entries
                             ON storage_keys.value_id = collection_entries.collection_id
                         WHERE storage_keys.data_type IN (?, ?)
@@ -1364,7 +1678,14 @@ class DatabaseImpl(
             DataType.Singleton.ordinal.toString(),
             DataType.Collection.ordinal.toString()
           )
-        ).map { it.getString(0) }.toSet()
+        ).map {
+          // Update the version number of all top level collections are going to change due to
+          // removal of references that have been deleted.
+          val values = ContentValues()
+          values.put("version_number", it.getInt(2) + 1)
+          update(TABLE_COLLECTIONS, values, "id = ?", arrayOf(it.getInt(1).toString()))
+          it.getString(0)
+        }.toSet()
 
         // Remove from collection_entries (for top level collections) all references to the
         // expired entities.
@@ -1379,11 +1700,12 @@ class DatabaseImpl(
         )
 
         (storageKeys union updatedContainersStorageKeys).map { storageKey ->
-          notifyClients(StorageKeyParser.parse(storageKey)) {
-            it.onDatabaseDelete(null)
+          notifyClients(storageKeyManager.parse(storageKey)) {
+            it.onDatabaseDelete(clientId)
           }
         }
       }
+      storageKeyIdsPairs.size
     }
   }
 
@@ -1494,19 +1816,7 @@ class DatabaseImpl(
       }
     }
     schema.fields.singletons.forEach { (fieldName, fieldType) ->
-      val fieldClass = when (fieldType.tag) {
-        FieldType.Tag.List -> {
-          require(fieldType is FieldType.ListOf) {
-            "FieldType with List tag is not a list!"
-          }
-          when (fieldType.primitiveType) {
-            is FieldType.InlineEntity -> FieldClass.InlineEntityList
-            else -> FieldClass.List
-          }
-        }
-        FieldType.Tag.InlineEntity -> FieldClass.InlineEntity
-        else -> FieldClass.Singleton
-      }
+      val fieldClass = FieldClass.fromFieldType(fieldType)
       insertFieldBlock(fieldName, fieldType, fieldClass)
     }
     schema.fields.collections.forEach { (fieldName, fieldType) ->
@@ -1540,6 +1850,12 @@ class DatabaseImpl(
   ): StorageKeyId? = db.transaction {
     // TODO(#4889): Use an LRU cache.
     counters?.increment(DatabaseCounters.GET_ENTITY_STORAGEKEY_ID)
+
+    // The compiler can't figure out that storageKey.toString()'s result won't change
+    // between the two places it's used in this function. storageKey.toString() is also
+    // surprisingly expensive.
+    val storageKeyAsString = storageKey.toString()
+
     rawQuery(
       """
                 SELECT
@@ -1550,7 +1866,7 @@ class DatabaseImpl(
                 LEFT JOIN entities ON storage_keys.id = entities.storage_key_id
                 WHERE storage_keys.storage_key = ?
       """.trimIndent(),
-      arrayOf(storageKey.toString())
+      arrayOf(storageKeyAsString)
     ).forSingleResult {
       // Check existing entry for the storage key.
       val dataType = DataType.values()[it.getInt(0)]
@@ -1564,7 +1880,7 @@ class DatabaseImpl(
       }
       // Inline entities are covered by the version stored with their
       // parent entity and don't need to be separately gated by version.
-      if (!(storageKey is InlineStorageKey)) {
+      if (storageKey !is InlineStorageKey) {
         val storedVersion = it.getInt(2)
         if (databaseVersion != storedVersion + 1) {
           return@transaction null
@@ -1581,7 +1897,7 @@ class DatabaseImpl(
       TABLE_STORAGE_KEYS,
       null,
       ContentValues().apply {
-        put("storage_key", storageKey.toString())
+        put("storage_key", storageKeyAsString)
         put("data_type", DataType.Entity.ordinal)
         put("value_id", typeId)
       }
@@ -1597,17 +1913,16 @@ class DatabaseImpl(
         put("entity_id", entityId)
         put("creation_timestamp", creationTimestamp)
         put("expiration_timestamp", expirationTimestamp)
-        put("version_map", versionMap.toProtoLiteral())
+        put("version_map", versionMap.toLiteral())
         put("version_number", databaseVersion)
       }
     )
-
     storageKeyId
   }
 
   @VisibleForTesting
   fun getEntityReferenceId(
-    reference: Reference,
+    rawReference: RawReference,
     db: SQLiteDatabase,
     counters: Counters? = null
   ): ReferenceId = db.transaction {
@@ -1620,11 +1935,11 @@ class DatabaseImpl(
                     AND creation_timestamp = ? AND expiration_timestamp = ?
                     AND is_hard_ref = ?
       """.trimIndent() to arrayOf(
-        reference.id,
-        reference.storageKey.toString(),
-        reference.creationTimestamp.toString(),
-        reference.expirationTimestamp.toString(),
-        reference.isHardReference.toQueryString()
+        rawReference.id,
+        rawReference.storageKey.toString(),
+        rawReference.creationTimestamp.toString(),
+        rawReference.expirationTimestamp.toString(),
+        rawReference.isHardReference.toQueryString()
       )
     val withVersionMap =
       """
@@ -1634,15 +1949,15 @@ class DatabaseImpl(
                     AND creation_timestamp = ? AND expiration_timestamp = ?
                     AND is_hard_ref = ?
       """.trimIndent() to arrayOf(
-        reference.id,
-        reference.storageKey.toString(),
-        reference.version?.toProtoLiteral(),
-        reference.creationTimestamp.toString(),
-        reference.expirationTimestamp.toString(),
-        reference.isHardReference.toQueryString()
+        rawReference.id,
+        rawReference.storageKey.toString(),
+        rawReference.version?.toLiteral(),
+        rawReference.creationTimestamp.toString(),
+        rawReference.expirationTimestamp.toString(),
+        rawReference.isHardReference.toQueryString()
       )
 
-    val refId = (reference.version?.let { withVersionMap } ?: withoutVersionMap)
+    val refId = (rawReference.version?.let { withVersionMap } ?: withoutVersionMap)
       .let { rawQuery(it.first, it.second) }
       .forSingleResult { it.getLong(0) }
 
@@ -1652,14 +1967,14 @@ class DatabaseImpl(
         TABLE_ENTITY_REFS,
         null,
         ContentValues().apply {
-          put("entity_id", reference.id)
-          put("creation_timestamp", reference.creationTimestamp)
-          put("expiration_timestamp", reference.expirationTimestamp)
-          put("backing_storage_key", reference.storageKey.toString())
-          put("entity_storage_key", reference.referencedStorageKey().toString())
-          put("is_hard_ref", reference.isHardReference)
-          reference.version?.let {
-            put("version_map", it.toProtoLiteral())
+          put("entity_id", rawReference.id)
+          put("creation_timestamp", rawReference.creationTimestamp)
+          put("expiration_timestamp", rawReference.expirationTimestamp)
+          put("backing_storage_key", rawReference.storageKey.toString())
+          put("entity_storage_key", rawReference.referencedStorageKey().toString())
+          put("is_hard_ref", rawReference.isHardReference)
+          rawReference.version?.let {
+            put("version_map", it.toLiteral())
           } ?: run {
             putNull("version_map")
           }
@@ -1718,9 +2033,9 @@ class DatabaseImpl(
     arrayOf(collectionId.toString())
   ).map {
     ReferenceWithVersion(
-      Reference(
+      RawReference(
         id = it.getString(0),
-        storageKey = StorageKeyParser.parse(it.getString(3)),
+        storageKey = storageKeyManager.parse(it.getString(3)),
         version = it.getVersionMap(4),
         _creationTimestamp = it.getLong(1),
         _expirationTimestamp = it.getLong(2)
@@ -1728,6 +2043,37 @@ class DatabaseImpl(
       it.getVersionMap(5)!!
     )
   }.toSet()
+
+  private fun getCollectionReferencesWithValueId(
+    collectionId: CollectionId,
+    db: SQLiteDatabase
+  ): MutableMap<RawReference, String> {
+    val map = mutableMapOf<RawReference, String>()
+    db.rawQuery(
+      """
+        SELECT
+          entity_refs.entity_id,
+          entity_refs.creation_timestamp,
+          entity_refs.expiration_timestamp,
+          entity_refs.backing_storage_key,
+          entity_refs.version_map,
+          collection_entries.value_id
+        FROM collection_entries
+        JOIN entity_refs ON collection_entries.value_id = entity_refs.id
+        WHERE collection_entries.collection_id = ?
+      """.trimIndent(),
+      arrayOf(collectionId.toString())
+    ).forEach {
+      map[RawReference(
+        id = it.getString(0),
+        storageKey = storageKeyManager.parse(it.getString(3)),
+        version = it.getVersionMap(4),
+        _creationTimestamp = it.getLong(1),
+        _expirationTimestamp = it.getLong(2)
+      )] = it.getString(5)
+    }
+    return map
+  }
 
   /** Returns true if the given [TypeId] represents a primitive type. */
   private fun isPrimitiveType(typeId: TypeId) = typeId <= LARGEST_PRIMITIVE_TYPE_ID
@@ -1820,21 +2166,31 @@ class DatabaseImpl(
         }
         PrimitiveType.BigInt.id -> {
           // TODO(https://github.com/PolymerLabs/arcs/issues/5867): To avoid
-          // lexicographic ordering, ArcsInstant and BigInt should be compared as numeric
-          // values rather than strings.
+          // lexicographic ordering, ArcsDuration, ArcsInstant and BigInt should be compared as
+          // numeric values rather than strings.
           require(value is BigInt) { "Expected value to be a BigInt" }
           counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
           TABLE_TEXT_PRIMITIVES to value.toString()
         }
         PrimitiveType.Instant.id -> {
           // TODO(https://github.com/PolymerLabs/arcs/issues/5867): To avoid
-          // lexicographic ordering, ArcsInstant and BigInt should be compared as numeric
-          // values rather than strings.
+          // lexicographic ordering, ArcsDuration, ArcsInstant and BigInt should be compared as
+          // numeric values rather than strings.
           require(value is ArcsInstant) {
             "Expected value to be a ArcsInstant, got $value"
           }
           counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
           TABLE_TEXT_PRIMITIVES to value.toEpochMilli().toString()
+        }
+        PrimitiveType.Duration.id -> {
+          // TODO(https://github.com/PolymerLabs/arcs/issues/5867): To avoid
+          // lexicographic ordering, ArcsDuration, ArcsDuration and BigInt should be compared as
+          // numeric values rather than strings.
+          require(value is ArcsDuration) {
+            "Expected value to be a ArcsDuration, got $value"
+          }
+          counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
+          TABLE_TEXT_PRIMITIVES to value.toMillis().toString()
         }
         PrimitiveType.Number.id -> {
           require(value is Double) { "Expected value to be a Double." }
@@ -1851,7 +2207,7 @@ class DatabaseImpl(
           counters?.increment(DatabaseCounters.GET_NUMBER_VALUE_ID)
           TABLE_NUMBER_PRIMITIVES to value.toString()
         }
-        else -> throw IllegalArgumentException("Not a primitive type ID: $typeId")
+        else -> throw IllegalArgumentException("Unknown primitive type ID: $typeId")
       }
       val fieldValueId = rawQuery(
         "SELECT id FROM $tableName WHERE value = ?", arrayOf(valueStr)
@@ -1892,6 +2248,7 @@ class DatabaseImpl(
       val schema = SchemaRegistry.getSchema(fieldType.schemaHash)
       getSchemaTypeId(schema, database)
     }
+    is FieldType.NullableOf -> getTypeId(fieldType.innerType, database)
   }
 
   /** Test-only version of [getTypeId]. */
@@ -1960,25 +2317,14 @@ class DatabaseImpl(
 
   /** Returns a base-64 string representation of the [VersionMapProto] for this [VersionMap]. */
   // TODO(#4889): Find a way to store raw bytes as BLOBs, rather than having to base-64 encode.
-  private fun VersionMap.toProtoLiteral() =
-    Base64.encodeToString(toProto().toByteArray(), Base64.DEFAULT)
+  private fun VersionMap.toLiteral() = encode()
 
   /** Parses a [VersionMap] out of the [Cursor] for the given column. */
   private fun Cursor.getVersionMap(column: Int): VersionMap? {
     if (isNull(column)) return null
 
     val str = getString(column)
-    val bytes = Base64.decode(str, Base64.DEFAULT)
-    val proto: VersionMapProto
-    try {
-      proto = VersionMapProto.parseFrom(bytes)
-    } catch (e: InvalidProtocolBufferException) {
-      // TODO(b/160251910): Make logging detail more cleanly conditional.
-      log.debug(e) { "Parsing serialized VersionMap \"$str\"." }
-      log.info { "Failed to parse serialized version map." }
-      throw e
-    }
-    return fromProto(proto)
+    return VersionMap.decode(str)
   }
 
   /** The type of the data stored at a storage key. */
@@ -2010,6 +2356,28 @@ class DatabaseImpl(
           "Invalid value $ordinal for FieldClass stored in isCollection field."
         )
       }
+
+      fun fromFieldType(fieldType: FieldType): FieldClass = when (fieldType.tag) {
+        FieldType.Tag.List -> {
+          require(fieldType is FieldType.ListOf) {
+            "FieldType with List tag is not a list!"
+          }
+          when (fieldType.primitiveType) {
+            is FieldType.InlineEntity -> FieldClass.InlineEntityList
+            else -> FieldClass.List
+          }
+        }
+        FieldType.Tag.InlineEntity -> FieldClass.InlineEntity
+        FieldType.Tag.Nullable -> {
+          require(fieldType is FieldType.NullableOf) {
+            "FieldType with Nullable tag is not a nullable!"
+          }
+          fromFieldType(fieldType.innerType)
+        }
+        FieldType.Tag.Primitive -> FieldClass.Singleton
+        FieldType.Tag.EntityRef -> FieldClass.Singleton
+        FieldType.Tag.Tuple -> throw NotImplementedError("FieldType $fieldType is not supported.")
+      }
     }
   }
 
@@ -2029,8 +2397,10 @@ class DatabaseImpl(
   )
 
   companion object {
-    /* internal */
-    const val DB_VERSION = 6
+    @VisibleForTesting
+    val DB_VERSION = 9
+    // Crdt actor used for edits applied by this class.
+    const val DATABASE_CRDT_ACTOR = "db"
 
     private const val TABLE_STORAGE_KEYS = "storage_keys"
     private const val TABLE_COLLECTION_ENTRIES = "collection_entries"
@@ -2043,7 +2413,7 @@ class DatabaseImpl(
     private const val TABLE_TEXT_PRIMITIVES = "text_primitive_values"
     private const val TABLE_NUMBER_PRIMITIVES = "number_primitive_values"
 
-    /* internal */
+    @VisibleForTesting
     val TABLES = arrayOf(
       TABLE_STORAGE_KEYS,
       TABLE_COLLECTION_ENTRIES,
@@ -2057,7 +2427,10 @@ class DatabaseImpl(
       TABLE_NUMBER_PRIMITIVES
     )
 
-    val CREATE_VERSION_3 =
+    // Tables managed by SQLiteDatabase that we cannot drop.
+    private val SYSTEM_TABLES = arrayOf("android_metadata", "sqlite_sequence")
+
+    private val CREATE_VERSION_3 =
       """
                 CREATE TABLE types (
                     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -2337,10 +2710,11 @@ class DatabaseImpl(
 
                 CREATE INDEX number_primitive_value_index ON number_primitive_values (value);
       """.trimIndent().split("\n\n")
-    val CREATE_VERSION_4 = CREATE_VERSION_3
-    val CREATE_VERSION_5 = CREATE_VERSION_3
-
-    private val CREATE = CREATE_VERSION_6
+    private val CREATE_VERSION_4 = CREATE_VERSION_3
+    private val CREATE_VERSION_5 = CREATE_VERSION_3
+    private val CREATE_VERSION_7 = CREATE_VERSION_6
+    private val CREATE_VERSION_8 = CREATE_VERSION_6
+    private val CREATE_VERSION_9 = CREATE_VERSION_6
 
     private val DROP_VERSION_2 =
       """
@@ -2368,27 +2742,48 @@ class DatabaseImpl(
     private val VERSION_2_MIGRATION = arrayOf("ALTER TABLE entities ADD COLUMN orphan INTEGER;")
     private val VERSION_3_MIGRATION =
       listOf(DROP_VERSION_2, CREATE_VERSION_3).flatten().toTypedArray()
-    val VERSION_4_MIGRATION =
+    private val VERSION_4_MIGRATION =
       listOf(DROP_VERSION_3, CREATE_VERSION_4).flatten().toTypedArray()
-    val VERSION_5_MIGRATION = arrayOf(
-      "INSERT INTO types (id, name, is_primitive) VALUES (10, \"BigInt\", 1)"
-    )
-    val VERSION_6_MIGRATION = arrayOf(
+
+    // This migration was previously needed to update the types table with new primitive types.
+    // It is no longer needed as primitive types are no longer kept in the types table.
+    private val VERSION_5_MIGRATION = emptyArray<String>()
+    private val VERSION_6_MIGRATION = arrayOf(
       "ALTER TABLE entity_refs ADD COLUMN is_hard_ref INTEGER;"
     )
-    val VERSION_7_MIGRATION = arrayOf(
-      "INSERT INTO types (id, name, is_primitive) VALUES (11, \"ArcsInstant\", 1)",
-      "INSERT INTO types (id, name, is_primitive) VALUES (11, \"ArcsDuration\", 1)"
-    )
+    private val VERSION_7_MIGRATION =
+      listOf(DROP_VERSION_3, CREATE_VERSION_7).flatten().toTypedArray()
 
-    private val MIGRATION_STEPS = mapOf(
+    private val VERSION_8_MIGRATION =
+      listOf(DROP_VERSION_3, CREATE_VERSION_8).flatten().toTypedArray()
+
+    private val VERSION_9_MIGRATION =
+      listOf(DROP_VERSION_3, CREATE_VERSION_9).flatten().toTypedArray()
+
+    @VisibleForTesting
+    val MIGRATION_STEPS = mapOf(
       2 to VERSION_2_MIGRATION,
       3 to VERSION_3_MIGRATION,
       4 to VERSION_4_MIGRATION,
       5 to VERSION_5_MIGRATION,
       6 to VERSION_6_MIGRATION,
-      7 to VERSION_7_MIGRATION
+      7 to VERSION_7_MIGRATION,
+      8 to VERSION_8_MIGRATION,
+      9 to VERSION_9_MIGRATION
     )
+
+    @VisibleForTesting
+    val CREATES_BY_VERSION = mapOf(
+      3 to CREATE_VERSION_3,
+      4 to CREATE_VERSION_4,
+      5 to CREATE_VERSION_5,
+      6 to CREATE_VERSION_6,
+      7 to CREATE_VERSION_7,
+      8 to CREATE_VERSION_8,
+      9 to CREATE_VERSION_9
+    )
+
+    private val CREATE = checkNotNull(CREATES_BY_VERSION[DB_VERSION])
 
     /** The primitive types that are stored in TABLE_NUMBER_PRIMITIVES */
     private val TYPES_IN_NUMBER_TABLE = listOf(
@@ -2405,7 +2800,8 @@ class DatabaseImpl(
     private val TYPES_IN_TEXT_TABLE = listOf(
       PrimitiveType.Text.id,
       PrimitiveType.BigInt.id,
-      PrimitiveType.Instant.id
+      PrimitiveType.Instant.id,
+      PrimitiveType.Duration.id
     )
 
     /** A version of TYPES_IN_TEXT_TABLE to use in SQL IN statements */
@@ -2449,6 +2845,19 @@ class DatabaseImpl(
       FIELD_CLASSES_FOR_ENTITY_COLLECTIONS.joinToString(prefix = "(", postfix = ")")
 
     /**
+     * The field classes for which the value of the field points to one or more inline entities.
+     */
+    private val FIELD_CLASSES_FOR_INLINE_ENTITIES = listOf(
+      FieldClass.InlineEntity.ordinal,
+      FieldClass.InlineEntityCollection.ordinal,
+      FieldClass.InlineEntityList.ordinal
+    )
+
+    /** A version of FIELD_CLASSES_FOR_INLINE_ENTITIES to use in SQL IN statements */
+    private val INLINE_ENTITIES_FIELDS =
+      FIELD_CLASSES_FOR_INLINE_ENTITIES.joinToString(prefix = "(", postfix = ")")
+
+    /**
      * The id and name of a sentinel type, to ensure references are namespaced separately to
      * primitive types. Changing this value will require a DB migration!
      */
@@ -2457,21 +2866,36 @@ class DatabaseImpl(
     private const val REFERENCE_TYPE_SENTINEL_NAME = "SENTINEL TYPE FOR REFERENCES"
 
     /**
+     * A list of timeouts (in milliseconds) that defines the number of retries of [getEntity]
+     * before failure, and the delay duration between each retry. For example, a list of
+     * [0, 100, 1000] defines 3 retries:
+     *   - immediately
+     *   - after a further 100ms
+     *   - after a further 1000ms
+     * If all 3 retries fail then the call to [getEntity] will fail overall.
+     */
+    private val GET_ENTITY_RETRY_DURATIONS = listOf(0L, 100L, 1000L)
+
+    /**
      * A StorageKey used internally by the DB for recording inline entities.
      */
+    @VisibleForTesting
     class InlineStorageKey(
-      val parentKey: StorageKey,
-      val fieldName: String
-    ) : StorageKey("inline") {
+      private val parentKey: StorageKey,
+      // TODO(b/179216769): Delete this field, it's not needed.
+      private val fieldName: String
+    ) : StorageKey(StorageKeyProtocol.Inline) {
       /**
        * A unique component to the key. This is required because there may be multiple inline
        * entities stored against a single fieldName (for collections and lists).
        */
+      private val unique: String = Random.nextVersionMapSafeString(10)
 
-      val unique = (Math.random() * Long.MAX_VALUE).roundToLong()
-      override fun toKeyString(): String = "{${parentKey.embed()}}!$unique/$fieldName"
-      override fun childKeyWithComponent(component: String): StorageKey =
-        InlineStorageKey(parentKey, "$fieldName/$component")
+      override fun toKeyString() = "{${parentKey.embed()}}$unique"
+
+      override fun newKeyWithComponent(component: String): StorageKey {
+        return InlineStorageKey(parentKey, component)
+      }
 
       companion object {
         // Given a string inline storage key, returns the string storage key of the top

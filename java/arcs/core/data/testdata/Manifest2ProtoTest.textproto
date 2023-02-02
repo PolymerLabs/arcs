@@ -56,6 +56,9 @@ recipes {
                                       primitive: TEXT
                                     }
                                   }
+                                  annotations {
+                                    name: "hardRef"
+                                  }
                                 }
                               }
                               fields {
@@ -82,10 +85,14 @@ recipes {
               fields {
                 key: "safeForKids"
                 value {
-                  primitive: BOOLEAN
+                  nullable {
+                    element_type: {
+                      primitive: BOOLEAN
+                    }
+                  }
                 }
               }
-              hash: "60ef386d931bbd6c15fb9c8168b91f5ac8c40698"
+              hash: "ac616e8d2534c0214babf0c551c4255ca3833b3d"
             }
           }
         }
@@ -138,6 +145,9 @@ recipes {
                                         primitive: TEXT
                                       }
                                     }
+                                    annotations {
+                                      name: "hardRef"
+                                    }
                                   }
                                 }
                                 fields {
@@ -163,11 +173,15 @@ recipes {
                 }
                 fields {
                   key: "safeForKids"
-                  value: {
-                    primitive: BOOLEAN
+                  value {
+                    nullable {
+                      element_type: {
+                        primitive: BOOLEAN
+                      }
+                    }
                   }
                 }
-                hash: "60ef386d931bbd6c15fb9c8168b91f5ac8c40698"
+                hash: "ac616e8d2534c0214babf0c551c4255ca3833b3d"
               }
             }
           }
@@ -316,6 +330,9 @@ particle_specs {
                                       primitive: TEXT
                                     }
                                   }
+                                  annotations {
+                                    name: "hardRef"
+                                  }
                                 }
                               }
                               fields {
@@ -342,10 +359,14 @@ particle_specs {
               fields {
                 key: "safeForKids"
                 value {
-                  primitive: BOOLEAN
+                  nullable {
+                    element_type: {
+                      primitive: BOOLEAN
+                    }
+                  }
                 }
               }
-              hash: "60ef386d931bbd6c15fb9c8168b91f5ac8c40698"
+              hash: "ac616e8d2534c0214babf0c551c4255ca3833b3d"
             }
           }
         }

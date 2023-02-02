@@ -41,15 +41,14 @@ describe('DevtoolsArcInspector', () => {
         P
           foo: foo`);
     const runtime = new Runtime({loader, context});
-    const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
+    const arc = await runtime.allocator.startArc({arcName: 'demo', storageKeyPrefix: storageKeyPrefixForTest(), inspectorFactory: devtoolsArcInspectorFactory});
 
     const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
-    const fooStore = await arc.createStore(new SingletonType(foo.type), undefined, 'fooStore');
+    const fooStore = await arc.createStoreInfo(new SingletonType(foo.type), {id: 'fooStore'});
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(fooStore);
-    recipe.normalize();
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc, recipe);
 
     const instantiateParticleCall = DevtoolsForTests.channel.messages.find(m =>
       m.messageType === 'PecLog' && m.messageBody.name === 'InstantiateParticle').messageBody;
@@ -70,8 +69,7 @@ describe('DevtoolsArcInspector', () => {
       },
       spec: {
         name: 'P',
-        description: {},
-        external: false,
+        description: null,
         implFile: 'p.js',
         modality: ['dom'],
         slotConnections: [],
@@ -85,7 +83,8 @@ describe('DevtoolsArcInspector', () => {
           direction: 'reads writes',
           isOptional: false,
           expression: null,
-          name: 'foo'
+          name: 'foo',
+          relaxed: false
         }]
       }
     });

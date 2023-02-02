@@ -24,7 +24,7 @@ class MockDriverProvider : DriverProvider {
     storageKey: StorageKey,
     dataClass: KClass<Data>,
     type: Type
-  ): Driver<Data> = MockDriver(storageKey)
+  ): Driver<Data> = MockDriver(storageKey, dataClass)
 
   override suspend fun removeAllEntities() = Unit
 
@@ -33,7 +33,8 @@ class MockDriverProvider : DriverProvider {
 }
 
 class MockDriver<T : Any>(
-  override val storageKey: StorageKey
+  override val storageKey: StorageKey,
+  override val dataClass: KClass<T>
 ) : Driver<T> {
   override var token: String? = null
   var receiver: (suspend (data: T, version: Int) -> Unit)? = null
@@ -51,5 +52,9 @@ class MockDriver<T : Any>(
   override suspend fun send(data: T, version: Int): Boolean {
     sentData.add(data)
     return !fail
+  }
+
+  override suspend fun clone(): MockDriver<T> {
+    return MockDriver(storageKey, dataClass)
   }
 }

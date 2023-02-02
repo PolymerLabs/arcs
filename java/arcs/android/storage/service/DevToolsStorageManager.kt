@@ -11,22 +11,20 @@
 
 package arcs.android.storage.service
 
-import arcs.core.storage.StorageKey
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
  * A [DevToolsStorageManager] is used by a client of the [StorageService] to manage
  * data stored within the [StorageService].
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class DevToolsStorageManager(
   /** The stores managed by StorageService. */
-  val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>,
+  val stores: ReferencedStores,
   val proxy: IDevToolsProxy
 ) : IDevToolsStorageManager.Stub() {
 
-  override fun getStorageKeys() = stores.keys.joinToString { it.toKeyString() }
+  override fun getStorageKeys() = stores.storageKeys().joinToString { it.toKeyString() }
 
   override fun getDevToolsProxy(): IDevToolsProxy {
     return proxy

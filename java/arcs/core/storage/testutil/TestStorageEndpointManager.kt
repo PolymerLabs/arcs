@@ -1,9 +1,13 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package arcs.core.storage.testutil
 
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.LocalStorageEndpointManager
+import arcs.core.storage.StorageKeyProtocol
 import arcs.core.storage.StoreWriteBack
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.test.TestCoroutineDispatcher
 import kotlinx.coroutines.test.TestCoroutineScope
@@ -11,7 +15,7 @@ import kotlinx.coroutines.test.TestCoroutineScope
 val testScope = TestCoroutineScope(TestCoroutineDispatcher())
 
 /** Provide a [StoreWriteBack] instance that uses a [TestCoroutineScope], for testing purposes. */
-fun testWriteBackProvider(protocol: String) =
+fun testWriteBackProvider(protocol: StorageKeyProtocol) =
   StoreWriteBack(
     protocol,
     Channel.UNLIMITED,

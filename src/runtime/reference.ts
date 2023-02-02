@@ -14,12 +14,12 @@ import {ReferenceType, EntityType} from '../types/lib-types.js';
 import {Entity, SerializedEntity} from './entity.js';
 import {StorageProxy} from './storage/storage-proxy.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
-import {ChannelConstructor} from './channel-constructor.js';
 import {CRDTEntityTypeRecord, Identified} from '../crdt/lib-crdt.js';
 import {EntityHandle, Handle} from './storage/handle.js';
 import {StorageProxyMuxer} from './storage/storage-proxy-muxer.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
+import {StorageFrontend} from './storage/storage-frontend.js';
 
 enum ReferenceMode {Unstored, Stored}
 
@@ -50,13 +50,14 @@ export class Reference implements Storable {
   private readonly expirationTimestamp: Date|null;
   private entityStorageKey: string;
   private backingKey: string;
-  private readonly context: ChannelConstructor;
+  private readonly frontend: StorageFrontend;
+
   private storageProxy: StorageProxy<CRDTEntityTypeRecord<Identified, Identified>> = null;
   protected handle: EntityHandle<Entity>|null = null;
 
   [SYMBOL_INTERNALS]: {serialize: () => SerializedEntity};
 
-  constructor(data: {id: string, creationTimestamp?: Date|number, expirationTimestamp?: Date|number, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor) {
+  constructor(data: {id: string, creationTimestamp?: Date|number, expirationTimestamp?: Date|number, entityStorageKey: string | null}, type: ReferenceType<EntityType>, frontend: StorageFrontend) {
     this.id = data.id;
     this.creationTimestamp = toDate(data.creationTimestamp);
     this.expirationTimestamp = toDate(data.expirationTimestamp);
@@ -64,8 +65,8 @@ export class Reference implements Storable {
     if (this.entityStorageKey == null) {
       throw Error('entity storage key must be defined');
     }
-    this.backingKey = Reference.extractBackingKey(this.entityStorageKey);
-    this.context = context;
+    this.frontend = frontend;
+    this.backingKey = Reference.extractBackingKey(this.entityStorageKey, this.frontend.storageKeyParser);
     this.type = type;
     this[SYMBOL_INTERNALS] = {
       serialize: () => ({
@@ -79,14 +80,14 @@ export class Reference implements Storable {
 
   protected async ensureStorageProxyMuxer(): Promise<void> {
     if (this.storageProxy == null) {
-      const storageProxyMuxer = await this.context.getStorageProxyMuxer(this.backingKey, this.type.referredType);
+      const storageProxyMuxer = await this.frontend.getStorageProxyMuxer(this.backingKey, this.type.referredType);
       this.storageProxy = storageProxyMuxer.getStorageProxy(this.id);
-      this.handle = new EntityHandle(this.context.generateID(), this.storageProxy, this.context.idGenerator, null, true, true, this.id);
+      this.handle = new EntityHandle(this.frontend.generateID(), this.storageProxy, this.frontend.idGenerator, null, true, true, this.id);
     }
   }
 
   async dereference(): Promise<Entity|null> {
-    assert(this.context, 'Must have context to dereference');
+    assert(this.frontend, 'Must have frontend to dereference');
 
     if (this.entity) {
       return this.entity;
@@ -107,8 +108,8 @@ export class Reference implements Storable {
     };
   }
 
-  static extractBackingKey(storageKey: string): string {
-    const key = StorageKeyParser.parse(storageKey);
+  static extractBackingKey(storageKey: string, storageKeyParser: StorageKeyParser): string {
+    const key = storageKeyParser.parse(storageKey);
     if (key instanceof ReferenceModeStorageKey) {
       return key.backingKey.toString();
     } else {
@@ -117,10 +118,11 @@ export class Reference implements Storable {
   }
 
   // Called by WasmParticle to retrieve the entity for a reference held in a wasm module.
-  static async retrieve(channelConstructor: ChannelConstructor, id: string, storageKey: string, entityType: EntityType, particleId: string) {
-    const storageProxyMuxer = await channelConstructor.getStorageProxyMuxer(this.extractBackingKey(storageKey), entityType) as StorageProxyMuxer<CRDTEntityTypeRecord<Identified, Identified>>;
+  static async retrieve(frontend: StorageFrontend, id: string, storageKey: string, entityType: EntityType, particleId: string) {
+    const storageProxyMuxer = await frontend.getStorageProxyMuxer(
+      this.extractBackingKey(storageKey, frontend.storageKeyParser), entityType) as StorageProxyMuxer<CRDTEntityTypeRecord<Identified, Identified>>;
     const proxy = storageProxyMuxer.getStorageProxy(id);
-    const handle = new EntityHandle<Entity>(particleId, proxy, channelConstructor.idGenerator, null, true, true, id);
+    const handle = new EntityHandle<Entity>(particleId, proxy, frontend.idGenerator, null, true, true, id);
     return handle.fetch();
   }
 }
@@ -131,7 +133,7 @@ export abstract class ClientReference extends Reference {
   public stored: Promise<void>;
 
   /** Use the newClientReference factory method instead. */
-  protected constructor(entity: Entity, context: ChannelConstructor) {
+  protected constructor(entity: Entity, frontend: StorageFrontend) {
     // TODO(shans): start carrying storageKey information around on Entity objects
     super(
       {
@@ -141,7 +143,7 @@ export abstract class ClientReference extends Reference {
         entityStorageKey: Entity.storageKey(entity)
       },
       new ReferenceType(Entity.entityClass(entity).type),
-      context
+      frontend
     );
 
     this.entity = entity;
@@ -161,10 +163,10 @@ export abstract class ClientReference extends Reference {
     return Entity.isIdentified(this.entity);
   }
 
-  static newClientReference(context: ChannelConstructor): typeof ClientReference {
+  static newClientReference(frontend: StorageFrontend): typeof ClientReference {
     return class extends ClientReference {
       constructor(entity: Entity) {
-        super(entity, context);
+        super(entity, frontend);
       }
     };
   }
@@ -175,12 +177,12 @@ export abstract class ClientReference extends Reference {
  * Instead of statically depending on reference.ts, handle.ts defines a static makeReference method which is
  * dynamically populated here.
  */
-function makeReference(data: {id: string, creationTimestamp?: number | null, expirationTimestamp?: number | null, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor): Reference {
+function makeReference(data: {id: string, creationTimestamp?: number | null, expirationTimestamp?: number | null, entityStorageKey: string | null}, type: ReferenceType<EntityType>, frontend: StorageFrontend): Reference {
   return new Reference({
     id: data.id,
     creationTimestamp: data.creationTimestamp ? new Date(data.creationTimestamp) : null,
     expirationTimestamp: data.expirationTimestamp ? new Date(data.expirationTimestamp) : null,
-    entityStorageKey: data.entityStorageKey}, type, context);
+    entityStorageKey: data.entityStorageKey}, type, frontend);
 }
 
 Handle.makeReference = makeReference;

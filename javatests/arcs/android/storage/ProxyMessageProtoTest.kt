@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -52,15 +52,8 @@ class ProxyMessageProtoTest {
   fun roundTrip_operations() {
     val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
       listOf(
-        CrdtCount.Operation.Increment(
-          actor = "foo",
-          version = 0 to 1
-        ),
-        CrdtCount.Operation.MultiIncrement(
-          actor = "bar",
-          version = 0 to 20,
-          delta = 20
-        )
+        CrdtCount.Operation.Increment("foo", VersionMap("foo" to 1)),
+        CrdtCount.Operation.MultiIncrement("bar", VersionMap("bar" to 1), 20)
       ),
       id = 1
     )

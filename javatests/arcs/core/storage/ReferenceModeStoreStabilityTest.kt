@@ -11,6 +11,7 @@
 
 package arcs.core.storage
 
+import arcs.core.analytics.Analytics
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
@@ -33,6 +34,7 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.testDriverFactory
 import arcs.core.storage.testutil.testWriteBackProvider
 import arcs.core.util.testutil.LogRule
+import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -46,7 +48,7 @@ import org.junit.runners.JUnit4
 
 typealias RefModeStore = ActiveStore<RefModeStoreData, RefModeStoreOp, RawEntity?>
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class ReferenceModeStoreStabilityTest {
   @get:Rule
@@ -63,19 +65,19 @@ class ReferenceModeStoreStabilityTest {
 
   @Before
   fun setUp() = runBlocking<Unit> {
-    ReferenceModeStore.BLOCKING_QUEUE_TIMEOUT_MILLIS = 2000
+    ReferenceModeStore.BLOCKING_QUEUE_TIMEOUT_MILLIS = RECEIVE_QUEUE_TIMEOUT_FOR_TEST
     RamDisk.clear()
     DriverAndKeyConfigurator.configure(null)
   }
 
   @Test
   fun singleton_syncRequest_missingBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
-    val singletonCrdt = CrdtSingleton<Reference>()
+    val singletonCrdt = CrdtSingleton<RawReference>()
     singletonCrdt.applyOperation(
       CrdtSingleton.Operation.Update(
         "foo",
         VersionMap("foo" to 1),
-        Reference(
+        RawReference(
           "foo_value",
           backingKey,
           VersionMap("foo" to 1)
@@ -92,7 +94,8 @@ class ReferenceModeStoreStabilityTest {
       this,
       testDriverFactory,
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Singleton>()
@@ -102,7 +105,7 @@ class ReferenceModeStoreStabilityTest {
       }
     }
 
-    withTimeout(10000) {
+    withTimeout(RECEIVE_QUEUE_TIMEOUT_FOR_TEST * 2) {
       store.onProxyMessage(ProxyMessage.SyncRequest(id))
 
       assertThat(modelValue.await().values).isEmpty()
@@ -114,12 +117,12 @@ class ReferenceModeStoreStabilityTest {
 
   @Test
   fun collection_syncRequest_missingBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
-    val setCrdt = CrdtSet<Reference>()
+    val setCrdt = CrdtSet<RawReference>()
     setCrdt.applyOperation(
       CrdtSet.Operation.Add(
         "foo",
         VersionMap("foo" to 1),
-        Reference(
+        RawReference(
           "foo_value",
           backingKey,
           VersionMap("foo" to 1)
@@ -136,7 +139,8 @@ class ReferenceModeStoreStabilityTest {
       this,
       testDriverFactory,
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Set>()
@@ -146,9 +150,14 @@ class ReferenceModeStoreStabilityTest {
       }
     }
 
-    withTimeout(10000) {
+    // This shorter withTimeout is to verify that the SyncRequest handling is not blocked by
+    // the timeout that is set up to resolve the pending IDs (that will not be resolved in this
+    // test)
+    withTimeout(RECEIVE_QUEUE_TIMEOUT_FOR_TEST / 2) {
       store.onProxyMessage(ProxyMessage.SyncRequest(id))
+    }
 
+    withTimeout(RECEIVE_QUEUE_TIMEOUT_FOR_TEST * 2) {
       assertThat(modelValue.await().values).isEmpty()
       assertThat(RamDisk.memory.get<CrdtSet.Data<RawEntity>>(containerKey)?.data?.values)
         .isEmpty()
@@ -157,12 +166,12 @@ class ReferenceModeStoreStabilityTest {
 
   @Test
   fun collection_partiallyMissingBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
-    val setCrdt = CrdtSet<Reference>()
+    val setCrdt = CrdtSet<RawReference>()
     setCrdt.applyOperation(
       CrdtSet.Operation.Add(
         "foo",
         VersionMap("foo" to 1),
-        Reference(
+        RawReference(
           "foo_value",
           backingKey,
           VersionMap("foo" to 1)
@@ -173,7 +182,7 @@ class ReferenceModeStoreStabilityTest {
       CrdtSet.Operation.Add(
         "foo",
         VersionMap("foo" to 2),
-        Reference(
+        RawReference(
           "foo_value_2",
           backingKey,
           VersionMap("foo" to 2)
@@ -182,7 +191,9 @@ class ReferenceModeStoreStabilityTest {
     )
     RamDisk.memory.set(containerKey, VolatileEntry(setCrdt.data, 1))
 
-    val entityCrdt = CrdtEntity(VersionMap(), RawEntity("foo_value", setOf("name"), emptySet()))
+    val entityCrdt = CrdtEntity.newWithEmptyEntity(
+      RawEntity("foo_value", setOf("name"), emptySet())
+    )
     entityCrdt.applyOperation(
       CrdtEntity.Operation.SetSingleton(
         "foo",
@@ -192,7 +203,7 @@ class ReferenceModeStoreStabilityTest {
       )
     )
     RamDisk.memory.set(
-      backingKey.childKeyWithComponent("foo_value"),
+      backingKey.newKeyWithComponent("foo_value"),
       VolatileEntry(entityCrdt.data, 1)
     )
 
@@ -204,7 +215,8 @@ class ReferenceModeStoreStabilityTest {
       this,
       testDriverFactory,
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Set>()
@@ -214,7 +226,12 @@ class ReferenceModeStoreStabilityTest {
       }
     }
 
-    store.onProxyMessage(ProxyMessage.SyncRequest(id))
+    // This shorter withTimeout is to verify that the SyncRequest handling is not blocked by
+    // the timeout that is set up to resolve the pending IDs (that will not be resolved in this
+    // test)
+    withTimeout(RECEIVE_QUEUE_TIMEOUT_FOR_TEST / 2) {
+      store.onProxyMessage(ProxyMessage.SyncRequest(id))
+    }
 
     assertThat(modelValue.await().values).isEmpty()
     assertThat(RamDisk.memory.get<CrdtSet.Data<RawEntity>>(containerKey)?.data?.values)
@@ -223,12 +240,12 @@ class ReferenceModeStoreStabilityTest {
 
   @Test
   fun singleton_existingButOldBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
-    val singletonCrdt = CrdtSingleton<Reference>()
+    val singletonCrdt = CrdtSingleton<RawReference>()
     singletonCrdt.applyOperation(
       CrdtSingleton.Operation.Update(
         "foo",
         VersionMap("foo" to 1),
-        Reference(
+        RawReference(
           "foo_value",
           backingKey,
           VersionMap("foo" to 1)
@@ -239,7 +256,7 @@ class ReferenceModeStoreStabilityTest {
       CrdtSingleton.Operation.Update(
         "foo",
         VersionMap("foo" to 2),
-        Reference(
+        RawReference(
           "foo_value",
           backingKey,
           VersionMap("foo" to 2)
@@ -248,7 +265,9 @@ class ReferenceModeStoreStabilityTest {
     )
     RamDisk.memory.set(containerKey, VolatileEntry(singletonCrdt.data, 1))
 
-    val entityCrdt = CrdtEntity(VersionMap(), RawEntity("foo_value", setOf("name"), emptySet()))
+    val entityCrdt = CrdtEntity.newWithEmptyEntity(
+      RawEntity("foo_value", setOf("name"), emptySet())
+    )
     entityCrdt.applyOperation(
       CrdtEntity.Operation.SetSingleton(
         "foo",
@@ -258,7 +277,7 @@ class ReferenceModeStoreStabilityTest {
       )
     )
     RamDisk.memory.set(
-      backingKey.childKeyWithComponent("foo_value"),
+      backingKey.newKeyWithComponent("foo_value"),
       VolatileEntry(entityCrdt.data, 1)
     )
 
@@ -270,7 +289,8 @@ class ReferenceModeStoreStabilityTest {
       this,
       testDriverFactory,
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Singleton>()
@@ -285,16 +305,18 @@ class ReferenceModeStoreStabilityTest {
     assertThat(modelValue.await().values).isEmpty()
     assertThat(RamDisk.memory.get<CrdtSingleton.Data<RawEntity>>(containerKey)?.data?.values)
       .isEmpty()
+    val refmodestore = store as ReferenceModeStore
+    assertThat(refmodestore.holdQueueEmpty).isTrue()
   }
 
   @Test
   fun collection_existingButOldBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
-    val setCrdt = CrdtSet<Reference>()
+    val setCrdt = CrdtSet<RawReference>()
     setCrdt.applyOperation(
       CrdtSet.Operation.Add(
         "foo",
         VersionMap("foo" to 1),
-        Reference(
+        RawReference(
           "foo_value",
           backingKey,
           VersionMap("foo" to 1)
@@ -305,7 +327,7 @@ class ReferenceModeStoreStabilityTest {
       CrdtSet.Operation.Add(
         "foo",
         VersionMap("foo" to 2),
-        Reference(
+        RawReference(
           "foo_value",
           backingKey,
           VersionMap("foo" to 2)
@@ -314,7 +336,9 @@ class ReferenceModeStoreStabilityTest {
     )
     RamDisk.memory.set(containerKey, VolatileEntry(setCrdt.data, 1))
 
-    val entityCrdt = CrdtEntity(VersionMap(), RawEntity("foo_value", setOf("name"), emptySet()))
+    val entityCrdt = CrdtEntity.newWithEmptyEntity(
+      RawEntity("foo_value", setOf("name"), emptySet())
+    )
     entityCrdt.applyOperation(
       CrdtEntity.Operation.SetSingleton(
         "foo",
@@ -324,7 +348,7 @@ class ReferenceModeStoreStabilityTest {
       )
     )
     RamDisk.memory.set(
-      backingKey.childKeyWithComponent("foo_value"),
+      backingKey.newKeyWithComponent("foo_value"),
       VolatileEntry(entityCrdt.data, 1)
     )
 
@@ -336,7 +360,8 @@ class ReferenceModeStoreStabilityTest {
       this,
       testDriverFactory,
       ::testWriteBackProvider,
-      null
+      null,
+      JvmTime
     )
 
     val modelValue = CompletableDeferred<RefModeStoreData.Set>()
@@ -351,5 +376,140 @@ class ReferenceModeStoreStabilityTest {
     assertThat(modelValue.await().values).isEmpty()
     assertThat(RamDisk.memory.get<CrdtSet.Data<RawEntity>>(containerKey)?.data?.values)
       .isEmpty()
+
+    val refmodestore = store as ReferenceModeStore
+    assertThat(refmodestore.holdQueueEmpty).isTrue()
+  }
+
+  @Test
+  fun collection_backingDataArrivesAfterSyncRequest_resolves() = runBlocking<Unit> {
+    val setCrdt = CrdtSet<RawReference>()
+    setCrdt.applyOperation(
+      CrdtSet.Operation.Add(
+        "foo",
+        VersionMap("foo" to 1),
+        RawReference(
+          "foo_value",
+          backingKey,
+          VersionMap("foo" to 1)
+        )
+      )
+    )
+    RamDisk.memory.set(containerKey, VolatileEntry(setCrdt.data, 1))
+
+    val store: RefModeStore = ActiveStore(
+      StoreOptions(
+        storageKey,
+        CollectionType(EntityType(schema))
+      ),
+      this,
+      testDriverFactory,
+      ::testWriteBackProvider,
+      null,
+      JvmTime
+    )
+
+    val modelValue = CompletableDeferred<RefModeStoreData.Set>()
+    val id = store.on {
+      if (it is ProxyMessage.ModelUpdate<*, *, *>) {
+        modelValue.complete(it.model as RefModeStoreData.Set)
+      }
+    }
+
+    // Verify the timeout is not hit.
+    withTimeout(RECEIVE_QUEUE_TIMEOUT_FOR_TEST / 2) {
+      store.onProxyMessage(ProxyMessage.SyncRequest(id))
+
+      val entityCrdt = CrdtEntity.newWithEmptyEntity(
+        RawEntity("foo_value", setOf("name"), emptySet())
+      )
+      entityCrdt.applyOperation(
+        CrdtEntity.Operation.SetSingleton(
+          "foo",
+          VersionMap("foo" to 1),
+          "name",
+          CrdtEntity.ReferenceImpl("Alice".toReferencable().id)
+        )
+      )
+      val refmodestore = store as ReferenceModeStore
+      refmodestore.backingStore.getStore(
+        "foo_value",
+        refmodestore.backingStoreId
+      ).store.onProxyMessage(ProxyMessage.ModelUpdate(model = entityCrdt.data, id = 2))
+
+      // Verify the sync request resolves with data.
+      assertThat(modelValue.await().values.keys).containsExactly("foo_value")
+    }
+  }
+
+  @Test
+  fun collection_partiallyMissingBackingData_timesOutAnd_logsTheTimeout() = runBlocking {
+    val loggedTimeout = CompletableDeferred<Boolean>()
+    val fakeAnalytics = object : Analytics {
+      override fun logPendingReferenceTimeout() {
+        loggedTimeout.complete(true)
+      }
+    }
+    val setCrdt = CrdtSet<RawReference>()
+    setCrdt.applyOperation(
+      CrdtSet.Operation.Add(
+        "foo",
+        VersionMap("foo" to 1),
+        RawReference(
+          "foo_value",
+          backingKey,
+          VersionMap("foo" to 1)
+        )
+      )
+    )
+    setCrdt.applyOperation(
+      CrdtSet.Operation.Add(
+        "foo",
+        VersionMap("foo" to 2),
+        RawReference(
+          "foo_value_2",
+          backingKey,
+          VersionMap("foo" to 2)
+        )
+      )
+    )
+    RamDisk.memory.set(containerKey, VolatileEntry(setCrdt.data, 1))
+
+    val entityCrdt = CrdtEntity.newWithEmptyEntity(
+      RawEntity("foo_value", setOf("name"), emptySet())
+    )
+    entityCrdt.applyOperation(
+      CrdtEntity.Operation.SetSingleton(
+        "foo",
+        VersionMap("foo" to 1),
+        "name",
+        CrdtEntity.ReferenceImpl("Alice".toReferencable().id)
+      )
+    )
+    RamDisk.memory.set(
+      backingKey.newKeyWithComponent("foo_value"),
+      VolatileEntry(entityCrdt.data, 1)
+    )
+
+    val store: RefModeStore = ActiveStore(
+      StoreOptions(
+        storageKey,
+        CollectionType(EntityType(schema))
+      ),
+      this,
+      testDriverFactory,
+      ::testWriteBackProvider,
+      null,
+      JvmTime,
+      fakeAnalytics
+    )
+
+    val id = store.on {}
+    store.onProxyMessage(ProxyMessage.SyncRequest(id))
+    assertThat(loggedTimeout.await()).isTrue()
+  }
+
+  companion object {
+    const val RECEIVE_QUEUE_TIMEOUT_FOR_TEST = 2000L
   }
 }

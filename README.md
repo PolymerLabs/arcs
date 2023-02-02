@@ -10,7 +10,10 @@ A hosted version of Arcs is available at https://live.arcs.dev.
 
 [TypeDoc](https://live.arcs.dev/dist/apidocs/) generated documentation is available for Arcs Runtime.
 
-To develop with Arcs, please follow  our [Contributing Guide](CONTRIBUTING.md).
+To develop with Arcs, please follow  our [Contributing Guide](CONTRIBUTING.md) 
+and [tutorials](particles/Tutorial/README.md).
+
+Questions? Please join our [Mailing list](mailto:arcs-discuss@googlegroups.com).
 
 ## Subprojects
 

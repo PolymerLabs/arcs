@@ -11,13 +11,13 @@
 
 package arcs.android.storage.service
 
+import arcs.android.crdt.toProto
+import arcs.core.crdt.CrdtException
 import arcs.core.host.ArcHostManager
 import arcs.core.storage.DriverFactory
-import arcs.core.storage.StorageKey
-import arcs.core.storage.driver.DatabaseDriverProvider
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.CoroutineName
+import arcs.core.storage.StorageKeyManager
+import arcs.core.storage.database.DatabaseManager
+import arcs.core.storage.database.HardReferenceManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -26,21 +26,23 @@ import kotlinx.coroutines.launch
  * A [StorageServiceManager] is used by a client of the [StorageService] to manage
  * data stored within the [StorageService].
  */
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class StorageServiceManager(
-  /** [CoroutineContext] on which to build one specific to this [StorageServiceManager]. */
-  parentCoroutineContext: CoroutineContext,
+  /** [CoroutineScope] on which this [StorageServiceManager] runs. */
+  private val scope: CoroutineScope,
 
   /** The [DriverFactory] that's managing active drivers for the service. */
   private val driverFactory: DriverFactory,
 
+  /** The [DatabaseManager] that's managing active databases for the service. */
+  private val dbManager: DatabaseManager,
+
   /** The stores managed by StorageService. */
-  val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>
+  val stores: ReferencedStores
 ) : IStorageServiceManager.Stub() {
 
-  /** The local [CoroutineContext]. */
-  private val coroutineContext = parentCoroutineContext + CoroutineName("StorageServiceManager")
-  private val scope = CoroutineScope(coroutineContext)
+  // TODO(b/174432505): Don't use the GLOBAL_INSTANCE, accept as a constructor param instead.
+  private val storageKeyManager = StorageKeyManager.GLOBAL_INSTANCE
 
   override fun clearAll(resultCallback: IResultCallback) {
     scope.launch {
@@ -72,11 +74,53 @@ class StorageServiceManager(
 
   override fun resetDatabases(resultCallback: IResultCallback) {
     scope.launch {
-      DatabaseDriverProvider.manager.resetAll()
+      dbManager.resetAll()
       // Clear stores map, to remove cached data, as resetting the database does not propagate
       // changes to the stores.
       stores.clear()
       resultCallback.onResult(null)
+    }
+  }
+
+  override fun runGarbageCollection(resultCallback: IResultCallback) {
+    scope.launch {
+      resultCallback.wrapException("GarbageCollection failed") {
+        dbManager.runGarbageCollection()
+      }
+    }
+  }
+
+  override fun triggerHardReferenceDeletion(
+    storageKey: String,
+    entityId: String,
+    resultCallback: IHardReferencesRemovalCallback
+  ) {
+    val referenceManager = HardReferenceManager(dbManager)
+    launchHandlingExceptions(resultCallback, "triggerHardReferenceDeletion") {
+      referenceManager.triggerDatabaseDeletion(storageKeyManager.parse(storageKey), entityId)
+    }
+  }
+
+  override fun reconcileHardReferences(
+    storageKey: String,
+    idsToRetain: List<String>,
+    resultCallback: IHardReferencesRemovalCallback
+  ) {
+    val referenceManager = HardReferenceManager(dbManager)
+    launchHandlingExceptions(resultCallback, "reconcileHardReferences") {
+      referenceManager.reconcile(storageKeyManager.parse(storageKey), idsToRetain.toSet())
+    }
+  }
+
+  private fun launchHandlingExceptions(
+    resultCallback: IHardReferencesRemovalCallback,
+    message: String,
+    action: suspend () -> Long
+  ) = scope.launch {
+    try {
+      resultCallback.onSuccess(action())
+    } catch (e: Exception) {
+      resultCallback.onFailure(CrdtException("$message failed", e).toProto().toByteArray())
     }
   }
 }

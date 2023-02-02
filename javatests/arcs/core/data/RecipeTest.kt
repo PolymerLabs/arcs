@@ -13,7 +13,7 @@ package arcs.core.data
 import arcs.core.data.Recipe.Handle.Fate
 import arcs.core.data.expression.EvaluatorParticle
 import arcs.core.data.expression.asExpr
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -56,7 +56,7 @@ class RecipeTest {
 
   @Before
   fun setupTest() {
-    DriverAndKeyConfigurator.configureKeyParsers()
+    DriverAndKeyConfigurator.configureKeyParsersAndFactories()
   }
 
   @Test
@@ -92,7 +92,7 @@ class RecipeTest {
         storageKey = storageKey
       ).toStorageKey()
     ).isEqualTo(
-      StorageKeyParser.parse(storageKey)
+      StorageKeyManager.GLOBAL_INSTANCE.parse(storageKey)
     )
   }
 
@@ -112,7 +112,7 @@ class RecipeTest {
         )
       ).toStorageKey()
     ).isEqualTo(
-      StorageKeyParser.parse(storageKey)
+      StorageKeyManager.GLOBAL_INSTANCE.parse(storageKey)
     )
   }
 
@@ -229,7 +229,7 @@ class RecipeTest {
       ).toPlanHandle()
     ).isEqualTo(
       Plan.Handle(
-        storageKey = StorageKeyParser.parse(storageKey),
+        storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse(storageKey),
         type = personCollectionType,
         annotations = emptyList()
       )
@@ -286,7 +286,6 @@ class RecipeTest {
    */
   @Test
   fun recipeToPlan_fullExample() {
-
     val peopleStorageKey =
       "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}"
     val peopleHandle = Recipe.Handle(
@@ -322,7 +321,7 @@ class RecipeTest {
     )
 
     val peoplePlanHandle = Plan.Handle(
-      storageKey = StorageKeyParser.parse(peopleStorageKey),
+      storageKey = StorageKeyManager.GLOBAL_INSTANCE.parse(peopleStorageKey),
       type = personCollectionType,
       annotations = emptyList()
     )

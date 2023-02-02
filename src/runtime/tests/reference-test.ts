@@ -19,7 +19,6 @@ import {ReferenceModeStorageKey} from '../storage/reference-mode-storage-key.js'
 import {Reference} from '../reference.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {Runtime} from '../runtime.js';
-import {handleForStoreInfo} from '../storage/storage.js';
 
 describe('reference', () => {
   it('can parse & validate a recipe containing references', async () => {
@@ -50,7 +49,7 @@ describe('reference', () => {
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     assert.strictEqual(recipe.handles[0].id, 'reference:1');
-    recipe.handles[0].type.maybeEnsureResolved();
+    recipe.handles[0].type.maybeResolve();
     assert.instanceOf(recipe.handles[0].type, ReferenceType);
     assert.strictEqual((recipe.handles[0].type.resolvedType() as ReferenceType<EntityType>).referredType.entitySchema.name, 'Result');
   });
@@ -94,47 +93,36 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = await runtime.allocator.startArc({arcName: 'test', storageKeyPrefix});
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
-    const refModeStore = await arc.createStore(
-      new SingletonType(result.type),
-      undefined,
-      'test:1',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'a'), new VolatileStorageKey(arc.id, 'b'))
-    );
-    const refStore = await arc.createStore(
-      new SingletonType(new ReferenceType(result.type)),
-      undefined,
-      'input:1',
-      undefined,
-      new VolatileStorageKey(arc.id, 'refStore')
-    );
-    const outStore = await arc.createStore(
-      new SingletonType(result.type),
-      undefined,
-      'output:1',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'c'), new VolatileStorageKey(arc.id, 'd'))
-    );
+    const refModeStore = await arc.createStoreInfo(new SingletonType(result.type), {
+      id: 'test:1',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'a'), new VolatileStorageKey(arc.id, 'b'))
+    });
+    const refStore = await arc.createStoreInfo(new SingletonType(new ReferenceType(result.type)), {
+      id: 'input:1',
+      storageKey: new VolatileStorageKey(arc.id, 'refStore')
+    });
+    const outStore = await arc.createStoreInfo(new SingletonType(result.type), {
+      id: 'output:1',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'c'), new VolatileStorageKey(arc.id, 'd'))
+    });
 
     recipe.handles[0].mapToStorage(refStore);
     recipe.handles[1].mapToStorage(outStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
-    await arc.idle;
+    await runtime.allocator.runPlanInArc(arc, recipe);
+    await runtime.getArcById(arc.id).idle;
 
-    const inHandle = await handleForStoreInfo(refModeStore, arc);
+    const inHandle = await runtime.host.handleForStoreInfo(refModeStore, arc);
     const entity = await inHandle.setFromData({value: 'val1'});
-    const refHandle = await handleForStoreInfo(refStore, arc);
-    await refHandle.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, refStore.type.getContainedType(), null));
-    await arc.idle;
+    const refHandle = await runtime.host.handleForStoreInfo(refStore, arc);
+    await refHandle.set(new Reference({id: Entity.id(entity), entityStorageKey: refModeStore.storageKey.toString()}, refStore.type.getContainedType(), refHandle.storageFrontend));
+    await runtime.getArcById(arc.id).idle;
 
-    const outHandle = await handleForStoreInfo(outStore, arc);
+    const outHandle = await runtime.host.handleForStoreInfo(outStore, arc);
     const value = await outHandle.fetch();
     assert.deepStrictEqual(value as {}, {value: 'val1'});
   });
@@ -180,59 +168,46 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = await runtime.allocator.startArc({arcName: 'test', storageKeyPrefix});
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
-    const refModeStore1 = await arc.createStore(
-      new SingletonType(result.type),
-      undefined,
-      'test:1',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'a'), new VolatileStorageKey(arc.id, 'b'))
-    );
-    const refModeStore2 = await arc.createStore(
-      new SingletonType(result.type),
-      undefined,
-      'test:2',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'c'), new VolatileStorageKey(arc.id, 'd'))
-    );
-    const inputStore = await arc.createStore(
-      new CollectionType(new ReferenceType(result.type)),
-      undefined,
-      'input:1',
-      undefined,
-      new VolatileStorageKey(arc.id, 'inputStore')
-    );
-    const outputStore = await arc.createStore(
-      new CollectionType(result.type),
-      undefined,
-      'output:1',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'e'), new VolatileStorageKey(arc.id, 'f'))
-    );
+    const refModeStore1 = await arc.createStoreInfo(new SingletonType(result.type), {
+      id: 'test:1',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'a'), new VolatileStorageKey(arc.id, 'b'))
+    });
+    const refModeStore2 = await arc.createStoreInfo(new SingletonType(result.type), {
+      id: 'test:2',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'c'), new VolatileStorageKey(arc.id, 'd'))
+    });
+    const inputStore = await arc.createStoreInfo(new CollectionType(new ReferenceType(result.type)), {
+      id: 'input:1',
+      storageKey: new VolatileStorageKey(arc.id, 'inputStore')
+    });
+    const outputStore = await arc.createStoreInfo(new CollectionType(result.type), {
+      id: 'output:1',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'e'), new VolatileStorageKey(arc.id, 'f'))
+    });
 
     recipe.handles[0].mapToStorage(inputStore);
     recipe.handles[1].mapToStorage(outputStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
-    await arc.idle;
+    await runtime.allocator.runPlanInArc(arc, recipe);
+    await runtime.getArcById(arc.id).idle;
 
-    const handle1 = await handleForStoreInfo(refModeStore1, arc);
-    const handle2 = await handleForStoreInfo(refModeStore2, arc);
+    const handle1 = await runtime.host.handleForStoreInfo(refModeStore1, arc);
+    const handle2 = await runtime.host.handleForStoreInfo(refModeStore2, arc);
     const entity1 = await handle1.setFromData({value: 'val1'});
     const entity2 = await handle2.setFromData({value: 'val2'});
 
-    const refHandle = await handleForStoreInfo(inputStore, arc);
-    await refHandle.add(new Reference({id: Entity.id(entity1), entityStorageKey: refModeStore1.storageKey.toString()}, inputStore.type.getContainedType(), null));
-    await refHandle.add(new Reference({id: Entity.id(entity2), entityStorageKey: refModeStore2.storageKey.toString()}, inputStore.type.getContainedType(), null));
+    const refHandle = await runtime.host.handleForStoreInfo(inputStore, arc);
+    const storageFrontend = refHandle.storageFrontend;
+    await refHandle.add(new Reference({id: Entity.id(entity1), entityStorageKey: refModeStore1.storageKey.toString()}, inputStore.type.getContainedType(), storageFrontend));
+    await refHandle.add(new Reference({id: Entity.id(entity2), entityStorageKey: refModeStore2.storageKey.toString()}, inputStore.type.getContainedType(), storageFrontend));
 
-    await arc.idle;
+    await runtime.getArcById(arc.id).idle;
 
-    const outHandle = await handleForStoreInfo(outputStore, arc);
+    const outHandle = await runtime.host.handleForStoreInfo(outputStore, arc);
     const values = await outHandle.toList();
     assert.deepStrictEqual(values as {}[], [{value: 'val1'}, {value: 'val2'}]);
   });
@@ -278,39 +253,31 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = await runtime.allocator.startArc({arcName: 'test', storageKeyPrefix});
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
-    const inputStore = await arc.createStore(
-      new SingletonType(result.type),
-      undefined,
-      'test:1',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'a'), new VolatileStorageKey(arc.id, 'b'))
-    );
+    const inputStore = await arc.createStoreInfo(new SingletonType(result.type), {
+      id: 'test:1',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'a'), new VolatileStorageKey(arc.id, 'b'))
+    });
 
-    const refStore = await arc.createStore(
-      new SingletonType(new ReferenceType(result.type)),
-      undefined,
-      'test:2',
-      undefined,
-      new VolatileStorageKey(arc.id, 'refStore')
-    );
+    const refStore = await arc.createStoreInfo(new SingletonType(new ReferenceType(result.type)), {
+      id: 'test:2',
+      storageKey: new VolatileStorageKey(arc.id, 'refStore')
+    });
 
     recipe.handles[0].mapToStorage(inputStore);
     recipe.handles[1].mapToStorage(refStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
+    await runtime.allocator.runPlanInArc(arc, recipe);
 
-    const handle = await handleForStoreInfo(inputStore, arc);
+    const handle = await runtime.host.handleForStoreInfo(inputStore, arc);
     const entity = await handle.setFromData({value: 'what a result!'});
-    await arc.idle;
+    await runtime.getArcById(arc.id).idle;
 
     const storageKey = Entity.storageKey(entity);
-    const refHandle = await handleForStoreInfo(refStore, arc);
+    const refHandle = await runtime.host.handleForStoreInfo(refStore, arc);
     const reference = await refHandle.fetch();
     assert.equal(reference['id'], Entity.id(entity));
     assert.equal(reference['entityStorageKey'], storageKey);
@@ -359,51 +326,40 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = await runtime.allocator.startArc({arcName: 'test', storageKeyPrefix});
     const recipe = manifest.recipes[0];
     const resultEntity = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
 
-    const entityStore = await arc.createStore(
-      new SingletonType(resultEntity.type),
-      undefined,
-      'test:1',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'a'), new VolatileStorageKey(arc.id, 'b'))
-    );
+    const entityStore = await arc.createStoreInfo(new SingletonType(resultEntity.type), {
+      id: 'test:1',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'a'), new VolatileStorageKey(arc.id, 'b'))
+    });
 
     const referenceIn = manifest.particles[0].handleConnectionMap.get('referenceIn');
     const refType = referenceIn.type as EntityType;
-    const inputStore = await arc.createStore(
-      new SingletonType(refType),
-      undefined,
-      'input:1',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'e'), new VolatileStorageKey(arc.id, 'f'))
-    );
+    const inputStore = await arc.createStoreInfo(new SingletonType(refType), {
+      id: 'input:1',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'e'), new VolatileStorageKey(arc.id, 'f'))
+    });
 
-    const outStore = await arc.createStore(
-      new SingletonType(resultEntity.type),
-      undefined,
-      'output:1',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'c'), new VolatileStorageKey(arc.id, 'd'))
-    );
+    const outStore = await arc.createStoreInfo(new SingletonType(resultEntity.type), {
+      id: 'output:1',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'c'), new VolatileStorageKey(arc.id, 'd'))
+    });
 
     recipe.handles[0].mapToStorage(inputStore);
     recipe.handles[1].mapToStorage(outStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
-    await arc.idle;
+    await runtime.allocator.runPlanInArc(arc, recipe);
+    await runtime.getArcById(arc.id).idle;
 
-    const entityHandle = await handleForStoreInfo(entityStore, arc);
+    const entityHandle = await runtime.host.handleForStoreInfo(entityStore, arc);
     const entity = await entityHandle.setFromData({value: 'what a result!'});
-    const inHandle = await handleForStoreInfo(inputStore, arc);
-    await inHandle.setFromData({result: new Reference({id: Entity.id(entity), entityStorageKey: entityStore.storageKey.toString()}, new ReferenceType(resultEntity.type), null)});
-    await arc.idle;
+    const inHandle = await runtime.host.handleForStoreInfo(inputStore, arc);
+    await inHandle.setFromData({result: new Reference({id: Entity.id(entity), entityStorageKey: entityStore.storageKey.toString()}, new ReferenceType(resultEntity.type), inHandle.storageFrontend)});
+    await runtime.getArcById(arc.id).idle;
 
-    const outHandle = await handleForStoreInfo(outStore, arc);
+    const outHandle = await runtime.host.handleForStoreInfo(outStore, arc);
     assert.strictEqual(outHandle.type.getContainedType().getEntitySchema().name, 'Result');
     const out = await outHandle.fetch();
     assert.equal(out.value, 'what a result!');
@@ -500,53 +456,41 @@ describe('reference', () => {
     const memoryProvider = new TestVolatileMemoryProvider();
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = await runtime.allocator.startArc({arcName: 'test', storageKeyPrefix});
     const recipe = manifest.recipes[0];
 
     // create 'input:1' store to hold [Result]
     const resultType = Entity.createEntityClass(manifest.findSchemaByName('Result'), null).type;
-    const resultInputStore = await arc.createStore(
-      new CollectionType(resultType),
-      undefined,
-      'input:1',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'a'), new VolatileStorageKey(arc.id, 'b'))
-    );
+    const resultInputStore = await arc.createStoreInfo(new CollectionType(resultType), {
+      id: 'input:1',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'a'), new VolatileStorageKey(arc.id, 'b'))
+    });
 
     const fooType = manifest.particles[0].handleConnectionMap.get('inFoo').type as EntityType;
-    const fooInputStore = await arc.createStore(
-      new SingletonType(fooType),
-      undefined,
-      'input:2',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'c'), new VolatileStorageKey(arc.id, 'd'))
-    );
+    const fooInputStore = await arc.createStoreInfo(new SingletonType(fooType), {
+      id: 'input:2',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'c'), new VolatileStorageKey(arc.id, 'd'))
+    });
 
-    const fooOutputStore = await arc.createStore(
-      new CollectionType(fooType),
-      undefined,
-      'output:1',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'e'), new VolatileStorageKey(arc.id, 'f'))
-    );
+    const fooOutputStore = await arc.createStoreInfo(new CollectionType(fooType), {
+      id: 'output:1',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'e'), new VolatileStorageKey(arc.id, 'f'))
+    });
 
     recipe.handles[0].mapToStorage(resultInputStore);
     recipe.handles[1].mapToStorage(fooInputStore);
     recipe.handles[2].mapToStorage(fooOutputStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-
-    const fooInHandle = await handleForStoreInfo(fooInputStore, arc);
+    const fooInHandle = await runtime.host.handleForStoreInfo(fooInputStore, arc);
     await fooInHandle.setFromData({result: null, shortForm: 'a'});
 
-    const resultInHandle = await handleForStoreInfo(resultInputStore, arc);
+    const resultInHandle = await runtime.host.handleForStoreInfo(resultInputStore, arc);
     const resultInEntities = await resultInHandle.addMultipleFromData([{value: 'this is an a'}, {value: 'this is a b'}]);
 
-    const fooOutHandle = await handleForStoreInfo(fooOutputStore, arc);
+    const fooOutHandle = await runtime.host.handleForStoreInfo(fooOutputStore, arc);
     await fooOutHandle.addFromData({result: null, shortForm: 'b'});
-    await arc.instantiate(recipe);
-    await arc.idle;
+    await runtime.allocator.runPlanInArc(arc, recipe);
+    await runtime.getArcById(arc.id).idle;
 
     const values = await fooOutHandle.toList();
     assert.strictEqual(values.length, 2);
@@ -625,42 +569,35 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = await runtime.allocator.startArc({arcName: 'test', storageKeyPrefix});
     const recipe = manifest.recipes[0];
     const result = Entity.createEntityClass(manifest.findSchemaByName('Result'), null);
     const referenceOut = manifest.particles[0].handleConnectionMap.get('referenceOut');
     const refType = referenceOut.type as EntityType;
 
-    const inputStore = await arc.createStore(
-      new CollectionType(result.type),
-      undefined,
-      'input:1',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'a'), new VolatileStorageKey(arc.id, 'b'))
-    );
-    const refStore = await arc.createStore(
-      new SingletonType(refType),
-      undefined,
-      'output:1',
-      undefined,
-      new VolatileStorageKey(arc.id, 'refStore')
-    );
+    const inputStore = await arc.createStoreInfo(new CollectionType(result.type), {
+      id: 'input:1',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'a'), new VolatileStorageKey(arc.id, 'b'))
+    });
+    const refStore = await arc.createStoreInfo(new SingletonType(refType), {
+      id: 'output:1',
+      storageKey: new VolatileStorageKey(arc.id, 'refStore')
+    });
 
     recipe.handles[0].mapToStorage(inputStore);
     recipe.handles[1].mapToStorage(refStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
-
-    const handle = await handleForStoreInfo(inputStore, arc);
+    const handle = await runtime.host.handleForStoreInfo(inputStore, arc);
     assert.strictEqual((handle.type.getContainedType() as EntityType).entitySchema.name, 'Result');
+
+    await runtime.allocator.runPlanInArc(arc, recipe);
+
     const now = new Date().getTime();
     await handle.add(Entity.identify(new handle.entityClass({value: 'what a result!'}), 'id:1', null, now));
     await handle.add(Entity.identify(new handle.entityClass({value: 'what another result!'}), 'id:2', null, now));
 
-    await arc.idle;
-    const outputHandle = await handleForStoreInfo(refStore, arc);
+    await runtime.getArcById(arc.id).idle;
+    const outputHandle = await runtime.host.handleForStoreInfo(refStore, arc);
     assert.strictEqual(outputHandle.type.getContainedType().getEntitySchema().name, 'Foo');
     const outputRefs = await outputHandle.fetch();
     const ids = [...outputRefs.result].map(ref => ref.id);
@@ -711,55 +648,44 @@ describe('reference', () => {
 
     const manifest = await Manifest.load('./manifest', loader, {memoryProvider});
     const runtime = new Runtime({loader, context: manifest, memoryProvider});
-    const arc = runtime.newArc('test', storageKeyPrefix);
+    const arc = await runtime.allocator.startArc({arcName: 'test', storageKeyPrefix});
     const recipe = manifest.recipes[0];
 
     const resultType = Entity.createEntityClass(manifest.findSchemaByName('Result'), null).type;
-    const resultInputStore = await arc.createStore(
-      new CollectionType(resultType),
-      undefined,
-      'test:1',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'a'), new VolatileStorageKey(arc.id, 'b'))
-    );
+    const resultInputStore = await arc.createStoreInfo(new CollectionType(resultType), {
+      id: 'test:1',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'a'), new VolatileStorageKey(arc.id, 'b'))
+    });
 
     const fooType = manifest.particles[0].handleConnectionMap.get('referenceIn').type as EntityType;
-    const fooInputStore = await arc.createStore(
-      new SingletonType(fooType),
-      undefined,
-      'input:1',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'c'), new VolatileStorageKey(arc.id, 'd'))
-    );
+    const fooInputStore = await arc.createStoreInfo(new SingletonType(fooType), {
+      id: 'input:1',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'c'), new VolatileStorageKey(arc.id, 'd'))
+    });
 
-    const resultOutputStore = await arc.createStore(
-      new CollectionType(resultType),
-      undefined,
-      'output:1',
-      undefined,
-      new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'e'), new VolatileStorageKey(arc.id, 'f'))
-    );
+    const resultOutputStore = await arc.createStoreInfo(new CollectionType(resultType), {
+      id: 'output:1',
+      storageKey: new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, 'e'), new VolatileStorageKey(arc.id, 'f'))
+    });
 
     recipe.handles[0].mapToStorage(fooInputStore);
     recipe.handles[1].mapToStorage(resultOutputStore);
 
-    assert.isTrue(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-    await arc.instantiate(recipe);
-    await arc.idle;
+    await runtime.allocator.runPlanInArc(arc, recipe);
+    await runtime.getArcById(arc.id).idle;
 
-    const handle = await handleForStoreInfo(resultInputStore, arc);
+    const handle = await runtime.host.handleForStoreInfo(resultInputStore, arc);
     const resultEntities = await handle.addMultipleFromData([{value: 'what a result!'}, {value: 'what another result!'}]);
 
-    const fooInHandle = await handleForStoreInfo(fooInputStore, arc);
+    const fooInHandle = await runtime.host.handleForStoreInfo(fooInputStore, arc);
     await fooInHandle.setFromData({result: [
       {id: Entity.id(resultEntities[0]), creationTimestamp: Entity.creationTimestamp(resultEntities[0]), entityStorageKey: Entity.storageKey(resultEntities[0])},
       {id: Entity.id(resultEntities[1]), creationTimestamp: Entity.creationTimestamp(resultEntities[1]), entityStorageKey: Entity.storageKey(resultEntities[1])},
     ]});
 
-    await arc.idle;
+    await runtime.getArcById(arc.id).idle;
 
-    const outputHandle = await handleForStoreInfo(resultOutputStore, arc);
+    const outputHandle = await runtime.host.handleForStoreInfo(resultOutputStore, arc);
     assert.strictEqual((outputHandle.type.getContainedType() as EntityType).entitySchema.name, 'Result');
     const values = await outputHandle.toList();
     assert.strictEqual(values.length, 2);

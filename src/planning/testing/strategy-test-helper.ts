@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Arc} from '../../runtime/arc.js';
+import {ArcInfo} from '../../runtime/arc-info.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {SlotComposer} from '../../runtime/slot-composer.js';
@@ -21,31 +21,32 @@ import {Modality} from '../../runtime/arcs-types/modality.js';
 import {Runtime} from '../../runtime/runtime.js';
 
 export class StrategyTestHelper {
-  static createTestArc(context: Manifest, options: {id?: Id, modality?: Modality, loader?: Loader} = {}) {
+  static async createTestArcInfo(context: Manifest, options: {id?: Id, modality?: Modality, loader?: Loader} = {}): Promise<ArcInfo> {
     const runtime = new Runtime({context, loader: options.loader || new Loader()});
-    return runtime.newArc('test-arc', null, options);
+    return runtime.allocator.startArc({arcName: 'test-arc', ...options});
   }
-  static createTestStrategyArgs(arc: Arc, args?) {
-    return {recipeIndex: RecipeIndex.create(arc), ...args};
+  static createTestStrategyArgs(arcInfo: ArcInfo, args?) {
+    return {recipeIndex: RecipeIndex.create(arcInfo), ...args};
   }
-  static async planForArc(arc: Arc): Promise<Suggestion[]> {
+  static async planForArc(runtime: Runtime, arcInfo: ArcInfo): Promise<Suggestion[]> {
     const planner = new Planner();
-    planner.init(arc, {strategyArgs: StrategyTestHelper.createTestStrategyArgs(arc)});
+    // TODO(STARTHERE): use arcInfo INSTEAD!!!
+    planner.init(arcInfo, {runtime, strategyArgs: StrategyTestHelper.createTestStrategyArgs(arcInfo), noSpecEx: true});
     return planner.suggest();
   }
 
-  static run(arc: Arc, clazz, recipe) {
-    return new clazz(arc).generate({generated: [{result: recipe, score: 1}], terminal: []});
+  static run(arcInfo: ArcInfo, clazz, recipe) {
+    return new clazz(arcInfo).generate({generated: [{result: recipe, score: 1}], terminal: []});
   }
 
-  static onlyResult(arc: Arc, clazz, recipe) {
-    return StrategyTestHelper.run(arc, clazz, recipe).then(result => { assert.lengthOf(result, 1); return result[0].result;});
+  static onlyResult(arcInfo: ArcInfo, clazz, recipe) {
+    return StrategyTestHelper.run(arcInfo, clazz, recipe).then(result => { assert.lengthOf(result, 1); return result[0].result;});
   }
-  static theResults(arc: Arc, clazz, recipe) {
-    return StrategyTestHelper.run(arc, clazz, recipe).then(results => results.map(result => result.result)); // chicken chicken
+  static theResults(arcInfo: ArcInfo, clazz, recipe) {
+    return StrategyTestHelper.run(arcInfo, clazz, recipe).then(results => results.map(result => result.result)); // chicken chicken
   }
 
-  static noResult(arc: Arc, clazz, recipe) {
-    return StrategyTestHelper.run(arc, clazz, recipe).then(result => { assert.isEmpty(result); });
+  static noResult(arcInfo: ArcInfo, clazz, recipe) {
+    return StrategyTestHelper.run(arcInfo, clazz, recipe).then(result => { assert.isEmpty(result); });
   }
 }

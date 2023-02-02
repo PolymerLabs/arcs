@@ -8,13 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-export {Type, TypeLiteral, CountType, EntityType, SingletonType, CollectionType, BigCollectionType,
+export {Type, CountType, EntityType, SingletonType, CollectionType, BigCollectionType,
         ReferenceType, TupleType, MuxType, TypeVariable, TypeVariableInfo, InterfaceType, HandleType,
         HandleConnection, Slot, SlotType, InterfaceInfo, HandleConnectionLiteral, SlotLiteral,
-        TypeVarReference, InterfaceInfoLiteral, MatchResult} from './internal/type.js';
-
-export {Schema} from './internal/schema.js';
-export {FieldType, PrimitiveField, OrderedListField, ReferenceField, InlineField} from './internal/schema-field.js';
+        TypeVarReference, InterfaceInfoLiteral, MatchResult, Schema, FieldType, PrimitiveField,
+        ReferenceField, InlineField, CollectionField, OrderedListField, NullableField, TypeLiteral
+} from './internal/type.js';
 
 export {Refinement, RefinementExpressionLiteral, RefinementExpressionVisitor, BinaryExpression,
         UnaryExpression, FieldNamePrimitive, QueryArgumentPrimitive, BuiltIn, NumberPrimitive,
