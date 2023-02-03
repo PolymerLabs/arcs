@@ -155,18 +155,10 @@ This is precisely what is required for the handle to be correctly typed: anythin
 Take the following case of ‘N’ entities with some combinations of fields ‘a’, ‘b’, ‘c’, and ‘d’ being written into and read from a handle H:
 
 
-
-<p id="gdcalert2" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image1.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert3">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
 ![alt_text](images/The%20Arcs%20Type%20System%20img%201.png "image_tooltip")
 
 
 First we need to find the join of the read constraints. This derives the minimum expectations we have of the handle - i.e. what has to be true of every piece of data in the handle in order for the read constraints to be satisfiable:
-
-
-
-<p id="gdcalert3" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image2.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert4">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
 
 ![alt_text](images/The%20Arcs%20Type%20System%20img%202.png "image_tooltip")
@@ -175,18 +167,10 @@ First we need to find the join of the read constraints. This derives the minimum
 Next we find the meet of the write constraints. This constrains the type in a slightly different way - we can’t guarantee that any data written into the handle has more than the meet:
 
 
-
-<p id="gdcalert4" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image3.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert5">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
 ![alt_text](images/The%20Arcs%20Type%20System%20img3.png "image_tooltip")
 
 
 Putting these together, the type of H can be anything that is at least the join and at most the meet:
-
-
-
-<p id="gdcalert5" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image4.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert6">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
 
 ![alt_text](images/The%20Arcs%20Type%20System%20img4.png "image_tooltip")
