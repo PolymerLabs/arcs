@@ -1,6 +1,6 @@
 # The Arcs Type System
 
-Shane Stephens, Dec 2018_
+Shane Stephens, Dec 2018
 
 
 ## Introduction
