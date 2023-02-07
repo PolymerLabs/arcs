@@ -42,7 +42,7 @@ While refactoring storage, we will additionally:
 
 
 
-![alt_text](images/Storage Refactor image1.png "image_tooltip")
+![alt_text](images/Storage%20Refactor%20image1.png "image_tooltip")
 
 
 Currently, a StorageProviderFactory handles top-level requests and vends them to the appropriate Storage (subclass of StorageProviderBase) engine. This engine in turn constructs an engine-specific instance of BigCollection, Collection or Variable and returns it through the factory to the caller. The Store instance handles data requests with a type-specific API.
@@ -361,7 +361,7 @@ Returns the stored entity as a CRDT model serialization.
 
 
 
-![alt_text](images/Storage Refactor image2.png "image_tooltip")
+![alt_text](images/Storage%20Refactor%20image2.png "image_tooltip")
 
 
 This diagram illustrates the desired layout at a high-level: there’s one handle class for each API presented to the user, one implementation of direct mode and one of reference mode stores, and a single driver for each storage implementation.
@@ -396,7 +396,7 @@ Different backends can support different kinds of storage - for example, without
 
 
 
-![alt_text](images/Storage Refactor image3.png "image_tooltip")
+![alt_text](images/Storage%20Refactor%20image3.png "image_tooltip")
 
 
 Notionally, local CRDT models can keep in sync via 2 mechanisms:
