@@ -915,6 +915,116 @@ abstract class ReferenceModeStoreTestBase {
   }
 
   @Test
+  fun operationsFromContainer_withMissingBackingData_waitsForBackingData() = runBlockingTest {
+    assume().that(BuildFlags.REFERENCE_MODE_STORE_FIXES).isTrue()
+    val activeStore = collectionReferenceModeStore(scope = this)
+    val actor = "me"
+    val bobEntity = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
+
+    // Data stored in backing store.
+    val bobCrdt = CrdtEntity.newAtVersionForTest(
+      VersionMap(activeStore.crdtKey to 1),
+      bobEntity
+    )
+
+    // Data stored in container store.
+    val bobReference = bobEntity.toReference(
+      activeStore.backingStore.storageKey,
+      VersionMap(
+        activeStore.crdtKey to 1
+      )
+    )
+
+    // Set up proxy.
+    val deferredOps = CompletableDeferred<List<RefModeStoreOp>>()
+    activeStore.on {
+      if (it is ProxyMessage.Operations) {
+        deferredOps.complete(it.operations)
+        return@on
+      }
+    }
+
+    // Send data to container store.
+    val opsForContainer = CrdtSet.Operation.Add(actor, VersionMap(actor to 1), bobReference)
+    activeStore.containerStore.onProxyMessage(
+      ProxyMessage.Operations(listOf(opsForContainer), activeStore.containerStoreId + 1)
+    )
+
+    activeStore.idle()
+
+    // Send data to backing store
+    val bobBackingStore = activeStore.backingStore.getStore(
+      "an-id",
+      activeStore.backingStoreId
+    ).store
+    bobBackingStore.onReceive(bobCrdt.data, activeStore.backingStoreId + 1)
+
+    val ops = deferredOps.await()
+    assertThat(ops).containsExactly(
+      CrdtSet.Operation.Add(actor, VersionMap(actor to 1), bobEntity)
+    )
+  }
+
+  @Test
+  fun operationsfromContainerStore_withOldBackingData_waitsForBackingData() = runBlockingTest {
+    assume().that(BuildFlags.REFERENCE_MODE_STORE_FIXES).isTrue()
+    val activeStore = collectionReferenceModeStore(scope = this)
+    val actor = "me"
+    val bobEntity = createPersonEntity("an-id", "bob", 42, listOf(1L, 1L, 2L), "inline")
+
+    // Data stored in backing store. bobCrdt is old backing data.
+    val bobCrdt = CrdtEntity.newAtVersionForTest(
+      VersionMap(activeStore.crdtKey to 1),
+      bobEntity
+    )
+
+    // Data stored in container store. bobReference is up to date
+    val bobReference = bobEntity.toReference(
+      activeStore.backingStore.storageKey,
+      VersionMap(
+        activeStore.crdtKey to 2
+      )
+    )
+
+    // Set up proxy.
+    val deferredOps = CompletableDeferred<List<RefModeStoreOp>>()
+    activeStore.on {
+      if (it is ProxyMessage.Operations) {
+        deferredOps.complete(it.operations)
+        return@on
+      }
+    }
+
+    // Send data to backing store.
+    val bobBackingStore = activeStore.backingStore.getStore(
+      "an-id",
+      activeStore.backingStoreId
+    ).store
+    bobBackingStore.onReceive(bobCrdt.data, activeStore.backingStoreId + 1)
+
+    // Send data to container store.
+    val opsForContainer = CrdtSet.Operation.Add(actor, VersionMap(actor to 1), bobReference)
+    activeStore.containerStore.onProxyMessage(
+      ProxyMessage.Operations(listOf(opsForContainer), activeStore.containerStoreId + 1)
+    )
+
+    activeStore.idle()
+
+//    // Update backing store to update bobCrdt
+    val updatedBobEntity = createPersonEntity("an-id", "bob", 43, listOf(1L, 1L, 2L), "inline")
+    val updatedBobCrdt = CrdtEntity.newAtVersionForTest(
+      VersionMap(activeStore.crdtKey to 2),
+      updatedBobEntity
+    )
+    bobBackingStore.onReceive(updatedBobCrdt.data, activeStore.backingStoreId + 1)
+
+    val ops = deferredOps.await()
+    assertThat(ops).containsExactly(
+      CrdtSet.Operation.Add(actor, VersionMap(actor to 1), updatedBobEntity)
+    )
+  }
+
+  @Test
   fun entityVersion_isIncremented() = runBlockingTest {
     val activeStore = collectionReferenceModeStore(scope = this)
     val storeHelper = RefModeStoreHelper("me", activeStore)
