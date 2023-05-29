@@ -24,6 +24,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/data/proto:policy_java_proto_lite",
         "//java/arcs/core/policy",
         "//java/arcs/core/policy/proto",
+        "//java/arcs/core/testutil",
         "//java/arcs/core/testutil/protoloader",
         "//java/arcs/core/util",
         "//java/arcs/repoutils",
