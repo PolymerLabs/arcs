@@ -52,7 +52,7 @@
     "express": "4.17.1",
     "glob": "7.1.5",
     "grammkit": "0.7.0",
-    "minimist": "1.2.0",
+    "minimist": "1.2.6",
     "mocha": "5.2.0",
     "mocha-chrome": "2.2.0",
     "morgan": "1.9.1",
