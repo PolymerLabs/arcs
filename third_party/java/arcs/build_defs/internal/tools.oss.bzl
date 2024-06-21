@@ -74,7 +74,6 @@ def arcs_tool_verify_policy(name, manifest_proto):
         name = name,
         test_binary = "//java/arcs/tools:verify_policy",
         test_args = [
-            "--manifest",
             "$(rootpath %s)" % manifest_proto,
         ],
         data = [
