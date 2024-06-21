@@ -10,92 +10,157 @@
  */
 package arcs.core.analysis
 
-import arcs.core.data.Claim
-import arcs.core.data.ParticleSpec
 import arcs.core.data.expression.Expression
 
-private typealias Scope = DependencyNode.AssociationNode
+/** A [DependencyNode] holder class to track visitor results, context, and influence. */
+private data class AnalysisResult(
+  val node: DependencyNode,
+  val ctx: DependencyNode.AssociationNode = DependencyNode.AssociationNode(),
+  val influencedBy: Set<DependencyNode> = emptySet()
+) {
+
+  /** Cache [DependencyNode]s that bear influence on other nodes. */
+  fun addInfluence(influencer: AnalysisResult): AnalysisResult =
+    copy(influencedBy = influencedBy + influencer.node)
+}
 
 /**
- * A visitor that parses Paxel [Expression]s to produce data flow dependencies.
+ * A visitor that parses [Expression]s to produce data flow dependencies.
  *
- * For each [Expression], this visitor produces a [DependencyNode], which can be translated into a
- * set of [Claim] relationships.
+ * For each [Expression], this visitor produces an [AnalysisResult], which can be translated into a
+ * set of claims relationships via the [analyze] function.
  *
- * [DependencyNode]s are DAG structures that help map handle connections in a [ParticleSpec] to the
- * target [Expression].
+ * [AnalysisResult] structures [DependencyNode]s into a DAG. These map `ParticleSpec` input fields
+ * to output fields as specified by the [Expression].
  */
-class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
-  override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>, ctx: Scope): DependencyNode =
-    DependencyNode.DerivedFrom(expr.expr.accept(this, ctx))
+private class ExpressionDependencyAnalyzer : Expression.Visitor<AnalysisResult, AnalysisResult> {
+  override fun <E, T> visit(
+    expr: Expression.UnaryExpression<E, T>,
+    ctx: AnalysisResult
+  ): AnalysisResult {
+    val exprResult = expr.expr.accept(this, ctx)
+    return exprResult.copy(node = DependencyNode.Derived(exprResult.node))
+  }
 
-  override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>, ctx: Scope) =
-    DependencyNode.DerivedFrom(
-      expr.left.accept(this, ctx),
-      expr.right.accept(this, ctx)
+  override fun <L, R, T> visit(
+    expr: Expression.BinaryExpression<L, R, T>,
+    ctx: AnalysisResult
+  ): AnalysisResult {
+    val leftResult = expr.left.accept(this, ctx)
+    val rightResult = expr.right.accept(this, ctx)
+    return AnalysisResult(
+      node = DependencyNode.Derived(leftResult.node, rightResult.node),
+      ctx = ctx.ctx,
+      influencedBy = leftResult.influencedBy + rightResult.influencedBy
     )
+  }
 
-  override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): DependencyNode {
-    return when (val qualifier = expr.qualifier?.accept(this, ctx)) {
-      null -> ctx.associations[expr.field] ?: DependencyNode.Input(expr.field)
+  override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: AnalysisResult): AnalysisResult {
+    val defaultNode = ctx.ctx[expr.field] ?: DependencyNode.Input(expr.field)
+    val qualifierResult = expr.qualifier?.accept(this, ctx)
+      ?: return AnalysisResult(defaultNode)
+
+    val node = when (val qualifier = qualifierResult.node) {
       is DependencyNode.Input -> DependencyNode.Input(
         qualifier.path + expr.field
       )
-      is DependencyNode.AssociationNode -> qualifier.lookup(expr.field)
-      is DependencyNode.DerivedFrom -> throw UnsupportedOperationException(
-        "Field access is not defined on a '${expr.qualifier}'."
-      )
+      is DependencyNode.AssociationNode -> requireNotNull(qualifier[expr.field]) {
+        "Field ${expr.field} not found in ${expr.qualifier}."
+      }
+      is DependencyNode.Derived -> requireNotNull(
+        qualifier.inputs.find { it.path.last() == expr.field }
+      ) {
+        "Field ${expr.field} not found in ${expr.qualifier}."
+      }
     }
+
+    return qualifierResult.copy(node = node)
   }
 
-  override fun <T> visit(expr: Expression.QueryParameterExpression<T>, ctx: Scope): DependencyNode {
+  override fun <T> visit(
+    expr: Expression.QueryParameterExpression<T>,
+    ctx: AnalysisResult
+  ): AnalysisResult {
     TODO("Not yet implemented")
   }
 
-  override fun visit(expr: Expression.NumberLiteralExpression, ctx: Scope) = DependencyNode.LITERAL
+  override fun visit(
+    expr: Expression.NumberLiteralExpression,
+    ctx: AnalysisResult
+  ): AnalysisResult =
+    AnalysisResult(DependencyNode.LITERAL)
 
-  override fun visit(expr: Expression.TextLiteralExpression, ctx: Scope) = DependencyNode.LITERAL
+  override fun visit(expr: Expression.TextLiteralExpression, ctx: AnalysisResult): AnalysisResult =
+    AnalysisResult(DependencyNode.LITERAL)
 
-  override fun visit(expr: Expression.BooleanLiteralExpression, ctx: Scope) = DependencyNode.LITERAL
+  override fun visit(
+    expr: Expression.BooleanLiteralExpression,
+    ctx: AnalysisResult
+  ): AnalysisResult =
+    AnalysisResult(DependencyNode.LITERAL)
 
-  override fun visit(expr: Expression.NullLiteralExpression, ctx: Scope) = DependencyNode.LITERAL
+  override fun visit(expr: Expression.NullLiteralExpression, ctx: AnalysisResult): AnalysisResult =
+    AnalysisResult(DependencyNode.LITERAL)
 
-  override fun visit(expr: Expression.FromExpression, ctx: Scope): DependencyNode {
-    val scope = (expr.qualifier?.accept(this, ctx) ?: ctx) as Scope
-    return scope.add(expr.iterationVar to expr.source.accept(this, scope))
-  }
-
-  override fun <T> visit(expr: Expression.SelectExpression<T>, ctx: Scope): DependencyNode {
-    val qualifier = expr.qualifier.accept(this, ctx) as Scope
-    return expr.expr.accept(this, qualifier)
-  }
-
-  override fun visit(expr: Expression.LetExpression, ctx: Scope): DependencyNode {
-    val qualifier = expr.qualifier.accept(this, ctx) as Scope
-    return qualifier.add(
-      expr.variableName to expr.variableExpr.accept(this, qualifier)
+  override fun visit(expr: Expression.FromExpression, ctx: AnalysisResult): AnalysisResult {
+    val scope = (expr.qualifier?.accept(this, ctx) ?: ctx)
+    return scope.copy(
+      ctx = scope.ctx.add(
+        expr.iterationVar to expr.source.accept(this, scope).node
+      )
     )
   }
 
-  override fun <T> visit(expr: Expression.FunctionExpression<T>, ctx: Scope): DependencyNode {
+  override fun visit(expr: Expression.WhereExpression, ctx: AnalysisResult): AnalysisResult {
+    val qualifier = expr.qualifier.accept(this, ctx)
+    return qualifier.addInfluence(expr.expr.accept(this, qualifier))
+  }
+
+  override fun <T> visit(
+    expr: Expression.SelectExpression<T>,
+    ctx: AnalysisResult
+  ): AnalysisResult {
+    val qualifier = expr.qualifier.accept(this, ctx)
+    val result = expr.expr.accept(this, qualifier)
+    return result.copy(node = result.node.influence(qualifier.influencedBy))
+  }
+
+  override fun visit(expr: Expression.LetExpression, ctx: AnalysisResult): AnalysisResult {
+    val scope = expr.qualifier.accept(this, ctx)
+    return scope.copy(
+      ctx = scope.ctx.add(
+        expr.variableName to expr.variableExpr.accept(this, scope).node
+      )
+    )
+  }
+
+  override fun <T> visit(
+    expr: Expression.FunctionExpression<T>,
+    ctx: AnalysisResult
+  ): AnalysisResult {
     TODO("Not yet implemented")
   }
 
-  override fun visit(expr: Expression.NewExpression, ctx: Scope) = DependencyNode.AssociationNode(
-    expr.fields.associateBy({ it.first }, { it.second.accept(this, ctx) })
-  )
-
-  override fun <T> visit(expr: Expression.OrderByExpression<T>, ctx: Scope): DependencyNode {
-    TODO("Not yet implemented")
+  override fun visit(expr: Expression.NewExpression, ctx: AnalysisResult): AnalysisResult {
+    return AnalysisResult(
+      DependencyNode.AssociationNode(
+        associations = expr.fields.associateBy({ it.first }, { it.second.accept(this, ctx).node })
+      )
+    )
   }
 
-  override fun visit(expr: Expression.WhereExpression, ctx: Scope): DependencyNode {
+  override fun <T> visit(
+    expr: Expression.OrderByExpression<T>,
+    ctx: AnalysisResult
+  ): AnalysisResult {
     TODO("Not yet implemented")
   }
 }
 
-/** Analyze data flow relationships in a Paxel [Expression]. */
-fun <T> Expression<T>.analyze() = this.accept(
-  ExpressionDependencyAnalyzer(),
-  DependencyNode.AssociationNode()
-)
+/** Analyze data flow relationships in an [Expression]. */
+fun <T> Expression<T>.analyze(): DependencyNode {
+  return this.accept(
+    ExpressionDependencyAnalyzer(),
+    AnalysisResult(DependencyNode.AssociationNode())
+  ).node
+}

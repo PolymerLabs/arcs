@@ -70,7 +70,7 @@ class ExpressionDependencyAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.DerivedFrom(DependencyNode.Input("x")))
+    assertThat(actual).isEqualTo(DependencyNode.Derived(DependencyNode.Input("x")))
   }
 
   @Test
@@ -98,7 +98,7 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.DerivedFrom(
+      DependencyNode.Derived(
         DependencyNode.Input("x", "foo", "bar"),
         DependencyNode.Input("y", "foo", "bar", "baz"),
         DependencyNode.Input("z", "baz", "bar")
@@ -122,7 +122,7 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.DerivedFrom(
+      DependencyNode.Derived(
         DependencyNode.Input("x", "foo", "bar"),
         DependencyNode.Input("y", "foo", "bar", "baz"),
         DependencyNode.Input("z", "baz", "bar")
@@ -165,7 +165,7 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.DerivedFrom(
+      DependencyNode.Derived(
         DependencyNode.Input("x"),
         DependencyNode.Input("y")
       )
@@ -178,7 +178,7 @@ class ExpressionDependencyAnalyzerTest {
 
     val actual = expr.analyze()
 
-    assertThat(actual).isEqualTo(DependencyNode.DerivedFrom(listOf("x")))
+    assertThat(actual).isEqualTo(DependencyNode.Derived(DependencyNode.Input("x")))
   }
 
   @Test
@@ -191,7 +191,7 @@ class ExpressionDependencyAnalyzerTest {
       DependencyNode.AssociationNode(
         "foo" to DependencyNode.Input("input", "foo"),
         "bar" to
-          DependencyNode.DerivedFrom(
+          DependencyNode.Derived(
             DependencyNode.Input("input", "foo", "bar"),
             DependencyNode.Input("input", "foo")
           )
@@ -215,7 +215,7 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.DerivedFrom(
+      DependencyNode.Derived(
         DependencyNode.Input("foo", "x"),
         DependencyNode.Input("foo", "y")
       )
@@ -307,7 +307,7 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.DerivedFrom(
+      DependencyNode.Derived(
         DependencyNode.Input("foo", "x"),
         DependencyNode.Input("foo", "y")
       )
@@ -399,7 +399,7 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(
-      DependencyNode.DerivedFrom(
+      DependencyNode.Derived(
         DependencyNode.Input("foo", "x"),
         DependencyNode.Input("foo", "y"),
         DependencyNode.Input("foo", "z")
@@ -424,5 +424,227 @@ class ExpressionDependencyAnalyzerTest {
     val actual = expr.analyze()
 
     assertThat(actual).isEqualTo(DependencyNode.Input("foo", "a"))
+  }
+
+  @Test
+  fun from_where_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where f.x > 10
+      select f.y
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Input(
+        "foo", "y", influencedBy = setOf(
+          DependencyNode.Derived(
+            DependencyNode.Input("foo", "x")
+          )
+        )
+      )
+    )
+  }
+
+  @Test
+  fun from_where_binop_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where (f.y + f.z) > 10
+      select f.x
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Input(
+        "foo", "x",
+        influencedBy = setOf(
+          DependencyNode.Derived(
+            DependencyNode.Input("foo", "y"),
+            DependencyNode.Input("foo", "z")
+          )
+        )
+      )
+    )
+  }
+
+  @Test
+  fun from_from_where_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      from b in bar
+      where (f.x + b.x) > 10
+      select f.y + b.y
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Derived(
+        DependencyNode.Input("foo", "y"),
+        DependencyNode.Input("bar", "y"),
+        influencedBy = setOf(
+          DependencyNode.Derived(
+            DependencyNode.Input("foo", "x"),
+            DependencyNode.Input("bar", "x")
+          )
+        )
+      )
+    )
+  }
+
+  @Test
+  fun from_where_where_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where f.x > 10
+      where f.z < 100
+      select f.y
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Input(
+        "foo", "y",
+        influencedBy = setOf(
+          DependencyNode.Derived(DependencyNode.Input("foo", "x")),
+          DependencyNode.Derived(DependencyNode.Input("foo", "z"))
+        )
+      )
+    )
+  }
+
+  @Test
+  fun from_where_from_where_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where f.x > 10
+      from b in bar
+      where b.x < 10
+      select f.y + b.y
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    val fooInfluencedBy = DependencyNode.Derived(DependencyNode.Input("foo", "x"))
+    val barInfluencedBy = DependencyNode.Derived(DependencyNode.Input("bar", "x"))
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Derived(
+        DependencyNode.Input("foo", "y"),
+        DependencyNode.Input("bar", "y"),
+        influencedBy = setOf(fooInfluencedBy, barInfluencedBy)
+      )
+    )
+  }
+
+  @Test
+  fun from_where_let_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where f.x > 10
+      let y = f.y
+      select y
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.Input(
+        "foo",
+        "y",
+        influencedBy = setOf(
+          DependencyNode.Derived(
+            DependencyNode.Input("foo", "x")
+          )
+        )
+      )
+    )
+  }
+
+  @Test
+  fun sub_from_where_select_expr() {
+    val expr = PaxelParser.parse(
+      """
+      new Foo {
+        a: (from f in foo where f.y > 12 select f.x),
+        b: foo.z
+      }
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.AssociationNode(
+        "a" to DependencyNode.Input(
+          "foo", "x",
+          influencedBy = setOf(DependencyNode.Derived(DependencyNode.Input("foo", "y")))
+        ),
+        "b" to DependencyNode.Input("foo", "z")
+      )
+    )
+  }
+
+  @Test
+  fun from_where_select_new() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where f.x > 10
+      select new Foo { a: f.y }
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.AssociationNode(
+        "a" to DependencyNode.Input("foo", "y"),
+        influencedBy = setOf(DependencyNode.Derived(DependencyNode.Input("foo", "x")))
+      )
+    )
+  }
+
+  @Test
+  fun from_where_select_new_derived() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where f.x > 10
+      select new Bar {
+        a: f.x,
+        b: f.y + f.z
+      }
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.AssociationNode(
+        "a" to DependencyNode.Input("foo", "x"),
+        "b" to DependencyNode.Derived(
+          DependencyNode.Input("foo", "y"),
+          DependencyNode.Input("foo", "z")
+        ),
+        influencedBy = setOf(DependencyNode.Derived(DependencyNode.Input("foo", "x")))
+      )
+    )
   }
 }
