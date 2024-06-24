@@ -11,7 +11,6 @@
 
 package arcs.android.devtools;
 
-
 /**
  * Exposed API for the DevToolsService.
  *
