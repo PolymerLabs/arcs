@@ -13,6 +13,8 @@ import {CodegenUnitTest} from './codegen-unit-test-base.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {AllocatorRecipeResolver} from '../allocator-recipe-resolver.js';
 import {PlanGenerator} from '../plan-generator.js';
+import {recipe2flavoredplan, OutputFormat} from '../recipe2plan.js';
+import {Dictionary} from '../../utils/lib-utils.js';
 
 export const recipe2PlanTestSuite: CodegenUnitTest[] = [
   new class extends ManifestCodegenUnitTest {
@@ -71,5 +73,21 @@ export const recipe2PlanTestSuite: CodegenUnitTest[] = [
       const handles = recipes.map(recipe => recipe.handles).reduce((a, b) => a.concat(b));
       return Promise.all(handles.map(handle => generator.createHandleVariable(handle)));
     }
-  }()
+  }(),
+  new class extends ManifestCodegenUnitTest {
+    constructor() {
+      super(
+        'Kotlin Plan Generation - Flavors',
+        'flavored-plan-generator-plans.cgtest'
+      );
+    }
+    async computeFromManifest(manifest: Manifest) {
+      const policies: Dictionary<Manifest> = {
+        'test': manifest,
+        'prod': manifest,
+      };
+      // TODO(bgogul):...
+      return (await recipe2flavoredplan(manifest, policies, 'getFlavor()') as string);
+    }
+  }(),
 ];

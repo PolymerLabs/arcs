@@ -1,0 +1,292 @@
+-----[header]-----
+Kotlin Plan Generation - Flavors
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+-----[end_header]-----
+
+-----[name]-----
+uses the same storage key for created and mapped handles
+-----[input]-----
+meta
+  namespace: com.google.test
+
+schema Thing {
+ num: Number
+ text: Text
+ ok: Text
+}
+
+policy NumPolicy {
+  @maxAge(age: '2d')
+  @allowedRetention(medium: 'Disk', encryption: false)
+  from Thing access { ok, num, text }
+}
+
+policy TextPolicy {
+  @maxAge(age: '2d')
+  @allowedRetention(medium: 'Disk', encryption: false)
+  from Thing access { ok, num, text }
+}
+
+particle A
+  data: writes Thing
+particle B
+  data: reads Thing {ok: Text}
+
+@arcId('ingestion')
+recipe Ingest
+  h: create 'data' @persistent @ttl('2d')
+  A
+    data: writes h
+
+recipe Retrieve
+  h: map 'data'
+  B
+    data: reads h
+-----[results]-----
+/* ktlint-disable */
+@file:Suppress("PackageName", "TopLevelName")
+
+package com.google.test
+
+//
+// GENERATED CODE -- DO NOT EDIT
+//
+
+import arcs.core.data.*
+import arcs.core.data.expression.*
+import arcs.core.data.expression.Expression.*
+import arcs.core.data.expression.Expression.BinaryOp.*
+import arcs.core.data.Plan.*
+import arcs.core.storage.StorageKeyManager
+import arcs.core.util.ArcsInstant
+import arcs.core.util.ArcsDuration
+import arcs.core.util.BigInt
+
+class TestPlans {
+  companion object {
+
+    val Ingest_Handle0 by lazy {
+        Handle(
+            StorageKeyManager.GLOBAL_INSTANCE.parse(
+                "db://5899b47e7afaed6870f78a643e30bf6695334b22@arcs/!:ingestion/handle/data"
+            ),
+            arcs.core.data.SingletonType(
+                arcs.core.data.EntityType(
+                    arcs.core.data.Schema(
+                        setOf(arcs.core.data.SchemaName("Thing")),
+                        arcs.core.data.SchemaFields(
+                            singletons = mapOf(
+                                "ok" to arcs.core.data.FieldType.Text,
+                                "num" to arcs.core.data.FieldType.Number,
+                                "text" to arcs.core.data.FieldType.Text
+                            ),
+                            collections = emptyMap()
+                        ),
+                        "5899b47e7afaed6870f78a643e30bf6695334b22",
+                        refinementExpression = true.asExpr(),
+                        queryExpression = true.asExpr()
+                    )
+                )
+            ),
+            listOf(
+                Annotation("persistent", emptyMap()),
+                Annotation("ttl", mapOf("value" to AnnotationParam.Str("2d")))
+            )
+        )
+    }
+    val IngestPlan by lazy {
+        Plan(
+            listOf(
+                Particle(
+                    "A",
+                    "",
+                    mapOf(
+                        "data" to HandleConnection(
+                            Ingest_Handle0,
+                            HandleMode.Write,
+                            arcs.core.data.SingletonType(arcs.core.data.EntityType(A_Data.SCHEMA)),
+                            listOf(
+                                Annotation("persistent", emptyMap()),
+                                Annotation("ttl", mapOf("value" to AnnotationParam.Str("2d")))
+                            )
+                        )
+                    )
+                )
+            ),
+            listOf(Ingest_Handle0),
+            listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str("ingestion"))))
+        )
+    },
+    val Retrieve_Handle0 by lazy {
+        Handle(
+            StorageKeyManager.GLOBAL_INSTANCE.parse(
+                "db://5899b47e7afaed6870f78a643e30bf6695334b22@arcs/!:ingestion/handle/data"
+            ),
+            arcs.core.data.SingletonType(
+                arcs.core.data.EntityType(
+                    arcs.core.data.Schema(
+                        setOf(arcs.core.data.SchemaName("Thing")),
+                        arcs.core.data.SchemaFields(
+                            singletons = mapOf(
+                                "ok" to arcs.core.data.FieldType.Text,
+                                "num" to arcs.core.data.FieldType.Number,
+                                "text" to arcs.core.data.FieldType.Text
+                            ),
+                            collections = emptyMap()
+                        ),
+                        "5899b47e7afaed6870f78a643e30bf6695334b22",
+                        refinementExpression = true.asExpr(),
+                        queryExpression = true.asExpr()
+                    )
+                )
+            ),
+            emptyList()
+        )
+    }
+    val RetrievePlan by lazy {
+        Plan(
+            listOf(
+                Particle(
+                    "B",
+                    "",
+                    mapOf(
+                        "data" to HandleConnection(
+                            Retrieve_Handle0,
+                            HandleMode.Read,
+                            arcs.core.data.SingletonType(arcs.core.data.EntityType(B_Data.SCHEMA)),
+                            emptyList()
+                        )
+                    )
+                )
+            ),
+            listOf(Retrieve_Handle0),
+            emptyList()
+        )
+    }
+
+  }
+}
+
+class ProdPlans {
+  companion object {
+
+    val Ingest_Handle0 by lazy {
+        Handle(
+            StorageKeyManager.GLOBAL_INSTANCE.parse(
+                "db://5899b47e7afaed6870f78a643e30bf6695334b22@arcs/!:ingestion/handle/data"
+            ),
+            arcs.core.data.SingletonType(
+                arcs.core.data.EntityType(
+                    arcs.core.data.Schema(
+                        setOf(arcs.core.data.SchemaName("Thing")),
+                        arcs.core.data.SchemaFields(
+                            singletons = mapOf(
+                                "ok" to arcs.core.data.FieldType.Text,
+                                "num" to arcs.core.data.FieldType.Number,
+                                "text" to arcs.core.data.FieldType.Text
+                            ),
+                            collections = emptyMap()
+                        ),
+                        "5899b47e7afaed6870f78a643e30bf6695334b22",
+                        refinementExpression = true.asExpr(),
+                        queryExpression = true.asExpr()
+                    )
+                )
+            ),
+            listOf(
+                Annotation("persistent", emptyMap()),
+                Annotation("ttl", mapOf("value" to AnnotationParam.Str("2d")))
+            )
+        )
+    }
+    val IngestPlan by lazy {
+        Plan(
+            listOf(
+                Particle(
+                    "A",
+                    "",
+                    mapOf(
+                        "data" to HandleConnection(
+                            Ingest_Handle0,
+                            HandleMode.Write,
+                            arcs.core.data.SingletonType(arcs.core.data.EntityType(A_Data.SCHEMA)),
+                            listOf(
+                                Annotation("persistent", emptyMap()),
+                                Annotation("ttl", mapOf("value" to AnnotationParam.Str("2d")))
+                            )
+                        )
+                    )
+                )
+            ),
+            listOf(Ingest_Handle0),
+            listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str("ingestion"))))
+        )
+    },
+    val Retrieve_Handle0 by lazy {
+        Handle(
+            StorageKeyManager.GLOBAL_INSTANCE.parse(
+                "db://5899b47e7afaed6870f78a643e30bf6695334b22@arcs/!:ingestion/handle/data"
+            ),
+            arcs.core.data.SingletonType(
+                arcs.core.data.EntityType(
+                    arcs.core.data.Schema(
+                        setOf(arcs.core.data.SchemaName("Thing")),
+                        arcs.core.data.SchemaFields(
+                            singletons = mapOf(
+                                "ok" to arcs.core.data.FieldType.Text,
+                                "num" to arcs.core.data.FieldType.Number,
+                                "text" to arcs.core.data.FieldType.Text
+                            ),
+                            collections = emptyMap()
+                        ),
+                        "5899b47e7afaed6870f78a643e30bf6695334b22",
+                        refinementExpression = true.asExpr(),
+                        queryExpression = true.asExpr()
+                    )
+                )
+            ),
+            emptyList()
+        )
+    }
+    val RetrievePlan by lazy {
+        Plan(
+            listOf(
+                Particle(
+                    "B",
+                    "",
+                    mapOf(
+                        "data" to HandleConnection(
+                            Retrieve_Handle0,
+                            HandleMode.Read,
+                            arcs.core.data.SingletonType(arcs.core.data.EntityType(B_Data.SCHEMA)),
+                            emptyList()
+                        )
+                    )
+                )
+            ),
+            listOf(Retrieve_Handle0),
+            emptyList()
+        )
+    }
+
+  }
+}
+
+
+
+val IngestPlan by lazy {
+    when (getFlavor()) {
+        case "test": TestPlans.IngestPlan
+        case "prod": ProdPlans.IngestPlan
+    }
+}
+val RetrievePlan by lazy {
+    when (getFlavor()) {
+        case "test": TestPlans.RetrievePlan
+        case "prod": ProdPlans.RetrievePlan
+    }
+}
+
+-----[end]-----
