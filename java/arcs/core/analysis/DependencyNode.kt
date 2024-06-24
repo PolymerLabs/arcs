@@ -23,117 +23,210 @@ private typealias Path = List<Identifier>
  * [DependencyNode]s make up a directed-acyclic-graph that describes how input handle connections
  * map to output connections in particle specs with Paxel [Expression]s.
  *
- * - [DependencyNode.Input] represents an input handle connection and access path.
- * - [DependencyNode.DerivedFrom] indicates that an input has been modified in the Paxel expression.
- * - [DependencyNode.AssociationNode] connects fields to other nodes in the graph. These are used to
- *   form left-hand-side / right-hand-side relations between handle connections.
+ * Each [DependencyNode.Terminal] node contains two types of edges: `dependency`, which indicates
+ * that the current node depends one or more additional nodes; and `influence`, which is used to
+ * express indirect effects on the output expression (namely, from filters).
+ *
+ * Terminal nodes include:
+ * - [DependencyNode.Equal] represents an unmodified input handle connection and access path.
+ * - [DependencyNode.Derived] indicates that an input has been modified in the Paxel expression.
+ *
+ * Non-terminal nodes consist of:
+ * - [DependencyNode.Nodes] represent a collection of [DependencyNode.Terminal] nodes.
+ * - [DependencyNode.BufferedScope] contains associations between [Identifier]s and
+ *   [DependencyNode]s as well as a buffer of "influence" nodes.
+ *
+ * These nodes are composed to express a graph of data flow relationships for claim generation.
  *
  * Example:
- *   ```
- *   particle HousePets
- *     input: reads PetData { cats: Number, dogs: Number, household: Text }
- *     output: writes PetStats {
- *       ratio: inline Domestication {trained: Number, total: Number},
- *       family: Text,
- *       limit: Number
- *     } = new PetStats {
- *       ratio: new Domestication {
- *         trained: input.cats,
- *         total: input.cats + input.dogs,
- *       },
- *       family: input.household,
- *       limit: 5
- *     }
- *   ```
+ *  ```
+ *  particle Example
+ *    input: reads Foo {x: Number, y: Number, z: Number}
+ *    output: writes Bar {a, b} =
+ *      from f in input
+ *      where f.x > 10
+ *      select new Bar {
+ *        a: f.x
+ *        b: f.y + f.z
+ *      }
+ *  ```
  *
- *   This can be translated to:
+ *  This translates to:
  *
- *   ```
- *   DependencyNode.AssociationNode(
- *    "ratio" to DependencyNode.AssociationNode(
- *      "trained" to DependencyNode.Input("input", "cats"),
- *      "total" to DependencyNode.DerivedFrom(
- *        DependencyNode.Input("input", "cats"),
- *        DependencyNode.Input("input", "dogs")
- *      )
+ *  ```
+ *  DependencyNode.Nodes(
+ *    DependencyNode.Equal(
+ *      "a",
+ *      dependency = setOf(DependencyNode.Equal("input", "x")),
+ *      influence = setOf(DependencyNode.Derived("input", "x"))
  *    ),
- *    "family" to DependencyNode.Input("input", "household"),
- *    "limit" to DependencyNode.LITERAL
- *   )
- *   ```
+ *    DependencyNode.Equal(
+ *      "b",
+ *      dependency = setOf(
+ *        DependencyNode.Derived("input", "y"),
+ *        DependencyNode.Derived("input", "z")
+ *      ),
+ *      influence = setOf(DependencyNode.Derived("input", "x"))
+ *    )
+ *  )
+ *  ```
  *
- *   We can represent this DAG graphically:
+ *  Graphically, this is represented as:
  *
- *                    (root)
- *            __________|______
- *           /      |          \
- *          /      /        _(ratio)_
- *        /       /        |         \
- *   (limit)  (family)  (trained)  (total)
- *     |        |          |     /   |
- *     |        |          |   /     |
- *     x     (household)  (cats)  (dogs)
+ *  >  (input) --> ((x))==========
+ *  >     \                   \\ \\
+ *  >      \                  ||  V
+ *  >       \--> (x) <--------V--(a)-|[Bar]
+ *  >        \---> ((y)) <--(b)------|
+ *  >         \---> ((z)) <-/
  *
- *   This internal representation, in turn, can be translated into the following claims:
- *
- *   ```
- *   claim output.ratio.trained derives from input.cats
- *   claim output.ratio.total derives from input.cats and derives from input.dogs
- *   claim output.family derives from input.household
- *   ```
+ *  This internal representation, in turn, can be translated into the following claims:
+ *  ```
+ *  claim output.a is equal to input.x and is influenced by input.x
+ *  claim output.b is derived from input.y and is derived from input.z and is influenced by input.x
+ *  ```
  */
 sealed class DependencyNode {
 
-  /** An unmodified input (from a handle connection) used in a Paxel [Expression]. */
-  data class Input(val path: Path = emptyList()) : DependencyNode() {
-    constructor(vararg fields: Identifier) : this(listOf(*fields))
-  }
+  /** Expresses influence on to the current [DependencyNode]. */
+  abstract fun influencedBy(influence: Set<DependencyNode>): DependencyNode
 
-  /** Represents derivation from a group of [Input]s in an [Expression]. */
-  data class DerivedFrom(val inputs: Set<Input> = emptySet()) : DependencyNode() {
+  /** Abstract notion of an access path and dependency relationships. */
+  abstract class Terminal : DependencyNode() {
+    /** Path of [Identifier]s representing access to a handle connection. */
+    abstract val accessPath: Path
 
-    constructor(vararg paths: Path) : this(paths.map { Input(it) }.toSet())
+    /** Set of [Terminal] nodes that the current node depends on. */
+    abstract val dependency: Set<Terminal>
 
-    /** Produce a new [DerivedFrom] with a flattened set of [Input]s. */
-    constructor(vararg nodes: DependencyNode) : this(flatten(*nodes))
+    /** Set of [Terminal] nodes that bear influence on the current node. */
+    abstract val influence: Set<Terminal>
 
-    companion object {
-      /** Flatten nested sets of [DependencyNode]s.*/
-      private fun flatten(vararg nodes: DependencyNode): Set<Input> {
-        return nodes.flatMap { node ->
-          when (node) {
-            is Input -> setOf(node)
-            is DerivedFrom -> node.inputs
-            else -> throw IllegalArgumentException(
-              "Nodes must be a 'Input' or 'DerivedFrom'."
-            )
-          }
-        }.toSet()
-      }
+    /** Gets the [Identifier] of the current node, if present (`null` otherwise). */
+    val id: Identifier?
+      get() = accessPath.last()
+
+    /** Returns unwrapped dependency node(s), or `default` if none exist. */
+    fun dependencyOrDefault(default: DependencyNode): DependencyNode = when (dependency.size) {
+      0 -> default
+      1 -> dependency.first()
+      else -> Nodes(dependency.toList())
     }
   }
 
-  /** Associates [Identifier]s with [DependencyNode]s. */
-  data class AssociationNode(
-    val associations: Map<Identifier, DependencyNode> = emptyMap()
+  /** A [Terminal] with input that has been unmodified by the expression. */
+  data class Equal(
+    override val accessPath: Path,
+    override val dependency: Set<Terminal>,
+    override val influence: Set<Terminal>
+  ) : Terminal() {
+    /** Expresses an access path with variable arguments.*/
+    constructor(
+      vararg paths: Identifier,
+      dependency: Set<Terminal> = emptySet(),
+      influence: Set<Terminal> = emptySet()
+    ) : this(listOf(*paths), dependency, influence)
+
+    /** Constructs an access path from a single [Identifier] and a known parent node. */
+    constructor(id: Identifier, parent: Terminal) :
+      this(parent.accessPath + id, emptySet(), emptySet())
+
+    /** Adds influencing nodes to the `influence` edge set. */
+    override fun influencedBy(influence: Set<DependencyNode>) =
+      copy(influence = this.influence + influence.flatten())
+  }
+
+  /** A [Terminal] with input that has been modified by the expression. */
+  data class Derived(
+    override val accessPath: Path,
+    override val dependency: Set<Terminal>,
+    override val influence: Set<Terminal>
+  ) : Terminal() {
+    /** Expresses an access path with variable arguments.*/
+    constructor(
+      vararg paths: Identifier,
+      dependency: Set<Terminal> = emptySet(),
+      influence: Set<Terminal> = emptySet()
+    ) : this(listOf(*paths), dependency, influence)
+
+    /** Constructs an access path from a single [Identifier] and a known parent node. */
+    constructor(id: Identifier, parent: Terminal) :
+      this(parent.accessPath + id, emptySet(), emptySet())
+
+    /** Adds influencing nodes to the `influence` edge set. */
+    override fun influencedBy(influence: Set<DependencyNode>) =
+      copy(influence = this.influence + influence.flatten())
+  }
+
+  /** A collection of [Terminal] nodes. */
+  data class Nodes private constructor(
+    val nodes: Set<Terminal> = emptySet()
+  ) : DependencyNode() {
+    constructor() : this(emptySet())
+    constructor(nodes: List<Terminal>) : this(nodes.toSet())
+
+    /** Converts [DependencyNode]s into a flattened collection of [Terminal] nodes. */
+    constructor(vararg nodes: DependencyNode) : this(listOf(*nodes).flatten())
+
+    /** Converts a list of node pairs into `dependency` relationships. */
+    constructor(vararg edges: Pair<Identifier, DependencyNode>) :
+      this(edges.groupBy({ it.first }, { it.second }).map { (id, node) ->
+        Equal(id, dependency = node.flatten())
+      })
+
+    /** Extends influence relationships to all contained nodes. */
+    override fun influencedBy(influence: Set<DependencyNode>) = copy(
+      nodes = nodes.map { it.influencedBy(influence) as Terminal }.toSet()
+    )
+  }
+
+  /**
+   * Associates [Identifier]s with [DependencyNode]s and holds a buffer to express `influence`.
+   */
+  data class BufferedScope(
+    val ctx: Map<Identifier, DependencyNode> = emptyMap(),
+    val influence: Set<Terminal> = emptySet()
   ) : DependencyNode() {
 
-    /** Construct an [AssociationNode] from associations of [Identifier]s to [DependencyNode]s. */
-    constructor(vararg pairs: Pair<Identifier, DependencyNode>) : this(pairs.toMap())
+    /** Adds associations to the scope. */
+    fun add(vararg associations: Pair<Identifier, DependencyNode>) = copy(ctx = ctx + associations)
 
-    /** Replace the associations of an [AssociationNode] with new mappings. */
-    fun add(vararg other: Pair<Identifier, DependencyNode>): DependencyNode = AssociationNode(
-      associations + other
-    )
+    /** Returns the [DependencyNode]s associated with the input [Identifier], or `null`. */
+    operator fun get(key: Identifier): DependencyNode? = ctx[key]
 
-    /** Returns the [DependencyNode] associated with the input [Identifier]. */
-    fun lookup(key: Identifier): DependencyNode = requireNotNull(associations[key]) {
-      "Identifier '$key' is not found in AssociationNode."
-    }
+    /** Adds [DependencyNode]s that bear influence into the buffer. */
+    fun addInfluence(vararg nodes: DependencyNode) =
+      copy(influence = influence + listOf(*nodes).flatten())
+
+    /** Extends influence relationships to all contained nodes. */
+    override fun influencedBy(influence: Set<DependencyNode>) =
+      copy(ctx = ctx.mapValues { (_, node) -> node.influencedBy(influence) })
   }
 
   companion object {
     /** A [DependencyNode] case to represent literals. */
-    val LITERAL = DerivedFrom()
+    val LITERAL = Nodes()
+  }
+}
+
+/** Flattens nested [DependencyNode]s into a set of [DependencyNode.Terminal]s. */
+fun Collection<DependencyNode>.flatten(): Set<DependencyNode.Terminal> {
+  return flatMap { node ->
+    when (node) {
+      is DependencyNode.Terminal -> listOf(node)
+      is DependencyNode.Nodes -> node.nodes
+      is DependencyNode.BufferedScope -> node.ctx.values.flatten()
+    }
+  }.toSet()
+}
+
+/** Converts all nested [DependencyNode.Equal] nodes into [DependencyNode.Derived] nodes. */
+fun DependencyNode.modified(): DependencyNode {
+  return when (this) {
+    is DependencyNode.Terminal -> DependencyNode.Derived(accessPath, dependency, influence)
+    is DependencyNode.Nodes -> DependencyNode.Nodes(
+      nodes.map { it.modified() as DependencyNode.Terminal }
+    )
+    is DependencyNode.BufferedScope -> copy(ctx = ctx.mapValues { it.value.modified() })
   }
 }
