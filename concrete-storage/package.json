@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "firebase": "6.0.4",
+    "firebase": "10.9.0",
     "pouchdb": "7.1.1",
     "pouchdb-adapter-memory": "7.1.1",
     "pouchdb-debug": "7.1.1"
