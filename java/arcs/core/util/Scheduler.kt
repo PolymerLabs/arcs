@@ -86,6 +86,8 @@ class Scheduler(
 
         try {
           withTimeout(agendaProcessingTimeoutMs) { executeAgenda(agenda) }
+        } catch (e: TimeoutCancellationException) {
+          log.info { "Agenda timed out." }
         } finally {
           agenda.listenersByNamespace.clear()
           val agendasLeft = agendasInFlight.getAndDecrement()
