@@ -391,6 +391,33 @@ class ReferenceModeStore private constructor(
   private suspend fun handleContainerMessage(proxyMessage: ContainerProxyMessage): Boolean {
     when (proxyMessage) {
       is ProxyMessage.Operations -> {
+
+        suspend fun handlePendingId(reference: RawReference, op: CrdtOperation) {
+          addToHoldQueueFromReferences(
+            listOf(reference),
+            onTimeout = {}
+          ) {
+            val updated =
+              getLocalData(reference.id) as? CrdtEntity.Data
+
+            // Bridge the op from the collection using the RawEntity from the
+            // backing store, and use the refModeOp for sending back to the
+            // proxy.
+            val upstreamOps = listOf(
+              op.toBridgingOp(updated?.toRawEntity(reference.id)).refModeOp
+            )
+
+            callbacks.allCallbacksExcept(proxyMessage.id).forEach { callback ->
+              callback(
+                ProxyMessage.Operations(
+                  operations = upstreamOps,
+                  id = proxyMessage.id
+                )
+              )
+            }
+          }
+        }
+
         val containerOps = proxyMessage.operations
         opLoop@ for (op in containerOps) {
           val reference = when (op) {
@@ -399,34 +426,22 @@ class ReferenceModeStore private constructor(
             else -> null
           }
           val getEntity = if (reference != null) {
-            val entityCrdt = getLocalData(reference.id) as? CrdtEntity.Data
-            if (entityCrdt == null) {
-              addToHoldQueueFromReferences(
-                listOf(reference),
-                onTimeout = {}
-              ) {
-                val updated =
-                  getLocalData(reference.id) as? CrdtEntity.Data
-
-                // Bridge the op from the collection using the RawEntity from the
-                // backing store, and use the refModeOp for sending back to the
-                // proxy.
-                val upstreamOps = listOf(
-                  op.toBridgingOp(updated?.toRawEntity(reference.id)).refModeOp
-                )
-
-                callbacks.allCallbacksExcept(proxyMessage.id).forEach { callback ->
-                  callback(
-                    ProxyMessage.Operations(
-                      operations = upstreamOps,
-                      id = proxyMessage.id
-                    )
-                  )
-                }
+            if (BuildFlags.REFERENCE_MODE_STORE_FIXES) {
+              val entityCrdt = getLocalData(reference.id)
+              val referenceVersionMap = checkNotNull(reference.version) { "reference is null" }
+              if (entityCrdt.versionMap doesNotDominate referenceVersionMap) {
+                handlePendingId(reference, op)
+                continue@opLoop
               }
-              continue@opLoop
+              suspend { entityCrdt.toRawEntity(reference.id) }
+            } else {
+              val entityCrdt = getLocalData(reference.id) as? CrdtEntity.Data
+              if (entityCrdt == null) {
+                handlePendingId(reference, op)
+                continue@opLoop
+              }
+              suspend { entityCrdt.toRawEntity(reference.id) }
             }
-            suspend { entityCrdt.toRawEntity(reference.id) }
           } else {
             suspend { null }
           }
