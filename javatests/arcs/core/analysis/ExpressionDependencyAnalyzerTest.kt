@@ -425,4 +425,97 @@ class ExpressionDependencyAnalyzerTest {
 
     assertThat(actual).isEqualTo(DependencyNode.Input("foo", "a"))
   }
+
+  @Test
+  fun from_where_select() {
+    val expr = PaxelParser.parse("from f in foo where f.x > 10 select f.y")
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.DerivedFrom(
+        DependencyNode.Input("foo", "x"),
+        DependencyNode.Input("foo", "y")
+      )
+    )
+  }
+
+  @Test
+  fun from_where_binop_select() {
+    val expr = PaxelParser.parse("from f in foo where (f.y + f.z) > 10 select f.x")
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.DerivedFrom(
+        DependencyNode.Input("foo", "x"),
+        DependencyNode.Input("foo", "y"),
+        DependencyNode.Input("foo", "z")
+      )
+    )
+  }
+
+  @Test
+  fun from_from_where_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      from b in bar
+      where (f.x + b.x) > 10
+      select f.y + b.y
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.DerivedFrom(
+        DependencyNode.Input("foo", "x"),
+        DependencyNode.Input("bar", "x"),
+        DependencyNode.Input("bar", "y"),
+        DependencyNode.Input("foo", "y")
+      )
+    )
+  }
+
+  @Test
+  fun from_where_where_select() {
+    val expr = PaxelParser.parse(
+      """
+      from f in foo
+      where f.x > 10
+      where f.z < 100
+      select f.y
+      """.trimIndent()
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.DerivedFrom(
+        DependencyNode.Input("foo", "x"),
+        DependencyNode.Input("foo", "y"),
+        DependencyNode.Input("foo", "z")
+      )
+    )
+  }
+
+  @Test
+  fun sub_from_where_select_expr() {
+    val expr = PaxelParser.parse(
+      "new Foo {a: (from f in foo where f.y > 12 select f.x), b: foo.z}"
+    )
+
+    val actual = expr.analyze()
+
+    assertThat(actual).isEqualTo(
+      DependencyNode.AssociationNode(
+        "a" to DependencyNode.DerivedFrom(
+          DependencyNode.Input("foo", "x"),
+          DependencyNode.Input("foo", "y")
+        ),
+        "b" to DependencyNode.Input("foo", "z")
+      )
+    )
+  }
 }

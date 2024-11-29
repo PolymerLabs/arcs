@@ -30,10 +30,7 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
     DependencyNode.DerivedFrom(expr.expr.accept(this, ctx))
 
   override fun <L, R, T> visit(expr: Expression.BinaryExpression<L, R, T>, ctx: Scope) =
-    DependencyNode.DerivedFrom(
-      expr.left.accept(this, ctx),
-      expr.right.accept(this, ctx)
-    )
+    DependencyNode.DerivedFrom(expr.left.accept(this, ctx), expr.right.accept(this, ctx))
 
   override fun <T> visit(expr: Expression.FieldExpression<T>, ctx: Scope): DependencyNode {
     return when (val qualifier = expr.qualifier?.accept(this, ctx)) {
@@ -67,7 +64,10 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
 
   override fun <T> visit(expr: Expression.SelectExpression<T>, ctx: Scope): DependencyNode {
     val qualifier = expr.qualifier.accept(this, ctx) as Scope
-    return expr.expr.accept(this, qualifier)
+    val expression = expr.expr.accept(this, qualifier)
+    return qualifier.lookupOrNull(DependencyNode.INFLUENCE_KEY)?.let {
+      DependencyNode.DerivedFrom(it, expression)
+    } ?: expression
   }
 
   override fun visit(expr: Expression.LetExpression, ctx: Scope): DependencyNode {
@@ -90,7 +90,15 @@ class ExpressionDependencyAnalyzer : Expression.Visitor<DependencyNode, Scope> {
   }
 
   override fun visit(expr: Expression.WhereExpression, ctx: Scope): DependencyNode {
-    TODO("Not yet implemented")
+    val qualifier = expr.qualifier.accept(this, ctx) as Scope
+    val expression = expr.expr.accept(this, qualifier)
+    return qualifier.add(
+      DependencyNode.INFLUENCE_KEY to (
+        qualifier.lookupOrNull(DependencyNode.INFLUENCE_KEY)?.let {
+          DependencyNode.DerivedFrom(it, expression)
+        } ?: expression
+      )
+    )
   }
 }
 
