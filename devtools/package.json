@@ -11,7 +11,7 @@
     "@polymer/polymer": "3.3.1",
     "@vaadin/vaadin-split-layout": "4.1.1",
     "@webcomponents/webcomponentsjs": "2.4.0",
-    "diff": "4.0.1",
+    "diff": "8.0.3",
     "golden-layout": "1.5.9",
     "jquery": "3.4.1",
     "vis": "4.21.0-EOL",
